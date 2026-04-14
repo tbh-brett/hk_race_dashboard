@@ -1,0 +1,168 @@
+{
+  "date": "2026-04-01",
+  "date_compact": "20260401",
+  "meeting_title": "SHA TIN (AWT) — WEDNESDAY, 1 APRIL 2026",
+  "n_races_matched": 9,
+  "n_runners_matched": 114,
+  "computed_at": "2026-04-09T17:27:44.397517",
+  "time_accuracy": {
+    "mae_seconds": 0.799,
+    "median_ae_seconds": 0.6,
+    "n_observations": 113,
+    "rank_correlation_avg": 0.374,
+    "n_races_ranked": 9,
+    "top1_win_rate": 0.111,
+    "top1_total": 9,
+    "top3_place_rate": 0.259,
+    "top3_total": 27
+  },
+  "pace_accuracy": {
+    "exact_match_rate": 0.0,
+    "within_one_category": 0.111,
+    "n_races": 9,
+    "deviation_correlation": 0.109,
+    "details": [
+      {
+        "race": 1,
+        "predicted": "Fast",
+        "predicted_dev": -0.46,
+        "actual": "Normal",
+        "actual_dev": 0.01,
+        "match": false
+      },
+      {
+        "race": 2,
+        "predicted": "Fast",
+        "predicted_dev": -0.48,
+        "actual": "Slightly Slow",
+        "actual_dev": 0.625,
+        "match": false
+      },
+      {
+        "race": 3,
+        "predicted": "Fast",
+        "predicted_dev": -0.46,
+        "actual": "Slightly Slow",
+        "actual_dev": 0.43,
+        "match": false
+      },
+      {
+        "race": 4,
+        "predicted": "Fast",
+        "predicted_dev": -0.45,
+        "actual": "Normal",
+        "actual_dev": -0.197,
+        "match": false
+      },
+      {
+        "race": 5,
+        "predicted": "Fast",
+        "predicted_dev": -0.51,
+        "actual": "Slightly Slow",
+        "actual_dev": 0.634,
+        "match": false
+      },
+      {
+        "race": 6,
+        "predicted": "Fast",
+        "predicted_dev": -0.54,
+        "actual": "Normal",
+        "actual_dev": 0.01,
+        "match": false
+      },
+      {
+        "race": 7,
+        "predicted": "Fast",
+        "predicted_dev": -0.58,
+        "actual": "Slightly Fast",
+        "actual_dev": -0.48,
+        "match": false
+      },
+      {
+        "race": 8,
+        "predicted": "Fast",
+        "predicted_dev": -0.43,
+        "actual": "Normal",
+        "actual_dev": -0.1,
+        "match": false
+      },
+      {
+        "race": 9,
+        "predicted": "Fast",
+        "predicted_dev": -0.63,
+        "actual": "Normal",
+        "actual_dev": 0.213,
+        "match": false
+      }
+    ]
+  },
+  "pace_beneficiary": {
+    "pace_beneficiary_avg_rank_diff": -0.04,
+    "pace_penalised_avg_rank_diff": 0.09,
+    "n_beneficiaries": 67,
+    "n_penalised": 46,
+    "benefit_advantage": 0.13
+  },
+  "risk_accuracy": {
+    "risk_error_correlation": -0.059,
+    "n_observations": 113,
+    "tier_performance": {
+      "Low": {
+        "n_bets": 10,
+        "win_rate": 0.0,
+        "place_rate": 0.3,
+        "roi_pct": -100.0
+      },
+      "Moderate": {
+        "n_bets": 21,
+        "win_rate": 0.143,
+        "place_rate": 0.286,
+        "roi_pct": -8.6
+      },
+      "High": {
+        "n_bets": 5,
+        "win_rate": 0.2,
+        "place_rate": 0.4,
+        "roi_pct": 120.0
+      }
+    }
+  },
+  "style_accuracy": {
+    "exact_match_rate": 0.354,
+    "n_observations": 113,
+    "confusion_matrix": {
+      "Midfield": {
+        "Closer": 23,
+        "Midfield": 12,
+        "On-Pace": 7,
+        "Leader": 3
+      },
+      "On-Pace": {
+        "Midfield": 7,
+        "On-Pace": 10,
+        "Closer": 5,
+        "Leader": 2
+      },
+      "Closer": {
+        "Midfield": 9,
+        "Closer": 11,
+        "Leader": 1,
+        "On-Pace": 1
+      },
+      "Leader": {
+        "Leader": 7,
+        "Midfield": 7,
+        "On-Pace": 4,
+        "Closer": 4
+      }
+    }
+  },
+  "draw_accuracy": {
+    "inside_avg_place": 6.11,
+    "middle_avg_place": 6.48,
+    "outside_avg_place": 7.62,
+    "draw_bias_detected": "inside",
+    "n_races_inside": 9,
+    "n_races_outside": 9
+  }
+}

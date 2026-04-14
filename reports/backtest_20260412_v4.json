@@ -1,0 +1,1847 @@
+{
+  "date": "2026-04-12",
+  "venue": "ST",
+  "model_version": "v4.4",
+  "n_races": 10,
+  "n_predictions": 120,
+  "metrics": {
+    "mae": 0.507,
+    "median_ae": 0.42,
+    "bias": 0.104,
+    "mean_spearman_rho": 0.48,
+    "top1_rate": 0.143,
+    "top3_rate": 0.571,
+    "top5_rate": 0.571,
+    "mean_top3_overlap": 1.1
+  },
+  "factor_importance": [
+    {
+      "factor": "Effective Residual",
+      "rho_place": 0.49279394237636626,
+      "p": 1.080552323753136e-08,
+      "rho_ft": 0.2702734144408587
+    },
+    {
+      "factor": "Projected Time",
+      "rho_place": 0.17538034731204433,
+      "p": 0.05536966201887229,
+      "rho_ft": 0.9420579995030193
+    },
+    {
+      "factor": "Win%",
+      "rho_place": -0.4639010683303983,
+      "p": 9.483384163121399e-08,
+      "rho_ft": -0.13943780381736104
+    },
+    {
+      "factor": "Sectional Adj",
+      "rho_place": 0.2541256889370319,
+      "p": 0.005097558252923671,
+      "rho_ft": 0.024484097556971243
+    },
+    {
+      "factor": "Late Dev (avg)",
+      "rho_place": 0.323378522504688,
+      "p": 0.0003149828642827607,
+      "rho_ft": 0.06017630280142305
+    },
+    {
+      "factor": "SSI",
+      "rho_place": 0.088272031549798,
+      "p": 0.337698044839035,
+      "rho_ft": -0.12998531107106018
+    },
+    {
+      "factor": "Speed Map Adj",
+      "rho_place": -0.053039379103211035,
+      "p": 0.5650606808828722,
+      "rho_ft": 0.0046922070427724534
+    },
+    {
+      "factor": "Early Speed Z",
+      "rho_place": 0.15937921705483105,
+      "p": 0.08207520455480619,
+      "rho_ft": 0.3362330778812468
+    }
+  ],
+  "exceptional_performers": [
+    {
+      "race": 5,
+      "distance": 1200,
+      "class": "C4",
+      "horse": "GORGEOUS VICTORY",
+      "place": 3,
+      "odds": 51.0,
+      "draw": 8,
+      "pred_rank": 9,
+      "score": 4.11,
+      "reasons": [
+        "exceptional late speed (22.07s last section vs 23.71s avg early)",
+        "ran 1.21s faster than projected",
+        "model Rk#9 → P3 — unanticipated improvement",
+        "closed from position 10 to finish P3"
+      ]
+    },
+    {
+      "race": 7,
+      "distance": 1400,
+      "class": "C4",
+      "horse": "ALABAMA SONG",
+      "place": 1,
+      "odds": 14.0,
+      "draw": 9,
+      "pred_rank": 10,
+      "score": 3.72,
+      "reasons": [
+        "ran 1.03s faster than projected",
+        "won at $14.0 — market underrated",
+        "model Rk#10 → P1 — unanticipated improvement",
+        "closed from position 9 to finish P1"
+      ]
+    },
+    {
+      "race": 3,
+      "distance": 1600,
+      "class": "C5",
+      "horse": "HARRY'S HERO",
+      "place": 3,
+      "odds": 13.0,
+      "draw": 4,
+      "pred_rank": 11,
+      "score": 3.15,
+      "reasons": [
+        "exceptional late speed (23.23s last section vs 24.20s avg early)",
+        "ran 0.86s faster than projected",
+        "model Rk#11 → P3 — unanticipated improvement",
+        "closed from position 11 to finish P3"
+      ]
+    },
+    {
+      "race": 10,
+      "distance": 1200,
+      "class": "C3",
+      "horse": "MY MARS",
+      "place": 1,
+      "odds": 29.0,
+      "draw": 7,
+      "pred_rank": null,
+      "score": 2.64,
+      "reasons": [
+        "exceptional late speed (22.49s last section vs 23.13s avg early)",
+        "won at $29.0 — market underrated"
+      ]
+    },
+    {
+      "race": 9,
+      "distance": 1400,
+      "class": "C3",
+      "horse": "FORTUNE LINK",
+      "place": 1,
+      "odds": 17.0,
+      "draw": 12,
+      "pred_rank": null,
+      "score": 2.5,
+      "reasons": [
+        "placed from wide draw (12)",
+        "won at $17.0 — market underrated",
+        "led/sat 2nd from start — all-the-way or gate-to-wire effort"
+      ]
+    },
+    {
+      "race": 2,
+      "distance": 1400,
+      "class": "C5",
+      "horse": "YEE CHEONG RAIDER",
+      "place": 2,
+      "odds": 10.0,
+      "draw": 12,
+      "pred_rank": 9,
+      "score": 2.3,
+      "reasons": [
+        "ran 0.62s faster than projected",
+        "placed from wide draw (12)",
+        "model Rk#9 → P2 — unanticipated improvement",
+        "led/sat 2nd from start — all-the-way or gate-to-wire effort"
+      ]
+    },
+    {
+      "race": 5,
+      "distance": 1200,
+      "class": "C4",
+      "horse": "SPICY STANDARD",
+      "place": 2,
+      "odds": 3.2,
+      "draw": 11,
+      "pred_rank": 3,
+      "score": 1.92,
+      "reasons": [
+        "exceptional late speed (22.56s last section vs 23.39s avg early)",
+        "ran 0.74s faster than projected",
+        "placed from wide draw (11)"
+      ]
+    },
+    {
+      "race": 11,
+      "distance": 1200,
+      "class": "C2",
+      "horse": "CRIMSON FLASH",
+      "place": 1,
+      "odds": 13.0,
+      "draw": 3,
+      "pred_rank": 3,
+      "score": 1.83,
+      "reasons": [
+        "exceptional late speed (22.60s last section vs 23.13s avg early)",
+        "won at $13.0 — market underrated"
+      ]
+    },
+    {
+      "race": 2,
+      "distance": 1400,
+      "class": "C5",
+      "horse": "HE WAS ME",
+      "place": 1,
+      "odds": 8.7,
+      "draw": 2,
+      "pred_rank": 8,
+      "score": 1.75,
+      "reasons": [
+        "ran 0.56s faster than projected",
+        "model Rk#8 → P1 — unanticipated improvement",
+        "led/sat 2nd from start — all-the-way or gate-to-wire effort"
+      ]
+    },
+    {
+      "race": 7,
+      "distance": 1400,
+      "class": "C4",
+      "horse": "RUN RUN SMART",
+      "place": 3,
+      "odds": 8.2,
+      "draw": 1,
+      "pred_rank": 8,
+      "score": 1.7,
+      "reasons": [
+        "ran 0.88s faster than projected",
+        "model Rk#8 → P3 — unanticipated improvement"
+      ]
+    },
+    {
+      "race": 11,
+      "distance": 1200,
+      "class": "C2",
+      "horse": "YOUNG CHAMPION",
+      "place": 3,
+      "odds": 6.0,
+      "draw": 7,
+      "pred_rank": 6,
+      "score": 1.59,
+      "reasons": [
+        "exceptional late speed (22.26s last section vs 23.36s avg early)",
+        "closed from position 9 to finish P3"
+      ]
+    },
+    {
+      "race": 3,
+      "distance": 1600,
+      "class": "C5",
+      "horse": "BLING BLING GENIUS",
+      "place": 1,
+      "odds": 4.8,
+      "draw": 3,
+      "pred_rank": 8,
+      "score": 1.55,
+      "reasons": [
+        "ran 0.69s faster than projected",
+        "model Rk#8 → P1 — unanticipated improvement"
+      ]
+    },
+    {
+      "race": 4,
+      "distance": 1400,
+      "class": "C4",
+      "horse": "GALLANT DESIGN",
+      "place": 3,
+      "odds": 4.4,
+      "draw": 9,
+      "pred_rank": 8,
+      "score": 1.5,
+      "reasons": [
+        "model Rk#8 → P3 — unanticipated improvement",
+        "closed from position 10 to finish P3"
+      ]
+    },
+    {
+      "race": 8,
+      "distance": 1600,
+      "class": "C3",
+      "horse": "RISING PHOENIX",
+      "place": 4,
+      "odds": 7.5,
+      "draw": 2,
+      "pred_rank": 5,
+      "score": 1.42,
+      "reasons": [
+        "exceptional late speed (22.71s last section vs 24.13s avg early)"
+      ]
+    },
+    {
+      "race": 11,
+      "distance": 1200,
+      "class": "C2",
+      "horse": "GALACTIC VOYAGE",
+      "place": 4,
+      "odds": 5.2,
+      "draw": 5,
+      "pred_rank": 1,
+      "score": 1.42,
+      "reasons": [
+        "exceptional late speed (22.08s last section vs 23.50s avg early)"
+      ]
+    },
+    {
+      "race": 3,
+      "distance": 1600,
+      "class": "C5",
+      "horse": "WINDICATOR FAMILY",
+      "place": 2,
+      "odds": 20.0,
+      "draw": 8,
+      "pred_rank": 5,
+      "score": 1.35,
+      "reasons": [
+        "exceptional late speed (23.28s last section vs 24.13s avg early)",
+        "closed from position 10 to finish P2"
+      ]
+    },
+    {
+      "race": 8,
+      "distance": 1600,
+      "class": "C3",
+      "horse": "AMAZING PARTNERS",
+      "place": 1,
+      "odds": 5.4,
+      "draw": 4,
+      "pred_rank": 2,
+      "score": 1.29,
+      "reasons": [
+        "exceptional late speed (22.77s last section vs 24.06s avg early)"
+      ]
+    },
+    {
+      "race": 8,
+      "distance": 1600,
+      "class": "C3",
+      "horse": "MISTER DAPPER",
+      "place": 2,
+      "odds": 13.0,
+      "draw": 3,
+      "pred_rank": 3,
+      "score": 1.18,
+      "reasons": [
+        "exceptional late speed (23.09s last section vs 23.97s avg early)",
+        "led/sat 2nd from start — all-the-way or gate-to-wire effort"
+      ]
+    },
+    {
+      "race": 5,
+      "distance": 1200,
+      "class": "C4",
+      "horse": "FLASHING FIGHTER",
+      "place": 1,
+      "odds": 8.6,
+      "draw": 2,
+      "pred_rank": null,
+      "score": 1.14,
+      "reasons": [
+        "exceptional late speed (22.55s last section vs 23.39s avg early)",
+        "led/sat 2nd from start — all-the-way or gate-to-wire effort"
+      ]
+    },
+    {
+      "race": 6,
+      "distance": 1200,
+      "class": "C4",
+      "horse": "BABY SAKURA",
+      "place": 3,
+      "odds": 1.7,
+      "draw": 3,
+      "pred_rank": 1,
+      "score": 1.09,
+      "reasons": [
+        "exceptional late speed (22.57s last section vs 23.66s avg early)"
+      ]
+    },
+    {
+      "race": 3,
+      "distance": 1600,
+      "class": "C5",
+      "horse": "COOL BLUE",
+      "place": 4,
+      "odds": 18.0,
+      "draw": 10,
+      "pred_rank": 2,
+      "score": 1.06,
+      "reasons": [
+        "exceptional late speed (23.18s last section vs 24.24s avg early)"
+      ]
+    },
+    {
+      "race": 7,
+      "distance": 1400,
+      "class": "C4",
+      "horse": "FORZA TORO",
+      "place": 2,
+      "odds": 6.3,
+      "draw": 10,
+      "pred_rank": 3,
+      "score": 1.0,
+      "reasons": [
+        "placed from wide draw (10)",
+        "closed from position 14 to finish P2"
+      ]
+    }
+  ],
+  "races": [
+    {
+      "race_number": 2,
+      "distance": 1400,
+      "class": 5,
+      "winner": "HE WAS ME",
+      "winner_pred_rank": 8,
+      "top3_overlap": 0,
+      "spearman_rho": 0.165,
+      "mae": 0.616,
+      "horses": [
+        {
+          "horse": "WINNING DIAMOND",
+          "pred_rank": 1,
+          "actual_place": 4,
+          "pred_time": 82.67,
+          "actual_ft": 82.9,
+          "time_error": 0.23,
+          "actual_odds": 13.0,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "SETANTA",
+          "pred_rank": 2,
+          "actual_place": 8,
+          "pred_time": 82.72,
+          "actual_ft": 83.37,
+          "time_error": 0.65,
+          "actual_odds": 17.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "ONE LOVE",
+          "pred_rank": 3,
+          "actual_place": 12,
+          "pred_time": 82.77,
+          "actual_ft": 83.78999999999999,
+          "time_error": 1.02,
+          "actual_odds": 34.0,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "WINNING MACHINE",
+          "pred_rank": 4,
+          "actual_place": 3,
+          "pred_time": 82.81,
+          "actual_ft": 82.61,
+          "time_error": -0.2,
+          "actual_odds": 1.9,
+          "pred_style": "Closer",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "DASH",
+          "pred_rank": 5,
+          "actual_place": 11,
+          "pred_time": 82.85,
+          "actual_ft": 83.66,
+          "time_error": 0.81,
+          "actual_odds": 10.0,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "CALL TO COMMAND",
+          "pred_rank": 6,
+          "actual_place": 9,
+          "pred_time": 82.96,
+          "actual_ft": 83.42,
+          "time_error": 0.46,
+          "actual_odds": 49.0,
+          "pred_style": "Midfield",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "PANDA LEGEND",
+          "pred_rank": 7,
+          "actual_place": 5,
+          "pred_time": 83.04,
+          "actual_ft": 82.98,
+          "time_error": -0.06,
+          "actual_odds": 22.0,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "HE WAS ME",
+          "pred_rank": 8,
+          "actual_place": 1,
+          "pred_time": 83.07,
+          "actual_ft": 82.51,
+          "time_error": -0.56,
+          "actual_odds": 8.7,
+          "pred_style": "Leader",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "YEE CHEONG RAIDER",
+          "pred_rank": 9,
+          "actual_place": 2,
+          "pred_time": 83.14,
+          "actual_ft": 82.52,
+          "time_error": -0.62,
+          "actual_odds": 10.0,
+          "pred_style": "Midfield",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "BASIC INSTINCT",
+          "pred_rank": 10,
+          "actual_place": 13,
+          "pred_time": 83.37,
+          "actual_ft": 83.87,
+          "time_error": 0.5,
+          "actual_odds": 116.0,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "MR GOOD VIBES",
+          "pred_rank": 11,
+          "actual_place": 14,
+          "pred_time": 83.44,
+          "actual_ft": 84.98,
+          "time_error": 1.54,
+          "actual_odds": 102.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "WINNING CIGAR",
+          "pred_rank": 12,
+          "actual_place": 6,
+          "pred_time": 83.62,
+          "actual_ft": 83.17,
+          "time_error": -0.45,
+          "actual_odds": 100.0,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "ISLAND GOLDEN",
+          "pred_rank": 13,
+          "actual_place": 7,
+          "pred_time": 83.9,
+          "actual_ft": 83.28999999999999,
+          "time_error": -0.61,
+          "actual_odds": 161.0,
+          "pred_style": "Leader",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "GOOD FORTUNE",
+          "pred_rank": 14,
+          "actual_place": 10,
+          "pred_time": 84.36,
+          "actual_ft": 83.44,
+          "time_error": -0.92,
+          "actual_odds": 8.0,
+          "pred_style": "Midfield",
+          "actual_style": "Midfield"
+        }
+      ]
+    },
+    {
+      "race_number": 3,
+      "distance": 1600,
+      "class": 5,
+      "winner": "BLING BLING GENIUS",
+      "winner_pred_rank": 8,
+      "top3_overlap": 0,
+      "spearman_rho": 0.209,
+      "mae": 0.484,
+      "horses": [
+        {
+          "horse": "DASHING MAURISON",
+          "pred_rank": 1,
+          "actual_place": 9,
+          "pred_time": 95.38,
+          "actual_ft": 96.25,
+          "time_error": 0.87,
+          "actual_odds": 10.0,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "COOL BLUE",
+          "pred_rank": 2,
+          "actual_place": 4,
+          "pred_time": 95.38,
+          "actual_ft": 95.89,
+          "time_error": 0.51,
+          "actual_odds": 18.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "BEAUTY MISSILE",
+          "pred_rank": 3,
+          "actual_place": 10,
+          "pred_time": 95.76,
+          "actual_ft": 96.36,
+          "time_error": 0.6,
+          "actual_odds": 3.8,
+          "pred_style": "On-Pace",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "GOLD TACK",
+          "pred_rank": 4,
+          "actual_place": 7,
+          "pred_time": 95.86,
+          "actual_ft": 96.17,
+          "time_error": 0.31,
+          "actual_odds": 11.0,
+          "pred_style": "Leader",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "WINDICATOR FAMILY",
+          "pred_rank": 5,
+          "actual_place": 2,
+          "pred_time": 95.95,
+          "actual_ft": 95.67,
+          "time_error": -0.28,
+          "actual_odds": 20.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "IRON LEGION",
+          "pred_rank": 6,
+          "actual_place": 12,
+          "pred_time": 96.15,
+          "actual_ft": 96.61,
+          "time_error": 0.46,
+          "actual_odds": 12.0,
+          "pred_style": "Midfield",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "RATTAN GALAXY",
+          "pred_rank": 7,
+          "actual_place": 11,
+          "pred_time": 96.17,
+          "actual_ft": 96.50999999999999,
+          "time_error": 0.34,
+          "actual_odds": 33.0,
+          "pred_style": "Midfield",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "BLING BLING GENIUS",
+          "pred_rank": 8,
+          "actual_place": 1,
+          "pred_time": 96.23,
+          "actual_ft": 95.53999999999999,
+          "time_error": -0.69,
+          "actual_odds": 4.8,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "MR ALADDIN",
+          "pred_rank": 9,
+          "actual_place": 6,
+          "pred_time": 96.32,
+          "actual_ft": 96.16,
+          "time_error": -0.16,
+          "actual_odds": 21.0,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "THE WAY WE WIN",
+          "pred_rank": 10,
+          "actual_place": 5,
+          "pred_time": 96.53,
+          "actual_ft": 96.00999999999999,
+          "time_error": -0.52,
+          "actual_odds": 48.0,
+          "pred_style": "Leader",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "HARRY'S HERO",
+          "pred_rank": 11,
+          "actual_place": 3,
+          "pred_time": 96.68,
+          "actual_ft": 95.82,
+          "time_error": -0.86,
+          "actual_odds": 13.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "GENERAL SMART",
+          "pred_rank": 12,
+          "actual_place": 13,
+          "pred_time": 96.76,
+          "actual_ft": 97.00999999999999,
+          "time_error": 0.25,
+          "actual_odds": 6.4,
+          "pred_style": "Closer",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "CASA LEGEND",
+          "pred_rank": 13,
+          "actual_place": 8,
+          "pred_time": 96.81,
+          "actual_ft": 96.24000000000001,
+          "time_error": -0.57,
+          "actual_odds": 22.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "SPEEDY TRIDENT",
+          "pred_rank": 14,
+          "actual_place": 14,
+          "pred_time": 97.45,
+          "actual_ft": 97.81,
+          "time_error": 0.36,
+          "actual_odds": 175.0,
+          "pred_style": "Closer",
+          "actual_style": "On-Pace"
+        }
+      ]
+    },
+    {
+      "race_number": 4,
+      "distance": 1400,
+      "class": 4,
+      "winner": "HAPPY BOSS",
+      "winner_pred_rank": 1,
+      "top3_overlap": 1,
+      "spearman_rho": 0.72,
+      "mae": 0.362,
+      "horses": [
+        {
+          "horse": "HAPPY BOSS",
+          "pred_rank": 1,
+          "actual_place": 1,
+          "pred_time": 81.91,
+          "actual_ft": 82.33,
+          "time_error": 0.42,
+          "actual_odds": 7.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "EIGHTY LIGHT YEARS",
+          "pred_rank": 2,
+          "actual_place": 4,
+          "pred_time": 82.3,
+          "actual_ft": 82.61,
+          "time_error": 0.31,
+          "actual_odds": 14.0,
+          "pred_style": "Midfield",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "INVICTUS DRAGON",
+          "pred_rank": 3,
+          "actual_place": 5,
+          "pred_time": 82.33,
+          "actual_ft": 82.88,
+          "time_error": 0.55,
+          "actual_odds": 2.1,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "THE CONCENTRATION",
+          "pred_rank": 4,
+          "actual_place": 7,
+          "pred_time": 82.38,
+          "actual_ft": 82.98,
+          "time_error": 0.6,
+          "actual_odds": 12.0,
+          "pred_style": "On-Pace",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "TOP TIME",
+          "pred_rank": 5,
+          "actual_place": 2,
+          "pred_time": 82.5,
+          "actual_ft": 82.4,
+          "time_error": -0.1,
+          "actual_odds": 12.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "TYCOON EXPRESS",
+          "pred_rank": 6,
+          "actual_place": 10,
+          "pred_time": 82.52,
+          "actual_ft": 83.22,
+          "time_error": 0.7,
+          "actual_odds": 11.0,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "SUPREME FEELING",
+          "pred_rank": 7,
+          "actual_place": 14,
+          "pred_time": 82.73,
+          "actual_ft": 83.53,
+          "time_error": 0.8,
+          "actual_odds": 241.0,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "GALLANT DESIGN",
+          "pred_rank": 8,
+          "actual_place": 3,
+          "pred_time": 82.91,
+          "actual_ft": 82.53999999999999,
+          "time_error": -0.37,
+          "actual_odds": 4.4,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "CHEERFUL WONGCHOY",
+          "pred_rank": 9,
+          "actual_place": 8,
+          "pred_time": 82.94,
+          "actual_ft": 82.98,
+          "time_error": 0.04,
+          "actual_odds": 125.0,
+          "pred_style": "Leader",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "GOLDEN WIN",
+          "pred_rank": 10,
+          "actual_place": 9,
+          "pred_time": 83.09,
+          "actual_ft": 82.99,
+          "time_error": -0.1,
+          "actual_odds": 145.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "AMAZING FUN",
+          "pred_rank": 11,
+          "actual_place": 11,
+          "pred_time": 83.26,
+          "actual_ft": 83.28,
+          "time_error": 0.02,
+          "actual_odds": 52.0,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "LIGHTNESS OF BEING",
+          "pred_rank": 12,
+          "actual_place": 12,
+          "pred_time": 83.67,
+          "actual_ft": 83.32,
+          "time_error": -0.35,
+          "actual_odds": 181.0,
+          "pred_style": "Midfield",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "SWEET BRIAR",
+          "pred_rank": 13,
+          "actual_place": 13,
+          "pred_time": 83.77,
+          "actual_ft": 83.42,
+          "time_error": -0.35,
+          "actual_odds": 143.0,
+          "pred_style": "Midfield",
+          "actual_style": "Midfield"
+        }
+      ]
+    },
+    {
+      "race_number": 5,
+      "distance": 1200,
+      "class": 4,
+      "winner": "FLASHING FIGHTER",
+      "winner_pred_rank": null,
+      "top3_overlap": 1,
+      "spearman_rho": 0.636,
+      "mae": 0.459,
+      "horses": [
+        {
+          "horse": "CALL ME SPARKLE",
+          "pred_rank": 1,
+          "actual_place": 4,
+          "pred_time": 69.97,
+          "actual_ft": 69.55,
+          "time_error": -0.42,
+          "actual_odds": 4.4,
+          "pred_style": "Midfield",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "CONRAD PATCH",
+          "pred_rank": 2,
+          "actual_place": 5,
+          "pred_time": 70.01,
+          "actual_ft": 69.64,
+          "time_error": -0.37,
+          "actual_odds": 4.5,
+          "pred_style": "On-Pace",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "SPICY STANDARD",
+          "pred_rank": 3,
+          "actual_place": 2,
+          "pred_time": 70.08,
+          "actual_ft": 69.34,
+          "time_error": -0.74,
+          "actual_odds": 3.2,
+          "pred_style": "On-Pace",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "VICTOR THE RAPID",
+          "pred_rank": 4,
+          "actual_place": 6,
+          "pred_time": 70.11,
+          "actual_ft": 69.86,
+          "time_error": -0.25,
+          "actual_odds": 46.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "RUBY SAILING",
+          "pred_rank": 5,
+          "actual_place": 8,
+          "pred_time": 70.19,
+          "actual_ft": 70.14,
+          "time_error": -0.05,
+          "actual_odds": 8.9,
+          "pred_style": "Leader",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "SUPREME VOYAGER",
+          "pred_rank": 6,
+          "actual_place": 7,
+          "pred_time": 70.3,
+          "actual_ft": 69.97,
+          "time_error": -0.33,
+          "actual_odds": 14.0,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "CHATER FLASH",
+          "pred_rank": 7,
+          "actual_place": 11,
+          "pred_time": 70.38,
+          "actual_ft": 70.67,
+          "time_error": 0.29,
+          "actual_odds": 26.0,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "JUBILANT STAR",
+          "pred_rank": 8,
+          "actual_place": 9,
+          "pred_time": 70.41,
+          "actual_ft": 70.3,
+          "time_error": -0.11,
+          "actual_odds": 14.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "GORGEOUS VICTORY",
+          "pred_rank": 9,
+          "actual_place": 3,
+          "pred_time": 70.7,
+          "actual_ft": 69.49,
+          "time_error": -1.21,
+          "actual_odds": 51.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "FULL OF LAUGHTER",
+          "pred_rank": 10,
+          "actual_place": 12,
+          "pred_time": 71.16,
+          "actual_ft": 71.81,
+          "time_error": 0.65,
+          "actual_odds": 184.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "SMILING CHAMPION",
+          "pred_rank": 11,
+          "actual_place": 10,
+          "pred_time": 71.2,
+          "actual_ft": 70.57,
+          "time_error": -0.63,
+          "actual_odds": 175.0,
+          "pred_style": "Closer",
+          "actual_style": "On-Pace"
+        }
+      ]
+    },
+    {
+      "race_number": 6,
+      "distance": 1200,
+      "class": 4,
+      "winner": "ELITE GOLF",
+      "winner_pred_rank": 2,
+      "top3_overlap": 3,
+      "spearman_rho": 0.482,
+      "mae": 0.373,
+      "horses": [
+        {
+          "horse": "BABY SAKURA",
+          "pred_rank": 1,
+          "actual_place": 3,
+          "pred_time": 69.53,
+          "actual_ft": 69.88,
+          "time_error": 0.35,
+          "actual_odds": 1.7,
+          "pred_style": "Leader",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "ELITE GOLF",
+          "pred_rank": 2,
+          "actual_place": 1,
+          "pred_time": 69.53,
+          "actual_ft": 69.74,
+          "time_error": 0.21,
+          "actual_odds": 6.8,
+          "pred_style": "Leader",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "LEADING DRAGON",
+          "pred_rank": 3,
+          "actual_place": 2,
+          "pred_time": 70.14,
+          "actual_ft": 69.82,
+          "time_error": -0.32,
+          "actual_odds": 7.7,
+          "pred_style": "Leader",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "FLYING SNIPER",
+          "pred_rank": 4,
+          "actual_place": 5,
+          "pred_time": 70.45,
+          "actual_ft": 70.22,
+          "time_error": -0.23,
+          "actual_odds": 13.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "LO PAN SPIRIT",
+          "pred_rank": 5,
+          "actual_place": 12,
+          "pred_time": 70.49,
+          "actual_ft": 71.23,
+          "time_error": 0.74,
+          "actual_odds": 46.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "AQUAMAN",
+          "pred_rank": 6,
+          "actual_place": 10,
+          "pred_time": 70.52,
+          "actual_ft": 70.98,
+          "time_error": 0.46,
+          "actual_odds": 62.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "KINGDOM OF RICHES",
+          "pred_rank": 7,
+          "actual_place": 8,
+          "pred_time": 70.62,
+          "actual_ft": 70.66,
+          "time_error": 0.04,
+          "actual_odds": 41.0,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "ISLAND BUDDY",
+          "pred_rank": 8,
+          "actual_place": 9,
+          "pred_time": 70.66,
+          "actual_ft": 70.89,
+          "time_error": 0.23,
+          "actual_odds": 14.0,
+          "pred_style": "Leader",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "HEROIC VANGUARD",
+          "pred_rank": 9,
+          "actual_place": 11,
+          "pred_time": 70.72,
+          "actual_ft": 70.99,
+          "time_error": 0.27,
+          "actual_odds": 50.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "TOP THRONE",
+          "pred_rank": 10,
+          "actual_place": 4,
+          "pred_time": 70.87,
+          "actual_ft": 70.07,
+          "time_error": -0.8,
+          "actual_odds": 21.0,
+          "pred_style": "On-Pace",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "SUPER RUBICK KID",
+          "pred_rank": 11,
+          "actual_place": 7,
+          "pred_time": 71.04,
+          "actual_ft": 70.59,
+          "time_error": -0.45,
+          "actual_odds": 98.0,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        }
+      ]
+    },
+    {
+      "race_number": 7,
+      "distance": 1400,
+      "class": 4,
+      "winner": "ALABAMA SONG",
+      "winner_pred_rank": 10,
+      "top3_overlap": 1,
+      "spearman_rho": 0.467,
+      "mae": 0.583,
+      "horses": [
+        {
+          "horse": "SHOTGUN",
+          "pred_rank": 1,
+          "actual_place": 4,
+          "pred_time": 81.98,
+          "actual_ft": 82.25,
+          "time_error": 0.27,
+          "actual_odds": 2.2,
+          "pred_style": "Leader",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "JUST FOLLOW ME",
+          "pred_rank": 2,
+          "actual_place": 7,
+          "pred_time": 82.13,
+          "actual_ft": 82.63,
+          "time_error": 0.5,
+          "actual_odds": 4.8,
+          "pred_style": "Midfield",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "FORZA TORO",
+          "pred_rank": 3,
+          "actual_place": 2,
+          "pred_time": 82.24,
+          "actual_ft": 82.01,
+          "time_error": -0.23,
+          "actual_odds": 6.3,
+          "pred_style": "On-Pace",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "SUPER DRAGON",
+          "pred_rank": 4,
+          "actual_place": 5,
+          "pred_time": 82.4,
+          "actual_ft": 82.35,
+          "time_error": -0.05,
+          "actual_odds": 11.0,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "MASTER PHOENIX",
+          "pred_rank": 5,
+          "actual_place": 8,
+          "pred_time": 82.44,
+          "actual_ft": 82.7,
+          "time_error": 0.26,
+          "actual_odds": 41.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "FUN TOGETHER",
+          "pred_rank": 6,
+          "actual_place": 13,
+          "pred_time": 82.73,
+          "actual_ft": 83.85,
+          "time_error": 1.12,
+          "actual_odds": 91.0,
+          "pred_style": "Leader",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "FLYING FORTUNE",
+          "pred_rank": 7,
+          "actual_place": 6,
+          "pred_time": 82.74,
+          "actual_ft": 82.56,
+          "time_error": -0.18,
+          "actual_odds": 131.0,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "RUN RUN SMART",
+          "pred_rank": 8,
+          "actual_place": 3,
+          "pred_time": 82.92,
+          "actual_ft": 82.03999999999999,
+          "time_error": -0.88,
+          "actual_odds": 8.2,
+          "pred_style": "Leader",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "STAR SATYR",
+          "pred_rank": 9,
+          "actual_place": 10,
+          "pred_time": 82.95,
+          "actual_ft": 83.09,
+          "time_error": 0.14,
+          "actual_odds": 26.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "ALABAMA SONG",
+          "pred_rank": 10,
+          "actual_place": 1,
+          "pred_time": 83.01,
+          "actual_ft": 81.98,
+          "time_error": -1.03,
+          "actual_odds": 14.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "WAVE GARDEN",
+          "pred_rank": 11,
+          "actual_place": 9,
+          "pred_time": 83.81,
+          "actual_ft": 82.73,
+          "time_error": -1.08,
+          "actual_odds": 114.0,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "LUCKY GIBS",
+          "pred_rank": 12,
+          "actual_place": 12,
+          "pred_time": 83.88,
+          "actual_ft": 83.51,
+          "time_error": -0.37,
+          "actual_odds": 283.0,
+          "pred_style": "Leader",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "LUCKY SECRET",
+          "pred_rank": 13,
+          "actual_place": 14,
+          "pred_time": 84.02,
+          "actual_ft": 85.49,
+          "time_error": 1.47,
+          "actual_odds": 239.0,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        }
+      ]
+    },
+    {
+      "race_number": 8,
+      "distance": 1600,
+      "class": 3,
+      "winner": "AMAZING PARTNERS",
+      "winner_pred_rank": 2,
+      "top3_overlap": 2,
+      "spearman_rho": 0.406,
+      "mae": 0.438,
+      "horses": [
+        {
+          "horse": "ENDUED",
+          "pred_rank": 1,
+          "actual_place": 8,
+          "pred_time": 94.43,
+          "actual_ft": 95.27000000000001,
+          "time_error": 0.84,
+          "actual_odds": 2.8,
+          "pred_style": "Midfield",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "AMAZING PARTNERS",
+          "pred_rank": 2,
+          "actual_place": 1,
+          "pred_time": 94.7,
+          "actual_ft": 94.96000000000001,
+          "time_error": 0.26,
+          "actual_odds": 5.4,
+          "pred_style": "Midfield",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "MISTER DAPPER",
+          "pred_rank": 3,
+          "actual_place": 2,
+          "pred_time": 94.84,
+          "actual_ft": 95.0,
+          "time_error": 0.16,
+          "actual_odds": 13.0,
+          "pred_style": "Midfield",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "WITHALLMYFAITH",
+          "pred_rank": 4,
+          "actual_place": 3,
+          "pred_time": 94.99,
+          "actual_ft": 95.09,
+          "time_error": 0.1,
+          "actual_odds": 8.6,
+          "pred_style": "On-Pace",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "RISING PHOENIX",
+          "pred_rank": 5,
+          "actual_place": 4,
+          "pred_time": 95.0,
+          "actual_ft": 95.1,
+          "time_error": 0.1,
+          "actual_odds": 7.5,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "FLYING LUCK",
+          "pred_rank": 6,
+          "actual_place": 12,
+          "pred_time": 95.09,
+          "actual_ft": 95.61,
+          "time_error": 0.52,
+          "actual_odds": 5.6,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "LEGEND WINNER",
+          "pred_rank": 7,
+          "actual_place": 9,
+          "pred_time": 95.36,
+          "actual_ft": 95.53,
+          "time_error": 0.17,
+          "actual_odds": 24.0,
+          "pred_style": "Leader",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "PRESTIGE GOOD",
+          "pred_rank": 8,
+          "actual_place": 11,
+          "pred_time": 95.72,
+          "actual_ft": 95.61,
+          "time_error": -0.11,
+          "actual_odds": 13.0,
+          "pred_style": "Leader",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "HYMNBOOK",
+          "pred_rank": 9,
+          "actual_place": 5,
+          "pred_time": 95.78,
+          "actual_ft": 95.11,
+          "time_error": -0.67,
+          "actual_odds": 28.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "HAPPY TERCENTENARY",
+          "pred_rank": 10,
+          "actual_place": 10,
+          "pred_time": 95.8,
+          "actual_ft": 95.57,
+          "time_error": -0.23,
+          "actual_odds": 162.0,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "WINDLORD",
+          "pred_rank": 11,
+          "actual_place": 7,
+          "pred_time": 95.91,
+          "actual_ft": 95.25999999999999,
+          "time_error": -0.65,
+          "actual_odds": 83.0,
+          "pred_style": "Leader",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "SHANWAH",
+          "pred_rank": 12,
+          "actual_place": 6,
+          "pred_time": 96.6,
+          "actual_ft": 95.16,
+          "time_error": -1.44,
+          "actual_odds": 96.0,
+          "pred_style": "Closer",
+          "actual_style": "Midfield"
+        }
+      ]
+    },
+    {
+      "race_number": 9,
+      "distance": 1400,
+      "class": 3,
+      "winner": "FORTUNE LINK",
+      "winner_pred_rank": null,
+      "top3_overlap": 1,
+      "spearman_rho": 0.236,
+      "mae": 0.792,
+      "horses": [
+        {
+          "horse": "POSITIVE SMILE",
+          "pred_rank": 1,
+          "actual_place": 6,
+          "pred_time": 81.65,
+          "actual_ft": 82.72,
+          "time_error": 1.07,
+          "actual_odds": 11.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "PRAY FOR JUSTICE",
+          "pred_rank": 2,
+          "actual_place": 7,
+          "pred_time": 81.71,
+          "actual_ft": 82.72,
+          "time_error": 1.01,
+          "actual_odds": 10.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "ENDEARED",
+          "pred_rank": 3,
+          "actual_place": 2,
+          "pred_time": 81.85,
+          "actual_ft": 82.36,
+          "time_error": 0.51,
+          "actual_odds": 6.6,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "ALL'S WELL",
+          "pred_rank": 4,
+          "actual_place": 3,
+          "pred_time": 81.99,
+          "actual_ft": 82.39,
+          "time_error": 0.4,
+          "actual_odds": 6.5,
+          "pred_style": "Midfield",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "CHARMING LEGEND",
+          "pred_rank": 5,
+          "actual_place": 12,
+          "pred_time": 82.22,
+          "actual_ft": 83.56,
+          "time_error": 1.34,
+          "actual_odds": 6.5,
+          "pred_style": "Leader",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "REFUSETOBEENGLISH",
+          "pred_rank": 6,
+          "actual_place": 8,
+          "pred_time": 82.22,
+          "actual_ft": 82.96000000000001,
+          "time_error": 0.74,
+          "actual_odds": 17.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "FLASH CURRENT",
+          "pred_rank": 7,
+          "actual_place": 9,
+          "pred_time": 82.23,
+          "actual_ft": 82.96000000000001,
+          "time_error": 0.73,
+          "actual_odds": 27.0,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "OUTGATE",
+          "pred_rank": 8,
+          "actual_place": 11,
+          "pred_time": 82.26,
+          "actual_ft": 83.53,
+          "time_error": 1.27,
+          "actual_odds": 19.0,
+          "pred_style": "Leader",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "HEAVING",
+          "pred_rank": 9,
+          "actual_place": 4,
+          "pred_time": 82.27,
+          "actual_ft": 82.69,
+          "time_error": 0.42,
+          "actual_odds": 17.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "GHORGAN",
+          "pred_rank": 10,
+          "actual_place": 10,
+          "pred_time": 82.29,
+          "actual_ft": 83.19,
+          "time_error": 0.9,
+          "actual_odds": 3.3,
+          "pred_style": "Midfield",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "COMPLETE UNKNOWN",
+          "pred_rank": 11,
+          "actual_place": 5,
+          "pred_time": 82.38,
+          "actual_ft": 82.7,
+          "time_error": 0.32,
+          "actual_odds": 77.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Midfield"
+        }
+      ]
+    },
+    {
+      "race_number": 10,
+      "distance": 1200,
+      "class": 3,
+      "winner": "MY MARS",
+      "winner_pred_rank": null,
+      "top3_overlap": 0,
+      "spearman_rho": 0.7,
+      "mae": 0.477,
+      "horses": [
+        {
+          "horse": "CHILL BUDDY",
+          "pred_rank": 2,
+          "actual_place": 4,
+          "pred_time": 69.04,
+          "actual_ft": 68.93,
+          "time_error": -0.11,
+          "actual_odds": 6.5,
+          "pred_style": "On-Pace",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "CROSSBORDERPEGASUS",
+          "pred_rank": 3,
+          "actual_place": 5,
+          "pred_time": 69.08,
+          "actual_ft": 68.97,
+          "time_error": -0.11,
+          "actual_odds": 3.9,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "TURQUOISE VELOCITY",
+          "pred_rank": 4,
+          "actual_place": 2,
+          "pred_time": 69.48,
+          "actual_ft": 68.76,
+          "time_error": -0.72,
+          "actual_odds": 11.0,
+          "pred_style": "Leader",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "JUMBO TREASURE",
+          "pred_rank": 5,
+          "actual_place": 8,
+          "pred_time": 69.62,
+          "actual_ft": 69.23,
+          "time_error": -0.39,
+          "actual_odds": 10.0,
+          "pred_style": "Midfield",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "YOUNG EMPEROR",
+          "pred_rank": 6,
+          "actual_place": 3,
+          "pred_time": 69.66,
+          "actual_ft": 68.9,
+          "time_error": -0.76,
+          "actual_odds": 26.0,
+          "pred_style": "Midfield",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "YEE CHEONG GLORY",
+          "pred_rank": 7,
+          "actual_place": 6,
+          "pred_time": 69.76,
+          "actual_ft": 69.06,
+          "time_error": -0.7,
+          "actual_odds": 12.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "NEW FUTURE FOLKS",
+          "pred_rank": 8,
+          "actual_place": 10,
+          "pred_time": 69.81,
+          "actual_ft": 70.32,
+          "time_error": 0.51,
+          "actual_odds": 35.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "THE UNIQUE STAR",
+          "pred_rank": 9,
+          "actual_place": 7,
+          "pred_time": 69.9,
+          "actual_ft": 69.16,
+          "time_error": -0.74,
+          "actual_odds": 52.0,
+          "pred_style": "Midfield",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "MASTER OF ALL",
+          "pred_rank": 10,
+          "actual_place": 11,
+          "pred_time": 70.35,
+          "actual_ft": 70.6,
+          "time_error": 0.25,
+          "actual_odds": 136.0,
+          "pred_style": "On-Pace",
+          "actual_style": "On-Pace"
+        }
+      ]
+    },
+    {
+      "race_number": 11,
+      "distance": 1200,
+      "class": 2,
+      "winner": "CRIMSON FLASH",
+      "winner_pred_rank": 3,
+      "top3_overlap": 2,
+      "spearman_rho": 0.776,
+      "mae": 0.475,
+      "horses": [
+        {
+          "horse": "GALACTIC VOYAGE",
+          "pred_rank": 1,
+          "actual_place": 4,
+          "pred_time": 68.44,
+          "actual_ft": 69.07,
+          "time_error": 0.63,
+          "actual_odds": 5.2,
+          "pred_style": "Closer",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "RISING FORCE",
+          "pred_rank": 2,
+          "actual_place": 2,
+          "pred_time": 68.59,
+          "actual_ft": 68.87,
+          "time_error": 0.28,
+          "actual_odds": 2.4,
+          "pred_style": "Leader",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "CRIMSON FLASH",
+          "pred_rank": 3,
+          "actual_place": 1,
+          "pred_time": 68.61,
+          "actual_ft": 68.87,
+          "time_error": 0.26,
+          "actual_odds": 13.0,
+          "pred_style": "On-Pace",
+          "actual_style": "On-Pace"
+        },
+        {
+          "horse": "SKY TRUST",
+          "pred_rank": 4,
+          "actual_place": 5,
+          "pred_time": 68.76,
+          "actual_ft": 69.08,
+          "time_error": 0.32,
+          "actual_odds": 14.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "COLOURFUL KING",
+          "pred_rank": 5,
+          "actual_place": 6,
+          "pred_time": 68.81,
+          "actual_ft": 69.11,
+          "time_error": 0.3,
+          "actual_odds": 9.9,
+          "pred_style": "On-Pace",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "YOUNG CHAMPION",
+          "pred_rank": 6,
+          "actual_place": 3,
+          "pred_time": 68.85,
+          "actual_ft": 68.97,
+          "time_error": 0.12,
+          "actual_odds": 6.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "SELF IMPROVEMENT",
+          "pred_rank": 7,
+          "actual_place": 12,
+          "pred_time": 68.87,
+          "actual_ft": 70.3,
+          "time_error": 1.43,
+          "actual_odds": 59.0,
+          "pred_style": "Leader",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "MAGIC CONTROL",
+          "pred_rank": 8,
+          "actual_place": 8,
+          "pred_time": 68.92,
+          "actual_ft": 69.24,
+          "time_error": 0.32,
+          "actual_odds": 67.0,
+          "pred_style": "Leader",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "GORGEOUS WIN",
+          "pred_rank": 9,
+          "actual_place": 10,
+          "pred_time": 68.98,
+          "actual_ft": 69.63,
+          "time_error": 0.65,
+          "actual_odds": 100.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Closer"
+        },
+        {
+          "horse": "VICTOR THE WINNER",
+          "pred_rank": 10,
+          "actual_place": 7,
+          "pred_time": 69.02,
+          "actual_ft": 69.12,
+          "time_error": 0.1,
+          "actual_odds": 137.0,
+          "pred_style": "Leader",
+          "actual_style": "Leader"
+        },
+        {
+          "horse": "CHATEAUNEUF",
+          "pred_rank": 11,
+          "actual_place": 9,
+          "pred_time": 69.22,
+          "actual_ft": 69.45,
+          "time_error": 0.23,
+          "actual_odds": 69.0,
+          "pred_style": "On-Pace",
+          "actual_style": "Midfield"
+        },
+        {
+          "horse": "PAKISTAN LEGACY",
+          "pred_rank": 12,
+          "actual_place": 11,
+          "pred_time": 69.24,
+          "actual_ft": 70.3,
+          "time_error": 1.06,
+          "actual_odds": 7.5,
+          "pred_style": "On-Pace",
+          "actual_style": "On-Pace"
+        }
+      ]
+    }
+  ]
+}

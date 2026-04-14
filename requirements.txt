@@ -1,0 +1,23 @@
+# HKJC Race Analysis — Python Dependencies
+# Install: pip install -r requirements.txt
+
+# Core data
+pandas>=2.0
+numpy>=1.24
+openpyxl>=3.1          # Excel read/write
+
+# Network & scraping
+requests>=2.31
+beautifulsoup4>=4.12
+
+# PDF generation
+reportlab>=4.0
+
+# Database (used by scrape_hkjc.py results scraper)
+duckdb>=0.9
+
+# Dashboard
+streamlit>=1.35
+
+# Optional: headless browser fallback for JS-rendered pages
+# playwright>=1.40     # Uncomment if needed, then run: playwright install chromium
