@@ -40,6 +40,28 @@ REPORTS = BASE / "reports"
 PYTHON = sys.executable
 BLACKBOOK_FILE = BASE / "blackbook.json"
 
+# ── Playwright browser pre-install (Streamlit Cloud has no post-install hook) ─
+def _ensure_playwright_chromium():
+    """Install Playwright Chromium once per container boot (cached in session)."""
+    if st.session_state.get("_pw_checked"):
+        return
+    st.session_state["_pw_checked"] = True
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            b = p.chromium.launch(headless=True)
+            b.close()
+    except Exception:
+        subprocess.run(
+            [sys.executable, "-m", "playwright", "install", "chromium"],
+            capture_output=True, timeout=180,
+        )
+
+try:
+    _ensure_playwright_chromium()
+except Exception:
+    pass  # Non-critical — scraper will retry at runtime
+
 DEFAULT_EXPIRY_DAYS = 90
 CEILING_EXPIRY_DAYS = 45
 
@@ -3745,7 +3767,7 @@ def page_form_guide():
                          help=f"Runs build_form_guide.py {date_iso}"):
         with st.spinner(f"Building form guide for {date_iso}..."):
             result = subprocess.run(
-                [r"C:\Users\tbhbr\miniconda3\python.exe", "build_form_guide.py", date_iso],
+                [PYTHON, "build_form_guide.py", date_iso],
                 capture_output=True, text=True, encoding="utf-8",
                 cwd=str(Path(__file__).parent),
             )
