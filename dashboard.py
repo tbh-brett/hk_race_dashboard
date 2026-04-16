@@ -1146,12 +1146,14 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
 
 
 def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
-                 model: str = "v4.4"):
+                 model: str = "v4.4", skip_scrape: bool = False):
     """Run the orchestrator from the dashboard."""
     cmd = [PYTHON, str(BASE / "run_meeting.py"), "--date", date_str,
            "--model", model]
     if no_cache:
         cmd.append("--no-cache")
+    if skip_scrape:
+        cmd.append("--skip-scrape")
     cmd.extend(["--going-turf", going_turf, "--going-awt", going_awt])
 
     env = os.environ.copy()
@@ -1159,11 +1161,15 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
 
     with st.spinner(f"Running pipeline for {date_str}..."):
         status = st.empty()
-        status.info(f"Scraping race card for {date_str}...")
+        if skip_scrape:
+            status.info(f"Running analysis for {date_str} (using uploaded racecard)...")
+        else:
+            status.info(f"Scraping race card for {date_str}...")
 
         result = subprocess.run(
             cmd, env=env, cwd=str(BASE),
             capture_output=True, text=True, encoding="utf-8",
+            timeout=300,
         )
 
         if result.returncode == 0:
@@ -1175,6 +1181,90 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
             st.error(f"Pipeline failed (exit code {result.returncode})")
             with st.expander("Error output"):
                 st.code(result.stderr[-2000:] if result.stderr else result.stdout[-2000:])
+
+
+def _save_uploaded_racecard(uploaded_json: bytes, date_str: str) -> bool:
+    """Save an uploaded racecard cache JSON and regenerate the Excel file.
+
+    Returns True on success.
+    """
+    import json as _json
+    try:
+        data = _json.loads(uploaded_json)
+    except (ValueError, TypeError) as exc:
+        st.error(f"Invalid JSON: {exc}")
+        return False
+
+    if "races" not in data or not data["races"]:
+        st.error("JSON has no 'races' key or races list is empty.")
+        return False
+
+    # Write cache JSON
+    cache_dir = BASE / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_path = cache_dir / f"racecard_{date_str}.json"
+    cache_path.write_text(
+        _json.dumps(data, ensure_ascii=False, indent=2, default=str),
+        encoding="utf-8",
+    )
+
+    # Regenerate Excel from the JSON data
+    racecourse = data.get("racecourse", "")
+    race_date = data.get("race_date", date_str)
+    all_race_data = []
+    for race_entry in data["races"]:
+        meta = race_entry.get("meta", {})
+        horses = race_entry.get("horses", [])
+        all_race_data.append((meta, horses))
+
+    # Build DataFrame (inline — mirrors scrape_hkjc_racecard.normalize_data)
+    rows = []
+    for race_meta, horse_list in all_race_data:
+        for horse in horse_list:
+            row = {"race_date": race_date, "racecourse": racecourse}
+            row.update(horse)
+            rows.append(row)
+
+    if not rows:
+        st.error("Uploaded JSON contains no horse data.")
+        return False
+
+    df = pd.DataFrame(rows)
+    leading_cols = [
+        "race_date", "racecourse", "race_number", "race_name", "race_class",
+        "distance", "surface", "race_course", "going", "rating_range",
+        "horse_no", "horse_name", "horse_id", "brand_no", "draw",
+        "jockey", "overweight", "trainer",
+        "weight", "rating", "rating_change", "intl_rating",
+        "age", "sex", "colour",
+        "last_6_runs", "gear", "priority",
+        "horse_wt_declaration", "wt_change", "best_time", "wfa",
+        "season_stakes", "days_since_last",
+        "owner", "sire", "dam", "import_cat",
+        "is_standby", "prize", "race_time",
+    ]
+    present = [c for c in leading_cols if c in df.columns]
+    remaining = [c for c in df.columns if c not in present]
+    df = df[present + remaining]
+
+    # Write Excel
+    rc_dir = BASE / "racecards"
+    rc_dir.mkdir(parents=True, exist_ok=True)
+    date_compact = date_str.replace("-", "")
+    xl_path = rc_dir / f"racecard_{date_compact}.xlsx"
+    with pd.ExcelWriter(str(xl_path), engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="All Races", index=False)
+        if "race_number" in df.columns:
+            for rn in sorted(df["race_number"].dropna().unique()):
+                race_df = df[df["race_number"] == rn]
+                race_df.to_excel(writer, sheet_name=f"Race {int(rn)}", index=False)
+
+    st.toast(
+        f"Racecard saved: {cache_path.name} + {xl_path.name}  "
+        f"({len(df)} horses, {df['race_number'].nunique() if 'race_number' in df.columns else '?'} races)",
+        icon="\u2705",
+    )
+    return True
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -5413,8 +5503,26 @@ def sidebar_race_day():
     going_turf = st.sidebar.text_input("Turf Going", value="Good", key="going_turf")
     going_awt = st.sidebar.text_input("AWT Going", value="Good", key="going_awt")
 
+    # ── Upload fallback (for when cloud scraper can't reach HKJC) ──
+    uploaded = st.sidebar.file_uploader(
+        "Or upload racecard JSON (from local scrape)",
+        type=["json"], key="racecard_upload",
+        help="Upload cache/racecard_YYYY-MM-DD.json produced by a local scrape",
+    )
+    if uploaded is not None:
+        date_iso = run_date.isoformat()
+        if _save_uploaded_racecard(uploaded.getvalue(), date_iso):
+            st.session_state["_uploaded_rc_date"] = date_iso
+
+    # Detect whether uploaded racecard is available for the selected date
+    date_iso = run_date.isoformat()
+    date_compact = date_iso.replace("-", "")
+    _has_racecard = (BASE / "racecards" / f"racecard_{date_compact}.xlsx").exists()
+
     if st.sidebar.button("[ RUN ANALYSIS ]", type="primary", use_container_width=True):
-        run_pipeline(run_date.isoformat(), no_cache, going_turf, going_awt)
+        # Skip scrape if we already have a racecard file (uploaded or cached)
+        skip = _has_racecard and not no_cache
+        run_pipeline(date_iso, no_cache, going_turf, going_awt, skip_scrape=skip)
         st.cache_data.clear()
         st.rerun()
 
