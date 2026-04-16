@@ -21,6 +21,7 @@ import io
 import json
 import os
 import re
+import base64
 import shutil
 import subprocess
 import sys
@@ -31,6 +32,7 @@ from datetime import datetime, date, timedelta
 from pathlib import Path
 
 import pandas as pd
+import requests as _requests
 import streamlit as st
 
 BASE = Path(__file__).parent
@@ -410,6 +412,57 @@ def find_prediction_dates() -> list[str]:
 # Blackbook — load / save / helpers
 # ══════════════════════════════════════════════════════════════════════════════
 
+# ── GitHub sync for Streamlit Cloud persistence ──────────────────────────────
+_GH_REPO = "tbh-brett/hk_race_dashboard"
+_GH_BB_PATH = "blackbook.json"
+
+
+def _gh_headers() -> dict | None:
+    """Return GitHub API auth headers, or None if no token configured."""
+    token = st.secrets.get("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN", ""))
+    if not token:
+        return None
+    return {"Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json"}
+
+
+def _gh_get_file_sha() -> str | None:
+    """Get the current SHA of blackbook.json on GitHub (needed for updates)."""
+    headers = _gh_headers()
+    if not headers:
+        return None
+    try:
+        r = _requests.get(
+            f"https://api.github.com/repos/{_GH_REPO}/contents/{_GH_BB_PATH}",
+            headers=headers, timeout=10)
+        if r.status_code == 200:
+            return r.json().get("sha")
+    except Exception:
+        pass
+    return None
+
+
+def _gh_push_blackbook(content_bytes: bytes) -> bool:
+    """Push blackbook.json to GitHub via the Contents API."""
+    headers = _gh_headers()
+    if not headers:
+        return False
+    sha = _gh_get_file_sha()
+    payload = {
+        "message": f"blackbook: auto-sync {date.today().isoformat()}",
+        "content": base64.b64encode(content_bytes).decode("ascii"),
+    }
+    if sha:
+        payload["sha"] = sha
+    try:
+        r = _requests.put(
+            f"https://api.github.com/repos/{_GH_REPO}/contents/{_GH_BB_PATH}",
+            headers=headers, json=payload, timeout=15)
+        return r.status_code in (200, 201)
+    except Exception:
+        return False
+
+
 def _load_blackbook() -> dict:
     if BLACKBOOK_FILE.exists():
         with open(BLACKBOOK_FILE, "r", encoding="utf-8") as f:
@@ -418,8 +471,12 @@ def _load_blackbook() -> dict:
 
 
 def _save_blackbook(bb: dict):
+    content = json.dumps(bb, ensure_ascii=False, indent=2)
+    # Always write locally (fast, used by current session)
     with open(BLACKBOOK_FILE, "w", encoding="utf-8") as f:
-        json.dump(bb, f, ensure_ascii=False, indent=2)
+        f.write(content)
+    # Sync to GitHub so data survives Streamlit Cloud restarts/redeploys
+    _gh_push_blackbook(content.encode("utf-8"))
 
 
 def _bb_active_entries(bb: dict) -> list[dict]:
