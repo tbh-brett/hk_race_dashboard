@@ -98,7 +98,7 @@ def discover_races(session: requests.Session,
     if not html:
         return "", []
 
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     race_links = soup.select("a[href*='localresults?racedate=']")
     venue = ""
     nums = set()
@@ -122,7 +122,7 @@ GOING_ABBREV = {
 
 
 def parse_race_header(html: str) -> Dict[str, str]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     text = " ".join(soup.stripped_strings)
     info: Dict[str, str] = {}
 
@@ -168,7 +168,7 @@ def parse_race_header(html: str) -> Dict[str, str]:
 
 
 def parse_results_table(html: str) -> List[Dict]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     table = soup.select_one("table.f_tac.table_bd.draggable")
     if not table:
         return []
@@ -196,7 +196,7 @@ def parse_results_table(html: str) -> List[Dict]:
 
 def parse_sectional_table(html: str) -> Dict[str, Dict]:
     """Returns {horse_no: {positions: [...], sectiontimes: [...]}}."""
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     table = soup.select_one("table.table_bd.f_tac.race_table")
     if not table:
         return {}

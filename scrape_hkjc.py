@@ -112,14 +112,14 @@ def fetch_html(
 
 
 def parse_available_dates(html: str) -> List[str]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     options = soup.select("#selectId option")
     dates = [opt.get("value", "").strip() for opt in options]
     return [d for d in dates if d]
 
 
 def parse_racecourse_and_numbers(html: str) -> Tuple[str, List[int]]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     race_links = soup.select("a[href*='localresults?racedate=']")
     race_numbers = set()
     racecourse = ""
@@ -137,7 +137,7 @@ def parse_racecourse_and_numbers(html: str) -> Tuple[str, List[int]]:
 
 
 def parse_race_header_info(html: str) -> Dict[str, str]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     text = " ".join(soup.stripped_strings)
 
     race_title = ""
@@ -221,7 +221,7 @@ def parse_race_header_info(html: str) -> Dict[str, str]:
 
 
 def parse_localresults_table(html: str) -> List[Dict[str, str]]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     table = soup.select_one("table.f_tac.table_bd.draggable")
     if not table:
         return []
@@ -270,7 +270,7 @@ def parse_localresults_table(html: str) -> List[Dict[str, str]]:
 
 
 def parse_sectional_table(html: str) -> Dict[str, SectionalRow]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     table = soup.select_one("table.table_bd.f_tac.race_table")
     if not table:
         return {}
@@ -365,7 +365,7 @@ def extract_labeled_values(text: str, labels: List[str]) -> Dict[str, str]:
 
 
 def parse_horse_profile(html: str) -> Dict[str, str]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     table = None
     for candidate in soup.select("table"):
         if "Country of Origin / Age" in candidate.get_text(" ", strip=True):
@@ -410,7 +410,7 @@ def parse_horse_profile(html: str) -> Dict[str, str]:
 
 
 def parse_otherhorse_profile(html: str) -> Dict[str, str]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     table = None
     for candidate in soup.select("table"):
         if "Country of Origin" in candidate.get_text(" ", strip=True):
@@ -443,7 +443,7 @@ def parse_otherhorse_profile(html: str) -> Dict[str, str]:
 
 
 def parse_horse_profile_zh(html: str) -> Dict[str, str]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     title = soup.title.get_text(" ", strip=True) if soup.title else ""
     horsename_zh = title.split(" - ")[0].strip() if " - " in title else ""
 
@@ -480,7 +480,7 @@ def parse_horse_profile_zh(html: str) -> Dict[str, str]:
 
 
 def parse_otherhorse_profile_zh(html: str) -> Dict[str, str]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     title = soup.title.get_text(" ", strip=True) if soup.title else ""
     horsename_zh = title.split(" - ")[0].strip() if " - " in title else ""
 
@@ -540,7 +540,7 @@ def parse_all_horse_form_rows(html: str) -> Dict[str, Dict[str, str]]:
             return f"{day}/{month}/{year}"
         return date_str
     
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     all_rows = {}
     start_of_season_rating = ""
     
@@ -625,7 +625,7 @@ def parse_horse_form_row(html: str, race_index: str, race_date: str = "") -> Dic
             return f"{day}/{month}/{year}"
         return date_str
     
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     result = {"rating": "", "gear": "", "start_of_season_rating": ""}
     
     # Normalize input date for comparison
@@ -1164,3 +1164,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

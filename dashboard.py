@@ -63,7 +63,7 @@ st.markdown("""
     [data-testid="stMarkdownContainer"] li { font-size: 1.0em; }
 
     /* ══ SIDEBAR SHELL ══ */
-    [data-testid="stSidebar"] { border-right: 1px solid rgba(186,117,23,0.25); }
+    [data-testid="stSidebar"] { border-right: 1px solid rgba(230,57,70,0.25); }
     [data-testid="stSidebarContent"] { padding-top: 1rem; }
 
     /* ── Sidebar brand header ── */
@@ -75,7 +75,7 @@ st.markdown("""
     }
     .sb-brand-icon {
         width: 32px; height: 32px; border-radius: 6px;
-        background: #BA7517; display: flex; align-items: center;
+        background: #e63946; display: flex; align-items: center;
         justify-content: center; font-size: 15px; font-weight: 700;
         color: #fff; letter-spacing: -0.03em; flex-shrink: 0;
     }
@@ -99,15 +99,15 @@ st.markdown("""
         transition: background 0.12s;
     }
     [data-testid="stSidebarContent"] .stButton > button:hover {
-        background: rgba(186,117,23,0.1) !important;
-        color: #BA7517 !important;
+        background: rgba(230,57,70,0.1) !important;
+        color: #e63946 !important;
     }
     /* Active nav item — injected via a wrapper div with class sb-active */
     .sb-active button {
-        background: rgba(186,117,23,0.15) !important;
-        color: #BA7517 !important;
+        background: rgba(230,57,70,0.15) !important;
+        color: #e63946 !important;
         font-weight: 700 !important;
-        border-left: 3px solid #BA7517 !important;
+        border-left: 3px solid #e63946 !important;
         padding-left: 9px !important;
     }
     .sb-nav-section {
@@ -122,7 +122,7 @@ st.markdown("""
     /* ══ METRIC CARDS ══ */
     div[data-testid="stMetric"] {
         background: var(--secondary-background-color, rgba(128,128,128,0.06));
-        border: 1px solid rgba(186,117,23,0.3);
+        border: 1px solid rgba(230,57,70,0.3);
         border-radius: 6px; padding: 10px 14px;
     }
     div[data-testid="stMetric"] label {
@@ -143,13 +143,13 @@ st.markdown("""
         background: transparent; color: inherit;
         transition: all 0.1s;
     }
-    .rtab:hover  { border-color: #BA7517; color: #BA7517; }
-    .rtab.active { background: #BA7517; color: #fff; border-color: #BA7517; font-weight: 700; }
+    .rtab:hover  { border-color: #e63946; color: #e63946; }
+    .rtab.active { background: #e63946; color: #fff; border-color: #e63946; font-weight: 700; }
 
     /* ══ RACE HEADER BLOCK ══ */
     .race-hdr-block {
         background: var(--secondary-background-color, rgba(128,128,128,0.06));
-        border-left: 3px solid #BA7517;
+        border-left: 3px solid #e63946;
         border-radius: 0 6px 6px 0;
         padding: 10px 16px; margin-bottom: 10px;
     }
@@ -183,7 +183,7 @@ st.markdown("""
         font-family: inherit; font-weight: 400;
     }
     .ft-btn + .ft-btn { border-left: 1px solid rgba(128,128,128,0.3); }
-    .ft-btn.on { background: rgba(186,117,23,0.18); color: #BA7517; font-weight: 700; }
+    .ft-btn.on { background: rgba(230,57,70,0.18); color: #e63946; font-weight: 700; }
 
     /* ══ RISK / STATUS COLOURS ══ */
     .risk-low  { color: #22c55e; font-weight: 700; }
@@ -217,7 +217,7 @@ st.markdown("""
         display: flex; align-items: center; gap: 10px;
         padding: 7px 12px;
         background: var(--secondary-background-color, rgba(128,128,128,0.07));
-        border-left: 3px solid #BA7517;
+        border-left: 3px solid #e63946;
         border-radius: 0 5px 5px 0;
         margin: 14px 0 3px 0;
         font-family: 'Figtree', sans-serif;
@@ -226,17 +226,17 @@ st.markdown("""
     .fg-bb-col button {
         background: var(--secondary-background-color, rgba(128,128,128,0.07)) !important;
         border: none !important; border-radius: 0 5px 5px 0 !important;
-        color: #BA7517 !important; font-size: 1.3em !important;
+        color: #e63946 !important; font-size: 1.3em !important;
         font-weight: 700 !important; opacity: 0.45;
         min-height: 42px !important; width: 100% !important;
         transition: opacity 0.15s, background 0.15s;
     }
     .fg-bb-col button:hover {
-        opacity: 1 !important; background: rgba(186,117,23,0.12) !important;
+        opacity: 1 !important; background: rgba(230,57,70,0.12) !important;
     }
 
 
-    .h-num  { font-size: 1.05em; font-weight: 700; color: #BA7517; min-width: 28px; }
+    .h-num  { font-size: 1.05em; font-weight: 700; color: #e63946; min-width: 28px; }
     .h-name { font-size: 1.1em;  font-weight: 700; letter-spacing: 0.03em; }
     .h-sep  { opacity: 0.3; }
     .h-meta { font-size: 0.92em; opacity: 0.75; }
@@ -247,7 +247,7 @@ st.markdown("""
         min-width: 20px; height: 20px; border-radius: 3px;
         font-size: 0.82em; font-weight: 700; padding: 0 3px;
     }
-    .l6-1  { background: #BA7517; color: #fff; }
+    .l6-1  { background: #e63946; color: #fff; }
     .l6-2  { background: #1D9E75; color: #fff; }
     .l6-3  { background: #0F6E56; color: #d1fae5; }
     .l6-45 { background: rgba(128,128,128,0.18); }
@@ -287,12 +287,12 @@ st.markdown("""
         min-width: 22px; height: 20px; border-radius: 3px;
         font-size: 0.88em; font-weight: 700; padding: 0 4px;
     }
-    .pl-1  { background: #BA7517; color: #fff; }
+    .pl-1  { background: #e63946; color: #fff; }
     .pl-2  { background: #1D9E75; color: #fff; }
     .pl-3  { background: #0F6E56; color: #d1fae5; }
     .pl-45 { background: rgba(128,128,128,0.18); }
     .pl-x  { opacity: 0.6; }
-    .t5-self { color: #BA7517 !important; font-weight: 700 !important; }
+    .t5-self { color: #e63946 !important; font-weight: 700 !important; }
 
     /* ══ SECTION DIVIDER ══ */
     .term-divider {
@@ -302,7 +302,7 @@ st.markdown("""
     .page-title {
         font-size: 1.2em; font-weight: 700; letter-spacing: 0.06em;
         text-transform: uppercase; opacity: 0.9; margin-bottom: 2px;
-        border-bottom: 2px solid #BA7517; display: inline-block;
+        border-bottom: 2px solid #e63946; display: inline-block;
         padding-bottom: 3px;
     }
     .page-subtitle { font-size: 0.8em; opacity: 0.5; margin-bottom: 14px; }
@@ -962,6 +962,8 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
     for p in display_picks:
         vf = p.get("vet_flag") or _race_vet.get(p["horse_no"], "")
         bb_entry = _bb.get(p["horse_name"].upper())
+        esz_val = p.get("early_speed_z", 0) or 0
+        ssi_val = p.get("avg_ssi", None)
         rows.append({
             "Rk": p["rank"],
             "No": p["horse_no"],
@@ -969,7 +971,7 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
             "BB": "BB" if bb_entry else "",
             "Proj (s)": f"{p['projected_time']:.2f}",
             "Win%": f"{p['win_prob']:.0f}%",
-            "Risk": f"{p['risk_score']:.0f}({p['risk_tier'][0]})",
+            "SSI": round(ssi_val, 2) if ssi_val is not None else None,
             "Vet": _vet_display(vf),
             "Draw": p.get("draw", "—") or "—",
             "Wt": p.get("weight", "—") or "—",
@@ -978,7 +980,7 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
             "Trial": p.get("trial_flag", "") or "—",
             "Eff Resid": f"{p['effective_resid']:+.3f}",
             "Fin Sec": f"{p['proj_final_sec']:.2f}" if p.get("proj_final_sec") else "—",
-            "ESZ": f"{p['early_speed_z']:+.1f}" if p.get("early_speed_z", 0) != 0 else "—",
+            "ESZ": round(esz_val, 1) if esz_val != 0 else None,
             "Flags": ", ".join(p.get("flags", [])),
         })
 
@@ -992,10 +994,15 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
 
     df = pd.DataFrame(rows)
 
-    def style_risk(val):
-        if "(L)" in str(val): return "color: #22c55e; font-weight: bold"
-        elif "(H)" in str(val): return "color: #ef4444; font-weight: bold"
-        elif "(M)" in str(val): return "color: #f59e0b; font-weight: bold"
+    def style_ssi(val):
+        try:
+            v = float(val)
+        except (ValueError, TypeError):
+            return ""
+        if v >= 0.3: return "color: #ef4444; font-weight: bold"
+        elif v >= 0.1: return "color: #ef4444"
+        elif v <= -0.3: return "color: #22c55e; font-weight: bold"
+        elif v <= -0.1: return "color: #22c55e"
         return ""
 
     def style_winprob(val):
@@ -1019,10 +1026,24 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
         elif v == "-": return "color: #ef4444"
         return ""
 
-    styled = df.style.map(style_risk, subset=["Risk"]) \
+    def style_esz(val):
+        try:
+            v = float(val)
+        except (ValueError, TypeError):
+            return ""
+        if v >= 1.0: return "color: #ef4444; font-weight: bold"
+        elif v >= 0.5: return "color: #ef4444"
+        elif v <= -1.0: return "color: #22c55e; font-weight: bold"
+        elif v <= -0.5: return "color: #22c55e"
+        return ""
+
+    styled = df.style.map(style_ssi, subset=["SSI"]) \
                       .map(style_winprob, subset=["Win%"]) \
                       .map(style_vet, subset=["Vet"]) \
                       .map(style_trial, subset=["Trial"]) \
+                      .map(style_esz, subset=["ESZ"]) \
+                      .format({"ESZ": lambda v: f"{v:+.1f}" if pd.notna(v) else "—",
+                               "SSI": lambda v: f"{v:+.2f}" if pd.notna(v) else "—"}) \
                       .set_properties(**{"text-align": "center"}) \
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
 
@@ -1136,12 +1157,6 @@ def page_overview():
     st.markdown(f"### {data.get('meeting_title', nice_date)}")
     if version:
         st.caption(f"Model {version}  ·  {len(races)} races")
-
-    # ── PDF Export button (top of page) ────────────────────
-    _ov_pdf_col1, _ov_pdf_col2 = st.columns([3, 1])
-    with _ov_pdf_col2:
-        _gen_pdf = st.button("📄 匯出客戶報告 PDF", key="ov_gen_client_pdf",
-                             use_container_width=True, type="primary")
 
     # ── Section 1: Blackbooked horses running today ─────────
     bb = _load_blackbook()
@@ -1458,66 +1473,6 @@ def page_overview():
         st.dataframe(pd.DataFrame(bt_rows), use_container_width=True, hide_index=True)
     else:
         st.caption("No backtests available yet.")
-
-    # ── Generate Client PDF (deferred to end so all data is collected) ──
-    if _gen_pdf:
-        with st.spinner("正在生成客戶報告 PDF…"):
-            # Rebuild trial standouts for PDF
-            _pdf_trial_hits = []
-            _pdf_trial_index = _load_all_trial_horse_index()
-            if _pdf_trial_index:
-                from datetime import datetime as _pdt, timedelta as _ptd
-                _pcutoff = _pdt.now() - _ptd(days=60)
-                _pcard = {}
-                for _pr in races:
-                    for _pp in _pr.get("picks", []):
-                        _phn = _pp.get("horse_name", "").upper().strip()
-                        _pcard[_phn] = {"race": _pr["race_number"], "dist": _pr.get("distance", "?"),
-                                        "rank": _pp.get("rank"), "wp": _pp.get("win_prob", 0)}
-                for _ph, _pe in _pdf_trial_index.items():
-                    if _ph.upper().strip() not in _pcard:
-                        continue
-                    _precent = [e for e in _pe if e.get("date") and _pdt.strptime(e["date"], "%Y-%m-%d") >= _pcutoff]
-                    if not _precent:
-                        continue
-                    _precent.sort(key=lambda x: x["date"], reverse=True)
-                    _plat = _precent[0]
-                    _pcomm = (_plat.get("comment", "") or "").lower()
-                    _prp = _plat.get("running_positions", [])
-                    _pfp = _prp[-1] if _prp else None
-                    _pn = _plat.get("n_horses", 0)
-                    _pconc = any(kw in _pcomm for kw in _CONCEAL_KW) and not any(nk in _pcomm for nk in _NEG_KW)
-                    _ptoph = _pfp is not None and _pn > 0 and _pfp <= (_pn / 2)
-                    _ppos = any(p in _pcomm for p in _POS_PHRASES)
-                    _peased = "eased" in _pcomm and not any(nk in _pcomm for nk in _NEG_KW)
-                    _pneg = any(nk in _pcomm for nk in _NEG_KW)
-                    _pwon = _pfp == 1 and _pn and _pn >= 3
-                    _pflag, _pdet = "", []
-                    if _pconc and _ptoph: _pflag, _pdet = "++", ["Concealed + top half"]
-                    elif _peased and _ppos: _pflag, _pdet = "++", ["Eased + strong finish"]
-                    elif _pwon and _pconc: _pflag, _pdet = "++", ["Won trial under hold"]
-                    elif _pwon and _ppos: _pflag, _pdet = "+", ["Trial winner, positive"]
-                    elif _peased: _pflag, _pdet = "+", ["Eased"]
-                    elif _ppos and _ptoph: _pflag, _pdet = "+", ["Positive trial"]
-                    elif _pconc: _pflag, _pdet = "+", ["Concealed form"]
-                    elif _pneg: _pflag, _pdet = "—", ["Negative signal"]
-                    if not _pflag:
-                        continue
-                    _pch = _pcard[_ph.upper().strip()]
-                    _pdf_trial_hits.append({"race": _pch["race"], "dist": _pch["dist"],
-                        "horse": _ph, "rank": _pch["rank"], "wp": _pch["wp"],
-                        "flag": _pflag, "detail": "; ".join(_pdet), "date": _plat["date"]})
-
-            zh_map = _build_zh_name_map()
-            pdf_bytes = _build_client_briefing_pdf(data, active, _pdf_trial_hits, zh_map)
-            date_tag = dstr.replace("-", "")
-            st.download_button(
-                label="⬇️ 下載客戶報告 PDF",
-                data=pdf_bytes,
-                file_name=f"client_briefing_{date_tag}.pdf",
-                mime="application/pdf",
-                key="ov_download_pdf",
-            )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -3082,368 +3037,6 @@ def page_results():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Client Briefing PDF — All-Chinese, dark navy + gold, professional
-# ══════════════════════════════════════════════════════════════════════════════
-
-_STYLE_MAP_ZH = {
-    "Leader": "領前", "On-Pac": "居中", "Midfield": "居中",
-    "Midfie": "居中", "Closer": "尾上", "Off-Pace": "尾上",
-    "Off-Pa": "尾上",
-}
-
-_VENUE_ZH = {"ST": "沙田", "HV": "跑馬地"}
-
-_BET_LABELS = {"win": "獨贏", "place": "位置", "quinella": "連贏"}
-
-
-def _build_zh_name_map() -> dict[str, str]:
-    """Build UPPER English name → Chinese name mapping from the DB."""
-    db_file = BASE / "hkjc_results_updated.xlsx"
-    tmp_db = Path(tempfile.gettempdir()) / db_file.name
-    src = tmp_db if tmp_db.exists() else db_file
-    if not src.exists():
-        return {}
-    try:
-        df = pd.read_excel(src, usecols=["horse_name", "horsename_zh"])
-        df = df.dropna(subset=["horsename_zh"]).drop_duplicates("horse_name")
-        return {row["horse_name"].upper().strip(): str(row["horsename_zh"]).strip()
-                for _, row in df.iterrows()}
-    except Exception:
-        return {}
-
-
-def _build_client_briefing_pdf(meeting_data: dict, bb_lookup: dict,
-                                trial_standouts: list[dict],
-                                zh_map: dict[str, str]) -> bytes:
-    """Generate a professional client briefing PDF.
-
-    Design: All Chinese, dark navy + gold, 2-3 A4 portrait pages.
-    Sections: meeting header, race-by-race picks, blackbook, trial standouts,
-              pace/risk notes, suggested bets.
-    """
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib import colors
-    from reportlab.lib.units import mm
-    from reportlab.platypus import (SimpleDocTemplate, Table, TableStyle,
-                                     Paragraph, Spacer, PageBreak,
-                                     KeepTogether, HRFlowable)
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
-    from reportlab.pdfbase.cidfonts import UnicodeCIDFont
-
-    # Register CJK font — try MSJH, fall back to CID
-    _font = "MSJH"
-    _font_bold = "MSJH-Bold"
-    try:
-        pdfmetrics.registerFont(TTFont("MSJH", r"C:\Windows\Fonts\msjh.ttc", subfontIndex=0))
-        pdfmetrics.registerFont(TTFont("MSJH-Bold", r"C:\Windows\Fonts\msjhbd.ttc", subfontIndex=0))
-    except Exception:
-        try:
-            pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
-            _font = "STSong-Light"
-            _font_bold = "STSong-Light"
-        except Exception:
-            _font = "Helvetica"
-            _font_bold = "Helvetica-Bold"
-
-    # Colour palette — dark navy + gold
-    NAVY = colors.HexColor("#0a1628")
-    DARK_BG = colors.HexColor("#0f1d36")
-    GOLD = colors.HexColor("#d4a843")
-    LIGHT_GOLD = colors.HexColor("#e8c96a")
-    WHITE = colors.white
-    GREY = colors.HexColor("#b0b8c8")
-    SOFT_WHITE = colors.HexColor("#e8eaf0")
-    RED = colors.HexColor("#ef4444")
-    GREEN = colors.HexColor("#22c55e")
-    ACCENT_BLUE = colors.HexColor("#3b82f6")
-
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4,
-                            leftMargin=14 * mm, rightMargin=14 * mm,
-                            topMargin=12 * mm, bottomMargin=12 * mm)
-
-    # ── Styles ──
-    s_title = ParagraphStyle("BTitle", fontName=_font_bold, fontSize=18,
-                              leading=22, textColor=GOLD, alignment=TA_CENTER,
-                              spaceAfter=1 * mm)
-    s_subtitle = ParagraphStyle("BSub", fontName=_font, fontSize=10,
-                                 leading=13, textColor=GREY, alignment=TA_CENTER,
-                                 spaceAfter=4 * mm)
-    s_section = ParagraphStyle("BSec", fontName=_font_bold, fontSize=12,
-                                leading=16, textColor=GOLD, spaceBefore=4 * mm,
-                                spaceAfter=2 * mm)
-    s_race_hdr = ParagraphStyle("BRaceHdr", fontName=_font_bold, fontSize=11,
-                                 leading=14, textColor=LIGHT_GOLD, spaceBefore=3 * mm,
-                                 spaceAfter=1 * mm)
-    s_body = ParagraphStyle("BBody", fontName=_font, fontSize=9,
-                             leading=12, textColor=SOFT_WHITE)
-    s_small = ParagraphStyle("BSmall", fontName=_font, fontSize=8,
-                              leading=10, textColor=GREY)
-    s_pick_main = ParagraphStyle("BPickMain", fontName=_font_bold, fontSize=10,
-                                  leading=13, textColor=WHITE)
-    s_pick_minor = ParagraphStyle("BPickMinor", fontName=_font, fontSize=9,
-                                   leading=12, textColor=SOFT_WHITE)
-    s_bet = ParagraphStyle("BBet", fontName=_font, fontSize=9,
-                            leading=12, textColor=LIGHT_GOLD)
-    s_star = ParagraphStyle("BStar", fontName=_font_bold, fontSize=10,
-                             leading=13, textColor=GOLD)
-    s_warn = ParagraphStyle("BWarn", fontName=_font, fontSize=8.5,
-                             leading=11, textColor=RED)
-    s_header_cell = ParagraphStyle("BHdrCell", fontName=_font_bold, fontSize=8,
-                                    leading=10, textColor=NAVY, alignment=TA_CENTER)
-    s_data_cell = ParagraphStyle("BDataCell", fontName=_font, fontSize=8.5,
-                                  leading=11, textColor=SOFT_WHITE, alignment=TA_CENTER)
-    s_data_left = ParagraphStyle("BDataLeft", fontName=_font, fontSize=8.5,
-                                  leading=11, textColor=SOFT_WHITE, alignment=TA_LEFT)
-
-    story = []
-
-    # ────────────────────────────────────────────────────────────
-    # PAGE 1: Header + Race Picks
-    # ────────────────────────────────────────────────────────────
-    races = meeting_data.get("races", [])
-    title_text = meeting_data.get("meeting_title", "")
-    # Parse venue from title or races
-    venue_raw = meeting_data.get("venue", "")
-    if not venue_raw and races:
-        venue_raw = races[0].get("race_track", "ST")
-    venue_zh = _VENUE_ZH.get(venue_raw, venue_raw)
-
-    # Going
-    going_text = ""
-    if races:
-        going_text = races[0].get("going", "")
-
-    story.append(Paragraph("Brett's Race Day Briefing", s_title))
-    # Date line
-    dstr = meeting_data.get("date", "")
-    if not dstr:
-        # Try extracting from title
-        import re as _re_dt
-        _m = _re_dt.search(r'(\d{1,2})\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\w*\s+(\d{4})',
-                           title_text, _re_dt.IGNORECASE)
-        if _m:
-            dstr = f"{_m.group(1)} {_m.group(2)} {_m.group(3)}"
-    story.append(Paragraph(f"{venue_zh}  ·  {dstr}  ·  場地: {going_text}  ·  {len(races)} 場賽事", s_subtitle))
-    story.append(HRFlowable(width="100%", thickness=0.5, color=GOLD, spaceAfter=3 * mm))
-
-    # ── Race-by-race picks ──
-    story.append(Paragraph("📋 各場推介", s_section))
-
-    active_bb = {k.upper().strip() for k in bb_lookup.keys()} if bb_lookup else set()
-    trial_horse_set = {t["horse"].upper().strip() for t in trial_standouts if t.get("flag") in ("++", "+")}
-
-    for race in races:
-        rn = race["race_number"]
-        dist = race.get("distance", "?")
-        rc = race.get("race_class", "?")
-        pace = race.get("pace", "Normal")
-        picks = race.get("picks", [])
-        if not picks:
-            continue
-
-        cls_str = f"第{rc}班" if str(rc).isdigit() and int(str(rc)) > 0 else str(rc)
-        pace_zh = {"Normal": "正常", "Fast": "快", "Slow": "慢"}.get(str(pace), str(pace))
-
-        story.append(Paragraph(
-            f"第{rn}場  {dist}米  {cls_str}  步速: {pace_zh}",
-            s_race_hdr))
-
-        # Top pick
-        top = picks[0]
-        top_name = top.get("horse_name", "")
-        top_zh = zh_map.get(top_name.upper().strip(), top_name)
-        top_no = top.get("horse_no", top.get("horse_number", ""))
-        top_wp = top.get("win_prob", 0) or 0
-        top_draw = top.get("draw", "")
-        top_style = _STYLE_MAP_ZH.get(str(top.get("dominant_style", ""))[:6], "")
-        top_jockey = top.get("jockey", "")
-        is_bb = top_name.upper().strip() in active_bb
-        is_trial = top_name.upper().strip() in trial_horse_set
-
-        star_prefix = "★★ " if is_bb else ""
-        trial_tag = " 【試閘亮眼】" if is_trial else ""
-        story.append(Paragraph(
-            f'{star_prefix}◉ #{top_no} {top_zh} ({top_name}) — '
-            f'Win% {top_wp:.1f}  檔位{top_draw}  {top_style}  ({top_jockey}){trial_tag}',
-            s_pick_main if not is_bb else s_star))
-
-        # Minor picks (2nd, 3rd, optionally 4th)
-        minor_count = min(3, len(picks) - 1)
-        minor_parts = []
-        for i in range(1, minor_count + 1):
-            p = picks[i]
-            p_name = p.get("horse_name", "")
-            p_zh = zh_map.get(p_name.upper().strip(), p_name)
-            p_no = p.get("horse_no", p.get("horse_number", ""))
-            p_wp = p.get("win_prob", 0) or 0
-            p_style = _STYLE_MAP_ZH.get(str(p.get("dominant_style", ""))[:6], "")
-            p_bb = "★ " if p_name.upper().strip() in active_bb else ""
-            p_trial = " 【試閘】" if p_name.upper().strip() in trial_horse_set else ""
-            minor_parts.append(f'{p_bb}#{p_no} {p_zh} Win%{p_wp:.0f} {p_style}{p_trial}')
-
-        if minor_parts:
-            story.append(Paragraph("次選: " + "  |  ".join(minor_parts), s_pick_minor))
-
-        # Suggested bets
-        bet_parts = []
-        bet_parts.append(f"獨贏 #{top_no}")
-        bet_parts.append(f"位置 #{top_no}")
-        if len(picks) >= 2:
-            p2_no = picks[1].get("horse_no", picks[1].get("horse_number", ""))
-            bet_parts.append(f"連贏 #{top_no}-#{p2_no}")
-        story.append(Paragraph("建議: " + "  |  ".join(bet_parts), s_bet))
-
-        # Risk flags for this race
-        race_flags = []
-        for p in picks[:4]:
-            for fl in p.get("flags", []):
-                fl_str = str(fl)
-                if "DEC" in fl_str:
-                    p_zh_f = zh_map.get(p["horse_name"].upper().strip(), p["horse_name"])
-                    race_flags.append(f"⚠ {p_zh_f}: 走勢下滑")
-                elif "U" == fl_str:
-                    p_zh_f = zh_map.get(p["horse_name"].upper().strip(), p["horse_name"])
-                    race_flags.append(f"⚠ {p_zh_f}: 數據不足")
-        if race_flags:
-            story.append(Paragraph("  ".join(race_flags), s_warn))
-
-        story.append(Spacer(1, 1.5 * mm))
-
-    # ────────────────────────────────────────────────────────────
-    # PAGE 2: Blackbook + Trial Standouts + Notes
-    # ────────────────────────────────────────────────────────────
-    story.append(PageBreak())
-    story.append(Paragraph("Brett's Race Day Briefing", s_title))
-    story.append(HRFlowable(width="100%", thickness=0.5, color=GOLD, spaceAfter=3 * mm))
-
-    # ── Blackbook horses running today ──
-    story.append(Paragraph("📓 重點追蹤馬匹（Blackbook）", s_section))
-    bb_on_card = []
-    for race in races:
-        for pick in race.get("picks", []):
-            hn = pick.get("horse_name", "").upper().strip()
-            if hn in active_bb:
-                entry = bb_lookup.get(hn, bb_lookup.get(pick.get("horse_name", ""), {}))
-                bb_on_card.append({
-                    "race": race["race_number"],
-                    "horse": pick["horse_name"],
-                    "zh": zh_map.get(hn, pick["horse_name"]),
-                    "rank": pick.get("rank"),
-                    "wp": pick.get("win_prob", 0),
-                    "confidence": entry.get("confidence", "?") if isinstance(entry, dict) else "?",
-                    "reasoning": entry.get("reasoning", "") if isinstance(entry, dict) else "",
-                })
-    if bb_on_card:
-        for bm in sorted(bb_on_card, key=lambda x: x["race"]):
-            conf_zh = {"high": "高信心", "medium": "中等", "low": "偏低"}.get(
-                str(bm.get("confidence", "")), "")
-            story.append(Paragraph(
-                f'★ 第{bm["race"]}場 #{bm.get("rank", "?")} {bm["zh"]} ({bm["horse"]}) '
-                f'— Win%{bm["wp"]:.1f}  {conf_zh}',
-                s_pick_main))
-            if bm["reasoning"]:
-                story.append(Paragraph(f'  ↳ {bm["reasoning"][:100]}', s_small))
-    else:
-        story.append(Paragraph("今日無追蹤馬匹出賽。", s_small))
-
-    story.append(Spacer(1, 3 * mm))
-
-    # ── Trial standouts running today ──
-    story.append(Paragraph("🏇 試閘亮點", s_section))
-    if trial_standouts:
-        strong_trials = [t for t in trial_standouts if t["flag"] == "++"]
-        pos_trials = [t for t in trial_standouts if t["flag"] == "+"]
-        neg_trials = [t for t in trial_standouts if t["flag"] == "—"]
-
-        for label, group in [("★★ 強烈信號", strong_trials),
-                             ("★ 正面信號", pos_trials),
-                             ("⚠ 負面信號", neg_trials)]:
-            if not group:
-                continue
-            story.append(Paragraph(label, s_body))
-            for t in group:
-                t_zh = zh_map.get(t["horse"].upper().strip(), t["horse"])
-                story.append(Paragraph(
-                    f'  第{t["race"]}場 {t_zh} ({t["horse"]}) — {t["detail"]} ({t["date"]})',
-                    s_small))
-    else:
-        story.append(Paragraph("今日無試閘亮點馬匹。", s_small))
-
-    story.append(Spacer(1, 3 * mm))
-
-    # ── Speed map summary (pace labels) ──
-    story.append(Paragraph("🗺️ 步速預覽", s_section))
-    for race in races:
-        picks = race.get("picks", [])
-        if not picks:
-            continue
-        rn = race["race_number"]
-        leaders = []
-        closers = []
-        for p in picks:
-            sty = str(p.get("dominant_style", ""))[:6]
-            p_zh = zh_map.get(p["horse_name"].upper().strip(), p["horse_name"])
-            p_no = p.get("horse_no", p.get("horse_number", ""))
-            if sty in ("Leader",):
-                leaders.append(f"#{p_no}{p_zh}")
-            elif sty in ("Closer", "Off-Pa"):
-                closers.append(f"#{p_no}{p_zh}")
-
-        parts = [f"第{rn}場:"]
-        if leaders:
-            parts.append(f"領前 {', '.join(leaders[:3])}")
-        if closers:
-            parts.append(f"尾上 {', '.join(closers[:3])}")
-        if not leaders and not closers:
-            parts.append("均速")
-        story.append(Paragraph("  ".join(parts), s_small))
-
-    story.append(Spacer(1, 3 * mm))
-
-    # ── Risk summary ──
-    story.append(Paragraph("⚠️ 風險提示", s_section))
-    flag_counts: dict[str, int] = defaultdict(int)
-    declining_horses = []
-    for race in races:
-        for pick in race.get("picks", []):
-            for fl in pick.get("flags", []):
-                flag_counts[str(fl)] += 1
-                if "DEC" in str(fl):
-                    h_zh = zh_map.get(pick["horse_name"].upper().strip(), pick["horse_name"])
-                    declining_horses.append(f'R{race["race_number"]} {h_zh}')
-    if declining_horses:
-        story.append(Paragraph(f'走勢下滑: {", ".join(declining_horses[:8])}', s_warn))
-    unc_count = flag_counts.get("U", 0)
-    if unc_count:
-        story.append(Paragraph(f'數據不足馬匹: {unc_count} 匹', s_warn))
-    if not declining_horses and not unc_count:
-        story.append(Paragraph("今日無重大風險提示。", s_small))
-
-    story.append(Spacer(1, 4 * mm))
-
-    # ── Footer ──
-    story.append(HRFlowable(width="100%", thickness=0.3, color=GOLD, spaceAfter=2 * mm))
-    story.append(Paragraph(
-        "此報告由模型系統自動生成，僅供參考。投注須量力而為。",
-        ParagraphStyle("BFoot", fontName=_font, fontSize=7.5,
-                       leading=10, textColor=GREY, alignment=TA_CENTER)))
-
-    # ── Build with navy background ──
-    def _on_page(canvas, doc):
-        canvas.saveState()
-        canvas.setFillColor(NAVY)
-        canvas.rect(0, 0, A4[0], A4[1], fill=1, stroke=0)
-        canvas.restoreState()
-
-    doc.build(story, onFirstPage=_on_page, onLaterPages=_on_page)
-    return buf.getvalue()
-
-
-# ══════════════════════════════════════════════════════════════════════════════
 # Form Guide PDF builder
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -3476,7 +3069,7 @@ def _build_form_guide_pdf(meeting_data: dict, racecard: dict | None,
                             fontSize=13, leading=15, spaceAfter=3)
     sRace = ParagraphStyle("FGRace", parent=styles["Heading2"],
                            fontSize=10, leading=12, spaceAfter=2,
-                           textColor=colors.HexColor("#BA7517"))
+                           textColor=colors.HexColor("#e63946"))
     sHorse = ParagraphStyle("FGHorse", parent=styles["Heading3"],
                             fontSize=8, leading=10, spaceBefore=5, spaceAfter=1)
     sSmall = ParagraphStyle("FGSmall", parent=sN, fontSize=6, leading=7.5,
@@ -3675,7 +3268,7 @@ def _build_form_guide_pdf_from_cache(fg_cache: dict, bb_lookup: dict) -> bytes:
     sN.leading = 8.5
     sTitle = ParagraphStyle("FGTitle2", parent=styles["Heading1"], fontSize=13, leading=15, spaceAfter=3)
     sRace = ParagraphStyle("FGRace2", parent=styles["Heading2"], fontSize=10, leading=12,
-                           spaceAfter=2, textColor=colors.HexColor("#BA7517"))
+                           spaceAfter=2, textColor=colors.HexColor("#e63946"))
     sHorse = ParagraphStyle("FGHorse2", parent=styles["Heading3"], fontSize=8, leading=10,
                             spaceBefore=5, spaceAfter=1)
     sSmall = ParagraphStyle("FGSmall2", parent=sN, fontSize=6, leading=7.5, textColor=colors.grey)
@@ -5157,6 +4750,515 @@ def page_trials():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# PDF Builder page
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _auto_notes_for_pick(pick: dict, race: dict, bb_lookup: dict,
+                         trial_index: dict) -> list[str]:
+    """Generate evidence-backed reasoning notes for a single pick."""
+    notes = []
+    hn = pick.get("horse_name", "")
+    hn_upper = hn.strip().upper()
+
+    # Flags
+    flags = pick.get("flags", [])
+    if flags:
+        flag_map = {
+            "INC": "Inconsistent recent form",
+            "\u2191IMP": "Improving form trajectory",
+            "\u2193DEC": "Declining form",
+            "DEB": "Debutant \u2014 no race history",
+            "LDIST": "Lightly raced at this distance",
+            "SPELL": "Returning from a spell",
+            "CU": "Class upgrade from last start",
+            "CD": "Class drop from last start",
+        }
+        for f in flags:
+            desc = flag_map.get(f)
+            if desc:
+                notes.append(desc)
+
+    # ESZ / pace style
+    esz = pick.get("early_speed_z")
+    style = pick.get("style", "")
+    if esz is not None:
+        if esz <= -1.0:
+            notes.append(f"Strong early speed (ESZ {esz:+.1f}) \u2014 likely prominent")
+        elif esz >= 1.5:
+            notes.append(f"Deep closer (ESZ {esz:+.1f}) \u2014 needs genuine pace")
+    if style:
+        pace_label = race.get("pace", "Normal")
+        if style == "Leader" and pace_label in ("Fast", "Very Fast"):
+            notes.append("Leader in fast-predicted pace \u2014 risk of over-racing")
+        elif style == "Closer" and pace_label in ("Slow", "Very Slow"):
+            notes.append("Closer in slow-predicted pace \u2014 may lack momentum")
+
+    # SSI
+    ssi = pick.get("avg_ssi")
+    if ssi is not None:
+        if ssi >= 0.3:
+            notes.append(f"Strong sectional index (SSI {ssi:+.2f})")
+        elif ssi <= -0.3:
+            notes.append(f"Weak sectional profile (SSI {ssi:+.2f})")
+
+    # Projected final section
+    pfs = pick.get("proj_final_sec")
+    if pfs and pfs < 22.5:
+        notes.append(f"Projected strong finish ({pfs:.2f}s final 400m)")
+
+    # Win probability
+    wp = pick.get("win_prob", 0)
+    if wp >= 0.20:
+        notes.append(f"High model confidence (Win% {wp*100:.0f}%)")
+
+    # Vet flag
+    vf = pick.get("vet_flag", "")
+    if vf == "RED":
+        notes.append("VET: Recent vet concern (red flag)")
+    elif vf == "AMBER":
+        notes.append("VET: Minor vet concern (amber)")
+
+    # Draw
+    draw = pick.get("draw")
+    n_runners = race.get("runners", 14)
+    course = race.get("race_course", "")
+    if draw and n_runners:
+        if draw <= 3 and "C" in course.upper():
+            notes.append(f"Inside draw ({draw}) \u2014 potential rail advantage")
+        elif draw >= n_runners - 1 and n_runners >= 12:
+            notes.append(f"Wide draw ({draw}/{n_runners}) \u2014 must overcome barrier")
+
+    # Blackbook
+    bb_entry = bb_lookup.get(hn_upper)
+    if bb_entry:
+        conf = bb_entry.get("confidence", "")
+        reason = bb_entry.get("reasoning", "")
+        note = f"BLACKBOOK ({conf})"
+        if reason:
+            note += f": {reason[:80]}"
+        notes.append(note)
+
+    # Trial
+    trial_flag = pick.get("trial_flag", "")
+    trial_entries = trial_index.get(hn_upper, [])
+    if trial_entries:
+        from datetime import datetime as _dto, timedelta as _td
+        cutoff = _dto.now() - _td(days=60)
+        recent = []
+        for e in trial_entries:
+            try:
+                tdt = _dto.strptime(e["date"], "%Y-%m-%d")
+            except (ValueError, TypeError):
+                continue
+            if tdt >= cutoff:
+                recent.append(e)
+        if recent:
+            recent.sort(key=lambda x: x["date"], reverse=True)
+            latest = recent[0]
+            rp = latest.get("running_positions", [])
+            comment = (latest.get("comment", "") or "")
+            fp = rp[-1] if rp else None
+            n = latest.get("n_horses", 0)
+            parts = [f"Trial {latest['date']}"]
+            if fp and n:
+                parts.append(f"finished {fp}/{n}")
+            if comment:
+                parts.append(comment[:60])
+            notes.append(" \u2014 ".join(parts))
+    elif trial_flag:
+        notes.append(f"Trial form: {trial_flag}")
+
+    return notes
+
+
+def _build_pdfbuilder_pdf(meeting_data: dict, selected_races: list[int],
+                          race_selections: dict, race_notes: dict,
+                          bb_lookup: dict, trial_index: dict,
+                          include_bb: bool, include_trials: bool,
+                          include_speed_map: bool) -> bytes:
+    """Generate a custom race-day PDF with user selections and auto-notes.
+
+    race_selections: {race_num: {"banker": horse_name|None, "others": [horse_name, ...]}}
+    race_notes: {race_num: {"auto": [str], "manual": str}}
+    """
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.platypus import (
+        SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak,
+        HRFlowable,
+    )
+
+    RED = colors.HexColor("#e63946")
+    DARK = colors.HexColor("#0e1117")
+    GREY = colors.HexColor("#888888")
+    GREEN = colors.HexColor("#22c55e")
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+                            leftMargin=10*mm, rightMargin=10*mm,
+                            topMargin=12*mm, bottomMargin=12*mm)
+    styles = getSampleStyleSheet()
+
+    sTitle = ParagraphStyle("PBTitle", parent=styles["Heading1"],
+                            fontSize=16, leading=20, spaceAfter=2,
+                            textColor=DARK)
+    sSub = ParagraphStyle("PBSub", parent=styles["Normal"],
+                          fontSize=8, leading=10, textColor=GREY,
+                          spaceAfter=6)
+    sRace = ParagraphStyle("PBRace", parent=styles["Heading2"],
+                           fontSize=12, leading=14, spaceAfter=4,
+                           textColor=RED)
+    sPace = ParagraphStyle("PBPace", parent=styles["Normal"],
+                           fontSize=8, leading=10, textColor=GREY,
+                           spaceAfter=4)
+    sHorse = ParagraphStyle("PBHorse", parent=styles["Normal"],
+                            fontSize=10, leading=13, spaceAfter=1)
+    sNote = ParagraphStyle("PBNote", parent=styles["Normal"],
+                           fontSize=8, leading=10, textColor=DARK,
+                           leftIndent=12, spaceAfter=1)
+    sManual = ParagraphStyle("PBManual", parent=styles["Normal"],
+                             fontSize=8, leading=10,
+                             textColor=colors.HexColor("#333333"),
+                             leftIndent=12, spaceBefore=2, spaceAfter=4,
+                             fontName="Helvetica-Oblique")
+    sBB = ParagraphStyle("PBBB", parent=styles["Normal"],
+                         fontSize=8, leading=10,
+                         textColor=colors.HexColor("#d97706"),
+                         leftIndent=8, spaceAfter=2)
+    sTrial = ParagraphStyle("PBTrial", parent=styles["Normal"],
+                            fontSize=8, leading=10,
+                            textColor=colors.HexColor("#6366f1"),
+                            leftIndent=8, spaceAfter=2)
+    sSMap = ParagraphStyle("PBSMap", parent=styles["Normal"],
+                           fontSize=7, leading=9, textColor=GREY,
+                           leftIndent=8, spaceAfter=2)
+
+    elements = []
+
+    # Title
+    title = meeting_data.get("meeting_title", "Race Day Analysis")
+    elements.append(Paragraph(title, sTitle))
+    elements.append(Paragraph(
+        f"Generated {datetime.now().strftime('%d %b %Y %H:%M')} "
+        f"\u00b7 {len(selected_races)} race(s) selected",
+        sSub))
+    elements.append(HRFlowable(width="100%", thickness=1,
+                                color=RED, spaceAfter=8))
+
+    races = meeting_data.get("races", [])
+    race_map = {r["race_number"]: r for r in races}
+
+    for rn in selected_races:
+        race = race_map.get(rn)
+        if not race:
+            continue
+
+        cls_str = f"Class {race['race_class']}" if race.get("race_class") else "Group"
+        surface = "AWT" if race.get("is_awt") else "Turf"
+        elements.append(Paragraph(
+            f"R{rn} \u2014 {race.get('race_name', '')} \u00b7 "
+            f"{race['distance']}m {surface} ({race.get('race_course', '')}) "
+            f"\u00b7 {cls_str}",
+            sRace))
+
+        # Pace
+        pace = race.get("pace", "Normal")
+        pace_score = race.get("pace_score", 0)
+        pace_leaders = race.get("pace_leaders", [])
+        pace_reasons = race.get("pace_reasons", [])
+        pace_parts = [f"Pace: {pace} ({pace_score:+.2f}s)"]
+        if pace_leaders:
+            pace_parts.append(f"Front-runners: {', '.join(pace_leaders[:4])}")
+        if pace_reasons:
+            pace_parts.append(" | ".join(pace_reasons[:2]))
+        elements.append(Paragraph(" \u00b7 ".join(pace_parts), sPace))
+
+        sel = race_selections.get(rn, {})
+        banker = sel.get("banker")
+        others = sel.get("others", [])
+        picks = race.get("picks", [])
+        pick_map = {p["horse_name"]: p for p in picks}
+
+        # Banker
+        if banker and banker in pick_map:
+            p = pick_map[banker]
+            wp = p.get("win_prob", 0)
+            elements.append(Paragraph(
+                f'<b><font color="#{RED.hexval()[2:]}">\u2605 BANKER: '
+                f'#{p.get("horse_no", "?")} {banker}</font></b>'
+                f' \u00b7 {p.get("jockey", "")} \u00b7 '
+                f'Gt {p.get("draw", "?")} \u00b7 '
+                f'Win% {wp*100:.0f} \u00b7 '
+                f'{p.get("style", "")} (ESZ {p.get("early_speed_z", 0):+.1f})',
+                sHorse))
+            # Auto-notes for banker
+            rnotes = race_notes.get(rn, {})
+            auto = rnotes.get(f"auto_{banker}", [])
+            for n in auto:
+                elements.append(Paragraph(f"\u2022 {n}", sNote))
+
+        # Other selections
+        for hname in others:
+            if hname == banker:
+                continue
+            p = pick_map.get(hname, {})
+            wp = p.get("win_prob", 0)
+            elements.append(Paragraph(
+                f'<b>#{p.get("horse_no", "?")} {hname}</b>'
+                f' \u00b7 {p.get("jockey", "")} \u00b7 '
+                f'Gt {p.get("draw", "?")} \u00b7 '
+                f'Win% {wp*100:.0f} \u00b7 '
+                f'{p.get("style", "")} (ESZ {p.get("early_speed_z", 0):+.1f})',
+                sHorse))
+            rnotes = race_notes.get(rn, {})
+            auto = rnotes.get(f"auto_{hname}", [])
+            for n in auto:
+                elements.append(Paragraph(f"\u2022 {n}", sNote))
+
+        # Manual notes
+        rnotes = race_notes.get(rn, {})
+        manual = rnotes.get("manual", "")
+        if manual.strip():
+            elements.append(Paragraph(f"Notes: {manual}", sManual))
+
+        # Blackbook callouts for this race
+        if include_bb:
+            for p in picks:
+                hn_up = p["horse_name"].strip().upper()
+                bb = bb_lookup.get(hn_up)
+                if bb and p["horse_name"] not in ([banker] if banker else []) + others:
+                    conf = bb.get("confidence", "")
+                    reason = bb.get("reasoning", "")[:80]
+                    elements.append(Paragraph(
+                        f'\u26a0 BB: {p["horse_name"]} ({conf}) '
+                        f'{"\u2014 " + reason if reason else ""}',
+                        sBB))
+
+        # Trial standouts for this race
+        if include_trials:
+            for p in picks:
+                hn_up = p["horse_name"].strip().upper()
+                entries = trial_index.get(hn_up, [])
+                if not entries:
+                    continue
+                if p["horse_name"] in ([banker] if banker else []) + others:
+                    continue  # already covered in auto-notes
+                from datetime import datetime as _dto, timedelta as _td
+                cutoff = _dto.now() - _td(days=60)
+                recent = [e for e in entries
+                          if e.get("date", "") >= cutoff.strftime("%Y-%m-%d")]
+                if recent:
+                    recent.sort(key=lambda x: x["date"], reverse=True)
+                    lat = recent[0]
+                    rp = lat.get("running_positions", [])
+                    fp = rp[-1] if rp else "?"
+                    n = lat.get("n_horses", "?")
+                    comm = (lat.get("comment", "") or "")[:60]
+                    elements.append(Paragraph(
+                        f'\U0001f3c7 Trial: {p["horse_name"]} \u2014 '
+                        f'{lat["date"]} {fp}/{n} {comm}',
+                        sTrial))
+
+        # Speed map summary
+        if include_speed_map:
+            smap = race.get("speed_map", {})
+            beneficiaries = smap.get("beneficiaries", [])
+            if beneficiaries:
+                ben_str = ", ".join(
+                    f'{b["horse_name"]} ({b["reason"]})'
+                    for b in beneficiaries[:4])
+                elements.append(Paragraph(
+                    f"Speed map advantage: {ben_str}", sSMap))
+
+        elements.append(Spacer(1, 6*mm))
+
+    doc.build(elements)
+    return buf.getvalue()
+
+
+def page_pdf_builder():
+    """Custom PDF Builder — select races, pick bankers, generate notes, export."""
+    st.markdown("## \U0001f4c4 PDF Builder")
+
+    meetings = load_available_meetings()
+    if not meetings:
+        st.info("No analysed meetings available. Run an analysis first.")
+        return
+
+    options = {m["title"]: m for m in meetings}
+    selected = st.selectbox("Select meeting:", list(options.keys()),
+                            index=0, key="pb_meeting")
+    meeting = options[selected]
+    data = load_meeting_data(meeting["file"])
+    races = data.get("races", [])
+
+    if not races:
+        st.warning("No races in this meeting.")
+        return
+
+    bb = _load_blackbook()
+    bb_lookup = _bb_active_lookup(bb)
+    trial_index = _load_all_trial_horse_index()
+
+    # ── Race selection ─────────────────────────────────────────────────────
+    st.markdown("### Race Selection")
+    race_nums = [r["race_number"] for r in races]
+    race_labels = {
+        r["race_number"]: (
+            f'R{r["race_number"]} — {r["distance"]}m '
+            f'{"AWT" if r.get("is_awt") else "Turf"} '
+            f'C{r.get("race_class", "?")} '
+            f'{r.get("race_name", "")[:30]}'
+        )
+        for r in races
+    }
+    selected_races = st.multiselect(
+        "Include races:",
+        race_nums,
+        default=race_nums,
+        format_func=lambda x: race_labels.get(x, f"R{x}"),
+        key="pb_races",
+    )
+
+    if not selected_races:
+        st.info("Select at least one race.")
+        return
+
+    # ── Toggles ────────────────────────────────────────────────────────────
+    col_t1, col_t2, col_t3 = st.columns(3)
+    with col_t1:
+        include_bb = st.checkbox("Include blackbook callouts", value=True,
+                                 key="pb_inc_bb")
+    with col_t2:
+        include_trials = st.checkbox("Include trial standouts", value=True,
+                                     key="pb_inc_trials")
+    with col_t3:
+        include_speed_map = st.checkbox("Include speed map notes", value=True,
+                                        key="pb_inc_smap")
+
+    st.markdown("---")
+
+    # ── Per-race selections ────────────────────────────────────────────────
+    race_selections = {}
+    race_notes = {}
+    race_map = {r["race_number"]: r for r in races}
+
+    for rn in selected_races:
+        race = race_map.get(rn)
+        if not race:
+            continue
+        picks = race.get("picks", [])
+        horse_names = [p["horse_name"] for p in picks]
+
+        cls_str = f"C{race.get('race_class', '?')}" if race.get("race_class") else "Grp"
+        surface = "AWT" if race.get("is_awt") else "Turf"
+        pace = race.get("pace", "Normal")
+        pace_score = race.get("pace_score", 0)
+
+        st.markdown(
+            f'<div style="border-left:3px solid #e63946; padding-left:10px; '
+            f'margin-bottom:4px;">'
+            f'<strong>R{rn}</strong> — {race["distance"]}m {surface} {cls_str} '
+            f'| Pace: {pace} ({pace_score:+.2f}s)'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        # Quick model ranking view
+        if picks:
+            rank_parts = []
+            for i, p in enumerate(picks[:6]):
+                wp = p.get("win_prob", 0)
+                esz = p.get("early_speed_z", 0)
+                ssi = p.get("avg_ssi")
+                ssi_str = f" SSI{ssi:+.1f}" if ssi is not None else ""
+                rank_parts.append(
+                    f'**{i+1}.** #{p.get("horse_no", "?")} {p["horse_name"]} '
+                    f'({wp*100:.0f}% ESZ{esz:+.1f}{ssi_str})'
+                )
+            st.caption(" | ".join(rank_parts))
+
+        col1, col2 = st.columns(2)
+        with col1:
+            banker = st.selectbox(
+                f"R{rn} Banker (top selection):",
+                ["(None)"] + horse_names,
+                index=1 if horse_names else 0,
+                key=f"pb_banker_{rn}",
+            )
+            if banker == "(None)":
+                banker = None
+        with col2:
+            default_others = horse_names[1:4] if len(horse_names) > 1 else []
+            others = st.multiselect(
+                f"R{rn} Other selections:",
+                horse_names,
+                default=default_others,
+                key=f"pb_others_{rn}",
+            )
+
+        race_selections[rn] = {"banker": banker, "others": others}
+
+        # Auto-generate notes for each selected horse
+        all_selected = ([banker] if banker else []) + [o for o in others if o != banker]
+        pick_map = {p["horse_name"]: p for p in picks}
+        auto_notes_for_race = {}
+        for hname in all_selected:
+            p = pick_map.get(hname, {})
+            auto = _auto_notes_for_pick(p, race, bb_lookup, trial_index)
+            auto_notes_for_race[f"auto_{hname}"] = auto
+
+        # Show auto-notes in expander
+        if all_selected:
+            with st.expander(f"R{rn} Auto-generated notes", expanded=False):
+                for hname in all_selected:
+                    auto = auto_notes_for_race.get(f"auto_{hname}", [])
+                    if auto:
+                        prefix = "\u2605 " if hname == banker else ""
+                        st.markdown(f"**{prefix}{hname}:**")
+                        for n in auto:
+                            st.markdown(f"- {n}")
+                    else:
+                        st.caption(f"{hname}: No notable flags")
+
+        manual = st.text_area(
+            f"R{rn} Manual notes:",
+            value="", height=68,
+            key=f"pb_manual_{rn}",
+            placeholder="Add personal observations, betting angles...",
+        )
+
+        auto_notes_for_race["manual"] = manual
+        race_notes[rn] = auto_notes_for_race
+        st.markdown("")
+
+    # ── Export ─────────────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### Export PDF")
+
+    if st.button("Generate PDF", type="primary", key="pb_generate",
+                 use_container_width=True):
+        with st.spinner("Building PDF..."):
+            pdf_bytes = _build_pdfbuilder_pdf(
+                data, selected_races, race_selections, race_notes,
+                bb_lookup, trial_index,
+                include_bb, include_trials, include_speed_map,
+            )
+        st.success("PDF generated!")
+        date_str = meeting.get("date_str", "meeting")
+        st.download_button(
+            label="Download PDF",
+            data=pdf_bytes,
+            file_name=f"race_analysis_{date_str}.pdf",
+            mime="application/pdf",
+            key="pb_download",
+            use_container_width=True,
+        )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Entry point — page router
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -5173,14 +5275,15 @@ def main():
 
     # ── Navigation ────────────────────────────────────────────────────────
     NAV_ITEMS = [
-        ("Overview",   "Overview"),
-        ("Race Day",   "Race Day"),
-        ("Live Feed",  "Live Feed"),
-        ("Form Guide", "Form Guide"),
-        ("Trials",     "Trials"),
-        ("Backtest",   "Backtest"),
-        ("Results",    "Results"),
-        ("Blackbook",  "Blackbook"),
+        ("Overview",     "Overview"),
+        ("Race Day",     "Race Day"),
+        ("Live Feed",    "Live Feed"),
+        ("Form Guide",   "Form Guide"),
+        ("Trials",       "Trials"),
+        ("Backtest",     "Backtest"),
+        ("Results",      "Results"),
+        ("Blackbook",    "Blackbook"),
+        ("PDF Builder",  "PDF Builder"),
     ]
     if "nav_page" not in st.session_state:
         st.session_state["nav_page"] = "Overview"
@@ -5215,6 +5318,8 @@ def main():
         page_results()
     elif page == "Blackbook":
         page_blackbook()
+    elif page == "PDF Builder":
+        page_pdf_builder()
 
 
 def sidebar_race_day():

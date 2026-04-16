@@ -4234,6 +4234,8 @@ def main():
             "is_awt": race["is_awt"],
             "pace": pace_label,
             "pace_score": round(pace_score, 2),
+            "pace_reasons": pace_reasons,
+            "pace_leaders": leader_names,
             "runners": len(df),
             "projected": int(valid.shape[0]),
             "picks": picks,
