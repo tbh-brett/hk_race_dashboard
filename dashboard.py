@@ -5511,8 +5511,12 @@ def sidebar_race_day():
     )
     if uploaded is not None:
         date_iso = run_date.isoformat()
-        if _save_uploaded_racecard(uploaded.getvalue(), date_iso):
-            st.session_state["_uploaded_rc_date"] = date_iso
+        # Only save once per unique upload (avoid re-trigger on every rerun)
+        upload_id = f"{uploaded.name}_{uploaded.size}_{date_iso}"
+        if st.session_state.get("_last_upload_id") != upload_id:
+            if _save_uploaded_racecard(uploaded.getvalue(), date_iso):
+                st.session_state["_uploaded_rc_date"] = date_iso
+                st.session_state["_last_upload_id"] = upload_id
 
     # Detect whether uploaded racecard is available for the selected date
     date_iso = run_date.isoformat()

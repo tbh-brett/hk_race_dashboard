@@ -33,17 +33,25 @@ import pandas as pd
 warnings.filterwarnings("ignore")
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-BASE = Path(r"c:\Users\tbhbr\OneDrive\Desktop\python\HK races anaylsis, April onwards")
+BASE = Path(__file__).resolve().parent
 
 # ── Per-meeting configuration (UPDATE THESE FOR EACH MEETING) ─────────────────
 RACE_CARD    = BASE / "racecards" / "racecard_20260415.xlsx"
 SHEET_NAME   = "All Races"                                          # v4.0: new racecard format
-EXP_TIME_REF = Path(os.environ.get("TEMP", str(BASE))) / "expected_time_references_v4.xlsx"
+
+def _find_data_file(name: str) -> Path:
+    """Locate a data file: check BASE first, then $TEMP."""
+    p = BASE / name
+    if p.exists():
+        return p
+    return Path(os.environ.get("TEMP", str(BASE))) / name
+
+EXP_TIME_REF = _find_data_file("expected_time_references_v4.xlsx")
 ABILITY_FILE = BASE / "horse_ability_analysis_v3.xlsx"
 
 OUT_PDF  = BASE / "reports" / "race_day_report_20260415_v4.4_sec.pdf"
 OUT_TEXT = BASE / "reports" / "race_day_analysis_20260415_v4.4_sec.txt"
-DB_FILE  = Path(os.environ.get("TEMP", str(BASE))) / "hkjc_results_updated.xlsx"
+DB_FILE  = _find_data_file("hkjc_results_updated.xlsx")
 
 MEETING_TITLE = "HAPPY VALLEY — WEDNESDAY, 15 APRIL 2026"
 MEETING_VENUE = "HV"
