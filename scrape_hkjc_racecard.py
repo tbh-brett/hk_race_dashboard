@@ -18,7 +18,10 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import re
+import shutil
+import subprocess
 import sys
 import time
 from datetime import datetime
@@ -107,6 +110,72 @@ def fetch_page(url: str, session: requests.Session, params: Optional[dict] = Non
                 time.sleep(wait)
     log.error("All %d attempts failed for %s", retries, url)
     return None
+
+
+def _ensure_playwright_browser() -> bool:
+    """Install Playwright Chromium if not already available. Returns True on success."""
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            # Try to launch — will fail fast if browser isn't installed
+            b = p.chromium.launch(headless=True)
+            b.close()
+        return True
+    except Exception:
+        log.info("Installing Playwright Chromium browser …")
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "playwright", "install", "chromium"],
+                check=True, capture_output=True, timeout=120,
+            )
+            return True
+        except Exception as exc:
+            log.warning("Playwright browser install failed: %s", exc)
+            return False
+
+
+def fetch_page_js(url: str, params: Optional[dict] = None,
+                  timeout: int = 30000) -> Optional[str]:
+    """Fetch a page using Playwright (headless Chromium) for JS-rendered content.
+
+    Returns the fully-rendered HTML, or None on failure.
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        log.warning("Playwright not installed — cannot render JS pages")
+        return None
+
+    if not _ensure_playwright_browser():
+        return None
+
+    # Build full URL with query params
+    if params:
+        from urllib.parse import urlencode
+        full_url = f"{url}?{urlencode(params)}"
+    else:
+        full_url = url
+
+    log.info("  Fetching via Playwright: %s", full_url[:120])
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(full_url, wait_until="networkidle", timeout=timeout)
+            # Wait for table content to appear (up to 10s)
+            try:
+                page.wait_for_selector(
+                    "table.starter, table#racecardlist, table.table_bd",
+                    timeout=10000,
+                )
+            except Exception:
+                pass  # Table may not exist for this date
+            html = page.content()
+            browser.close()
+        return html
+    except Exception as exc:
+        log.warning("Playwright fetch failed: %s", exc)
+        return None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -644,6 +713,8 @@ def scrape_race_day(race_date: str, use_cache: bool = True,
         race_numbers = list(range(1, 12))
 
     # Step 2: Fetch each race card page
+    # Try requests first; if no tables found on first race, switch to Playwright
+    use_playwright = False
     all_race_data: List[Tuple[Dict, List[Dict]]] = []
 
     for rn in race_numbers:
@@ -654,14 +725,37 @@ def scrape_race_day(race_date: str, use_cache: bool = True,
             "RaceNo": str(rn),
         }
 
-        html = fetch_page(RACECARD_URL, session, params=params)
-        if not html:
-            log.warning("    Failed to fetch R%d — skipping", rn)
-            continue
+        html = None
+        if not use_playwright:
+            html = fetch_page(RACECARD_URL, session, params=params)
 
-        soup = BeautifulSoup(html, "html.parser")
-        race_meta = parse_race_header(soup, rn)
-        horses = parse_racecard_table(soup, race_meta)
+        soup = BeautifulSoup(html, "html.parser") if html else None
+        horses = []
+        race_meta = {"race_number": rn}
+
+        if soup:
+            race_meta = parse_race_header(soup, rn)
+            horses = parse_racecard_table(soup, race_meta)
+
+        # If requests returned no horses on the first race, try Playwright
+        if not horses and not use_playwright and rn == race_numbers[0]:
+            log.info("  No tables via requests — trying Playwright (JS render) …")
+            js_html = fetch_page_js(RACECARD_URL, params=params)
+            if js_html:
+                soup = BeautifulSoup(js_html, "html.parser")
+                race_meta = parse_race_header(soup, rn)
+                horses = parse_racecard_table(soup, race_meta)
+                if horses:
+                    log.info("  Playwright succeeded — switching to JS rendering")
+                    use_playwright = True
+
+        # For subsequent races, use Playwright if we switched
+        if not horses and use_playwright and rn != race_numbers[0]:
+            js_html = fetch_page_js(RACECARD_URL, params=params)
+            if js_html:
+                soup = BeautifulSoup(js_html, "html.parser")
+                race_meta = parse_race_header(soup, rn)
+                horses = parse_racecard_table(soup, race_meta)
 
         if not horses:
             # Race might not exist (e.g., only 9 races on the card)
