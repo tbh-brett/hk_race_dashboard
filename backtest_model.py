@@ -67,12 +67,13 @@ PACE_THRESHOLDS = {
 # ══════════════════════════════════════════════════════════════════════════════
 
 def load_prediction(date_compact: str) -> Optional[Dict]:
-    """Load pre-race prediction JSON."""
-    path = REPORTS / f"race_day_report_{date_compact}_v3.4.8.json"
-    if not path.exists():
-        return None
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    """Load pre-race prediction JSON (v4.4 preferred, v3.4.8 fallback)."""
+    for suffix in ["_v4.4.json", "_v3.4.8.json"]:
+        path = REPORTS / f"race_day_report_{date_compact}{suffix}"
+        if path.exists():
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+    return None
 
 
 def load_results(date_compact: str) -> Optional[Dict]:
@@ -87,8 +88,8 @@ def load_results(date_compact: str) -> Optional[Dict]:
 def find_meeting_dates(pattern: str = "all") -> List[str]:
     """Find all date_compact strings that have BOTH prediction + results."""
     pred_dates = set()
-    for f in REPORTS.glob("race_day_report_*_v3.4.8.json"):
-        m = re.search(r"race_day_report_(\d{8})_v3\.4\.8\.json", f.name)
+    for f in REPORTS.glob("race_day_report_*_v*.json"):
+        m = re.search(r"race_day_report_(\d{8})_v", f.name)
         if m:
             pred_dates.add(m.group(1))
 

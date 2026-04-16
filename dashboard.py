@@ -582,6 +582,7 @@ def _bb_add_entry(bb: dict, horse_name: str, reasoning: str, tags: list[str],
                   preferred_distance: list | None = None,
                   preferred_surface: str | None = None,
                   expiry_days: int | None = None,
+                  category: str = "Pre-Race",
                   **_kwargs) -> dict:
     eid = f"bb_{bb['next_id']:04d}"
     bb["next_id"] += 1
@@ -600,6 +601,7 @@ def _bb_add_entry(bb: dict, horse_name: str, reasoning: str, tags: list[str],
         },
         "confidence": confidence,
         "source_race": source_race,
+        "category": category,
         "performances": [],
     }
     bb["entries"].append(entry)
@@ -2542,46 +2544,100 @@ def page_blackbook():
         if not bb["entries"]:
             st.info("No blackbook entries yet. Use the **Add / Import** tab to get started.")
         else:
-            # Status filter
-            filter_status = st.radio("Filter", ["Active", "All", "Expired", "Archived"],
-                                     horizontal=True, key="bb_filter")
-            if filter_status == "Active":
-                pool = active
-            elif filter_status == "Expired":
-                pool = expired
-            elif filter_status == "Archived":
-                pool = archived
-            else:
-                pool = bb["entries"]
+            # ── Filters row ──
+            fc1, fc2, fc3, fc4 = st.columns(4)
+            with fc1:
+                filter_status = st.selectbox("Status", ["Active", "All", "Expired", "Archived"],
+                                             key="bb_filter")
+            with fc2:
+                filter_category = st.selectbox("Category", ["All", "Pre-Race", "Post-Race"],
+                                               key="bb_cat_filter")
+            with fc3:
+                filter_conf = st.selectbox("Confidence", ["All", "High", "Medium", "Low"],
+                                           key="bb_conf_filter")
+            with fc4:
+                search_text = st.text_input("Search", placeholder="Horse name…",
+                                            key="bb_search")
+
+            # Build filtered pool
+            pool = bb["entries"]
+            if filter_status != "All":
+                pool = [e for e in pool if e["status"] == filter_status.lower()]
+            if filter_category != "All":
+                pool = [e for e in pool if e.get("category", "Pre-Race") == filter_category]
+            if filter_conf != "All":
+                pool = [e for e in pool if e.get("confidence", "medium") == filter_conf.lower()]
+            if search_text.strip():
+                _q = search_text.strip().upper()
+                pool = [e for e in pool if _q in e["horse_name"].upper()]
 
             if not pool:
-                st.caption(f"No {filter_status.lower()} entries.")
+                st.caption("No entries match the current filters.")
             else:
-                pool_sorted = sorted(pool, key=lambda x: x["added_date"], reverse=True)
-                horse_names = [e["horse_name"] for e in pool_sorted]
-                horse_ids = [e["id"] for e in pool_sorted]
+                # ── Build summary table ──
+                _tbl_rows = []
+                for e in sorted(pool, key=lambda x: x["added_date"], reverse=True):
+                    n_runs = len(e.get("performances", []))
+                    last_run = ""
+                    if e.get("performances"):
+                        last_run = e["performances"][-1].get("date", "")
+                    _tbl_rows.append({
+                        "Horse": e["horse_name"],
+                        "Category": e.get("category", "Pre-Race"),
+                        "Confidence": e.get("confidence", "medium").title(),
+                        "Status": e["status"].title(),
+                        "Added": e.get("added_date", ""),
+                        "Expires": e.get("expiry_date", ""),
+                        "Tags": ", ".join(e.get("tags", [])),
+                        "Runs": n_runs,
+                        "Last Run": last_run,
+                        "Source": e.get("source_race", ""),
+                        "_id": e["id"],
+                    })
 
-                # Selectbox with horse name + status badge
-                def _fmt_horse(idx):
-                    e = pool_sorted[idx]
-                    conf = e.get("confidence", "medium")
-                    n_perf = len(e.get("performances", []))
-                    return f"{e['horse_name']}  [{conf[0].upper()}]  ({n_perf} runs)"
+                tbl_df = pd.DataFrame(_tbl_rows)
 
-                selected_idx = st.selectbox(
-                    "Select horse:",
-                    range(len(pool_sorted)),
-                    format_func=_fmt_horse,
-                    key="bb_horse_select",
+                # Style confidence column
+                def _style_conf_col(val):
+                    _cm = {"High": "color:#d43700;font-weight:600",
+                           "Medium": "color:#8a6d00;font-weight:600",
+                           "Low": "color:#0066cc;font-weight:600"}
+                    return _cm.get(val, "")
+
+                def _style_status_col(val):
+                    _sm = {"Active": "color:#22c55e;font-weight:600",
+                           "Expired": "color:#888", "Archived": "color:#666"}
+                    return _sm.get(val, "")
+
+                display_cols = ["Horse", "Category", "Confidence", "Status",
+                                "Added", "Expires", "Tags", "Runs", "Last Run", "Source"]
+                styled_tbl = (tbl_df[display_cols].style
+                              .map(_style_conf_col, subset=["Confidence"])
+                              .map(_style_status_col, subset=["Status"])
+                              .set_properties(**{"text-align": "center"})
+                              .set_properties(subset=["Horse", "Tags", "Source"],
+                                              **{"text-align": "left"}))
+
+                st.dataframe(styled_tbl, use_container_width=True, hide_index=True,
+                             height=min(400, 35 * len(tbl_df) + 38))
+
+                # ── Detail panel — select horse from table ──
+                st.markdown("---")
+                horse_names_in_pool = [e["horse_name"] for e in
+                                       sorted(pool, key=lambda x: x["added_date"], reverse=True)]
+                selected_horse = st.selectbox(
+                    "Select horse for details / actions:",
+                    horse_names_in_pool, key="bb_detail_select",
                 )
-
-                entry = pool_sorted[selected_idx]
+                entry = next(e for e in pool if e["horse_name"] == selected_horse)
                 eid = entry["id"]
                 conf = entry.get("confidence", "medium")
                 conf_colours = {"high": "#d43700", "medium": "#8a6d00", "low": "#0066cc"}
                 conf_colour = conf_colours.get(conf, "#888")
 
                 # ── Horse detail card ─────────────────────────
+                _cat = entry.get("category", "Pre-Race")
+                _cat_icon = "📋" if _cat == "Pre-Race" else "🏁"
                 st.markdown(
                     f'<div style="border-left:4px solid {conf_colour};padding:8px 14px;'
                     f'margin:10px 0;border-radius:0 6px 6px 0;'
@@ -2590,6 +2646,8 @@ def page_blackbook():
                     f' &nbsp; <span style="color:{conf_colour};font-weight:600">'
                     f'● {conf.title()}</span>'
                     f' &nbsp; <span style="font-size:0.85em;opacity:0.6">{entry["status"].title()}</span>'
+                    f' &nbsp; <span style="font-size:0.82em;border:1px solid #888;border-radius:4px;'
+                    f'padding:1px 6px">{_cat_icon} {_cat}</span>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -2676,6 +2734,13 @@ def page_blackbook():
                                 key=f"bb_ed_src_{eid}",
                             )
                         with ec2:
+                            _cur_cat = entry.get("category", "Pre-Race")
+                            new_category = st.selectbox(
+                                "Category",
+                                ["Pre-Race", "Post-Race"],
+                                index=["Pre-Race", "Post-Race"].index(_cur_cat) if _cur_cat in ["Pre-Race", "Post-Race"] else 0,
+                                key=f"bb_ed_cat_{eid}",
+                            )
                             new_surface = st.selectbox(
                                 "Preferred Surface",
                                 [None, "Turf", "AWT"],
@@ -2707,6 +2772,7 @@ def page_blackbook():
                                 bb, eid,
                                 confidence=new_conf,
                                 source_race=new_source,
+                                category=new_category,
                                 tags=new_tags,
                                 reasoning=new_reasoning.strip(),
                                 conditions={
@@ -2727,6 +2793,9 @@ def page_blackbook():
                 source_race = st.text_input("Source Race (e.g. 2026-04-01 R4)")
                 confidence = st.selectbox("Confidence", ["high", "medium", "low"])
             with c2:
+                add_category = st.selectbox("Category", ["Pre-Race", "Post-Race"],
+                                            help="Pre-Race = spotted during form study / model review. "
+                                                 "Post-Race = added after seeing a good run in results.")
                 pref_surface = st.selectbox("Preferred Surface", [None, "Turf", "AWT"])
                 dist_text = st.text_input("Preferred Distance(s) (comma-sep, e.g. 1200,1400)")
 
@@ -2748,7 +2817,7 @@ def page_blackbook():
                         dists = [int(d.strip()) for d in dist_text.split(",") if d.strip().isdigit()]
                     _bb_add_entry(bb, horse_name, reasoning, selected_tags, confidence,
                                   source_race=source_race, preferred_distance=dists,
-                                  preferred_surface=pref_surface)
+                                  preferred_surface=pref_surface, category=add_category)
                     st.toast(f"✓ {horse_name.upper()} added to Blackbook", icon="⭐")
                     st.rerun()
 
@@ -2998,6 +3067,7 @@ def page_blackbook():
                             confidence="medium",
                             source_race=race_lbl,
                             preferred_distance=dists,
+                            category="Post-Race",
                         )
                         st.toast(f"✓ {hname.upper()} added to Blackbook", icon="⭐")
                         st.rerun()
@@ -3053,7 +3123,9 @@ def page_results():
     _bb_expire_stale(bb)
     bb_names = {e["horse_name"].upper() for e in _bb_active_entries(bb)}
 
-    pred_path = REPORTS / f"race_day_report_{selected_dc}_v3.4.8.json"
+    pred_path = REPORTS / f"race_day_report_{selected_dc}_v4.4.json"
+    if not pred_path.exists():
+        pred_path = REPORTS / f"race_day_report_{selected_dc}_v3.4.8.json"
     model_ranks = {}
     if pred_path.exists():
         try:
