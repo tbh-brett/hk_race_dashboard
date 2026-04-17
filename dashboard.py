@@ -380,6 +380,18 @@ def load_meeting_data(path: Path) -> dict:
         return json.load(f)
 
 
+def load_sarr_data(date_str: str) -> dict | None:
+    """Load SARR JSON report for a given date (YYYYMMDD). Returns None if missing."""
+    sarr_path = REPORTS / f"race_day_report_{date_str}_SARR.json"
+    if not sarr_path.exists():
+        return None
+    try:
+        with open(sarr_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
 # ── Backtest data loading ─────────────────────────────────────────────────────
 
 @st.cache_data(ttl=30)
@@ -1142,6 +1154,132 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
 
+def render_sarr_race_card(race: dict, et_race: dict | None = None,
+                          bb_lookup: dict | None = None):
+    """Render a single race's SARR picks as a terminal-style card."""
+    picks = race.get("picks", [])
+    if not picks:
+        st.warning(f"No SARR projections for Race {race['race_number']}")
+        return
+
+    # ── Race header ───────────────────────────────────────────────────────
+    cls_str = f"Class {race.get('race_class', '')}" if race.get('race_class') else "Group"
+    surface = "AWT" if race.get("is_awt") else "Turf"
+    st.markdown(
+        f'<div class="race-hdr-block">'
+        f'<div class="race-hdr-title">R{race["race_number"]} — {race.get("race_name", "")}'
+        f' <span style="opacity:0.5;font-size:0.75em">(SARR)</span></div>'
+        f'<div class="race-hdr-meta">'
+        f'<span>{race.get("distance", "?")}m {surface} ({race.get("race_course", "")})</span>'
+        f'<span>{cls_str}</span>'
+        f'<span style="margin-left:auto;opacity:0.5">{race.get("runners", len(picks))} runners</span>'
+        f'</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    # ── Speed map (from ET data if available) ─────────────────────────────
+    if et_race:
+        render_speed_map(et_race)
+
+    # ── Toggle ────────────────────────────────────────────────────────────
+    toggle_key = f"rd_sarr_full_{race['race_number']}"
+    if toggle_key not in st.session_state:
+        st.session_state[toggle_key] = True
+    show_full = st.session_state[toggle_key]
+
+    col_tog, _ = st.columns([2, 8])
+    with col_tog:
+        tog_label = "Full Field" if not show_full else "Top 4 Only"
+        if st.button(f"[ {tog_label} ]", key=f"sarr_tog_{race['race_number']}"):
+            st.session_state[toggle_key] = not show_full
+            st.rerun()
+
+    _bb = bb_lookup or {}
+    display_picks = picks if show_full else picks[:4]
+
+    rows = []
+    for p in display_picks:
+        bb_entry = _bb.get(p.get("horse_name", "").upper())
+        wpr_pct = (p.get("place_rate", 0) or 0) * 100
+        rows.append({
+            "Rk": p["rank"],
+            "No": p.get("horse_no", ""),
+            "Horse": p.get("horse_name", ""),
+            "BB": "BB" if bb_entry else "",
+            "SARR": round(p.get("sarr", 0), 3),
+            "FMRP": round(p.get("f_fmrp", 0), 2),
+            "LSA": round(p.get("f_lsa", 0), 2),
+            "ESZ": round(p.get("f_esz", 0), 2),
+            "SSI": round(p.get("avg_ssi", 0), 2),
+            "Style": p.get("style", "?"),
+            "Traj": round(p.get("f_traj", 0), 3),
+            "WPR%": f"{wpr_pct:.0f}%",
+            "Late Std": round(p.get("late_std", 0.5), 2),
+            "Draw": p.get("draw", "—") or "—",
+            "Wt": p.get("weight", "—") or "—",
+            "Jockey": p.get("jockey", ""),
+        })
+
+    df = pd.DataFrame(rows)
+
+    def _style_sarr(val):
+        try: v = float(val)
+        except (ValueError, TypeError): return ""
+        if v <= -0.30: return "color: #22c55e; font-weight: bold"
+        elif v <= -0.10: return "color: #22c55e"
+        elif v >= 0.05: return "color: #ef4444"
+        return ""
+
+    def _style_fmrp(val):
+        try: v = float(val)
+        except (ValueError, TypeError): return ""
+        if v <= -0.30: return "color: #22c55e; font-weight: bold"
+        elif v >= 0.10: return "color: #ef4444"
+        return ""
+
+    def _style_lsa_esz(val):
+        try: v = float(val)
+        except (ValueError, TypeError): return ""
+        if v <= -0.15: return "color: #22c55e; font-weight: bold"
+        elif v >= 0.15: return "color: #ef4444"
+        return ""
+
+    def _style_traj(val):
+        try: v = float(val)
+        except (ValueError, TypeError): return ""
+        if v <= -0.03: return "color: #22c55e; font-weight: bold"
+        elif v >= 0.03: return "color: #ef4444"
+        return ""
+
+    def _style_wpr(val):
+        pct = float(str(val).replace("%", "")) if "%" in str(val) else 0
+        if pct >= 40: return "color: #22c55e; font-weight: bold"
+        elif pct <= 10: return "color: #ef4444"
+        return ""
+
+    def _style_late_std(val):
+        try: v = float(val)
+        except (ValueError, TypeError): return ""
+        if v <= 0.20: return "color: #22c55e; font-weight: bold"
+        elif v >= 0.50: return "color: #ef4444"
+        return ""
+
+    styled = df.style.map(_style_sarr, subset=["SARR"]) \
+                      .map(_style_fmrp, subset=["FMRP"]) \
+                      .map(_style_lsa_esz, subset=["LSA", "ESZ"]) \
+                      .map(_style_traj, subset=["Traj"]) \
+                      .map(_style_wpr, subset=["WPR%"]) \
+                      .map(_style_late_std, subset=["Late Std"]) \
+                      .format({"SARR": "{:+.3f}", "FMRP": "{:+.2f}",
+                               "LSA": "{:+.2f}", "ESZ": "{:+.2f}",
+                               "SSI": "{:+.2f}", "Traj": "{:+.3f}"}) \
+                      .set_properties(**{"text-align": "center"}) \
+                      .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
+
+    st.dataframe(styled, use_container_width=True, hide_index=True)
+    st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Pipeline runner
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1175,14 +1313,35 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
         )
 
         if result.returncode == 0:
-            st.success(f"Pipeline complete for {date_str}!")
-            with st.expander("Pipeline output"):
+            st.success(f"ET pipeline complete for {date_str}!")
+            with st.expander("ET pipeline output"):
                 st.code(result.stdout[-3000:] if len(result.stdout) > 3000
                         else result.stdout)
         else:
-            st.error(f"Pipeline failed (exit code {result.returncode})")
+            st.error(f"ET pipeline failed (exit code {result.returncode})")
             with st.expander("Error output"):
                 st.code(result.stderr[-2000:] if result.stderr else result.stdout[-2000:])
+
+    # ── Run SARR model (independent, always runs after ET) ──
+    sarr_script = BASE / "sarr_raceday.py"
+    if sarr_script.exists():
+        with st.spinner(f"Running SARR analysis for {date_str}..."):
+            sarr_cmd = [PYTHON, str(sarr_script), "--date", date_str]
+            sarr_result = subprocess.run(
+                sarr_cmd, env=env, cwd=str(BASE),
+                capture_output=True, text=True, encoding="utf-8",
+                timeout=300,
+            )
+            if sarr_result.returncode == 0:
+                st.success(f"SARR analysis complete for {date_str}!")
+                with st.expander("SARR output"):
+                    st.code(sarr_result.stdout[-2000:] if len(sarr_result.stdout) > 2000
+                            else sarr_result.stdout)
+            else:
+                st.warning(f"SARR analysis failed (non-critical)")
+                with st.expander("SARR error"):
+                    st.code(sarr_result.stderr[-1500:] if sarr_result.stderr
+                            else sarr_result.stdout[-1500:])
 
 
 def _save_uploaded_racecard(uploaded_json: bytes, date_str: str) -> bool:
@@ -1310,8 +1469,9 @@ def _overview_find_today_meeting() -> dict | None:
 
 
 def page_overview():
+
     st.markdown('<div class="page-title">Overview</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Wagering briefing &middot; blackbook &middot; confident picks</div>',
+    st.markdown('<div class="page-subtitle">Blackbook &middot; Mutual model picks &middot; Trial standouts</div>',
                 unsafe_allow_html=True)
 
     meeting_info = _overview_find_today_meeting()
@@ -1319,11 +1479,17 @@ def page_overview():
         st.info("No meeting reports found yet. Run analysis from the Race Day page.")
         return
 
+
     data = load_meeting_data(meeting_info["file"])
     races = data.get("races", [])
     dstr = meeting_info["date_str"]
     nice_date = f"{dstr[:4]}-{dstr[4:6]}-{dstr[6:]}"
     version = meeting_info.get("model_version", data.get("model_version", ""))
+
+    # Load SARR data for this meeting
+    sarr_data = load_sarr_data(dstr)
+    sarr_races = sarr_data.get("races", []) if sarr_data else []
+
 
     st.markdown(f"### {data.get('meeting_title', nice_date)}")
     if version:
@@ -1388,9 +1554,41 @@ def page_overview():
     else:
         st.caption("No active blackbook entries match today's card.")
 
+
+    # ── Section 2: Mutual model top picks ─────────────
+    st.markdown("### 🤝 Mutual Model Top Picks (ET ∩ SARR)")
+    if sarr_races:
+        mutual_rows = []
+        for et_race in races:
+            rn = et_race["race_number"]
+            sarr_race = next((r for r in sarr_races if r["race_number"] == rn), None)
+            if not sarr_race:
+                continue
+            et_top = {p["horse_name"].upper().strip() for p in et_race.get("picks", [])[:4]}
+            sarr_top = {p["horse_name"].upper().strip() for p in sarr_race.get("picks", [])[:4]}
+            mutual = et_top & sarr_top
+            for hn in mutual:
+                et_pick = next((p for p in et_race["picks"] if p["horse_name"].upper().strip() == hn), None)
+                sarr_pick = next((p for p in sarr_race["picks"] if p["horse_name"].upper().strip() == hn), None)
+                mutual_rows.append({
+                    "Race": f"R{rn}",
+                    "Horse": hn.title(),
+                    "ET Rank": et_pick["rank"] if et_pick else "?",
+                    "SARR Rank": sarr_pick["rank"] if sarr_pick else "?",
+                    "ET Proj": f"{et_pick['projected_time']:.2f}" if et_pick and 'projected_time' in et_pick else "—",
+                    "SARR": f"{sarr_pick['sarr']:+.3f}" if sarr_pick and 'sarr' in sarr_pick else "—",
+                })
+        if mutual_rows:
+            df = pd.DataFrame(mutual_rows)
+            st.dataframe(df, use_container_width=True, hide_index=True)
+        else:
+            st.caption("No mutual top-4 picks between ET and SARR.")
+    else:
+        st.caption("SARR analysis not available for this meeting.")
+
     st.markdown("---")
 
-    # ── Section 1b: Trial standouts running today ──────────
+    # ── Section 3: Trial standouts running today ──────────
     st.markdown("### 🏇 Trial Standouts Running Today")
     trial_index = _load_all_trial_horse_index()
     if trial_index:
@@ -1659,13 +1857,19 @@ def page_race_day(selected):
     data = load_meeting_data(selected["file"])
 
     _date_match = re.search(r"(\d{8})", str(selected["file"]))
-    vet_lookup = _load_vet_lookup(_date_match.group(1)) if _date_match else {}
+    date_str = _date_match.group(1) if _date_match else ""
+    vet_lookup = _load_vet_lookup(date_str) if date_str else {}
 
     bb = _load_blackbook()
     _bb_expire_stale(bb)
     bb_lookup = _bb_active_lookup(bb)
 
-    races = data.get("races", [])
+    et_races = data.get("races", [])
+
+    # ── Load SARR data for same date ─────────────────────────────────────
+    sarr_data = load_sarr_data(date_str) if date_str else None
+    sarr_races = sarr_data.get("races", []) if sarr_data else []
+    sarr_available = bool(sarr_races)
 
     # ── Page header ──────────────────────────────────────────────────────
     st.markdown(
@@ -1675,11 +1879,24 @@ def page_race_day(selected):
         unsafe_allow_html=True,
     )
 
+    # ── Model toggle (ET / SARR) ─────────────────────────────────────────
+    if sarr_available:
+        model_options = ["ET (Expected Time)", "SARR (Sectional-Anchored)"]
+        sel_model = st.radio(
+            "Model", model_options, index=0, horizontal=True,
+            key="rd_model_toggle",
+        )
+        use_sarr = sel_model.startswith("SARR")
+    else:
+        use_sarr = False
+
+    active_races = sarr_races if use_sarr else et_races
+
     # ── Summary metrics ──────────────────────────────────────────────────
-    total_runners = sum(r.get("runners", 0) for r in races)
-    total_projected = sum(r.get("projected", 0) for r in races)
+    total_runners = sum(r.get("runners", 0) for r in active_races)
+    total_projected = sum(r.get("projected", 0) for r in active_races)
     cols = st.columns(4)
-    cols[0].metric("Races", len(races))
+    cols[0].metric("Races", len(active_races))
     cols[1].metric("Total Runners", total_runners)
     cols[2].metric("Projected", total_projected)
     cols[3].metric("Venue", data.get("meeting_venue", "?"))
@@ -1689,27 +1906,41 @@ def page_race_day(selected):
     # ── Top Picks Summary table (collapsible) ──────────────────────────
     with st.expander("**TOP PICKS SUMMARY**", expanded=False):
         summary_rows = []
-        for race in races:
+        for race in active_races:
             picks = race.get("picks", [])
             if not picks:
                 continue
             top = picks[0]
-            cls_str = f"C{race['race_class']}" if race['race_class'] else "Grp"
-            surface = "AWT" if race["is_awt"] else "Turf"
-            summary_rows.append({
-                "Race": f"R{race['race_number']}",
-                "Dist": f"{race['distance']}m",
-                "Surf": surface,
-                "Cls": cls_str,
-                "Pace": race["pace"],
-                "Top Pick": top["horse_name"],
-                "Proj (s)": f"{top['projected_time']:.2f}",
-                "Win%": f"{top['win_prob']:.0f}%",
-                "Risk": f"{top['risk_score']:.0f}({top['risk_tier'][0]})",
-                "2nd": picks[1]["horse_name"] if len(picks) > 1 else "—",
-                "3rd": picks[2]["horse_name"] if len(picks) > 2 else "—",
-                "4th": picks[3]["horse_name"] if len(picks) > 3 else "—",
-            })
+            cls_str = f"C{race.get('race_class', '')}" if race.get('race_class') else "Grp"
+            surface = "AWT" if race.get("is_awt") else "Turf"
+            if use_sarr:
+                summary_rows.append({
+                    "Race": f"R{race['race_number']}",
+                    "Dist": f"{race.get('distance', '?')}m",
+                    "Surf": surface,
+                    "Cls": cls_str,
+                    "Top Pick": top.get("horse_name", "?"),
+                    "SARR": f"{top.get('sarr', 0):+.3f}",
+                    "Style": top.get("style", "?"),
+                    "2nd": picks[1]["horse_name"] if len(picks) > 1 else "—",
+                    "3rd": picks[2]["horse_name"] if len(picks) > 2 else "—",
+                    "4th": picks[3]["horse_name"] if len(picks) > 3 else "—",
+                })
+            else:
+                summary_rows.append({
+                    "Race": f"R{race['race_number']}",
+                    "Dist": f"{race['distance']}m",
+                    "Surf": surface,
+                    "Cls": cls_str,
+                    "Pace": race.get("pace", "?"),
+                    "Top Pick": top["horse_name"],
+                    "Proj (s)": f"{top['projected_time']:.2f}",
+                    "Win%": f"{top['win_prob']:.0f}%",
+                    "Risk": f"{top['risk_score']:.0f}({top['risk_tier'][0]})",
+                    "2nd": picks[1]["horse_name"] if len(picks) > 1 else "—",
+                    "3rd": picks[2]["horse_name"] if len(picks) > 2 else "—",
+                    "4th": picks[3]["horse_name"] if len(picks) > 3 else "—",
+                })
 
         if summary_rows:
             st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
@@ -1717,7 +1948,7 @@ def page_race_day(selected):
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
     # ── Race tab selector ────────────────────────────────────────────────
-    race_numbers = [r["race_number"] for r in races]
+    race_numbers = [r["race_number"] for r in active_races]
     if "rd_active_race" not in st.session_state:
         st.session_state["rd_active_race"] = race_numbers[0] if race_numbers else None
 
@@ -1731,16 +1962,22 @@ def page_race_day(selected):
                          use_container_width=True,
                          type="primary" if is_active else "secondary"):
                 st.session_state["rd_active_race"] = rn
-                # Reset field toggle when switching race
                 st.session_state.pop(f"rd_full_{rn}", None)
+                st.session_state.pop(f"rd_sarr_full_{rn}", None)
                 st.rerun()
 
     # ── Render selected race ─────────────────────────────────────────────
     active_rn = st.session_state["rd_active_race"]
     if active_rn:
-        race = next((r for r in races if r["race_number"] == active_rn), None)
-        if race:
-            render_race_card(race, vet_lookup=vet_lookup, show_top=4, bb_lookup=bb_lookup)
+        if use_sarr:
+            sarr_race = next((r for r in sarr_races if r["race_number"] == active_rn), None)
+            et_race = next((r for r in et_races if r["race_number"] == active_rn), None)
+            if sarr_race:
+                render_sarr_race_card(sarr_race, et_race=et_race, bb_lookup=bb_lookup)
+        else:
+            race = next((r for r in et_races if r["race_number"] == active_rn), None)
+            if race:
+                render_race_card(race, vet_lookup=vet_lookup, show_top=4, bb_lookup=bb_lookup)
 
     # ── Sidebar downloads ────────────────────────────────────────────────
     st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
@@ -1753,7 +1990,7 @@ def page_race_day(selected):
     if pdf_path.exists():
         with open(pdf_path, "rb") as f:
             st.sidebar.download_button(
-                "[ PDF Report ]", f.read(),
+                "[ ET PDF Report ]", f.read(),
                 file_name=pdf_name, mime="application/pdf",
             )
     if txt_path.exists():
@@ -1762,6 +1999,16 @@ def page_race_day(selected):
                 "[ Text Report ]", f.read(),
                 file_name=txt_name, mime="text/plain",
             )
+    # SARR PDF download
+    if sarr_data:
+        sarr_pdf_name = sarr_data.get("pdf_file", "")
+        sarr_pdf_path = REPORTS / sarr_pdf_name
+        if sarr_pdf_path.exists():
+            with open(sarr_pdf_path, "rb") as f:
+                st.sidebar.download_button(
+                    "[ SARR PDF Report ]", f.read(),
+                    file_name=sarr_pdf_name, mime="application/pdf",
+                )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
