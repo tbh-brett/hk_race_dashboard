@@ -294,10 +294,10 @@ def build_profile(hist, today_dist, today_venue, today_surface):
     last6_str = "/".join(str(p) if p < 90 else "—" for p in last6_places)
 
     return {
-        "fmrp": fmrp_val if not np.isnan(fmrp_val) else 0.0,
-        "lsa": lsa_val if not np.isnan(lsa_val) else 0.0,
-        "esz": esz_val if not np.isnan(esz_val) else 0.0,
-        "avg_ssi": ssi_val if not np.isnan(ssi_val) else 0.0,
+        "fmrp": fmrp_val,
+        "lsa": lsa_val,
+        "esz": esz_val,
+        "avg_ssi": ssi_val,
         "late_std": late_std,
         "style": style,
         "rating": rating,
@@ -464,6 +464,8 @@ def main():
             if np.isnan(rat):
                 rat = safe_float(h.get("rating"), med_rat)
 
+            # NaN-safe factor extraction — use raw NaN for display, 0.0 for composite
+            _nan0 = lambda v: 0.0 if (isinstance(v, float) and np.isnan(v)) else v
             f_fmrp   = prof["fmrp"]
             f_lsa    = prof["lsa"]
             f_esz    = prof["esz"]
@@ -471,12 +473,12 @@ def main():
             f_rating = -(rat - med_rat) / 10.0
             f_traj   = prof["traj"]
             f_wpr    = -prof["place_rate"] * 5
-            f_dist   = abs(prof["avg_ssi"] - IDEAL_SSI.get(int(dist), -0.20))
+            f_dist   = abs(_nan0(prof["avg_ssi"]) - IDEAL_SSI.get(int(dist), -0.20))
             draw_adj = get_draw_score(h.get("draw", 0), venue, draw_stats) * 0.3
 
-            sarr = (WEIGHTS["f_fmrp"]   * f_fmrp
-                  + WEIGHTS["f_lsa"]    * f_lsa
-                  + WEIGHTS["f_esz"]    * f_esz
+            sarr = (WEIGHTS["f_fmrp"]   * _nan0(f_fmrp)
+                  + WEIGHTS["f_lsa"]    * _nan0(f_lsa)
+                  + WEIGHTS["f_esz"]    * _nan0(f_esz)
                   + WEIGHTS["f_style"]  * f_style
                   + WEIGHTS["f_rating"] * f_rating
                   + WEIGHTS["f_traj"]   * f_traj
@@ -684,17 +686,19 @@ def generate_pdf(path, race_date, venue, all_races):
             # Colour-coded SARR
             sarr_str = col_tag(h["sarr"], lo=-0.30, hi=0.05, fmt="{:+.3f}")
             fmrp_str = col_tag(h["f_fmrp"], lo=None, hi=0.10, fmt="{:+.2f}")
-            if h["f_fmrp"] < -0.30:
-                fmrp_str = f'<font color="{GREEN}"><b>{h["f_fmrp"]:+.2f}</b></font>'
+            _fmrp = h["f_fmrp"]
+            if isinstance(_fmrp, float) and not np.isnan(_fmrp) and _fmrp < -0.30:
+                fmrp_str = f'<font color="{GREEN}"><b>{_fmrp:+.2f}</b></font>'
             lsa_str = col_tag(h["f_lsa"], lo=-0.15, hi=0.15, fmt="{:+.2f}")
             esz_str = col_tag(h["f_esz"], lo=-0.15, hi=0.15, fmt="{:+.2f}")
             ssi_str = col_tag(h["avg_ssi"], lo=-0.20, hi=0.20, fmt="{:+.2f}")
 
-            traj_str = fvs(h["f_traj"], "{:+.3f}")
-            if h["f_traj"] < -0.03:
-                traj_str = f'<font color="{GREEN}"><b>{h["f_traj"]:+.3f}</b></font>'
-            elif h["f_traj"] > 0.03:
-                traj_str = f'<font color="{RED}">{h["f_traj"]:+.3f}</font>'
+            _traj = h["f_traj"]
+            traj_str = fvs(_traj, "{:+.3f}")
+            if isinstance(_traj, float) and not np.isnan(_traj) and _traj < -0.03:
+                traj_str = f'<font color="{GREEN}"><b>{_traj:+.3f}</b></font>'
+            elif isinstance(_traj, float) and not np.isnan(_traj) and _traj > 0.03:
+                traj_str = f'<font color="{RED}">{_traj:+.3f}</font>'
 
             wpr_pct = h["place_rate"] * 100
             wpr_str = f"{wpr_pct:.0f}%"
@@ -703,11 +707,12 @@ def generate_pdf(path, race_date, venue, all_races):
             elif wpr_pct <= 10:
                 wpr_str = f'<font color="{RED}">{wpr_pct:.0f}%</font>'
 
-            late_std_str = fv(h["late_std"], "{:.2f}")
-            if h["late_std"] <= 0.20:
-                late_std_str = f'<font color="{GREEN}"><b>{h["late_std"]:.2f}</b></font>'
-            elif h["late_std"] >= 0.50:
-                late_std_str = f'<font color="{RED}">{h["late_std"]:.2f}</font>'
+            _ls = h["late_std"]
+            late_std_str = fv(_ls, "{:.2f}")
+            if isinstance(_ls, float) and not np.isnan(_ls) and _ls <= 0.20:
+                late_std_str = f'<font color="{GREEN}"><b>{_ls:.2f}</b></font>'
+            elif isinstance(_ls, float) and not np.isnan(_ls) and _ls >= 0.50:
+                late_std_str = f'<font color="{RED}">{_ls:.2f}</font>'
 
             style_str = h["style"]
             if is_deb:

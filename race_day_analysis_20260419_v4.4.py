@@ -33,28 +33,20 @@ import pandas as pd
 warnings.filterwarnings("ignore")
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-BASE = Path(__file__).resolve().parent
+BASE = Path(r"c:\Users\tbhbr\OneDrive\Desktop\python\HK races anaylsis, April onwards")
 
 # ── Per-meeting configuration (UPDATE THESE FOR EACH MEETING) ─────────────────
-RACE_CARD    = BASE / "racecards" / "racecard_20260415.xlsx"
+RACE_CARD    = BASE / "racecards" / "racecard_20260419.xlsx"
 SHEET_NAME   = "All Races"                                          # v4.0: new racecard format
-
-def _find_data_file(name: str) -> Path:
-    """Locate a data file: check BASE first, then $TEMP."""
-    p = BASE / name
-    if p.exists():
-        return p
-    return Path(os.environ.get("TEMP", str(BASE))) / name
-
-EXP_TIME_REF = _find_data_file("expected_time_references_v4.xlsx")
+EXP_TIME_REF = Path(os.environ.get("TEMP", str(BASE))) / "expected_time_references_v4.xlsx"
 ABILITY_FILE = BASE / "horse_ability_analysis_v3.xlsx"
 
-OUT_PDF  = BASE / "reports" / "race_day_report_20260415_v4.4_sec.pdf"
-OUT_TEXT = BASE / "reports" / "race_day_analysis_20260415_v4.4_sec.txt"
-DB_FILE  = _find_data_file("hkjc_results_updated.xlsx")
+OUT_PDF  = BASE / "reports" / "race_day_report_20260419_v4.4.pdf"
+OUT_TEXT = BASE / "reports" / "race_day_analysis_20260419_v4.4.txt"
+DB_FILE  = Path(os.environ.get("TEMP", str(BASE))) / "hkjc_results_updated.xlsx"
 
-MEETING_TITLE = "HAPPY VALLEY — WEDNESDAY, 15 APRIL 2026"
-MEETING_VENUE = "HV"
+MEETING_TITLE = "SHA TIN (AWT) — SUNDAY, 19 APRIL 2026"
+MEETING_VENUE = "ST"
 
 # ── Scratchings (race_number: [horse_name, ...]) ──────────────────────────────
 SCRATCHINGS = {
@@ -63,8 +55,8 @@ SCRATCHINGS = {
 # ── Standby Promotions (injected after card parse) ────────────────────────────
 STANDBY_PROMOTIONS = {
 }
-TURF_GOING_ASSUMED = "Good"    # UPDATE per meeting (check HKJC going report)
-AWT_GOING_ASSUMED  = "Good"    # UPDATE per meeting (if AWT races scheduled)
+TURF_GOING_ASSUMED = "Good"    # auto-set by orchestrator
+AWT_GOING_ASSUMED  = "Good"    # auto-set by orchestrator
 
 # ── v3.2 Shrinkage Downplay Parameters (reduced from v3.1) ────────────────────
 # v3.2: increased raw weight from 0.70 → 0.80 and lowered SF threshold from 0.40 → 0.30
