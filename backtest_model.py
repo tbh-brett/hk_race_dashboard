@@ -776,6 +776,132 @@ def _style_benefits_from_pace(style: str, pace: str) -> bool:
     return False  # Normal pace — no strong beneficiary
 
 
+def find_exceptional_performers(pred_races: Dict, result_races: Dict) -> List[Dict]:
+    """Detect exceptional performers (blackbook candidates) from prediction vs result comparison."""
+    exceptional = []
+    for rn, pred_race in pred_races.items():
+        if rn not in result_races:
+            continue
+        result_race = result_races[rn]
+        dist = pred_race.get("distance") or result_race.get("distance", 0)
+        race_class = pred_race.get("race_class") or result_race.get("race_class", "")
+        try:
+            race_class_int = int(race_class) if race_class else 0
+        except (ValueError, TypeError):
+            race_class_int = 0
+        cls_str = f"C{race_class_int}" if race_class_int > 0 else "Grp"
+
+        actual_runners = result_race.get("runners", [])
+        picks = pred_race.get("picks", [])
+
+        # Median/winner finish times for context
+        race_fts = [r.get("finish_time_seconds") for r in actual_runners
+                     if r.get("finish_time_seconds")]
+        race_median_ft = float(np.median(race_fts)) if race_fts else None
+        winner_ft = None
+        for r in actual_runners:
+            p = _parse_place(r.get("place", "99"))
+            if p == 1:
+                winner_ft = r.get("finish_time_seconds")
+                break
+
+        for r in actual_runners:
+            place = _parse_place(r.get("place", "99"))
+            if place is None or place > 20:
+                continue
+            hn = r.get("horse_name", "?")
+            ft = r.get("finish_time_seconds")
+            odds = _parse_odds(r.get("win_odds"))
+            rp = r.get("running_position", "")
+            draw = r.get("draw", "?")
+
+            pred_pick = next((p for p in picks
+                              if (p.get("horse_name") or "").upper().strip() == hn.upper().strip()), None)
+            pred_rank = pred_pick.get("rank") if pred_pick else None
+            pred_time = pred_pick.get("projected_time") if pred_pick else None
+
+            reasons = []
+            score = 0.0
+
+            # 1. Dominant winner
+            if place == 1 and winner_ft and race_median_ft:
+                margin = race_median_ft - winner_ft
+                if margin > 1.0:
+                    reasons.append(f"won by {margin:.1f}s vs median — dominant")
+                    score += margin
+
+            # 2. Exceptional late speed
+            secs = r.get("sectiontimes", [])
+            if secs and isinstance(secs, list):
+                valid_secs = []
+                for s in secs:
+                    try:
+                        if s and str(s).strip():
+                            valid_secs.append(float(s))
+                    except (ValueError, TypeError):
+                        pass
+                if len(valid_secs) >= 2:
+                    last_sec = valid_secs[-1]
+                    avg_other = sum(valid_secs[:-1]) / max(len(valid_secs) - 1, 1)
+                    if last_sec < avg_other - 0.5 and place <= 4:
+                        reasons.append(f"exceptional late speed ({last_sec:.2f}s last section vs {avg_other:.2f}s avg early)")
+                        score += (avg_other - last_sec)
+
+            # 3. Ran faster than projected
+            if pred_time and ft:
+                beat_proj = pred_time - ft
+                if beat_proj > 0.5 and place <= 4:
+                    reasons.append(f"ran {beat_proj:.2f}s faster than projected")
+                    score += beat_proj * 0.8
+
+            # 4. Wide draw overcome
+            if place <= 3 and draw and str(draw).isdigit() and int(draw) >= 10:
+                reasons.append(f"placed from wide draw ({draw})")
+                score += 0.5
+
+            # 5. Big-odds winner
+            if place == 1 and odds and odds >= 10:
+                reasons.append(f"won at ${odds:.1f} — market underrated")
+                score += min(odds / 10, 2.0)
+
+            # 6. Model ranked poorly but outperformed
+            if pred_rank and pred_rank >= 8 and place <= 3:
+                reasons.append(f"model Rk#{pred_rank} → P{place} — unanticipated improvement")
+                score += 1.0
+
+            # 7. Strong closing
+            first_pos = None
+            if rp:
+                m = re.match(r"(\d+)", str(rp).strip())
+                if m:
+                    first_pos = int(m.group(1))
+            if first_pos and first_pos >= 8 and place <= 3:
+                reasons.append(f"closed from position {first_pos} to finish P{place}")
+                score += 0.5
+
+            # 8. Gate-to-wire
+            if first_pos and first_pos <= 2 and place <= 2:
+                reasons.append("led/sat 2nd from start — all-the-way effort")
+                score += 0.3
+
+            if score >= 1.0 and reasons:
+                exceptional.append({
+                    "race": rn,
+                    "distance": dist,
+                    "class": cls_str,
+                    "horse": hn,
+                    "place": place,
+                    "odds": odds,
+                    "draw": draw,
+                    "pred_rank": pred_rank,
+                    "score": round(score, 2),
+                    "reasons": reasons,
+                })
+
+    exceptional.sort(key=lambda x: -x["score"])
+    return exceptional
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Main backtest pipeline
 # ══════════════════════════════════════════════════════════════════════════════
@@ -813,19 +939,49 @@ def backtest_meeting(date_compact: str) -> Optional[Dict]:
     if not matched_races:
         return None
 
+    # Compute all accuracy dimensions
+    ta = compute_time_accuracy(matched_races)
+    pa = compute_pace_accuracy(matched_races)
+    pb = compute_pace_beneficiary(matched_races)
+    ra = compute_risk_accuracy(matched_races)
+    sa = compute_style_accuracy(matched_races)
+    da = compute_draw_accuracy(matched_races)
+
+    # Exceptional performers for blackbook
+    exc = find_exceptional_performers(pred_races, result_races)
+
+    # Build dashboard-compatible metrics summary
+    metrics = {
+        "mae": ta.get("mae_seconds"),
+        "median_ae": ta.get("median_ae_seconds"),
+        "bias": None,
+        "mean_spearman_rho": ta.get("rank_correlation_avg"),
+        "top1_rate": ta.get("top1_win_rate"),
+        "top3_rate": ta.get("top3_place_rate"),
+        "top5_rate": None,
+        "mean_top3_overlap": None,
+    }
+
     return {
         "date": f"{date_compact[:4]}-{date_compact[4:6]}-{date_compact[6:]}",
+        "venue": pred_data.get("meeting_title", ""),
+        "model_version": "v4.4",
         "date_compact": date_compact,
         "meeting_title": pred_data.get("meeting_title", ""),
+        "n_races": len(matched_races),
         "n_races_matched": len(matched_races),
+        "n_predictions": sum(len(r["pairs"]) for r in matched_races),
         "n_runners_matched": sum(len(r["pairs"]) for r in matched_races),
         "computed_at": datetime.now().isoformat(),
-        "time_accuracy": compute_time_accuracy(matched_races),
-        "pace_accuracy": compute_pace_accuracy(matched_races),
-        "pace_beneficiary": compute_pace_beneficiary(matched_races),
-        "risk_accuracy": compute_risk_accuracy(matched_races),
-        "style_accuracy": compute_style_accuracy(matched_races),
-        "draw_accuracy": compute_draw_accuracy(matched_races),
+        "metrics": metrics,
+        "factor_importance": [],
+        "exceptional_performers": exc,
+        "time_accuracy": ta,
+        "pace_accuracy": pa,
+        "pace_beneficiary": pb,
+        "risk_accuracy": ra,
+        "style_accuracy": sa,
+        "draw_accuracy": da,
     }
 
 

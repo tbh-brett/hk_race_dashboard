@@ -1564,23 +1564,72 @@ def page_overview():
             sarr_race = next((r for r in sarr_races if r["race_number"] == rn), None)
             if not sarr_race:
                 continue
-            et_top = {p["horse_name"].upper().strip() for p in et_race.get("picks", [])[:4]}
-            sarr_top = {p["horse_name"].upper().strip() for p in sarr_race.get("picks", [])[:4]}
-            mutual = et_top & sarr_top
+            et_top = {p["horse_name"].upper().strip(): p for p in et_race.get("picks", [])[:4]}
+            sarr_top = {p["horse_name"].upper().strip(): p for p in sarr_race.get("picks", [])[:4]}
+            mutual = set(et_top.keys()) & set(sarr_top.keys())
             for hn in mutual:
-                et_pick = next((p for p in et_race["picks"] if p["horse_name"].upper().strip() == hn), None)
-                sarr_pick = next((p for p in sarr_race["picks"] if p["horse_name"].upper().strip() == hn), None)
+                et_pick = et_top[hn]
+                sarr_pick = sarr_top[hn]
+                et_rk = et_pick["rank"] if et_pick else 99
+                sarr_rk = sarr_pick["rank"] if sarr_pick else 99
+                # Highlight tier: green = both top 2, amber = both top 3
+                if et_rk <= 2 and sarr_rk <= 2:
+                    tier = "green"
+                elif et_rk <= 3 and sarr_rk <= 3:
+                    tier = "amber"
+                else:
+                    tier = "none"
                 mutual_rows.append({
-                    "Race": f"R{rn}",
-                    "Horse": hn.title(),
-                    "ET Rank": et_pick["rank"] if et_pick else "?",
-                    "SARR Rank": sarr_pick["rank"] if sarr_pick else "?",
-                    "ET Proj": f"{et_pick['projected_time']:.2f}" if et_pick and 'projected_time' in et_pick else "—",
-                    "SARR": f"{sarr_pick['sarr']:+.3f}" if sarr_pick and 'sarr' in sarr_pick else "—",
+                    "race": rn,
+                    "horse": hn.title(),
+                    "et_rank": et_rk,
+                    "sarr_rank": sarr_rk,
+                    "et_proj": f"{et_pick['projected_time']:.2f}" if et_pick and 'projected_time' in et_pick else "—",
+                    "sarr_val": f"{sarr_pick['sarr']:+.3f}" if sarr_pick and 'sarr' in sarr_pick else "—",
+                    "tier": tier,
                 })
         if mutual_rows:
-            df = pd.DataFrame(mutual_rows)
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            mutual_rows.sort(key=lambda r: ({"green": 0, "amber": 1, "none": 2}[r["tier"]], r["race"]))
+            html_rows = []
+            for mr in mutual_rows:
+                if mr["tier"] == "green":
+                    bg = "rgba(34,197,94,0.18)"
+                    name_style = "font-weight:800;color:#22c55e"
+                    rk_style = "font-weight:700;color:#22c55e"
+                elif mr["tier"] == "amber":
+                    bg = "rgba(245,158,11,0.15)"
+                    name_style = "font-weight:800;color:#f59e0b"
+                    rk_style = "font-weight:700;color:#f59e0b"
+                else:
+                    bg = "transparent"
+                    name_style = "font-weight:600"
+                    rk_style = ""
+                html_rows.append(
+                    f'<tr style="background:{bg}">'
+                    f'<td>R{mr["race"]}</td>'
+                    f'<td style="{name_style}">{mr["horse"]}</td>'
+                    f'<td style="{rk_style}">{mr["et_rank"]}</td>'
+                    f'<td style="{rk_style}">{mr["sarr_rank"]}</td>'
+                    f'<td>{mr["et_proj"]}</td>'
+                    f'<td>{mr["sarr_val"]}</td>'
+                    f'</tr>'
+                )
+            st.markdown(
+                '<table style="width:100%;border-collapse:collapse;font-size:0.92em">'
+                '<thead><tr style="border-bottom:2px solid rgba(128,128,128,0.3)">'
+                '<th style="text-align:left;padding:6px">Race</th>'
+                '<th style="text-align:left;padding:6px">Horse</th>'
+                '<th style="text-align:left;padding:6px">ET Rk</th>'
+                '<th style="text-align:left;padding:6px">SARR Rk</th>'
+                '<th style="text-align:left;padding:6px">ET Proj</th>'
+                '<th style="text-align:left;padding:6px">SARR</th>'
+                '</tr></thead><tbody>'
+                + "".join(html_rows)
+                + '</tbody></table>'
+                '<div style="margin-top:6px;font-size:0.78em;opacity:0.6">'
+                '🟢 Both top 2 &nbsp; 🟡 Both top 3</div>',
+                unsafe_allow_html=True,
+            )
         else:
             st.caption("No mutual top-4 picks between ET and SARR.")
     else:
@@ -3799,81 +3848,28 @@ def _build_form_guide_pdf_from_cache(fg_cache: dict, bb_lookup: dict) -> bytes:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Live Feed page — mid-meeting result feed + track bias detection
+# Live Feed page — real-time race analysis engine
 # ══════════════════════════════════════════════════════════════════════════════
 
-def _live_init_state():
-    """Ensure session state keys for live feed exist."""
-    if "live_results" not in st.session_state:
-        st.session_state["live_results"] = {}  # {race_num: {place, horse, ft, odds, running_position, ...}}
-    if "live_meeting_file" not in st.session_state:
-        st.session_state["live_meeting_file"] = None
-
-
-def _live_compute_bias(results: dict) -> dict:
-    """Compute running track bias signals from entered results."""
-    if len(results) < 2:
-        return {}
-
-    front_wins = 0
-    closer_wins = 0
-    inner_places = []
-    outer_places = []
-    total = 0
-
-    for rnum, runners in sorted(results.items()):
-        for r in runners:
-            place = r.get("place", 99)
-            draw = r.get("draw")
-            rp = r.get("running_position", "")
-            first_pos = None
-            if rp:
-                m = re.match(r"(\d+)", str(rp).strip())
-                if m:
-                    first_pos = int(m.group(1))
-
-            if place <= 3:
-                total += 1
-                if first_pos and first_pos <= 3:
-                    front_wins += 1
-                elif first_pos and first_pos > 6:
-                    closer_wins += 1
-                if draw and draw <= 4:
-                    inner_places.append(place)
-                elif draw and draw >= 9:
-                    outer_places.append(place)
-
-    bias = {}
-    if total >= 3:
-        fr = front_wins / total
-        cr = closer_wins / total
-        if fr >= 0.6:
-            bias["pace"] = ("Front-runners dominant", "🔴", fr)
-        elif cr >= 0.5:
-            bias["pace"] = ("Closers dominant", "🔵", cr)
-        else:
-            bias["pace"] = ("No clear pace bias", "⚪", max(fr, cr))
-
-    if inner_places and outer_places:
-        avg_in = sum(inner_places) / len(inner_places)
-        avg_out = sum(outer_places) / len(outer_places)
-        diff = avg_out - avg_in
-        if diff > 2:
-            bias["rail"] = ("Inside rail advantage", "🟢", diff)
-        elif diff < -2:
-            bias["rail"] = ("Outside rail advantage", "🟡", abs(diff))
-        else:
-            bias["rail"] = ("No rail bias detected", "⚪", abs(diff))
-
-    return bias
+def _live_load_analysis(dstr: str) -> dict | None:
+    """Run live_analysis engine for a meeting date."""
+    try:
+        from live_analysis import run_live_analysis
+        result = run_live_analysis(dstr)
+        if "error" in result:
+            return None
+        return result
+    except Exception:
+        return None
 
 
 def page_live_feed():
     st.markdown('<div class="page-title">Live Feed</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Enter results mid-meeting &middot; detect track bias in real time</div>',
-                unsafe_allow_html=True)
-
-    _live_init_state()
+    st.markdown(
+        '<div class="page-subtitle">Real-time race analysis &middot; '
+        'convergence detection &middot; pattern recognition</div>',
+        unsafe_allow_html=True,
+    )
 
     # Find today's or most recent meeting
     meeting_info = _overview_find_today_meeting()
@@ -3886,162 +3882,214 @@ def page_live_feed():
     dstr = meeting_info["date_str"]
     nice_date = f"{dstr[:4]}-{dstr[4:6]}-{dstr[6:]}"
 
+    # Also load SARR if available
+    sarr_data = load_sarr_data(dstr)
+
     st.markdown(f"**Meeting:** {data.get('meeting_title', nice_date)}")
 
-    # ── Auto-scrape button ─────────────────────────────────
+    # ── Controls ───────────────────────────────────────────
     col_s1, col_s2, col_s3 = st.columns([2, 2, 4])
     with col_s1:
         scrape_date = f"{dstr[:4]}-{dstr[4:6]}-{dstr[6:]}"
-        if st.button("Auto-Scrape Results", key="live_scrape"):
+        if st.button("🔄 Scrape Results", key="live_scrape"):
             _run_results_scraper(scrape_date)
-            # Load scraped data into session
-            res_file = REPORTS / f"results_{dstr}.json"
-            if res_file.exists():
-                with open(res_file, "r", encoding="utf-8") as f:
-                    scraped = json.load(f)
-                for race in scraped.get("races", []):
-                    rn = race["race_number"]
-                    st.session_state["live_results"][rn] = race.get("runners", [])
-                st.success(f"Loaded {len(scraped.get('races', []))} races from scraper")
-                st.session_state["live_last_refresh"] = datetime.now().strftime("%H:%M:%S")
-                st.rerun()
+            st.session_state["live_last_refresh"] = datetime.now().strftime("%H:%M:%S")
+            st.rerun()
     with col_s2:
-        if st.button("Clear All Results", key="live_clear"):
-            st.session_state["live_results"] = {}
+        if st.button("📊 Run Analysis", key="live_analyse"):
+            st.session_state["live_last_refresh"] = datetime.now().strftime("%H:%M:%S")
             st.rerun()
     with col_s3:
-        entered = len(st.session_state["live_results"])
-        st.metric("Races Entered", f"{entered}/{len(races)}")
+        res_file = REPORTS / f"results_{dstr}.json"
+        n_results = 0
+        if res_file.exists():
+            try:
+                with open(res_file, "r", encoding="utf-8") as f:
+                    n_results = len(json.load(f).get("races", []))
+            except Exception:
+                pass
+        st.metric("Results Available", f"{n_results}/{len(races)} races")
         if "live_last_refresh" in st.session_state:
             st.caption(f"Last refresh: {st.session_state['live_last_refresh']}")
 
     st.markdown("---")
 
-    # ── Track Bias Panel ───────────────────────────────────
-    bias = _live_compute_bias(st.session_state["live_results"])
-    if bias:
-        st.markdown("### Track Bias Signals")
-        cols = st.columns(len(bias))
-        for i, (btype, (label, icon, val)) in enumerate(bias.items()):
-            with cols[i]:
+    # ── Load analysis ──────────────────────────────────────
+    analysis = _live_load_analysis(dstr)
+    if not analysis:
+        st.info(
+            "No results scraped yet for this meeting. "
+            "Click **Scrape Results** once races have been run, then **Run Analysis**."
+        )
+        return
+
+    race_analyses = analysis.get("race_analyses", [])
+    cumulative = analysis.get("cumulative", {})
+
+    # ── Cumulative Patterns & Alerts (top of page) ─────────
+    patterns = cumulative.get("patterns", [])
+    alerts = cumulative.get("alerts", [])
+
+    if patterns or alerts:
+        st.markdown("### 📡 Live Pattern Detection")
+        n_turf = cumulative.get("n_turf", 0)
+        n_awt = cumulative.get("n_awt", 0)
+        surf_str = []
+        if n_turf:
+            surf_str.append(f"{n_turf} Turf")
+        if n_awt:
+            surf_str.append(f"{n_awt} AWT")
+        st.caption(f"After {cumulative.get('n_races', 0)} race(s) ({', '.join(surf_str)})")
+
+        if alerts:
+            for a in alerts:
+                # Colour by surface tag
+                if "[AWT]" in a:
+                    icon = "🟠"
+                elif "DIVERGING" in a.upper() or "struggling" in a.lower() or "inaccurate" in a.lower():
+                    icon = "🔴"
+                elif "CONVERGING" in a.upper() or "advantage" in a.lower():
+                    icon = "🟢"
+                else:
+                    icon = "⚡"
                 st.markdown(
-                    f'<div style="text-align:center;padding:10px;'
-                    f'background:var(--secondary-background-color,rgba(128,128,128,0.06));'
-                    f'border-radius:8px;border:1px solid rgba(128,128,128,0.2)">'
-                    f'<span style="font-size:2em">{icon}</span><br>'
-                    f'<span style="font-weight:700">{label}</span><br>'
-                    f'<span style="font-size:0.8em;opacity:0.6">{val:.0%} signal</span>'
-                    f'</div>',
+                    f'<div style="border-left:3px solid rgba(245,158,11,0.7);'
+                    f'padding:4px 10px;margin:4px 0;border-radius:0 4px 4px 0;'
+                    f'background:rgba(245,158,11,0.06)">'
+                    f'{icon} {a}</div>',
                     unsafe_allow_html=True,
                 )
+
+        if patterns:
+            with st.expander("Detailed Patterns", expanded=False):
+                for p in patterns:
+                    st.markdown(f"• {p}")
+
         st.markdown("---")
 
-    # ── Comparison: predictions vs entered results ─────────
-    live_res = st.session_state["live_results"]
-    if live_res:
-        st.markdown("### Race-by-Race Comparison")
-        for race in races:
-            rn = race["race_number"]
-            if rn not in live_res:
-                continue
-            actual_runners = live_res[rn]
-            picks = race.get("picks", [])
-            if not picks:
-                continue
+    # ── Race-by-Race Analysis ──────────────────────────────
+    st.markdown("### 🏇 Race-by-Race Analysis")
+    for ra in race_analyses:
+        if ra.get("status") != "analysed":
+            continue
+        rn = ra["race_number"]
+        w = ra.get("winner") or {}
+        dist = ra.get("distance", "?")
+        surface = ra.get("surface", "?")
 
-            dist = race.get("distance", "?")
-            cls = race.get("race_class", "?")
-            cls_str = f"C{cls}" if str(cls).isdigit() and int(str(cls)) > 0 else "Grp"
+        # Race header
+        w_name = w.get("horse_name", "?")
+        w_odds = w.get("win_odds", "?")
+        w_draw = w.get("draw", "?")
+        et_rk = w.get("et_rank")
+        sarr_rk = w.get("sarr_rank")
 
-            # Find winner from actuals
-            winner = "?"
-            for r in actual_runners:
-                p = r.get("place", "99")
-                try:
-                    if int(re.match(r"(\d+)", str(p)).group(1)) == 1:
-                        winner = r.get("horse_name", "?")
-                        break
-                except (ValueError, AttributeError):
-                    pass
+        header_parts = [f"**R{rn}** {dist}m {surface}"]
+        header_parts.append(f"— Winner: **{w_name}** (Dr{w_draw}, ${w_odds})")
+        if et_rk or sarr_rk:
+            ranks = []
+            if et_rk:
+                ranks.append(f"ET Rk{et_rk}")
+            if sarr_rk:
+                ranks.append(f"SARR Rk{sarr_rk}")
+            header_parts.append(f"[{' | '.join(ranks)}]")
 
-            # How did model's top-3 do?
-            top3_pred = [p["horse_name"].upper().strip() for p in picks[:3]]
-            actual_places = {}
-            for r in actual_runners:
-                hn = r.get("horse_name", "").upper().strip()
-                p = r.get("place", "99")
-                try:
-                    actual_places[hn] = int(re.match(r"(\d+)", str(p)).group(1))
-                except (ValueError, AttributeError):
-                    actual_places[hn] = 99
+        with st.expander(" ".join(header_parts), expanded=(rn == max(r["race_number"] for r in race_analyses if r.get("status") == "analysed"))):
+            # Model convergence badges
+            conv_cols = st.columns(2)
+            for ci, (mk, label) in enumerate([("et", "ET"), ("sarr", "SARR")]):
+                ma = ra.get(mk)
+                if not ma:
+                    with conv_cols[ci]:
+                        st.caption(f"{label}: N/A")
+                    continue
+                conv = ma["convergence"]
+                if conv == "strong":
+                    badge_color = "#22c55e"
+                    badge_icon = "✓"
+                elif conv == "partial":
+                    badge_color = "#f59e0b"
+                    badge_icon = "~"
+                else:
+                    badge_color = "#ef4444"
+                    badge_icon = "✗"
+                rho_str = f"ρ={ma['spearman_rho']:.2f}" if ma.get("spearman_rho") is not None else ""
+                mae_str = f"MAE {ma['mae']:.3f}s" if ma.get("mae") is not None else ""
+                detail = f"top3 overlap {ma['top3_overlap']}/3"
+                if rho_str:
+                    detail += f", {rho_str}"
+                if mae_str:
+                    detail += f", {mae_str}"
 
-            results_str = []
-            for hn in top3_pred:
-                ap = actual_places.get(hn, "?")
-                colour = "#22c55e" if ap and ap != "?" and ap <= 3 else "#ef4444" if ap != "?" else "#888"
-                results_str.append(f'<span style="color:{colour};font-weight:700">P{ap}</span>')
+                with conv_cols[ci]:
+                    st.markdown(
+                        f'<div style="border:1px solid {badge_color};border-radius:6px;'
+                        f'padding:6px 10px;text-align:center;'
+                        f'background:{badge_color}15">'
+                        f'<span style="color:{badge_color};font-weight:700;font-size:1.1em">'
+                        f'{badge_icon} {label}: {conv.upper()}</span><br>'
+                        f'<span style="font-size:0.82em;opacity:0.7">{detail}</span>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
 
-            st.markdown(
-                f'**R{rn}** {dist}m {cls_str} — '
-                f'Winner: **{winner}** — '
-                f'Model top-3: {picks[0]["horse_name"]} ({results_str[0]}), '
-                f'{picks[1]["horse_name"]} ({results_str[1]}), '
-                f'{picks[2]["horse_name"]} ({results_str[2]})',
-                unsafe_allow_html=True,
-            )
+            # Pace read
+            pr = ra.get("pace_read", {})
+            if pr.get("shape") != "unknown":
+                pace_parts = [f"**Pace:** {pr.get('summary', '?')}"]
+                pm = pr.get("pace_match")
+                if pm == "aligned":
+                    pace_parts.append("— ET pace prediction ✓ correct")
+                elif pm == "divergent":
+                    pace_parts.append("— ET pace prediction ✗ wrong")
+                st.markdown(" ".join(pace_parts))
+
+            # Draw
+            do = ra.get("draw_obs", {})
+            if do.get("bias") and do["bias"] != "unknown":
+                st.markdown(f"**Draw:** {do['summary']}")
+
+            # Under/overperformers
+            for u in ra.get("underperformers", []):
+                et_r = f"ET Rk{u.get('et_rank','?')}" if u.get('et_rank') else ""
+                sarr_r = f"SARR Rk{u.get('sarr_rank','?')}" if u.get('sarr_rank') else ""
+                model_str = " | ".join(x for x in [et_r, sarr_r] if x)
+                st.markdown(
+                    f'<div style="border-left:3px solid #ef4444;padding:2px 8px;margin:2px 0;'
+                    f'border-radius:0 3px 3px 0;background:rgba(239,68,68,0.06)">'
+                    f'⚠ <strong>{u["horse_name"]}</strong> ({model_str}) → P{u["actual_place"]}'
+                    + "".join(f'<br><span style="font-size:0.85em;opacity:0.7">→ {r}</span>'
+                              for r in u.get("reasons", []))
+                    + '</div>',
+                    unsafe_allow_html=True,
+                )
+            for o in ra.get("overperformers", []):
+                et_r = f"ET Rk{o.get('et_rank','?')}" if o.get('et_rank') else ""
+                sarr_r = f"SARR Rk{o.get('sarr_rank','?')}" if o.get('sarr_rank') else ""
+                model_str = " | ".join(x for x in [et_r, sarr_r] if x)
+                odds_v = o.get("win_odds")
+                odds_str = f" ${odds_v}" if odds_v else ""
+                st.markdown(
+                    f'<div style="border-left:3px solid #22c55e;padding:2px 8px;margin:2px 0;'
+                    f'border-radius:0 3px 3px 0;background:rgba(34,197,94,0.06)">'
+                    f'★ <strong>{o["horse_name"]}</strong> ({model_str}) → P{o["actual_place"]}{odds_str}'
+                    + "".join(f'<br><span style="font-size:0.85em;opacity:0.7">→ {r}</span>'
+                              for r in o.get("reasons", []))
+                    + '</div>',
+                    unsafe_allow_html=True,
+                )
 
     st.markdown("---")
 
-    # ── Manual entry form ──────────────────────────────────
-    st.markdown("### Manual Result Entry")
-    race_nums = [r["race_number"] for r in races]
-    sel_race = st.selectbox("Race", race_nums, key="live_race_num")
-    sel_race_data = next((r for r in races if r["race_number"] == sel_race), None)
-
-    if sel_race_data:
-        # Get horse names from picks or speed map
-        horses = []
-        for p in sel_race_data.get("picks", []):
-            horses.append(p["horse_name"])
-        for sm in sel_race_data.get("speed_map", {}).get("grid", []):
-            hn = sm["horse_name"]
-            if hn not in horses:
-                horses.append(hn)
-
-        n_places = min(len(horses), 5)
-        with st.form(f"live_entry_{sel_race}", clear_on_submit=False):
-            st.markdown(f"**R{sel_race}** — enter top finishers")
-            entries = []
-            for i in range(n_places):
-                c1, c2, c3, c4 = st.columns([3, 1, 1, 2])
-                with c1:
-                    horse = st.selectbox(f"#{i+1}", [""] + horses, key=f"live_h_{sel_race}_{i}")
-                with c2:
-                    draw = st.number_input("Draw", min_value=1, max_value=14, value=1,
-                                           key=f"live_d_{sel_race}_{i}")
-                with c3:
-                    ft = st.text_input("FT (s)", key=f"live_ft_{sel_race}_{i}")
-                with c4:
-                    rp = st.text_input("Run Pos", key=f"live_rp_{sel_race}_{i}",
-                                       help="e.g. 3 2 1")
-                entries.append({"horse": horse, "draw": draw, "ft": ft, "rp": rp})
-
-            submitted = st.form_submit_button("Save Race Result")
-            if submitted:
-                runners = []
-                for i, e in enumerate(entries):
-                    if e["horse"]:
-                        runners.append({
-                            "place": str(i + 1),
-                            "horse_name": e["horse"],
-                            "draw": e["draw"],
-                            "finish_time_seconds": float(e["ft"]) if e["ft"] else None,
-                            "running_position": e["rp"],
-                        })
-                if runners:
-                    st.session_state["live_results"][sel_race] = runners
-                    st.success(f"R{sel_race}: saved {len(runners)} finishers")
-                    st.rerun()
+    # ── Full text report download ──────────────────────────
+    report_text = analysis.get("report_text", "")
+    if report_text:
+        st.download_button(
+            "📥 Download Full Report",
+            data=report_text,
+            file_name=f"live_analysis_{dstr}.txt",
+            mime="text/plain",
+        )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
