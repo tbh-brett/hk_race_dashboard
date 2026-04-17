@@ -998,6 +998,12 @@ def render_speed_map(race: dict):
         html += (f'<div style="font-size:0.82em;margin-top:6px;">'
                  f'★ Beneficiaries: {ben_html}</div>')
 
+    # Speed map legend
+    html += ('<div style="font-size:0.76em;margin-top:4px;opacity:0.55;">'
+             '<span style="color:#1D9E75;font-weight:700">●</span> Pace beneficiary &nbsp; '
+             '<span style="color:#C0392B;font-weight:700">●</span> Disadvantaged by pace &nbsp; '
+             '○ Neutral</div>')
+
     html += '</div>'
     st.markdown(html, unsafe_allow_html=True)
 
@@ -1061,19 +1067,19 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
             "Rk": p["rank"],
             "No": p["horse_no"],
             "Horse": p["horse_name"],
+            "Draw": p.get("draw", "—") or "—",
+            "Wt": p.get("weight", "—") or "—",
+            "Style": p.get("style", "?"),
             "BB": "BB" if bb_entry else "",
             "Proj (s)": f"{p['projected_time']:.2f}",
             "Win%": f"{p['win_prob']:.0f}%",
-            "SSI": round(ssi_val, 2) if ssi_val is not None else None,
-            "Vet": _vet_display(vf),
-            "Draw": p.get("draw", "—") or "—",
-            "Wt": p.get("weight", "—") or "—",
-            "Jockey": p.get("jockey", ""),
-            "Style": p.get("style", "?"),
-            "Trial": p.get("trial_flag", "") or "—",
-            "Eff Resid": f"{p['effective_resid']:+.3f}",
-            "Fin Sec": f"{p['proj_final_sec']:.2f}" if p.get("proj_final_sec") else "—",
             "ESZ": round(esz_val, 1) if esz_val != 0 else None,
+            "Fin Sec": f"{p['proj_final_sec']:.2f}" if p.get("proj_final_sec") else "—",
+            "SSI": round(ssi_val, 2) if ssi_val is not None else None,
+            "Jockey": p.get("jockey", ""),
+            "Eff Resid": f"{p['effective_resid']:+.3f}",
+            "Trial": p.get("trial_flag", "") or "—",
+            "Vet": _vet_display(vf),
             "Flags": ", ".join(p.get("flags", [])),
         })
 
@@ -1205,18 +1211,18 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
             "Rk": p["rank"],
             "No": p.get("horse_no", ""),
             "Horse": p.get("horse_name", ""),
+            "Draw": p.get("draw", "—") or "—",
+            "Wt": p.get("weight", "—") or "—",
+            "Style": p.get("style", "?"),
             "BB": "BB" if bb_entry else "",
+            "WPR%": f"{wpr_pct:.0f}%",
+            "ESZ": round(p.get("f_esz", 0), 2),
             "SARR": round(p.get("sarr", 0), 3),
             "FMRP": round(p.get("f_fmrp", 0), 2),
             "LSA": round(p.get("f_lsa", 0), 2),
-            "ESZ": round(p.get("f_esz", 0), 2),
             "SSI": round(p.get("avg_ssi", 0), 2),
-            "Style": p.get("style", "?"),
             "Traj": round(p.get("f_traj", 0), 3),
-            "WPR%": f"{wpr_pct:.0f}%",
             "Late Std": round(p.get("late_std", 0.5), 2),
-            "Draw": p.get("draw", "—") or "—",
-            "Wt": p.get("weight", "—") or "—",
             "Jockey": p.get("jockey", ""),
         })
 
@@ -1572,6 +1578,7 @@ def page_overview():
                 sarr_pick = sarr_top[hn]
                 et_rk = et_pick["rank"] if et_pick else 99
                 sarr_rk = sarr_pick["rank"] if sarr_pick else 99
+                horse_no = et_pick.get("horse_no", sarr_pick.get("horse_no", ""))
                 # Highlight tier: green = both top 2, amber = both top 3
                 if et_rk <= 2 and sarr_rk <= 2:
                     tier = "green"
@@ -1581,6 +1588,7 @@ def page_overview():
                     tier = "none"
                 mutual_rows.append({
                     "race": rn,
+                    "horse_no": horse_no,
                     "horse": hn.title(),
                     "et_rank": et_rk,
                     "sarr_rank": sarr_rk,
@@ -1589,7 +1597,7 @@ def page_overview():
                     "tier": tier,
                 })
         if mutual_rows:
-            mutual_rows.sort(key=lambda r: ({"green": 0, "amber": 1, "none": 2}[r["tier"]], r["race"]))
+            mutual_rows.sort(key=lambda r: (r["race"], r["et_rank"]))
             html_rows = []
             for mr in mutual_rows:
                 if mr["tier"] == "green":
@@ -1607,6 +1615,7 @@ def page_overview():
                 html_rows.append(
                     f'<tr style="background:{bg}">'
                     f'<td>R{mr["race"]}</td>'
+                    f'<td>{mr["horse_no"]}</td>'
                     f'<td style="{name_style}">{mr["horse"]}</td>'
                     f'<td style="{rk_style}">{mr["et_rank"]}</td>'
                     f'<td style="{rk_style}">{mr["sarr_rank"]}</td>'
@@ -1618,6 +1627,7 @@ def page_overview():
                 '<table style="width:100%;border-collapse:collapse;font-size:0.92em">'
                 '<thead><tr style="border-bottom:2px solid rgba(128,128,128,0.3)">'
                 '<th style="text-align:left;padding:6px">Race</th>'
+                '<th style="text-align:left;padding:6px">No</th>'
                 '<th style="text-align:left;padding:6px">Horse</th>'
                 '<th style="text-align:left;padding:6px">ET Rk</th>'
                 '<th style="text-align:left;padding:6px">SARR Rk</th>'
@@ -1743,10 +1753,11 @@ def page_overview():
     pace_fast = sum(1 for r in races if "Fast" in str(r.get("pace", "")))
     pace_slow = sum(1 for r in races if "Slow" in str(r.get("pace", "")))
     avg_field = sum(r.get("runners", len(r.get("picks", []))) for r in races) / max(len(races), 1)
-    col1.metric("Races", len(races))
+    n_races = len(races)
+    col1.metric("Races", n_races)
     col2.metric("Avg Field Size", f"{avg_field:.1f}")
-    col3.metric("Fast Pace", pace_fast)
-    col4.metric("Slow Pace", pace_slow)
+    col3.metric("Fast Pace", f"{pace_fast} / {n_races}")
+    col4.metric("Slow Pace", f"{pace_slow} / {n_races}")
 
     # ── Section 4: Risk overview ───────────────────────────
     st.markdown("### ⚠️ Risk Flags Summary")
@@ -1933,6 +1944,46 @@ def page_race_day(selected):
             race = next((r for r in et_races if r["race_number"] == active_rn), None)
             if race:
                 render_race_card(race, vet_lookup=vet_lookup, show_top=4, bb_lookup=bb_lookup)
+
+    # ── Column acronym legend ────────────────────────────────────────────
+    with st.expander("📖 Column Legend & Interpretation Guide"):
+        st.markdown(
+            """
+**ET Model (Expected Time)**
+| Column | Meaning | Interpretation |
+|--------|---------|---------------|
+| **Rk** | Model rank | Lower = stronger pick (1 = best) |
+| **No** | Saddle cloth number | Horse's race-day number |
+| **Proj (s)** | Projected finish time (seconds) | Lower = faster; best horse has lowest time |
+| **Win%** | Estimated win probability | Higher = more likely to win; ≥20% is strong |
+| **ESZ** | Early Speed Z-score | **Negative** = faster early speed; **Positive** = slower starter; ≥1.0 is very slow out |
+| **Fin Sec** | Projected final sectional (seconds) | Lower = stronger finishing burst |
+| **SSI** | Sectional Speed Index (consistency) | **Negative** = consistently faster than field; **Positive** = inconsistent/slower |
+| **Eff Resid** | Effective Residual | **Negative** = horse runs faster than expected from its rating; **Positive** = slower than expected |
+| **Trial** | Trial performance flag | ++ outstanding, + positive, - poor, -- very poor |
+| **Vet** | Vet report flag | RED = significant concern, AMB = monitor, INF = informational |
+| **Flags** | Model flags | ↑IMP = improving, U = unreliable form, etc. |
+
+**SARR Model (Style-Adjusted Residual Ranking)**
+| Column | Meaning | Interpretation |
+|--------|---------|---------------|
+| **SARR** | Composite score | **Negative** = outperforms expectations (better); positive = underperforms |
+| **FMRP** | Form Residual Performance | **Negative** = recent form better than rating suggests |
+| **LSA** | Late Speed Advantage | **Negative** = strong finishing ability relative to field |
+| **Traj** | Trajectory (form trend) | **Negative** = improving trend; positive = declining |
+| **WPR%** | Win/Place Rate | Higher = better historical strike rate |
+| **Late Std** | Late-section time standard deviation | Lower = more consistent finisher (≤0.20 very reliable) |
+
+**Shared Columns**
+| Column | Meaning |
+|--------|---------|
+| **Draw** | Barrier draw (gate position) |
+| **Wt** | Carried weight (lbs) |
+| **Style** | Predicted running style (Leader / On-Pace / Midfield / Closer) |
+| **BB** | In your Blackbook |
+            """,
+            unsafe_allow_html=False,
+        )
 
     # ── Sidebar downloads ────────────────────────────────────────────────
     st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
@@ -5717,15 +5768,15 @@ def main():
 
     # ── Navigation ────────────────────────────────────────────────────────
     NAV_ITEMS = [
-        ("Overview",     "Overview"),
-        ("Race Day",     "Race Day"),
-        ("Live Feed",    "Live Feed"),
-        ("Form Guide",   "Form Guide"),
-        ("Trials",       "Trials"),
-        ("Backtest",     "Backtest"),
-        ("Results",      "Results"),
-        ("Blackbook",    "Blackbook"),
-        ("PDF Builder",  "PDF Builder"),
+        ("Overview",     "🏁 Overview"),
+        ("Race Day",     "📊 Race Day"),
+        ("Live Feed",    "📡 Live Feed"),
+        ("Form Guide",   "📖 Form Guide"),
+        ("Trials",       "🎽 Trials"),
+        ("Backtest",     "🧪 Backtest"),
+        ("Results",      "🏆 Results"),
+        ("Blackbook",    "📓 Blackbook"),
+        ("PDF Builder",  "📄 PDF Builder"),
     ]
     if "nav_page" not in st.session_state:
         st.session_state["nav_page"] = "Overview"
