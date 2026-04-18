@@ -2068,16 +2068,17 @@ def _render_backtest_v4(data: dict, prefix: str = ""):
     c1.metric("MAE", f'{m.get("mae", "?")}s',
               help="Mean Absolute Error: projected vs actual finish time")
     c2.metric("Median AE", f'{m.get("median_ae", "?")}s')
-    c3.metric("Bias", f'{m.get("bias", 0):+.3f}s',
+    bias_val = m.get("bias")
+    c3.metric("Bias", f'{bias_val:+.3f}s' if bias_val is not None else "—",
               help="Positive = predicted too fast")
     c4.metric("Rank ρ", f'{m.get("mean_spearman_rho", "?")}',
               help="Average Spearman ρ — does model ordering match actual?")
 
     c5, c6, c7, c8 = st.columns(4)
-    c5.metric("Top-1 Win%", f'{100*m.get("top1_rate", 0):.0f}%')
-    c6.metric("Top-3 Hit%", f'{100*m.get("top3_rate", 0):.0f}%')
-    c7.metric("Top-5 Hit%", f'{100*m.get("top5_rate", 0):.0f}%')
-    c8.metric("Top-3 Overlap", f'{m.get("mean_top3_overlap", 0):.1f}/3')
+    c5.metric("Top-1 Win%", f'{100*(m.get("top1_rate") or 0):.0f}%')
+    c6.metric("Top-3 Hit%", f'{100*(m.get("top3_rate") or 0):.0f}%')
+    c7.metric("Top-5 Hit%", f'{100*(m.get("top5_rate") or 0):.0f}%')
+    c8.metric("Top-3 Overlap", f'{(m.get("mean_top3_overlap") or 0):.1f}/3')
 
     _traffic_light("MAE", m.get("mae"), good=0.8, ok=1.2, lower_is_better=True)
     _traffic_light("Rank ρ", m.get("mean_spearman_rho"), good=0.5, ok=0.3, lower_is_better=False)
@@ -4439,6 +4440,10 @@ def page_form_guide():
                     rtg = str(int(float(row["rating"]))) if pd.notna(row.get("rating")) else "?"
                 except (ValueError, TypeError):
                     rtg = str(row.get("rating", "?"))
+                try:
+                    wt = str(int(float(row["actual_weight"]))) if pd.notna(row.get("actual_weight")) else "?"
+                except (ValueError, TypeError):
+                    wt = str(row.get("actual_weight", "?"))
                 try:
                     gate = str(int(float(row["draw"]))) if pd.notna(row.get("draw")) else "?"
                 except (ValueError, TypeError):
