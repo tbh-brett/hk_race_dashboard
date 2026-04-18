@@ -344,17 +344,15 @@ st.markdown("""
         text-align: left; padding: 1px 8px 7px 2em;
         font-size: 0.9em; opacity: 0.82; line-height: 1.6;
     }
-    .form-tbl tr.run-note-row td {
-        border-bottom: 1px solid rgba(128,128,128,0.15);
-        text-align: left; padding: 1px 8px 6px 2em;
-        font-size: 0.85em; opacity: 0.78; line-height: 1.45;
-        font-style: italic;
+    .form-tbl a.vid-link {
+        color: #1f6feb; text-decoration: none;
+        font-weight: 700; font-size: 1.05em;
     }
-    .form-tbl tr.run-note-row a.vid-link {
-        color: #1f6feb; text-decoration: none; font-style: normal;
-        font-weight: 600; margin-right: 8px;
+    .form-tbl a.vid-link:hover { text-decoration: underline; color: #4c8ef0; }
+    .form-tbl td.form-comment {
+        font-size: 0.82em; opacity: 0.85; font-style: italic;
+        max-width: 260px; white-space: normal; line-height: 1.3;
     }
-    .form-tbl tr.run-note-row a.vid-link:hover { text-decoration: underline; }
     .t5-entry { display: inline-block; min-width: 18%; box-sizing: border-box; }
     .form-margin { }
     .frac { font-feature-settings: 'frac'; }
@@ -3480,6 +3478,18 @@ def page_results():
         unsafe_allow_html=True,
     )
 
+    # ── Race Replay button (top of race view) ────────────────────────────
+    _video_url = _hkjc_video_url(selected_dc, int(selected_rn))
+    st.markdown(
+        f'<div style="margin:4px 0 14px 0;">'
+        f'<a href="{_video_url}" target="_blank" rel="noopener noreferrer" '
+        f'style="display:inline-block;padding:8px 16px;background:#1f6feb;'
+        f'color:#fff;border-radius:6px;text-decoration:none;font-weight:600;'
+        f'font-size:14px;">▶ Watch Race Replay (HKJC)</a>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
     # ── Results table ────────────────────────────────────────────────────
     runners = race.get("runners", [])
     res_rows = []
@@ -3534,24 +3544,7 @@ def page_results():
             )
 
     # ── Race Replay (HKJC video) ─────────────────────────────────────────
-    _video_url = (
-        "https://racing.hkjc.com/contentAsset/videoplayer_v4/"
-        "video-player-iframe_v4.html?type=replay-full"
-        f"&date={selected_dc}&no={int(selected_rn):02d}&lang=eng"
-        "&noPTbar=false&noLeading=false&videoParam=PAD"
-    )
-    with st.expander("🎬 Race Replay (HKJC video)", expanded=False):
-        st.markdown(
-            f'<a href="{_video_url}" target="_blank" rel="noopener noreferrer" '
-            f'style="display:inline-block;padding:8px 14px;background:#1f6feb;'
-            f'color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">'
-            f'▶ Watch Full Replay (opens HKJC player)</a>',
-            unsafe_allow_html=True,
-        )
-        st.caption(
-            "Opens the HKJC Multi-Angle Race Replay player in a new tab. "
-            f"URL: `{_video_url}`"
-        )
+    # (button is rendered at the top of the race view — see above)
 
     # ── AI Race Commentary ───────────────────────────────────────────────
     _comm_path = BASE / "reports" / f"commentary_{selected_dc}.json"
@@ -4648,22 +4641,18 @@ def page_form_guide():
             margin_cell = f'<span class="form-margin" style="{margin_style}">{_smart_frac_html(margin)}</span>'
             t5_html = _fmt_top5_html(top5, hname) if top5 else "&mdash;"
 
-            # Video link + short commentary (if we have date+race+horse)
-            vid_note_row = ""
+            # Per-run video link + short commentary (inline cells)
             dc = dr.get("date_dc") or ""
             rnum = dr.get("race_num")
+            vid_cell = "&mdash;"
+            comment_cell = ""
             if dc and rnum:
                 vurl = _hkjc_video_url(dc, rnum)
-                vlink = (f'<a class="vid-link" href="{vurl}" target="_blank" '
-                         f'rel="noopener noreferrer">▶ Replay</a>')
-                note = _run_commentary_lookup(dc, rnum, hname).get("short", "")
-                note_html = (f'{vlink}<span>{note}</span>'
-                             if note else vlink)
-                vid_note_row = (
-                    f'<tr class="run-note-row">'
-                    f'<td colspan="14">{note_html}</td>'
-                    f'</tr>'
+                vid_cell = (
+                    f'<a class="vid-link" href="{vurl}" target="_blank" '
+                    f'rel="noopener noreferrer" title="Watch replay">&#9654;</a>'
                 )
+                comment_cell = _run_commentary_lookup(dc, rnum, hname).get("short", "") or ""
 
             html_rows.append(
                 f'<tr class="form-data-row">'
@@ -4676,11 +4665,12 @@ def page_form_guide():
                 f'<td class="td-pos">{pos}</td>'
                 f'<td>{margin_cell}</td>'
                 f'<td>{ftime}</td>'
+                f'<td>{vid_cell}</td>'
+                f'<td class="td-left form-comment">{comment_cell}</td>'
                 f'</tr>'
                 f'<tr class="top5-row">'
-                f'<td colspan="14">{t5_html}</td>'
+                f'<td colspan="16">{t5_html}</td>'
                 f'</tr>'
-                + vid_note_row
             )
 
             # For Excel download
@@ -4705,6 +4695,7 @@ def page_form_guide():
                 "Margin": margin,
                 "Finish Time": ftime,
                 "Top 5": t5_plain,
+                "Comment": comment_cell,
             })
 
         table_html = (
@@ -4713,6 +4704,7 @@ def page_form_guide():
             '<th>Date</th><th>Pl</th><th>Dist</th><th>Trk</th><th>Crs</th>'
             '<th>Gng</th><th>Cls</th><th class="th-left">Jockey</th>'
             '<th>Rtg</th><th>Wt</th><th>Gt</th><th>Pos</th><th>Mrgn</th><th>Time</th>'
+            '<th>Vid</th><th class="th-left">Comment</th>'
             '</tr></thead>'
             '<tbody>' + "".join(html_rows) + '</tbody>'
             '</table>'
