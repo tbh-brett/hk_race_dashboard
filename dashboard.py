@@ -40,6 +40,48 @@ REPORTS = BASE / "reports"
 PYTHON = sys.executable
 BLACKBOOK_FILE = BASE / "blackbook.json"
 
+
+# ── Per-run commentary lookup (for Form Guide rows) ──────────────────────────
+def _hkjc_video_url(date_dc: str, race_no: int) -> str:
+    return (
+        "https://racing.hkjc.com/contentAsset/videoplayer_v4/"
+        "video-player-iframe_v4.html?type=replay-full"
+        f"&date={date_dc}&no={int(race_no):02d}&lang=eng"
+        "&noPTbar=false&noLeading=false&videoParam=PAD"
+    )
+
+
+@st.cache_data(show_spinner=False)
+def _load_commentary(date_dc: str) -> dict:
+    """Load commentary_YYYYMMDD.json once per date (cached). Returns
+    dict keyed by (race_number, HORSE_NAME_UPPER) → {short, tags, incident_text}."""
+    path = REPORTS / f"commentary_{date_dc}.json"
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    out = {}
+    for race in raw.get("races", []):
+        rn = race.get("race_number")
+        for h in race.get("horses", []):
+            key = (rn, (h.get("horse_name") or "").upper())
+            out[key] = {
+                "short": h.get("short") or "",
+                "tags": h.get("tags") or [],
+                "incident_text": h.get("incident_text") or "",
+            }
+    return out
+
+
+def _run_commentary_lookup(date_dc: str, race_no: int, horse_name: str) -> dict:
+    """Return {'short', 'tags', 'incident_text'} for a given past run, or empty."""
+    if not date_dc or not race_no or not horse_name:
+        return {}
+    cm = _load_commentary(date_dc)
+    return cm.get((int(race_no), horse_name.upper()), {})
+
 # ── Playwright browser pre-install (Streamlit Cloud has no post-install hook) ─
 def _ensure_playwright_chromium():
     """Install Playwright Chromium once per container boot (cached in session)."""
@@ -302,6 +344,17 @@ st.markdown("""
         text-align: left; padding: 1px 8px 7px 2em;
         font-size: 0.9em; opacity: 0.82; line-height: 1.6;
     }
+    .form-tbl tr.run-note-row td {
+        border-bottom: 1px solid rgba(128,128,128,0.15);
+        text-align: left; padding: 1px 8px 6px 2em;
+        font-size: 0.85em; opacity: 0.78; line-height: 1.45;
+        font-style: italic;
+    }
+    .form-tbl tr.run-note-row a.vid-link {
+        color: #1f6feb; text-decoration: none; font-style: normal;
+        font-weight: 600; margin-right: 8px;
+    }
+    .form-tbl tr.run-note-row a.vid-link:hover { text-decoration: underline; }
     .t5-entry { display: inline-block; min-width: 18%; box-sizing: border-box; }
     .form-margin { }
     .frac { font-feature-settings: 'frac'; }
@@ -3480,6 +3533,82 @@ def page_results():
                 f"to download."
             )
 
+    # ── Race Replay (HKJC video) ─────────────────────────────────────────
+    _video_url = (
+        "https://racing.hkjc.com/contentAsset/videoplayer_v4/"
+        "video-player-iframe_v4.html?type=replay-full"
+        f"&date={selected_dc}&no={int(selected_rn):02d}&lang=eng"
+        "&noPTbar=false&noLeading=false&videoParam=PAD"
+    )
+    with st.expander("🎬 Race Replay (HKJC video)", expanded=False):
+        st.markdown(
+            f'<a href="{_video_url}" target="_blank" rel="noopener noreferrer" '
+            f'style="display:inline-block;padding:8px 14px;background:#1f6feb;'
+            f'color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">'
+            f'▶ Watch Full Replay (opens HKJC player)</a>',
+            unsafe_allow_html=True,
+        )
+        st.caption(
+            "Opens the HKJC Multi-Angle Race Replay player in a new tab. "
+            f"URL: `{_video_url}`"
+        )
+
+    # ── AI Race Commentary ───────────────────────────────────────────────
+    _comm_path = BASE / "reports" / f"commentary_{selected_dc}.json"
+    _comm_race = None
+    if _comm_path.exists():
+        try:
+            _comm_all = json.loads(_comm_path.read_text(encoding="utf-8"))
+            _comm_race = next(
+                (r for r in _comm_all.get("races", []) if r.get("race_number") == selected_rn),
+                None,
+            )
+        except Exception:
+            _comm_race = None
+    with st.expander("📝 Race Commentary & Blackbook Suggestions", expanded=False):
+        if _comm_race is None:
+            st.info(
+                f"No commentary cached for R{selected_rn}. Run "
+                f"`python race_commentary.py --date {selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}` "
+                f"after scraping incidents + photos."
+            )
+        else:
+            st.markdown(f"**Narrative**")
+            st.write(_comm_race.get("narrative", ""))
+            # Per-horse table (short blurb + tags)
+            horses_data = _comm_race.get("horses", [])
+            if horses_data:
+                _hrows = []
+                for h in horses_data:
+                    _hrows.append({
+                        "Pl": h.get("place", "?"),
+                        "No": h.get("horse_no", ""),
+                        "Horse": h.get("horse_name", ""),
+                        "Short": h.get("short", "") or "—",
+                        "Tags": ", ".join(h.get("tags", [])) or "—",
+                        "Score": h.get("polarity_score", 0),
+                    })
+                st.markdown("**Per-horse short commentary**")
+                st.dataframe(pd.DataFrame(_hrows), use_container_width=True, hide_index=True)
+            # Blackbook suggestions
+            bb_sugg = _comm_race.get("blackbook_suggestions", [])
+            if bb_sugg:
+                st.markdown("**🔖 Blackbook suggestions** (rule-based from incident + trip)")
+                for s in bb_sugg:
+                    sign = "➖" if s.get("polarity") == "-" else "➕"
+                    st.markdown(
+                        f"- {sign} **{s['horse_name']}** (P{s.get('place','?')}) — {s['reason']}"
+                    )
+            # Raw per-horse incident text (collapsible)
+            with st.expander("Full incident text per horse", expanded=False):
+                for h in horses_data:
+                    if h.get("incident_text"):
+                        st.markdown(
+                            f"**P{h.get('place','?')} #{h.get('horse_no','')} "
+                            f"{h.get('horse_name','')}**"
+                        )
+                        st.caption(h["incident_text"])
+
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
     # ── Add to Blackbook ─────────────────────────────────────────────────
@@ -4417,11 +4546,15 @@ def page_form_guide():
                 try:
                     rd_date = date.fromisoformat(run["date"])
                     date_disp = rd_date.strftime("%d/%m/%y")
+                    date_dc   = rd_date.strftime("%Y%m%d")
                 except (ValueError, KeyError):
                     date_disp = str(run.get("date", "?"))[:8]
+                    date_dc   = ""
                 top5 = [(int(entry[0]), entry[1]) for entry in (run.get("top5") or [])]
                 display_runs.append({
                     "date_disp": date_disp,
+                    "date_dc":   date_dc,
+                    "race_num":  run.get("race_number"),
                     "place_val": str(run.get("place", "?")),
                     "dist": str(run["distance"]) if run.get("distance") else "?",
                     "trk": str(run.get("track", "?")),
@@ -4443,6 +4576,7 @@ def page_form_guide():
                 rnum = row["race_number"]
                 ri = race_idx.get((rd, rnum), {"top5": [], "margin_2nd": "-"})
                 date_disp = rd.strftime("%d/%m/%y") if hasattr(rd, "strftime") else str(rd)
+                date_dc = rd.strftime("%Y%m%d") if hasattr(rd, "strftime") else ""
                 trk = str(row.get("race_track", "?"))[:2]
                 crs = str(row.get("race_course", "?"))
                 dist = int(row["distance"]) if pd.notna(row.get("distance")) else "?"
@@ -4474,6 +4608,8 @@ def page_form_guide():
                     place_val = "?"
                 display_runs.append({
                     "date_disp": date_disp,
+                    "date_dc":   date_dc,
+                    "race_num":  int(rnum) if pd.notna(rnum) else None,
                     "place_val": place_val,
                     "dist": dist,
                     "trk": trk,
@@ -4512,6 +4648,23 @@ def page_form_guide():
             margin_cell = f'<span class="form-margin" style="{margin_style}">{_smart_frac_html(margin)}</span>'
             t5_html = _fmt_top5_html(top5, hname) if top5 else "&mdash;"
 
+            # Video link + short commentary (if we have date+race+horse)
+            vid_note_row = ""
+            dc = dr.get("date_dc") or ""
+            rnum = dr.get("race_num")
+            if dc and rnum:
+                vurl = _hkjc_video_url(dc, rnum)
+                vlink = (f'<a class="vid-link" href="{vurl}" target="_blank" '
+                         f'rel="noopener noreferrer">▶ Replay</a>')
+                note = _run_commentary_lookup(dc, rnum, hname).get("short", "")
+                note_html = (f'{vlink}<span>{note}</span>'
+                             if note else vlink)
+                vid_note_row = (
+                    f'<tr class="run-note-row">'
+                    f'<td colspan="14">{note_html}</td>'
+                    f'</tr>'
+                )
+
             html_rows.append(
                 f'<tr class="form-data-row">'
                 f'<td>{date_disp}</td>'
@@ -4527,6 +4680,7 @@ def page_form_guide():
                 f'<tr class="top5-row">'
                 f'<td colspan="14">{t5_html}</td>'
                 f'</tr>'
+                + vid_note_row
             )
 
             # For Excel download
