@@ -3463,6 +3463,23 @@ def page_results():
             key="res_dl_xlsx",
         )
 
+    # ── Running Position Photo ───────────────────────────────────────────
+    rp_photo_path = BASE / "running_position_photos" / selected_dc / f"R{selected_rn}.jpg"
+    with st.expander("📸 Running Position Photo (HKJC)", expanded=False):
+        if rp_photo_path.exists():
+            st.caption(
+                "Left = front of pack · right = back · top = inside rail "
+                "(except Sha Tin 1000m). Use to validate speed-map predictions "
+                "and check if horses ran rail, 1-out, or 3–4 wide."
+            )
+            st.image(str(rp_photo_path), use_container_width=True)
+        else:
+            st.info(
+                f"No photo cached for R{selected_rn}. "
+                f"Run `python scrape_hkjc_rp_photos.py --date {selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}` "
+                f"to download."
+            )
+
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
     # ── Add to Blackbook ─────────────────────────────────────────────────

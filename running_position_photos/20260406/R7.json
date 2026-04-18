@@ -1,0 +1,462 @@
+{
+  "date": "2026-04-06",
+  "race_number": 7,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "580",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "BEAUTY WAVES",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 326,
+          "cy": 100,
+          "x_frac": 0.4534722222222222,
+          "conf": 0.867,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Waves",
+          "band_label": "580",
+          "y_in_band": 0.744
+        },
+        {
+          "band_idx": 1,
+          "cx": 253,
+          "cy": 237,
+          "x_frac": 0.35138888888888886,
+          "conf": 0.879,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Waves",
+          "band_label": "800M",
+          "y_in_band": 0.711
+        },
+        {
+          "band_idx": 2,
+          "cx": 322,
+          "cy": 391,
+          "x_frac": 0.44722222222222224,
+          "conf": 0.869,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Waves",
+          "band_label": "400M",
+          "y_in_band": 0.74
+        },
+        {
+          "band_idx": 3,
+          "cx": 399,
+          "cy": 565,
+          "x_frac": 0.5541666666666667,
+          "conf": 0.883,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Waves",
+          "band_label": "200M",
+          "y_in_band": 0.785
+        }
+      ],
+      "ocr_texts": [
+        "Beauty Waves",
+        "Beauty Waves",
+        "Beauty Waves",
+        "Beauty Waves"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.745,
+      "avg_x_frac": 0.452,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HELIOS EXPRESS",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 520,
+          "cy": 28,
+          "x_frac": 0.7229166666666667,
+          "conf": 0.858,
+          "match_score": 1.0,
+          "ocr_text": "Helios Express",
+          "band_label": "580",
+          "y_in_band": 0.149
+        },
+        {
+          "band_idx": 2,
+          "cx": 420,
+          "cy": 324,
+          "x_frac": 0.5840277777777778,
+          "conf": 0.875,
+          "match_score": 1.0,
+          "ocr_text": "Helios Express",
+          "band_label": "400M",
+          "y_in_band": 0.293
+        },
+        {
+          "band_idx": 3,
+          "cx": 341,
+          "cy": 576,
+          "x_frac": 0.4736111111111111,
+          "conf": 0.887,
+          "match_score": 1.0,
+          "ocr_text": "Helios Express",
+          "band_label": "200M",
+          "y_in_band": 0.849
+        }
+      ],
+      "ocr_texts": [
+        "Helios Express",
+        "Helios Express",
+        "Helios Express"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.43,
+      "avg_x_frac": 0.594,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KA YING RISING",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 227,
+          "cy": 99,
+          "x_frac": 0.31631944444444443,
+          "conf": 0.873,
+          "match_score": 1.0,
+          "ocr_text": "Ka Ying Rising",
+          "band_label": "580",
+          "y_in_band": 0.736
+        },
+        {
+          "band_idx": 1,
+          "cx": 175,
+          "cy": 236,
+          "x_frac": 0.24305555555555555,
+          "conf": 0.867,
+          "match_score": 1.0,
+          "ocr_text": "Ka Ying Rising",
+          "band_label": "800M",
+          "y_in_band": 0.705
+        },
+        {
+          "band_idx": 2,
+          "cx": 128,
+          "cy": 389,
+          "x_frac": 0.17847222222222223,
+          "conf": 0.848,
+          "match_score": 1.0,
+          "ocr_text": "Ka Ying Rising",
+          "band_label": "400M",
+          "y_in_band": 0.727
+        },
+        {
+          "band_idx": 3,
+          "cx": 128,
+          "cy": 554,
+          "x_frac": 0.178125,
+          "conf": 0.855,
+          "match_score": 1.0,
+          "ocr_text": "Ka Ying Rising",
+          "band_label": "200M",
+          "y_in_band": 0.721
+        }
+      ],
+      "ocr_texts": [
+        "Ka Ying Rising",
+        "Ka Ying Rising",
+        "Ka Ying Rising",
+        "Ka Ying Rising"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.722,
+      "avg_x_frac": 0.229,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LUCKY WITH YOU",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 419,
+          "cy": 28,
+          "x_frac": 0.5819444444444445,
+          "conf": 0.906,
+          "match_score": 1.0,
+          "ocr_text": "Lucky With You",
+          "band_label": "580",
+          "y_in_band": 0.149
+        },
+        {
+          "band_idx": 2,
+          "cx": 356,
+          "cy": 324,
+          "x_frac": 0.4951388888888889,
+          "conf": 0.882,
+          "match_score": 0.923,
+          "ocr_text": "LuckyWithYou",
+          "band_label": "400M",
+          "y_in_band": 0.293
+        },
+        {
+          "band_idx": 3,
+          "cx": 394,
+          "cy": 542,
+          "x_frac": 0.5472222222222223,
+          "conf": 0.84,
+          "match_score": 1.0,
+          "ocr_text": "Lucky With You",
+          "band_label": "200M",
+          "y_in_band": 0.651
+        }
+      ],
+      "ocr_texts": [
+        "Lucky With You",
+        "LuckyWithYou",
+        "Lucky With You"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.364,
+      "avg_x_frac": 0.541,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RAGING BLIZZARD",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 505,
+          "cy": 103,
+          "x_frac": 0.7013888888888888,
+          "conf": 0.821,
+          "match_score": 1.0,
+          "ocr_text": "Raging Blizzard",
+          "band_label": "580",
+          "y_in_band": 0.769
+        },
+        {
+          "band_idx": 1,
+          "cx": 412,
+          "cy": 243,
+          "x_frac": 0.5729166666666666,
+          "conf": 0.88,
+          "match_score": 1.0,
+          "ocr_text": "Raging Blizzard",
+          "band_label": "800M",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 2,
+          "cx": 425,
+          "cy": 417,
+          "x_frac": 0.5902777777777778,
+          "conf": 0.887,
+          "match_score": 1.0,
+          "ocr_text": "Raging Blizzard",
+          "band_label": "400M",
+          "y_in_band": 0.913
+        },
+        {
+          "band_idx": 3,
+          "cx": 410,
+          "cy": 587,
+          "x_frac": 0.5694444444444444,
+          "conf": 0.888,
+          "match_score": 1.0,
+          "ocr_text": "Raging Blizzard",
+          "band_label": "200M",
+          "y_in_band": 0.913
+        }
+      ],
+      "ocr_texts": [
+        "Raging Blizzard",
+        "Raging Blizzard",
+        "Raging Blizzard",
+        "Raging Blizzard"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.837,
+      "avg_x_frac": 0.609,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "STELLAR EXPRESS",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 115,
+          "cy": 103,
+          "x_frac": 0.1597222222222222,
+          "conf": 0.909,
+          "match_score": 0.966,
+          "ocr_text": "StellarExpress",
+          "band_label": "580",
+          "y_in_band": 0.769
+        },
+        {
+          "band_idx": 1,
+          "cx": 115,
+          "cy": 234,
+          "x_frac": 0.1597222222222222,
+          "conf": 0.898,
+          "match_score": 0.966,
+          "ocr_text": "StellarExpress",
+          "band_label": "800M",
+          "y_in_band": 0.691
+        },
+        {
+          "band_idx": 2,
+          "cx": 233,
+          "cy": 323,
+          "x_frac": 0.3236111111111111,
+          "conf": 0.886,
+          "match_score": 0.966,
+          "ocr_text": "StellarExpress",
+          "band_label": "400M",
+          "y_in_band": 0.287
+        },
+        {
+          "band_idx": 3,
+          "cx": 398,
+          "cy": 475,
+          "x_frac": 0.5534722222222223,
+          "conf": 0.802,
+          "match_score": 1.0,
+          "ocr_text": "Stellar Express",
+          "band_label": "200M",
+          "y_in_band": 0.262
+        }
+      ],
+      "ocr_texts": [
+        "StellarExpress",
+        "StellarExpress",
+        "StellarExpress",
+        "Stellar Express"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.502,
+      "avg_x_frac": 0.299,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TOMODACHI KOKOROE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 426,
+          "cy": 104,
+          "x_frac": 0.5923611111111111,
+          "conf": 0.934,
+          "match_score": 0.97,
+          "ocr_text": "TomodachiKokoroe",
+          "band_label": "580",
+          "y_in_band": 0.777
+        },
+        {
+          "band_idx": 1,
+          "cx": 333,
+          "cy": 237,
+          "x_frac": 0.46319444444444446,
+          "conf": 0.885,
+          "match_score": 1.0,
+          "ocr_text": "Tomodachi Kokoroe",
+          "band_label": "800M",
+          "y_in_band": 0.711
+        },
+        {
+          "band_idx": 2,
+          "cx": 393,
+          "cy": 394,
+          "x_frac": 0.5465277777777777,
+          "conf": 0.869,
+          "match_score": 1.0,
+          "ocr_text": "Tomodachi Kokoroe",
+          "band_label": "400M",
+          "y_in_band": 0.76
+        },
+        {
+          "band_idx": 3,
+          "cx": 475,
+          "cy": 576,
+          "x_frac": 0.6597222222222222,
+          "conf": 0.917,
+          "match_score": 0.97,
+          "ocr_text": "TomodachiKokoroe",
+          "band_label": "200M",
+          "y_in_band": 0.849
+        }
+      ],
+      "ocr_texts": [
+        "TomodachiKokoroe",
+        "Tomodachi Kokoroe",
+        "Tomodachi Kokoroe",
+        "TomodachiKokoroe"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.774,
+      "avg_x_frac": 0.565,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 54,
+    "matched_horses": 7,
+    "field_size": 7,
+    "coverage": 1.0,
+    "parsed_at": "2026-04-18T17:12:00"
+  }
+}

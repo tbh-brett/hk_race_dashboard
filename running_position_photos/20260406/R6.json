@@ -1,0 +1,558 @@
+{
+  "date": "2026-04-06",
+  "race_number": 6,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "579",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ALPHA STRIKE",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 290,
+          "cy": 45,
+          "x_frac": 0.403125,
+          "conf": 0.771,
+          "match_score": 0.857,
+          "ocr_text": "phaStrike",
+          "band_label": "579",
+          "y_in_band": 0.289
+        },
+        {
+          "band_idx": 1,
+          "cx": 234,
+          "cy": 171,
+          "x_frac": 0.32569444444444445,
+          "conf": 0.86,
+          "match_score": 1.0,
+          "ocr_text": "Alpha Strike",
+          "band_label": "800M",
+          "y_in_band": 0.268
+        },
+        {
+          "band_idx": 2,
+          "cx": 173,
+          "cy": 322,
+          "x_frac": 0.24027777777777778,
+          "conf": 0.834,
+          "match_score": 0.909,
+          "ocr_text": "AphaStrike",
+          "band_label": "400M",
+          "y_in_band": 0.28
+        }
+      ],
+      "ocr_texts": [
+        "phaStrike",
+        "Alpha Strike",
+        "AphaStrike"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.279,
+      "avg_x_frac": 0.323,
+      "wide_frames": 0,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "BLUE ILLUSION",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 232,
+          "cy": 231,
+          "x_frac": 0.3229166666666667,
+          "conf": 0.835,
+          "match_score": 0.96,
+          "ocr_text": "Blue llusion",
+          "band_label": "800M",
+          "y_in_band": 0.671
+        },
+        {
+          "band_idx": 2,
+          "cx": 242,
+          "cy": 385,
+          "x_frac": 0.33611111111111114,
+          "conf": 0.84,
+          "match_score": 0.87,
+          "ocr_text": "Bluelusion",
+          "band_label": "400M",
+          "y_in_band": 0.7
+        },
+        {
+          "band_idx": 3,
+          "cx": 340,
+          "cy": 555,
+          "x_frac": 0.47291666666666665,
+          "conf": 0.696,
+          "match_score": 0.87,
+          "ocr_text": "Blue llusi",
+          "band_label": "200M",
+          "y_in_band": 0.727
+        }
+      ],
+      "ocr_texts": [
+        "Blue llusion",
+        "Bluelusion",
+        "Blue llusi"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.699,
+      "avg_x_frac": 0.377,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FAST RESPONDER",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 128,
+          "cy": 112,
+          "x_frac": 0.17847222222222223,
+          "conf": 0.869,
+          "match_score": 1.0,
+          "ocr_text": "Fast Responder",
+          "band_label": "579",
+          "y_in_band": 0.843
+        },
+        {
+          "band_idx": 1,
+          "cx": 83,
+          "cy": 248,
+          "x_frac": 0.11527777777777778,
+          "conf": 0.908,
+          "match_score": 1.0,
+          "ocr_text": "Fast Responder",
+          "band_label": "800M",
+          "y_in_band": 0.785
+        },
+        {
+          "band_idx": 3,
+          "cx": 97,
+          "cy": 440,
+          "x_frac": 0.13541666666666666,
+          "conf": 0.907,
+          "match_score": 0.923,
+          "ocr_text": "astResponder",
+          "band_label": "200M",
+          "y_in_band": 0.058
+        }
+      ],
+      "ocr_texts": [
+        "Fast Responder",
+        "Fast Responder",
+        "astResponder"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.562,
+      "avg_x_frac": 0.143,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GLOWING PRAISES",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 152,
+          "cy": 240,
+          "x_frac": 0.21180555555555555,
+          "conf": 0.842,
+          "match_score": 0.8,
+          "ocr_text": "ng Praises",
+          "band_label": "800M",
+          "y_in_band": 0.732
+        },
+        {
+          "band_idx": 2,
+          "cx": 103,
+          "cy": 419,
+          "x_frac": 0.14305555555555555,
+          "conf": 0.881,
+          "match_score": 1.0,
+          "ocr_text": "Glowing Praises",
+          "band_label": "400M",
+          "y_in_band": 0.927
+        },
+        {
+          "band_idx": 3,
+          "cx": 129,
+          "cy": 569,
+          "x_frac": 0.17916666666666667,
+          "conf": 0.886,
+          "match_score": 1.0,
+          "ocr_text": "Glowing Praises",
+          "band_label": "200M",
+          "y_in_band": 0.808
+        }
+      ],
+      "ocr_texts": [
+        "ng Praises",
+        "Glowing Praises",
+        "Glowing Praises"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.822,
+      "avg_x_frac": 0.178,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KANSAS",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 434,
+          "cy": 46,
+          "x_frac": 0.6027777777777777,
+          "conf": 0.736,
+          "match_score": 1.0,
+          "ocr_text": "Kansas",
+          "band_label": "579",
+          "y_in_band": 0.298
+        },
+        {
+          "band_idx": 1,
+          "cx": 371,
+          "cy": 245,
+          "x_frac": 0.5159722222222223,
+          "conf": 0.818,
+          "match_score": 1.0,
+          "ocr_text": "Kansas",
+          "band_label": "800M",
+          "y_in_band": 0.765
+        },
+        {
+          "band_idx": 2,
+          "cx": 345,
+          "cy": 326,
+          "x_frac": 0.4791666666666667,
+          "conf": 0.833,
+          "match_score": 1.0,
+          "ocr_text": "Kansas",
+          "band_label": "400M",
+          "y_in_band": 0.307
+        },
+        {
+          "band_idx": 3,
+          "cx": 394,
+          "cy": 547,
+          "x_frac": 0.5472222222222223,
+          "conf": 0.85,
+          "match_score": 1.0,
+          "ocr_text": "Kansas",
+          "band_label": "200M",
+          "y_in_band": 0.68
+        }
+      ],
+      "ocr_texts": [
+        "Kansas",
+        "Kansas",
+        "Kansas",
+        "Kansas"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.512,
+      "avg_x_frac": 0.536,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LOOKING BRIGHT",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 106,
+          "cy": 137,
+          "x_frac": 0.1482638888888889,
+          "conf": 0.879,
+          "match_score": 1.0,
+          "ocr_text": "Looking Bright",
+          "band_label": "800M",
+          "y_in_band": 0.04
+        },
+        {
+          "band_idx": 1,
+          "cx": 143,
+          "cy": 264,
+          "x_frac": 0.1986111111111111,
+          "conf": 0.836,
+          "match_score": 1.0,
+          "ocr_text": "Looking Bright",
+          "band_label": "800M",
+          "y_in_band": 0.893
+        }
+      ],
+      "ocr_texts": [
+        "Looking Bright",
+        "Looking Bright"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.467,
+      "avg_x_frac": 0.173,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LUCKY CANDY",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 188,
+          "cy": 112,
+          "x_frac": 0.26180555555555557,
+          "conf": 0.874,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Candy",
+          "band_label": "579",
+          "y_in_band": 0.843
+        },
+        {
+          "band_idx": 1,
+          "cx": 201,
+          "cy": 254,
+          "x_frac": 0.2795138888888889,
+          "conf": 0.892,
+          "match_score": 0.952,
+          "ocr_text": "LuckyCandy",
+          "band_label": "800M",
+          "y_in_band": 0.826
+        },
+        {
+          "band_idx": 2,
+          "cx": 193,
+          "cy": 395,
+          "x_frac": 0.2690972222222222,
+          "conf": 0.896,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Candy",
+          "band_label": "400M",
+          "y_in_band": 0.767
+        },
+        {
+          "band_idx": 3,
+          "cx": 182,
+          "cy": 567,
+          "x_frac": 0.25381944444444443,
+          "conf": 0.902,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Candy",
+          "band_label": "200M",
+          "y_in_band": 0.797
+        }
+      ],
+      "ocr_texts": [
+        "Lucky Candy",
+        "LuckyCandy",
+        "Lucky Candy",
+        "Lucky Candy"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.808,
+      "avg_x_frac": 0.266,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TACTICAL ACE",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 300,
+          "cy": 318,
+          "x_frac": 0.4173611111111111,
+          "conf": 0.851,
+          "match_score": 1.0,
+          "ocr_text": "Tactical Ace",
+          "band_label": "400M",
+          "y_in_band": 0.253
+        }
+      ],
+      "ocr_texts": [
+        "Tactical Ace"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.253,
+      "avg_x_frac": 0.417,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "TACTICAL HORIZONS",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 408,
+          "cy": 103,
+          "x_frac": 0.5673611111111111,
+          "conf": 0.898,
+          "match_score": 0.97,
+          "ocr_text": "TacticalHorizons",
+          "band_label": "579",
+          "y_in_band": 0.769
+        }
+      ],
+      "ocr_texts": [
+        "TacticalHorizons"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.769,
+      "avg_x_frac": 0.567,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WHIZZ KID",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 215,
+          "cy": 47,
+          "x_frac": 0.29930555555555555,
+          "conf": 0.75,
+          "match_score": 0.824,
+          "ocr_text": "VhizzKid",
+          "band_label": "579",
+          "y_in_band": 0.306
+        },
+        {
+          "band_idx": 1,
+          "cx": 139,
+          "cy": 179,
+          "x_frac": 0.19375,
+          "conf": 0.804,
+          "match_score": 1.0,
+          "ocr_text": "Whizz Kid",
+          "band_label": "800M",
+          "y_in_band": 0.322
+        },
+        {
+          "band_idx": 2,
+          "cx": 138,
+          "cy": 395,
+          "x_frac": 0.19166666666666668,
+          "conf": 0.811,
+          "match_score": 0.941,
+          "ocr_text": "WhizzKid",
+          "band_label": "400M",
+          "y_in_band": 0.767
+        },
+        {
+          "band_idx": 3,
+          "cx": 243,
+          "cy": 566,
+          "x_frac": 0.3375,
+          "conf": 0.826,
+          "match_score": 0.941,
+          "ocr_text": "WhizzKid",
+          "band_label": "200M",
+          "y_in_band": 0.791
+        }
+      ],
+      "ocr_texts": [
+        "VhizzKid",
+        "Whizz Kid",
+        "WhizzKid",
+        "WhizzKid"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.546,
+      "avg_x_frac": 0.256,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WONDERSTAR",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 253,
+          "cy": 323,
+          "x_frac": 0.35138888888888886,
+          "conf": 0.907,
+          "match_score": 1.0,
+          "ocr_text": "Wonderstar",
+          "band_label": "400M",
+          "y_in_band": 0.287
+        }
+      ],
+      "ocr_texts": [
+        "Wonderstar"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.287,
+      "avg_x_frac": 0.351,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 50,
+    "matched_horses": 11,
+    "field_size": 12,
+    "coverage": 0.917,
+    "parsed_at": "2026-04-18T17:11:57"
+  }
+}

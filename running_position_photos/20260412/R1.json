@@ -1,0 +1,339 @@
+{
+  "date": "2026-04-12",
+  "race_number": 1,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "594",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "GLORIOUS HERO",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 233,
+          "cy": 144,
+          "x_frac": 0.32430555555555557,
+          "conf": 0.864,
+          "match_score": 1.0,
+          "ocr_text": "Glorious Hero",
+          "band_label": "800M",
+          "y_in_band": 0.087
+        }
+      ],
+      "ocr_texts": [
+        "Glorious Hero"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.087,
+      "avg_x_frac": 0.324,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "KA YING GRATEFUL",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 227,
+          "cy": 120,
+          "x_frac": 0.3159722222222222,
+          "conf": 0.843,
+          "match_score": 1.0,
+          "ocr_text": "Ka Ying Grateful",
+          "band_label": "594",
+          "y_in_band": 0.909
+        },
+        {
+          "band_idx": 1,
+          "cx": 238,
+          "cy": 259,
+          "x_frac": 0.33125,
+          "conf": 0.844,
+          "match_score": 0.968,
+          "ocr_text": "Ka YingGrateful",
+          "band_label": "800M",
+          "y_in_band": 0.859
+        },
+        {
+          "band_idx": 2,
+          "cx": 405,
+          "cy": 409,
+          "x_frac": 0.5625,
+          "conf": 0.902,
+          "match_score": 1.0,
+          "ocr_text": "Ka Ying Grateful",
+          "band_label": "400M",
+          "y_in_band": 0.86
+        }
+      ],
+      "ocr_texts": [
+        "Ka Ying Grateful",
+        "Ka YingGrateful",
+        "Ka Ying Grateful"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.876,
+      "avg_x_frac": 0.403,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PERFECT ONE",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 118,
+          "cy": 270,
+          "x_frac": 0.16458333333333333,
+          "conf": 0.811,
+          "match_score": 0.9,
+          "ocr_text": "erfectOne",
+          "band_label": "800M",
+          "y_in_band": 0.933
+        },
+        {
+          "band_idx": 2,
+          "cx": 131,
+          "cy": 413,
+          "x_frac": 0.18263888888888888,
+          "conf": 0.845,
+          "match_score": 0.952,
+          "ocr_text": "PerfectOne",
+          "band_label": "400M",
+          "y_in_band": 0.887
+        },
+        {
+          "band_idx": 3,
+          "cx": 101,
+          "cy": 582,
+          "x_frac": 0.14097222222222222,
+          "conf": 0.856,
+          "match_score": 0.952,
+          "ocr_text": "PerfectOne",
+          "band_label": "200M",
+          "y_in_band": 0.884
+        }
+      ],
+      "ocr_texts": [
+        "erfectOne",
+        "PerfectOne",
+        "PerfectOne"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.901,
+      "avg_x_frac": 0.163,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SECRET INGREDIENT",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 131,
+          "cy": 127,
+          "x_frac": 0.18194444444444444,
+          "conf": 0.892,
+          "match_score": 1.0,
+          "ocr_text": "Secret Ingredient",
+          "band_label": "594",
+          "y_in_band": 0.967
+        },
+        {
+          "band_idx": 3,
+          "cx": 143,
+          "cy": 439,
+          "x_frac": 0.19930555555555557,
+          "conf": 0.887,
+          "match_score": 1.0,
+          "ocr_text": "Secret Ingredient",
+          "band_label": "200M",
+          "y_in_band": 0.052
+        },
+        {
+          "band_idx": 3,
+          "cx": 155,
+          "cy": 591,
+          "x_frac": 0.21597222222222223,
+          "conf": 0.882,
+          "match_score": 0.938,
+          "ocr_text": "Secret Ingredie",
+          "band_label": "200M",
+          "y_in_band": 0.936
+        }
+      ],
+      "ocr_texts": [
+        "Secret Ingredient",
+        "Secret Ingredient",
+        "Secret Ingredie"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.652,
+      "avg_x_frac": 0.199,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SILVERY KNIGHT",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 179,
+          "cy": 97,
+          "x_frac": 0.24861111111111112,
+          "conf": 0.878,
+          "match_score": 1.0,
+          "ocr_text": "Silvery Knight",
+          "band_label": "594",
+          "y_in_band": 0.719
+        },
+        {
+          "band_idx": 2,
+          "cx": 194,
+          "cy": 408,
+          "x_frac": 0.26944444444444443,
+          "conf": 0.765,
+          "match_score": 0.963,
+          "ocr_text": "Sivery Knight",
+          "band_label": "400M",
+          "y_in_band": 0.853
+        },
+        {
+          "band_idx": 3,
+          "cx": 219,
+          "cy": 581,
+          "x_frac": 0.30416666666666664,
+          "conf": 0.846,
+          "match_score": 1.0,
+          "ocr_text": "Silvery Knight",
+          "band_label": "200M",
+          "y_in_band": 0.878
+        }
+      ],
+      "ocr_texts": [
+        "Silvery Knight",
+        "Sivery Knight",
+        "Silvery Knight"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.817,
+      "avg_x_frac": 0.274,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TALENTS CHAMPION",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 239,
+          "cy": 97,
+          "x_frac": 0.33229166666666665,
+          "conf": 0.886,
+          "match_score": 1.0,
+          "ocr_text": "Talents Champion",
+          "band_label": "594",
+          "y_in_band": 0.719
+        },
+        {
+          "band_idx": 1,
+          "cx": 192,
+          "cy": 169,
+          "x_frac": 0.2673611111111111,
+          "conf": 0.903,
+          "match_score": 0.968,
+          "ocr_text": "TalentsChampion",
+          "band_label": "800M",
+          "y_in_band": 0.255
+        },
+        {
+          "band_idx": 2,
+          "cx": 163,
+          "cy": 334,
+          "x_frac": 0.22708333333333333,
+          "conf": 0.868,
+          "match_score": 1.0,
+          "ocr_text": "Talents Champion",
+          "band_label": "400M",
+          "y_in_band": 0.36
+        },
+        {
+          "band_idx": 3,
+          "cx": 163,
+          "cy": 503,
+          "x_frac": 0.2263888888888889,
+          "conf": 0.84,
+          "match_score": 0.938,
+          "ocr_text": "Talents Champlon",
+          "band_label": "200M",
+          "y_in_band": 0.424
+        }
+      ],
+      "ocr_texts": [
+        "Talents Champion",
+        "TalentsChampion",
+        "Talents Champion",
+        "Talents Champlon"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.44,
+      "avg_x_frac": 0.263,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 33,
+    "matched_horses": 6,
+    "field_size": 6,
+    "coverage": 1.0,
+    "parsed_at": "2026-04-18T17:07:57"
+  }
+}

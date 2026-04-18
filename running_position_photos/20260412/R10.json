@@ -1,0 +1,567 @@
+{
+  "date": "2026-04-12",
+  "race_number": 10,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "603",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "CHILL BUDDY",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 254,
+          "cy": 23,
+          "x_frac": 0.3527777777777778,
+          "conf": 0.753,
+          "match_score": 1.0,
+          "ocr_text": "Chill Buddy",
+          "band_label": "603",
+          "y_in_band": 0.107
+        },
+        {
+          "band_idx": 1,
+          "cx": 211,
+          "cy": 245,
+          "x_frac": 0.2934027777777778,
+          "conf": 0.805,
+          "match_score": 1.0,
+          "ocr_text": "Chill Buddy",
+          "band_label": "800M",
+          "y_in_band": 0.765
+        },
+        {
+          "band_idx": 3,
+          "cx": 188,
+          "cy": 557,
+          "x_frac": 0.2611111111111111,
+          "conf": 0.623,
+          "match_score": 0.857,
+          "ocr_text": "Chll Budoy",
+          "band_label": "200M",
+          "y_in_band": 0.738
+        }
+      ],
+      "ocr_texts": [
+        "Chill Buddy",
+        "Chill Buddy",
+        "Chll Budoy"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.537,
+      "avg_x_frac": 0.302,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CROSSBORDERPEGASUS",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 608,
+          "cy": 23,
+          "x_frac": 0.8444444444444444,
+          "conf": 0.902,
+          "match_score": 1.0,
+          "ocr_text": "Crossborderpegasus",
+          "band_label": "603",
+          "y_in_band": 0.107
+        },
+        {
+          "band_idx": 1,
+          "cx": 462,
+          "cy": 276,
+          "x_frac": 0.6423611111111112,
+          "conf": 0.927,
+          "match_score": 1.0,
+          "ocr_text": "Crossborderpegasus",
+          "band_label": "800M",
+          "y_in_band": 0.973
+        },
+        {
+          "band_idx": 3,
+          "cx": 288,
+          "cy": 444,
+          "x_frac": 0.40069444444444446,
+          "conf": 0.915,
+          "match_score": 1.0,
+          "ocr_text": "Crossborderpegasus",
+          "band_label": "200M",
+          "y_in_band": 0.081
+        }
+      ],
+      "ocr_texts": [
+        "Crossborderpegasus",
+        "Crossborderpegasus",
+        "Crossborderpegasus"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.387,
+      "avg_x_frac": 0.629,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "JUMBO TREASURE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 86,
+          "cy": 236,
+          "x_frac": 0.11944444444444445,
+          "conf": 0.843,
+          "match_score": 1.0,
+          "ocr_text": "Jumbo Treasure",
+          "band_label": "800M",
+          "y_in_band": 0.705
+        },
+        {
+          "band_idx": 2,
+          "cx": 193,
+          "cy": 321,
+          "x_frac": 0.26875,
+          "conf": 0.913,
+          "match_score": 0.963,
+          "ocr_text": "JumboTreasure",
+          "band_label": "400M",
+          "y_in_band": 0.273
+        },
+        {
+          "band_idx": 3,
+          "cx": 278,
+          "cy": 470,
+          "x_frac": 0.38680555555555557,
+          "conf": 0.877,
+          "match_score": 1.0,
+          "ocr_text": "Jumbo Treasure",
+          "band_label": "200M",
+          "y_in_band": 0.233
+        }
+      ],
+      "ocr_texts": [
+        "Jumbo Treasure",
+        "JumboTreasure",
+        "Jumbo Treasure"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.404,
+      "avg_x_frac": 0.258,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MASTER OF ALL",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 332,
+          "cy": 399,
+          "x_frac": 0.4618055555555556,
+          "conf": 0.766,
+          "match_score": 0.917,
+          "ocr_text": "MasterOfAll",
+          "band_label": "400M",
+          "y_in_band": 0.793
+        },
+        {
+          "band_idx": 3,
+          "cx": 566,
+          "cy": 558,
+          "x_frac": 0.7861111111111111,
+          "conf": 0.883,
+          "match_score": 0.917,
+          "ocr_text": "MasterOfAll",
+          "band_label": "200M",
+          "y_in_band": 0.744
+        }
+      ],
+      "ocr_texts": [
+        "MasterOfAll",
+        "MasterOfAll"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.768,
+      "avg_x_frac": 0.624,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NEW FUTURE FOLKS",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 515,
+          "cy": 103,
+          "x_frac": 0.7152777777777778,
+          "conf": 0.877,
+          "match_score": 0.968,
+          "ocr_text": "NewFuture.Folks",
+          "band_label": "603",
+          "y_in_band": 0.769
+        },
+        {
+          "band_idx": 2,
+          "cx": 534,
+          "cy": 281,
+          "x_frac": 0.7423611111111111,
+          "conf": 0.871,
+          "match_score": 0.933,
+          "ocr_text": "NewFutureFolks",
+          "band_label": "400M",
+          "y_in_band": 0.007
+        },
+        {
+          "band_idx": 2,
+          "cx": 491,
+          "cy": 418,
+          "x_frac": 0.6826388888888889,
+          "conf": 0.84,
+          "match_score": 1.0,
+          "ocr_text": "New Future Folks",
+          "band_label": "400M",
+          "y_in_band": 0.92
+        },
+        {
+          "band_idx": 3,
+          "cx": 551,
+          "cy": 582,
+          "x_frac": 0.7659722222222223,
+          "conf": 0.849,
+          "match_score": 1.0,
+          "ocr_text": "New Future Folks",
+          "band_label": "200M",
+          "y_in_band": 0.884
+        }
+      ],
+      "ocr_texts": [
+        "NewFuture.Folks",
+        "NewFutureFolks",
+        "New Future Folks",
+        "New Future Folks"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.645,
+      "avg_x_frac": 0.727,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "QUANTUM LEGEND",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 448,
+          "cy": 102,
+          "x_frac": 0.6229166666666667,
+          "conf": 0.888,
+          "match_score": 0.963,
+          "ocr_text": "QuantumLegend",
+          "band_label": "603",
+          "y_in_band": 0.76
+        },
+        {
+          "band_idx": 1,
+          "cx": 326,
+          "cy": 273,
+          "x_frac": 0.45381944444444444,
+          "conf": 0.828,
+          "match_score": 0.963,
+          "ocr_text": "QuantumLegend",
+          "band_label": "800M",
+          "y_in_band": 0.953
+        },
+        {
+          "band_idx": 2,
+          "cx": 257,
+          "cy": 421,
+          "x_frac": 0.3576388888888889,
+          "conf": 0.892,
+          "match_score": 1.0,
+          "ocr_text": "Quantum Legend",
+          "band_label": "400M",
+          "y_in_band": 0.94
+        },
+        {
+          "band_idx": 3,
+          "cx": 284,
+          "cy": 557,
+          "x_frac": 0.39479166666666665,
+          "conf": 0.9,
+          "match_score": 1.0,
+          "ocr_text": "Quantum Legend",
+          "band_label": "200M",
+          "y_in_band": 0.738
+        }
+      ],
+      "ocr_texts": [
+        "QuantumLegend",
+        "QuantumLegend",
+        "Quantum Legend",
+        "Quantum Legend"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.848,
+      "avg_x_frac": 0.457,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE UNIQUE STAR",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 582,
+          "cy": 97,
+          "x_frac": 0.8083333333333333,
+          "conf": 0.898,
+          "match_score": 1.0,
+          "ocr_text": "The Unique Star",
+          "band_label": "603",
+          "y_in_band": 0.719
+        },
+        {
+          "band_idx": 1,
+          "cx": 392,
+          "cy": 272,
+          "x_frac": 0.5444444444444444,
+          "conf": 0.856,
+          "match_score": 1.0,
+          "ocr_text": "The Unique Star",
+          "band_label": "800M",
+          "y_in_band": 0.946
+        },
+        {
+          "band_idx": 2,
+          "cx": 319,
+          "cy": 420,
+          "x_frac": 0.4440972222222222,
+          "conf": 0.878,
+          "match_score": 1.0,
+          "ocr_text": "The Unique Star",
+          "band_label": "400M",
+          "y_in_band": 0.933
+        }
+      ],
+      "ocr_texts": [
+        "The Unique Star",
+        "The Unique Star",
+        "The Unique Star"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.866,
+      "avg_x_frac": 0.599,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TURQUOISE VELOCITY",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 153,
+          "cy": 241,
+          "x_frac": 0.21319444444444444,
+          "conf": 0.894,
+          "match_score": 1.0,
+          "ocr_text": "Turquoise Velocity",
+          "band_label": "800M",
+          "y_in_band": 0.738
+        },
+        {
+          "band_idx": 2,
+          "cx": 125,
+          "cy": 324,
+          "x_frac": 0.17430555555555555,
+          "conf": 0.894,
+          "match_score": 1.0,
+          "ocr_text": "Turquoise Velocity",
+          "band_label": "400M",
+          "y_in_band": 0.293
+        },
+        {
+          "band_idx": 3,
+          "cx": 131,
+          "cy": 557,
+          "x_frac": 0.18263888888888888,
+          "conf": 0.885,
+          "match_score": 1.0,
+          "ocr_text": "Turquoise Velocity",
+          "band_label": "200M",
+          "y_in_band": 0.738
+        }
+      ],
+      "ocr_texts": [
+        "Turquoise Velocity",
+        "Turquoise Velocity",
+        "Turquoise Velocity"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.59,
+      "avg_x_frac": 0.19,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "YEE CHEONG GLORY",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 472,
+          "cy": 23,
+          "x_frac": 0.65625,
+          "conf": 0.9,
+          "match_score": 0.968,
+          "ocr_text": "YeeCheong Glory",
+          "band_label": "603",
+          "y_in_band": 0.107
+        },
+        {
+          "band_idx": 1,
+          "cx": 303,
+          "cy": 171,
+          "x_frac": 0.42083333333333334,
+          "conf": 0.855,
+          "match_score": 1.0,
+          "ocr_text": "Yee Cheong Glory",
+          "band_label": "800M",
+          "y_in_band": 0.268
+        },
+        {
+          "band_idx": 2,
+          "cx": 316,
+          "cy": 327,
+          "x_frac": 0.4388888888888889,
+          "conf": 0.837,
+          "match_score": 1.0,
+          "ocr_text": "Yee Cheong Glory",
+          "band_label": "400M",
+          "y_in_band": 0.313
+        }
+      ],
+      "ocr_texts": [
+        "YeeCheong Glory",
+        "Yee Cheong Glory",
+        "Yee Cheong Glory"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.229,
+      "avg_x_frac": 0.505,
+      "wide_frames": 0,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "YOUNG EMPEROR",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 349,
+          "cy": 24,
+          "x_frac": 0.4847222222222222,
+          "conf": 0.889,
+          "match_score": 1.0,
+          "ocr_text": "Young Emperor",
+          "band_label": "603",
+          "y_in_band": 0.116
+        },
+        {
+          "band_idx": 1,
+          "cx": 227,
+          "cy": 171,
+          "x_frac": 0.3159722222222222,
+          "conf": 0.836,
+          "match_score": 1.0,
+          "ocr_text": "Young Emperor",
+          "band_label": "800M",
+          "y_in_band": 0.268
+        },
+        {
+          "band_idx": 2,
+          "cx": 253,
+          "cy": 322,
+          "x_frac": 0.35138888888888886,
+          "conf": 0.897,
+          "match_score": 1.0,
+          "ocr_text": "Young Emperor",
+          "band_label": "400M",
+          "y_in_band": 0.28
+        }
+      ],
+      "ocr_texts": [
+        "Young Emperor",
+        "Young Emperor",
+        "Young Emperor"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.221,
+      "avg_x_frac": 0.384,
+      "wide_frames": 0,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": true
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 59,
+    "matched_horses": 10,
+    "field_size": 12,
+    "coverage": 0.833,
+    "parsed_at": "2026-04-18T17:08:05"
+  }
+}
