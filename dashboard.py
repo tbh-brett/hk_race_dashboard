@@ -2709,62 +2709,98 @@ def _append_results_to_db(results_path: Path):
 def _run_results_scraper(date_str: str, *, full: bool = False):
     """Invoke results scraper from the dashboard.
 
-    *full=False*  (default / Live Feed): lightweight ``scrape_hkjc_results.py``
-        — fast, captures ~20 fields, good for mid-meeting live scores.
-    *full=True*   (Results page / Backtest): full ``scrape_hkjc.py``
-        — slower, captures all 55+ fields including horse profiles, Chinese
-        names, gear, rating, sire/dam.  Merges directly into the Excel DB.
+    *full=False*  (Live Feed): lightweight ``scrape_hkjc_results.py`` only.
+    *full=True*   (Results page / post-race): runs the *full* post-race pipeline:
+        1. ``scrape_hkjc_results.py`` → ``reports/results_YYYYMMDD.json``
+        2. ``scrape_hkjc.py``         → merged into ``hkjc_results_updated.xlsx``
+        3. ``scrape_hkjc_incident_reports.py`` → ``reports/incidents_YYYYMMDD.json``
+        4. ``scrape_hkjc_rp_photos.py`` → ``running_position_photos/YYYYMMDD/R*.jpg``
+        5. ``race_commentary.py``     → ``reports/commentary_YYYYMMDD.json``
     """
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
 
     if full:
-        # Full scraper: scrape_hkjc.py --date DD/MM/YYYY ...
+        date_compact = date_str.replace("-", "")
         dd_mm_yyyy = f"{date_str[8:10]}/{date_str[5:7]}/{date_str[:4]}"
         horse_cache = Path(tempfile.gettempdir()) / "horse_cache_hkjc.json"
-        cmd = [PYTHON, str(BASE / "scrape_hkjc.py"),
-               "--date", dd_mm_yyyy,
-               "--horse-cache", str(horse_cache),
-               "--no-cache"]
-        with st.spinner(f"Full-scraping results for {date_str} (includes horse profiles)…"):
-            result = subprocess.run(cmd, env=env, cwd=str(BASE),
-                                    capture_output=True, text=True, encoding="utf-8",
-                                    timeout=300)
+
+        steps = [
+            ("1/5 Results JSON",
+             [PYTHON, str(BASE / "scrape_hkjc_results.py"), "--date", date_str]),
+            ("2/5 Full DB scrape (sectionals, horse profiles)",
+             [PYTHON, str(BASE / "scrape_hkjc.py"),
+              "--dates", dd_mm_yyyy,
+              "--horse-cache", str(horse_cache),
+              "--no-cache"]),
+            ("3/5 Incident reports",
+             [PYTHON, str(BASE / "scrape_hkjc_incident_reports.py"), "--date", date_str]),
+            ("4/5 Running-position photos",
+             [PYTHON, str(BASE / "scrape_hkjc_rp_photos.py"), "--date", date_str]),
+            ("5/5 Race commentary",
+             [PYTHON, str(BASE / "race_commentary.py"), "--date", date_str]),
+        ]
+
+        outputs: list[tuple[str, int, str]] = []  # (label, rc, tail)
+        progress = st.progress(0.0, text=f"Post-race pipeline for {date_str}…")
+        for i, (label, cmd) in enumerate(steps, 1):
+            progress.progress((i - 1) / len(steps), text=f"{label}…")
+            try:
+                result = subprocess.run(
+                    cmd, env=env, cwd=str(BASE),
+                    capture_output=True, text=True, encoding="utf-8",
+                    timeout=900,
+                )
+                tail = (result.stdout or "") + ("\n" + result.stderr if result.stderr else "")
+                outputs.append((label, result.returncode, tail[-1500:]))
+            except subprocess.TimeoutExpired as e:
+                outputs.append((label, -1, f"TIMEOUT after {e.timeout}s"))
+            except Exception as e:  # pragma: no cover
+                outputs.append((label, -2, f"EXCEPTION: {e}"))
+        progress.progress(1.0, text="Done.")
+
+        # Step 2 (full DB scrape) writes hkjc_results.xlsx — merge if present
+        fresh_path = BASE / "hkjc_results.xlsx"
+        if fresh_path.exists() and outputs[1][1] == 0:
+            try:
+                _merge_full_scrape_to_db(fresh_path, date_str)
+            except Exception as e:
+                st.warning(f"Merge to main DB failed: {e}")
+
+        # Summary
+        n_ok = sum(1 for _, rc, _ in outputs if rc == 0)
+        if n_ok == len(steps):
+            st.success(f"Full post-race pipeline complete ({n_ok}/{len(steps)}) for {date_str}")
+        else:
+            st.warning(f"Pipeline partial: {n_ok}/{len(steps)} steps succeeded for {date_str}")
+
+        for label, rc, tail in outputs:
+            icon = "✅" if rc == 0 else "❌"
+            with st.expander(f"{icon} {label} (exit {rc})", expanded=(rc != 0)):
+                st.code(tail or "(no output)")
+        return
+
+    # Lightweight scraper (Live Feed)
+    cmd = [PYTHON, str(BASE / "scrape_hkjc_results.py"), "--date", date_str]
+    with st.spinner(f"Scraping results for {date_str}..."):
+        result = subprocess.run(cmd, env=env, cwd=str(BASE),
+                                capture_output=True, text=True, encoding="utf-8")
         if result.returncode == 0:
-            st.success(f"Full scrape complete for {date_str}")
+            st.success(f"Results scraped for {date_str}")
             with st.expander("Output"):
                 st.code(result.stdout[-2000:] if len(result.stdout) > 2000
                         else result.stdout)
-            # Merge hkjc_results.xlsx into the main DB
-            fresh_path = BASE / "hkjc_results.xlsx"
-            if fresh_path.exists():
-                _merge_full_scrape_to_db(fresh_path, date_str)
+            # Auto-append to DB
+            date_compact = date_str.replace("-", "")
+            results_json = REPORTS / f"results_{date_compact}.json"
+            if results_json.exists():
+                _append_results_to_db(results_json)
         else:
-            st.error(f"Full scraper failed (exit code {result.returncode})")
+            st.error(f"Scraper failed (exit code {result.returncode})")
             with st.expander("Error"):
                 st.code(result.stderr[-2000:] if result.stderr
                         else result.stdout[-2000:])
-    else:
-        # Lightweight scraper (Live Feed)
-        cmd = [PYTHON, str(BASE / "scrape_hkjc_results.py"), "--date", date_str]
-        with st.spinner(f"Scraping results for {date_str}..."):
-            result = subprocess.run(cmd, env=env, cwd=str(BASE),
-                                    capture_output=True, text=True, encoding="utf-8")
-            if result.returncode == 0:
-                st.success(f"Results scraped for {date_str}")
-                with st.expander("Output"):
-                    st.code(result.stdout[-2000:] if len(result.stdout) > 2000
-                            else result.stdout)
-                # Auto-append to DB
-                date_compact = date_str.replace("-", "")
-                results_json = REPORTS / f"results_{date_compact}.json"
-                if results_json.exists():
-                    _append_results_to_db(results_json)
-            else:
-                st.error(f"Scraper failed (exit code {result.returncode})")
-                with st.expander("Error"):
-                    st.code(result.stderr[-2000:] if result.stderr
-                            else result.stdout[-2000:])
+
 
 
 def _merge_full_scrape_to_db(fresh_path: Path, date_str: str):
