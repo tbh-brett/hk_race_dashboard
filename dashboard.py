@@ -51,6 +51,45 @@ def _hkjc_video_url(date_dc: str, race_no: int) -> str:
     )
 
 
+_TRIAL_COURSE_TO_RC = {
+    "CONGHUA": "ch",
+    "CONGHUA TURF": "ch",
+    "CONGHUA AWT": "ch",
+    "SHA TIN": "st",
+    "SHA TIN TURF": "st",
+    "SHA TIN AWT": "st",
+    "HAPPY VALLEY": "hv",
+}
+
+
+def _trial_rc_code(course: str | None) -> str:
+    """Map a trial batch course string (e.g. 'CONGHUA TURF') to the HKJC rc code."""
+    if not course:
+        return "ch"
+    k = str(course).strip().upper()
+    if k in _TRIAL_COURSE_TO_RC:
+        return _TRIAL_COURSE_TO_RC[k]
+    if "CONGHUA" in k:
+        return "ch"
+    if "HAPPY" in k or k == "HV":
+        return "hv"
+    if "SHA TIN" in k or k == "ST":
+        return "st"
+    return "ch"
+
+
+def _hkjc_trial_video_url(date_dc: str, batch_no: int, course: str | None = None) -> str:
+    """Build the HKJC barrier-trial replay iframe URL for (date, batch)."""
+    rc = _trial_rc_code(course)
+    return (
+        "https://racing.hkjc.com/contentAsset/videoplayer_v4/"
+        "video-player-iframe_v4.html?type=brts"
+        f"&date={date_dc}&rc={rc}&no={int(batch_no):02d}&lang=eng"
+        "&rf=http://racing.hkjc.com/en-us/local/information/btresult"
+        "&pageid=racing/local"
+    )
+
+
 @st.cache_data(show_spinner=False)
 def _load_commentary(date_dc: str) -> dict:
     """Load commentary_YYYYMMDD.json once per date (cached). Returns
@@ -4867,6 +4906,20 @@ def _trial_compact_html(entries: list) -> str:
         comment_short = comment[:45] + (".." if len(comment) > 45 else "") if comment else ""
         comment_html = f' <span style="color:#9ca3af;font-size:0.83em">{comment_short}</span>' if comment_short else ""
 
+        # Trial replay button — only reliable for 2026+ (HKJC video coverage gate)
+        vid_html = ""
+        dt_iso = e.get("date", "")
+        batch_n = e.get("batch_number", 0)
+        if dt_iso and dt_iso >= "2026-01-01" and batch_n:
+            dc = dt_iso.replace("-", "")
+            vurl = _hkjc_trial_video_url(dc, int(batch_n), e.get("course", ""))
+            vid_html = (
+                f' <a href="{vurl}" target="_blank" rel="noopener noreferrer" '
+                f'class="vid-link" title="Watch trial" '
+                f'style="color:#1f6feb;font-weight:700;text-decoration:none;">'
+                f'&#9654;</a>'
+            )
+
         # Top-4 finishers
         top4 = e.get("top4", [])
         if top4:
@@ -4891,6 +4944,7 @@ def _trial_compact_html(entries: list) -> str:
             f'{e.get("time", "")}'
             f'{gear_html}'
             f'{res_html}'
+            f'{vid_html}'
             f'{comment_html}'
             f'{top4_html}'
         )
@@ -4955,7 +5009,8 @@ def sidebar_trials():
             )
 
 
-def _render_trial_batch_table(batch: dict, search_upper: str = ""):
+def _render_trial_batch_table(batch: dict, search_upper: str = "",
+                              date_iso: str = ""):
     """Render a single trial batch as an expandable table."""
     horses = batch.get("horses", [])
     if search_upper:
@@ -4971,6 +5026,22 @@ def _render_trial_batch_table(batch: dict, search_upper: str = ""):
         f"{batch['n_horses']} horses",
         expanded=True,
     ):
+        # Replay button (2026+ only)
+        if date_iso and date_iso >= "2026-01-01":
+            vurl = _hkjc_trial_video_url(
+                date_iso.replace("-", ""),
+                int(batch["batch_number"]),
+                batch.get("course", ""),
+            )
+            st.markdown(
+                f'<div style="margin:0 0 8px 0;">'
+                f'<a href="{vurl}" target="_blank" rel="noopener noreferrer" '
+                f'style="display:inline-block;padding:6px 12px;background:#1f6feb;'
+                f'color:#fff;border-radius:5px;text-decoration:none;font-weight:600;'
+                f'font-size:13px;">▶ Watch Trial Batch {batch["batch_number"]} (HKJC)</a>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
         header = (
             '<table class="form-tbl"><thead><tr>'
             '<th>#</th><th>Horse</th><th>Jockey</th><th>Trainer</th>'
@@ -5031,7 +5102,7 @@ def _render_horse_trial_history(horse_name: str, trial_index: dict):
         '<table class="form-tbl"><thead><tr>'
         '<th>Date</th><th>Course</th><th>Dist</th><th>Going</th>'
         '<th>Draw</th><th>Gear</th><th>LBW</th><th>Pos</th>'
-        '<th>Fin</th><th>Time</th><th>Result</th>'
+        '<th>Fin</th><th>Time</th><th>Result</th><th>Vid</th>'
         '<th class="th-left">Comment</th><th>Top 4</th>'
         '</tr></thead><tbody>'
     )
@@ -5065,6 +5136,19 @@ def _render_horse_trial_history(horse_name: str, trial_index: dict):
         medals = ["\U0001f947", "\U0001f948", "\U0001f949", "4."]
         t4_html = " ".join(f'{medals[r]}{nm}' for r, nm in enumerate(top4)) if top4 else ""
 
+        # Trial replay button (2026+)
+        dt_iso = e.get("date", "") or ""
+        batch_n = e.get("batch_number", 0)
+        if dt_iso and dt_iso >= "2026-01-01" and batch_n:
+            dc = dt_iso.replace("-", "")
+            vurl = _hkjc_trial_video_url(dc, int(batch_n), e.get("course", ""))
+            vid_cell = (
+                f'<a href="{vurl}" target="_blank" rel="noopener noreferrer" '
+                f'class="vid-link" title="Watch trial">&#9654;</a>'
+            )
+        else:
+            vid_cell = "&mdash;"
+
         rows_html.append(
             f'<tr class="form-data-row">'
             f'<td>{e.get("date", "?")}</td>'
@@ -5078,6 +5162,7 @@ def _render_horse_trial_history(horse_name: str, trial_index: dict):
             f'<td>{fin_cell}</td>'
             f'<td>{e.get("time", "")}</td>'
             f'<td>{res_cell}</td>'
+            f'<td>{vid_cell}</td>'
             f'<td class="td-left" style="font-size:0.88em;color:#d1d5db">'
             f'{e.get("comment", "")}</td>'
             f'<td style="font-size:0.80em;color:#d1d5db">{t4_html}</td>'
@@ -5353,8 +5438,9 @@ def page_trials():
                                placeholder="Type to filter within this date...")
         search_upper = search.strip().upper() if search else ""
 
+        _trial_date_iso = data.get("date", "") or ""
         for batch in batches:
-            _render_trial_batch_table(batch, search_upper)
+            _render_trial_batch_table(batch, search_upper, _trial_date_iso)
 
         with st.expander("Gear Legend"):
             st.markdown(

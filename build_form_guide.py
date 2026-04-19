@@ -25,6 +25,7 @@ import pandas as pd
 
 BASE = Path(__file__).parent
 CACHE_DIR = BASE / "cache"
+RACECARDS_DIR = BASE / "racecards"
 
 FORM_COLS = [
     "horse_name", "race_date", "race_number", "race_track", "race_course",
@@ -97,14 +98,89 @@ def _fmt_margin(place, lbw, race_idx_entry: dict) -> str:
     return lbw_s
 
 
+def _racecard_xlsx_to_dict(xlsx_path: Path, date_iso: str) -> dict:
+    """Reconstruct a racecard JSON-cache dict directly from the xlsx.
+
+    Used as a fallback when cache/racecard_YYYY-MM-DD.json is a stub or missing
+    (e.g. HKJC live page was scraped post-meeting and returned no horses).
+    """
+    df = pd.read_excel(str(xlsx_path), sheet_name="All Races")
+    if df.empty:
+        raise RuntimeError(f"xlsx at {xlsx_path} is empty")
+
+    racecourse = ""
+    if "racecourse" in df.columns and pd.notna(df["racecourse"].iloc[0]):
+        racecourse = str(df["racecourse"].iloc[0])
+
+    races_out: list[dict] = []
+    meta_fields = [
+        "race_number", "race_name", "race_class", "distance", "surface",
+        "race_course", "going", "rating_range", "prize", "race_time",
+    ]
+    for rn, grp in df.groupby("race_number"):
+        if pd.isna(rn):
+            continue
+        first = grp.iloc[0]
+        meta = {}
+        for k in meta_fields:
+            v = first.get(k) if k in grp.columns else None
+            if pd.isna(v):
+                meta[k] = ""
+            else:
+                # Keep numeric fields numeric where appropriate
+                if k in ("race_number", "distance"):
+                    try:
+                        meta[k] = int(float(v))
+                    except (ValueError, TypeError):
+                        meta[k] = v
+                else:
+                    meta[k] = v
+        horses: list[dict] = []
+        for _, row in grp.iterrows():
+            h: dict = {}
+            for col in grp.columns:
+                if col in meta_fields or col in ("race_date", "racecourse"):
+                    continue
+                v = row[col]
+                if pd.isna(v):
+                    continue
+                h[col] = v
+            if not h.get("horse_name"):
+                continue
+            horses.append(h)
+        races_out.append({"meta": meta, "horses": horses})
+
+    return {
+        "race_date": date_iso,
+        "racecourse": racecourse,
+        "races": races_out,
+    }
+
+
 def build(date_iso: str) -> None:
     meeting_date = date.fromisoformat(date_iso)
 
     rc_path = CACHE_DIR / f"racecard_{date_iso}.json"
-    if not rc_path.exists():
-        sys.exit(f"ERROR: Racecard cache not found: {rc_path}")
-    with open(rc_path, "r", encoding="utf-8") as f:
-        racecard = json.load(f)
+    racecard = None
+    if rc_path.exists():
+        with open(rc_path, "r", encoding="utf-8") as f:
+            racecard = json.load(f)
+        # Detect stub / empty-horses case and fall back to xlsx
+        if not racecard.get("races") or all(
+            not r.get("horses") for r in racecard.get("races", [])
+        ):
+            print(f"Racecard JSON empty/stub ({rc_path.name}); falling back to xlsx...")
+            racecard = None
+
+    if racecard is None:
+        xl_path = RACECARDS_DIR / f"racecard_{date_iso.replace('-', '')}.xlsx"
+        if not xl_path.exists():
+            sys.exit(f"ERROR: No racecard JSON cache and no xlsx at {xl_path}")
+        racecard = _racecard_xlsx_to_dict(xl_path, date_iso)
+        # Persist rebuilt JSON cache so downstream code has it available
+        with open(rc_path, "w", encoding="utf-8") as f:
+            json.dump(racecard, f, ensure_ascii=False, indent=2, default=str)
+        print(f"Rebuilt racecard JSON cache from xlsx: {rc_path}")
 
     print(f"Loading historical results...")
     form_db = _load_form_db()
@@ -145,6 +221,7 @@ def build(date_iso: str) -> None:
 
                 runs.append({
                     "date": rd.isoformat() if hasattr(rd, "isoformat") else str(rd),
+                    "race_number": int(rnum) if pd.notna(rnum) else None,
                     "place": place_val,
                     "distance": int(row["distance"]) if pd.notna(row.get("distance")) else None,
                     "track": str(row.get("race_track", "?"))[:2],
@@ -188,7 +265,7 @@ def build(date_iso: str) -> None:
 
     out_path = CACHE_DIR / f"form_guide_{date_iso}.json"
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=2)
+        json.dump(output, f, ensure_ascii=False, indent=2, default=str)
     print(f"Form guide cache written: {out_path}")
     print(f"  {sum(len(r['horses']) for r in output['races'])} horses across {len(output['races'])} races")
 
