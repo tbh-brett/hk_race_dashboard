@@ -2724,6 +2724,9 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
         date_compact = date_str.replace("-", "")
         dd_mm_yyyy = f"{date_str[8:10]}/{date_str[5:7]}/{date_str[:4]}"
         horse_cache = Path(tempfile.gettempdir()) / "horse_cache_hkjc.json"
+        # OneDrive locks xlsx files that live under the workspace folder —
+        # write to TEMP then copy into the workspace after the scrape succeeds.
+        full_scrape_tmp = Path(tempfile.gettempdir()) / "hkjc_results.xlsx"
 
         steps = [
             ("1/5 Results JSON",
@@ -2732,7 +2735,8 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
              [PYTHON, str(BASE / "scrape_hkjc.py"),
               "--dates", dd_mm_yyyy,
               "--horse-cache", str(horse_cache),
-              "--no-cache"]),
+              "--no-cache",
+              "--output", str(full_scrape_tmp)]),
             ("3/5 Incident reports",
              [PYTHON, str(BASE / "scrape_hkjc_incident_reports.py"), "--date", date_str]),
             ("4/5 Running-position photos",
@@ -2759,11 +2763,10 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
                 outputs.append((label, -2, f"EXCEPTION: {e}"))
         progress.progress(1.0, text="Done.")
 
-        # Step 2 (full DB scrape) writes hkjc_results.xlsx — merge if present
-        fresh_path = BASE / "hkjc_results.xlsx"
-        if fresh_path.exists() and outputs[1][1] == 0:
+        # Step 2 (full DB scrape) writes the xlsx to TEMP — merge if present
+        if full_scrape_tmp.exists() and outputs[1][1] == 0:
             try:
-                _merge_full_scrape_to_db(fresh_path, date_str)
+                _merge_full_scrape_to_db(full_scrape_tmp, date_str)
             except Exception as e:
                 st.warning(f"Merge to main DB failed: {e}")
 
