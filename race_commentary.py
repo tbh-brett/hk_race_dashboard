@@ -324,13 +324,74 @@ def blackbook_suggestions(horse_entries: List[Dict]) -> List[Dict]:
 
 
 # ── Main per-meeting ─────────────────────────────────────────────────────────
+def _build_meeting_from_incidents(date_iso: str, inc: Dict) -> Dict:
+    """Fallback builder used when only the incidents JSON exists for a date.
+
+    Produces per-horse short blurbs + tags (sufficient for the Form Guide
+    Comment column) plus BB suggestions based on the place already carried in
+    each incident row. No race-narrative or photo-trip integration since both
+    require the results JSON / RP photo JSON.
+    """
+    out_races: List[Dict] = []
+    for race in inc.get("races", []):
+        rn = race.get("race_number")
+        horse_entries: List[Dict] = []
+        rows = race.get("incident_report", []) or []
+        field_size = len(rows)
+        for row in rows:
+            inc_text = row.get("incident", "") or ""
+            tags = apply_rules(inc_text)
+            pol_score = sum(1 if t["polarity"] == "+" else -1 if t["polarity"] == "-" else 0
+                            for t in tags)
+            try:
+                place_i = int(row.get("place")) if row.get("place") not in (None, "") else None
+            except (ValueError, TypeError):
+                place_i = None
+            horse_entries.append({
+                "horse_name":   row.get("horse_name", ""),
+                "horse_no":     row.get("horse_no"),
+                "place":        place_i,
+                "lbw":          "",
+                "running_position": "",
+                "draw":         "",
+                "win_odds":     "",
+                "short":        short_blurb(place_i, field_size, tags, "", ""),
+                "tags":         [t["tag"] for t in tags],
+                "polarity_score": pol_score,
+                "incident_text": inc_text,
+            })
+        out_races.append({
+            "race_number": rn,
+            "race_name":   "",
+            "distance":    "",
+            "race_class":  "",
+            "going":       "",
+            "narrative":   "",
+            "horses":      horse_entries,
+            "blackbook_suggestions": blackbook_suggestions(horse_entries),
+        })
+    return {
+        "date":         date_iso,
+        "venue":        inc.get("venue", ""),
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "n_races":      len(out_races),
+        "races":        out_races,
+        "source":       "incidents_only",
+    }
+
+
 def build_meeting(date_iso: str) -> Optional[Dict]:
     dc = _iso_to_dc(date_iso)
     res = load_json(REPORTS / f"results_{dc}.json")
-    if res is None:
-        print(f"  [{date_iso}] no results JSON — skipping")
+    inc = load_json(REPORTS / f"incidents_{dc}.json")
+    if res is None and inc is None:
+        print(f"  [{date_iso}] no results or incidents JSON — skipping")
         return None
-    inc = load_json(REPORTS / f"incidents_{dc}.json") or {"races": []}
+    if res is None:
+        # Fallback: build from incidents alone (per-horse short blurbs only, no narrative).
+        print(f"  [{date_iso}] no results JSON — building from incidents alone")
+        return _build_meeting_from_incidents(date_iso, inc)
+    inc = inc or {"races": []}
     inc_by_rn = {r["race_number"]: r for r in inc.get("races", [])}
 
     out_races: List[Dict] = []
