@@ -322,6 +322,13 @@ def scrape_meeting_results(date_str: str,
         "races": races,
     }
 
+    # v4.5: compute actual race pace for each race (HKJC standard + going offset).
+    try:
+        from pace_utils import annotate_results_meeting
+        annotate_results_meeting(output)
+    except Exception as e:
+        print(f"  (actual-pace annotation skipped: {e})")
+
     date_compact = date_str.replace("-", "")
     out_path = REPORTS_DIR / f"results_{date_compact}.json"
     with open(out_path, "w", encoding="utf-8") as f:

@@ -2361,7 +2361,22 @@ def project_race(race, class_fine, fine, coarse, ultra, draw_off, db=None, sec_d
     distance   = race["distance"]
     track_type = race["track_type"]
     course     = race["race_course"]
-    going = AWT_GOING_ASSUMED if race["is_awt"] else TURF_GOING_ASSUMED
+    # v4.5: prefer race-specific going (scraped racecard / results) over the
+    # module-level constant so the GOING_DEV_ADJ residual actually applies.
+    # Falls back to AWT_GOING_ASSUMED / TURF_GOING_ASSUMED when absent.
+    _race_going_raw = race.get("going")
+    if _race_going_raw:
+        try:
+            from pace_utils import normalise_going as _norm_going
+            going = _norm_going(_race_going_raw)
+            # v4.4 GOING_DEV_ADJ keys still use hyphenated form — translate
+            going = {"Good to Firm": "Good-to-Firm",
+                     "Good to Yielding": "Good-to-Yielding",
+                     "Soft": "Soft/Heavy", "Heavy": "Soft/Heavy"}.get(going, going)
+        except Exception:
+            going = AWT_GOING_ASSUMED if race["is_awt"] else TURF_GOING_ASSUMED
+    else:
+        going = AWT_GOING_ASSUMED if race["is_awt"] else TURF_GOING_ASSUMED
     cband = class_band(race["race_class"])
     field_size = len(race["horses"])  # v3.4.7 (AD): needed for draw scaling
 
@@ -2709,6 +2724,28 @@ def project_race(race, class_fine, fine, coarse, ultra, draw_off, db=None, sec_d
     pace_label, pace_score, pace_reasons, leader_names = predict_race_pace_v3(
         horse_data, distance, going, venue=MEETING_VENUE,
         race_class=race.get("race_class"), track_type=track_type)
+
+    # v4.5: additionally predict EARLY sectional deviation (separate channel).
+    # This is the corrected pace signal; we *override* the label/score with it
+    # because v3 (total-time deviation) was under-dispersed (32% exact,
+    # predicted "Normal" 28/31 races in Apr 2026 audit).
+    try:
+        from pace_utils import predict_early_sectional_dev, normalise_going
+        _going_v45 = normalise_going(race.get("going")) if race.get("going") else going
+        v45_label, v45_dev, v45_reasons, v45_leaders = predict_early_sectional_dev(
+            horse_data, distance, _going_v45, venue=MEETING_VENUE,
+            race_class=race.get("race_class"), is_awt=race["is_awt"],
+            field_size=len(horse_data))
+        # Record v3 details for diagnostic comparison
+        pace_reasons = list(pace_reasons) + [
+            f"[v3 total-dev for comparison: {pace_label} ({pace_score:+.2f}s)]",
+        ] + list(v45_reasons)
+        pace_label = v45_label
+        pace_score = v45_dev
+        if v45_leaders:
+            leader_names = v45_leaders
+    except Exception as _e:
+        pace_reasons = list(pace_reasons) + [f"(v4.5 pace fallback: {_e})"]
 
     # v4.2: PACE_STYLE_MULTIPLIERS removed (backtest: inverted — penalised horses
     # outperformed beneficiaries). Pace adjustment set to 0 for all horses.

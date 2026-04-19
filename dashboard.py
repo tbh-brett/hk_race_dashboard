@@ -3501,6 +3501,42 @@ def page_results():
         unsafe_allow_html=True,
     )
 
+    # ── Meeting-level pace strip (all races at a glance) ────────────────
+    _has_pace = any(r.get("actual_pace_label") and r["actual_pace_label"] != "N/A"
+                    for r in races)
+    if _has_pace:
+        _lbl_col = {
+            "Very Fast": "#d73a49", "Fast": "#e85d75",
+            "Slightly Fast": "#f0a0a0", "Normal": "#6a737d",
+            "Slightly Slow": "#a0c0f0", "Slow": "#5d8fe8", "Very Slow": "#3a69d7",
+        }
+        _cells = []
+        for _r in races:
+            _rn = _r.get("race_number", "?")
+            _lbl = _r.get("actual_pace_label") or "N/A"
+            _dev = _r.get("actual_dev")
+            _ws = _r.get("actual_winner_style") or ""
+            _c = _lbl_col.get(_lbl, "#444")
+            _dev_s = f"{_dev:+.2f}" if isinstance(_dev, (int, float)) else "—"
+            _cells.append(
+                f"<div style='flex:0 0 auto;min-width:78px;padding:6px 8px;"
+                f"border:1px solid #30363d;border-radius:4px;background:#0d1117;"
+                f"text-align:center;font-size:11px'>"
+                f"<div style='font-weight:700;font-size:12px'>R{_rn}</div>"
+                f"<div style='color:{_c};font-weight:600;margin-top:2px'>{_lbl}</div>"
+                f"<div style='opacity:0.65'>{_dev_s}s</div>"
+                f"<div style='opacity:0.55;font-size:10px'>{_ws}</div>"
+                f"</div>"
+            )
+        st.markdown(
+            "<div style='margin-bottom:12px'>"
+            "<div style='font-size:0.85em;opacity:0.7;margin-bottom:4px'>"
+            "Meeting pace profile (actual, HKJC-anchored)</div>"
+            f"<div style='display:flex;gap:6px;flex-wrap:wrap'>{''.join(_cells)}</div>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+
     # Load BB and prediction data
     bb = _load_blackbook()
     _bb_expire_stale(bb)
@@ -3510,6 +3546,7 @@ def page_results():
     if not pred_path.exists():
         pred_path = REPORTS / f"race_day_report_{selected_dc}_v3.4.8.json"
     model_ranks = {}
+    predicted_pace_by_race = {}
     if pred_path.exists():
         try:
             with open(pred_path, "r", encoding="utf-8") as f:
@@ -3518,6 +3555,10 @@ def page_results():
                 for pick in race.get("picks", []):
                     model_ranks[(race["race_number"],
                                  pick["horse_name"].upper())] = pick["rank"]
+                predicted_pace_by_race[race["race_number"]] = {
+                    "pace": race.get("pace"),
+                    "pace_score": race.get("pace_score"),
+                }
         except Exception:
             pass
 
@@ -3555,6 +3596,49 @@ def page_results():
         f'</div></div>',
         unsafe_allow_html=True,
     )
+
+    # ── Race pace banner (actual vs predicted) ────────────────────────────
+    _pred_pace = predicted_pace_by_race.get(race.get("race_number"), {})
+    _pred_lbl = _pred_pace.get("pace")
+    _pred_sc = _pred_pace.get("pace_score")
+    _act_lbl = race.get("actual_pace_label")
+    _act_dev = race.get("actual_dev")
+    _winner_style = race.get("actual_winner_style")
+    if _act_lbl and _act_lbl != "N/A":
+        _lbl_colour = {
+            "Very Fast": "#d73a49", "Fast": "#e85d75",
+            "Slightly Fast": "#f0a0a0", "Normal": "#6a737d",
+            "Slightly Slow": "#a0c0f0", "Slow": "#5d8fe8", "Very Slow": "#3a69d7",
+        }
+        _ac = _lbl_colour.get(_act_lbl, "#888")
+        _pc = _lbl_colour.get(_pred_lbl or "", "#888")
+        _dev_str = f"{_act_dev:+.2f}s vs HKJC std" if isinstance(_act_dev, (int, float)) else ""
+        _pred_str = (f"<span style='color:{_pc};font-weight:600'>{_pred_lbl}</span>"
+                     f" ({_pred_sc:+.2f}s)") if _pred_lbl is not None else \
+                    "<span style='opacity:0.5'>—</span>"
+        _match = ""
+        if _pred_lbl and _act_lbl:
+            from pace_utils import pace_band_distance
+            _d = pace_band_distance(_pred_lbl, _act_lbl)
+            if _d == 0:
+                _match = "<span style='color:#28a745;font-weight:600'> ✓ exact</span>"
+            elif _d == 1:
+                _match = "<span style='color:#b08800'> ±1 band</span>"
+            elif _d is not None:
+                _match = f"<span style='color:#d73a49'> off by {_d} bands</span>"
+        st.markdown(
+            f"<div style='background:#0e1117;border:1px solid #30363d;"
+            f"border-radius:6px;padding:10px 14px;margin:8px 0 14px 0;"
+            f"display:flex;gap:24px;flex-wrap:wrap;align-items:center;font-size:13px'>"
+            f"<div><span style='opacity:0.65'>Actual pace:</span> "
+            f"<span style='color:{_ac};font-weight:700'>{_act_lbl}</span> "
+            f"<span style='opacity:0.55'>({_dev_str})</span></div>"
+            f"<div><span style='opacity:0.65'>Model predicted:</span> {_pred_str}{_match}</div>"
+            f"<div><span style='opacity:0.65'>Winner style:</span> "
+            f"<span style='font-weight:600'>{_winner_style or '—'}</span></div>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
 
     # ── Race Replay button (top of race view) ────────────────────────────
     _video_url = _hkjc_video_url(selected_dc, int(selected_rn))
