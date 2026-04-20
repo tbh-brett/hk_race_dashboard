@@ -1555,15 +1555,12 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
                       .set_properties(**{"text-align": "center"}) \
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
 
-    # Render as HTML (via Styler) so light/dark mode CSS actually applies
-    # to cell backgrounds — glide-data-grid (st.dataframe) draws to canvas
-    # and cannot be themed via CSS variables.
-    try:
-        _html = styled.hide(axis="index").to_html()
-    except Exception:
-        _html = df.to_html(index=False, escape=False)
-    st.markdown(f'<div class="themed-table">{_html}</div>',
-                unsafe_allow_html=True)
+    # Unique key per (model, race) so Streamlit's column-reorder state
+    # for the SARR table doesn't bleed into the ET table and vice versa.
+    st.dataframe(
+        styled, use_container_width=True, hide_index=True,
+        key=f"rd_et_table_{race['race_number']}",
+    )
 
     # BB alerts
     for p, bbe in bb_alerts:
@@ -1705,13 +1702,11 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
                       .set_properties(**{"text-align": "center"}) \
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
 
-    # Render as HTML so light/dark mode CSS applies (see ET render above).
-    try:
-        _html = styled.hide(axis="index").to_html()
-    except Exception:
-        _html = df.to_html(index=False, escape=False)
-    st.markdown(f'<div class="themed-table">{_html}</div>',
-                unsafe_allow_html=True)
+    # Unique per-(model, race) key — see render_race_card for rationale.
+    st.dataframe(
+        styled, use_container_width=True, hide_index=True,
+        key=f"rd_sarr_table_{race['race_number']}",
+    )
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
 
