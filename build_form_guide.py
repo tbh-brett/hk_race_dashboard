@@ -131,26 +131,43 @@ def _build_pace_index(form_db: pd.DataFrame) -> dict:
         if not ref:
             continue
 
-        # Median early-section time across all horses with parsable sectionals
-        early_times = []
-        for sect_str in grp["sectiontimes"].astype(str):
-            if not sect_str or sect_str in ("nan", "None", ""):
-                continue
-            parts = [p.strip() for p in sect_str.split(";") if p.strip()]
-            nums = []
+        # Use the WINNER's sectional times (place=1) — these match the
+        # official "Sectional Time" row posted on HKJC's results page,
+        # which shows the race leader's splits.  Fall back to the fastest
+        # per-segment horse if the winner's sectionals are missing.
+        def _parse_sects(s):
+            if not s or s in ("nan", "None", ""):
+                return []
+            parts = [p.strip() for p in str(s).split(";") if p.strip()]
+            out = []
             for p in parts:
                 try:
                     v = float(p)
                     if 5.0 < v < 40.0:
-                        nums.append(v)
+                        out.append(v)
                 except ValueError:
-                    continue
-            if len(nums) >= 2:
-                early_times.append(sum(nums[:-1]))
-        if not early_times:
+                    return []
+            return out
+
+        winner_sects: list[float] = []
+        winner_rows = grp[grp["place_num"] == 1]
+        if not winner_rows.empty:
+            winner_sects = _parse_sects(winner_rows.iloc[0].get("sectiontimes", ""))
+
+        # Fallback: leader-at-each-split (min across field at each index)
+        if len(winner_sects) < 2:
+            all_sects = [s for s in (_parse_sects(x) for x in grp["sectiontimes"].astype(str)) if len(s) >= 2]
+            if not all_sects:
+                continue
+            n = min(len(s) for s in all_sects)
+            winner_sects = [min(s[i] for s in all_sects) for i in range(n)]
+
+        if len(winner_sects) < 2:
             continue
-        import statistics
-        actual_early = statistics.median(early_times)
+
+        # Early = all sections except the final 400m segment (matches
+        # HKJC reference: early = total - last_400).
+        actual_early = sum(winner_sects[:-1])
         dev = actual_early - ref["early"]
         pace_idx[(str(rd), int(rnum))] = {
             "label": _classify_pace(dev),
