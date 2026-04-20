@@ -1236,7 +1236,12 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
                       .set_properties(**{"text-align": "center"}) \
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
 
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    # Unique key per (model, race) so Streamlit's column-reorder state
+    # for the SARR table doesn't bleed into the ET table and vice versa.
+    st.dataframe(
+        styled, use_container_width=True, hide_index=True,
+        key=f"rd_et_table_{race['race_number']}",
+    )
 
     # BB alerts
     for p, bbe in bb_alerts:
@@ -1372,7 +1377,11 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
                       .set_properties(**{"text-align": "center"}) \
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
 
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    # Unique per-(model, race) key — see render_race_card for rationale.
+    st.dataframe(
+        styled, use_container_width=True, hide_index=True,
+        key=f"rd_sarr_table_{race['race_number']}",
+    )
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
 
@@ -1606,6 +1615,8 @@ def page_overview():
                     "race": race["race_number"],
                     "dist": race.get("distance", "?"),
                     "horse": pick["horse_name"],
+                    "horse_no": pick.get("horse_no", ""),
+                    "draw": pick.get("draw", ""),
                     "rank": pick.get("rank"),
                     "win_pct": pick.get("win_prob", 0),
                     "confidence": entry.get("confidence", "?"),
@@ -1621,6 +1632,8 @@ def page_overview():
                     "race": race["race_number"],
                     "dist": race.get("distance", "?"),
                     "horse": sm["horse_name"],
+                    "horse_no": sm.get("horse_no", ""),
+                    "draw": sm.get("draw", ""),
                     "rank": None,
                     "win_pct": 0,
                     "confidence": entry.get("confidence", "?"),
@@ -1636,8 +1649,21 @@ def page_overview():
             rk_str = f"Rk#{bm['rank']}" if bm["rank"] else "N/P"
             conf_colour = {"high": "#22c55e", "medium": "#f59e0b", "low": "#ef4444"}.get(
                 bm["confidence"], "#888")
+            no_chip = (
+                f'<span style="background:rgba(96,165,250,0.18);color:#60a5fa;'
+                f'padding:1px 7px;border-radius:8px;font-size:0.82em;'
+                f'font-weight:700;margin-right:4px">#{bm["horse_no"]}</span>'
+                if bm.get("horse_no") not in ("", None) else ""
+            )
+            draw_chip = (
+                f'<span style="background:rgba(167,139,250,0.18);color:#a78bfa;'
+                f'padding:1px 7px;border-radius:8px;font-size:0.82em;'
+                f'font-weight:700;margin-right:4px">Gate&nbsp;{bm["draw"]}</span>'
+                if bm.get("draw") not in ("", None) else ""
+            )
             st.markdown(
                 f'**R{bm["race"]}** {bm["dist"]}m — '
+                f'{no_chip}{draw_chip}'
                 f'**{bm["horse"]}** &nbsp; {rk_str} &nbsp; '
                 f'Win% {bm["win_pct"]:.1f} &nbsp; '
                 f'<span style="color:{conf_colour};font-weight:700">'
@@ -2039,16 +2065,19 @@ def page_race_day(selected):
     race_numbers = [r["race_number"] for r in active_races]
     if "rd_active_race" not in st.session_state:
         st.session_state["rd_active_race"] = race_numbers[0] if race_numbers else None
+    # Heal active race if the toggle changed (SARR/ET may differ in coverage)
+    if race_numbers and st.session_state["rd_active_race"] not in race_numbers:
+        st.session_state["rd_active_race"] = race_numbers[0]
 
     # ── Horse search box (above tabs) ────────────────────────────────────
+    # Use ONLY the widget key so Streamlit doesn't complain about
+    # value= conflicting with session_state.
     rd_search = st.text_input(
         "🔍 Find horse",
-        value=st.session_state.get("rd_search", ""),
         key="rd_search_input",
         placeholder="Type a horse name to jump to their race…",
         label_visibility="collapsed",
     )
-    st.session_state["rd_search"] = rd_search
     rd_q = (rd_search or "").strip().upper()
     if rd_q:
         match_races = []
@@ -2060,12 +2089,15 @@ def page_race_day(selected):
         if not match_races:
             st.warning(f"No horse matching “{rd_search}” on this card.")
         else:
-            # Auto-jump once per query change
+            # Auto-jump only when the query has changed since last render
+            # AND the current active race isn't already a match.
             last_q = st.session_state.get("_rd_search_last_q", "")
-            if last_q != rd_q:
+            current_rn = st.session_state.get("rd_active_race")
+            if last_q != rd_q and current_rn not in match_races:
                 st.session_state["rd_active_race"] = match_races[0]
                 st.session_state["_rd_search_last_q"] = rd_q
                 st.rerun()
+            st.session_state["_rd_search_last_q"] = rd_q
             chips = " ".join(
                 f'<span style="background:rgba(34,197,94,0.15);color:#22c55e;'
                 f'padding:2px 8px;border-radius:10px;font-size:0.85em;'
@@ -4669,12 +4701,10 @@ def page_form_guide():
     # ── Horse search box ─────────────────────────────────────────────────
     search_q = st.text_input(
         "🔍 Find horse",
-        value=st.session_state.get("fg_search", ""),
         key="fg_search_input",
         placeholder="Type a horse name to jump to their race…",
         label_visibility="collapsed",
     )
-    st.session_state["fg_search"] = search_q
     search_upper = (search_q or "").strip().upper()
     matched_race_idx = None
     matched_horse_uppers: set[str] = set()
@@ -4930,6 +4960,8 @@ def page_form_guide():
                     "gate": str(run.get("draw", "?")),
                     "pos": str(run.get("positions", "-")),
                     "margin": str(run.get("margin", "-")),
+                    "pace": str(run.get("pace", "-")),
+                    "pace_dev": run.get("pace_dev"),
                     "ftime": str(run.get("time", "-")),
                     "top5": top5,
                     "lane_avg": run.get("lane_avg"),
@@ -4988,6 +5020,8 @@ def page_form_guide():
                     "gate": gate,
                     "pos": pos,
                     "margin": margin,
+                    "pace": "-",
+                    "pace_dev": None,
                     "ftime": ftime,
                     "top5": ri.get("top5", []),
                 })
@@ -5013,6 +5047,26 @@ def page_form_guide():
             margin_style = "color:#ef4444;font-weight:700;" if place_val == "1" else ""
             margin_cell = f'<span class="form-margin" style="{margin_style}">{_smart_frac_html(margin)}</span>'
             t5_html = _fmt_top5_html(top5, hname) if top5 else "&mdash;"
+
+            # Pace cell — colour-code based on deviation from HKJC standard
+            pace_label = str(dr.get("pace", "-")) or "-"
+            pace_dev = dr.get("pace_dev")
+            if pace_label in ("V.Fast", "Fast"):
+                pace_colour = "#22c55e"
+            elif pace_label == "Sl.Fast":
+                pace_colour = "#86efac"
+            elif pace_label in ("V.Slow", "Slow"):
+                pace_colour = "#ef4444"
+            elif pace_label == "Sl.Slow":
+                pace_colour = "#fca5a5"
+            else:
+                pace_colour = "#9ca3af"
+            dev_title = f" ({pace_dev:+.2f}s vs HKJC)" if isinstance(pace_dev, (int, float)) else ""
+            pace_cell = (
+                f'<span title="Race-pace deviation from HKJC standard{dev_title}" '
+                f'style="color:{pace_colour};font-weight:600">{pace_label}</span>'
+                if pace_label and pace_label != "-" else "&mdash;"
+            )
 
             # Per-run video link + short commentary (inline cells)
             dc = dr.get("date_dc") or ""
@@ -5060,12 +5114,13 @@ def page_form_guide():
                 f'<td class="td-pos">{pos}</td>'
                 f'<td>{lane_cell}</td>'
                 f'<td>{margin_cell}</td>'
+                f'<td>{pace_cell}</td>'
                 f'<td>{ftime}</td>'
                 f'<td>{vid_cell}</td>'
                 f'<td class="td-left form-comment">{comment_cell}</td>'
                 f'</tr>'
                 f'<tr class="top5-row">'
-                f'<td colspan="17">{t5_html}</td>'
+                f'<td colspan="18">{t5_html}</td>'
                 f'</tr>'
             )
 
@@ -5089,6 +5144,7 @@ def page_form_guide():
                 "Gate": gate,
                 "Positions": pos,
                 "Margin": margin,
+                "Pace": pace_label,
                 "Finish Time": ftime,
                 "Top 5": t5_plain,
                 "Comment": comment_cell,
@@ -5099,7 +5155,7 @@ def page_form_guide():
             '<thead><tr>'
             '<th>Date</th><th>Pl</th><th>Dist</th><th>Trk</th><th>Crs</th>'
             '<th>Gng</th><th>Cls</th><th class="th-left">Jockey</th>'
-            '<th>Rtg</th><th>Wt</th><th>Gt</th><th>Pos</th><th>Ln</th><th>Mrgn</th><th>Time</th>'
+            '<th>Rtg</th><th>Wt</th><th>Gt</th><th>Pos</th><th>Ln</th><th>Mrgn</th><th>Pace</th><th>Time</th>'
             '<th>Vid</th><th class="th-left">Comment</th>'
             '</tr></thead>'
             '<tbody>' + "".join(html_rows) + '</tbody>'

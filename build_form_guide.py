@@ -31,6 +31,7 @@ FORM_COLS = [
     "horse_name", "race_date", "race_number", "race_track", "race_course",
     "going", "race_class", "jockey", "rating", "draw", "running_positions",
     "place", "lbw", "finish_time_seconds", "distance", "actual_weight",
+    "sectiontimes",
 ]
 
 
@@ -65,6 +66,98 @@ def _build_race_index(form_db: pd.DataFrame) -> dict:
         margin_2nd = str(second.iloc[0]["lbw"]) if not second.empty else "-"
         idx[(str(key[0]), int(key[1]))] = {"top5": top5, "margin_2nd": margin_2nd}
     return idx
+
+
+# ── Measured race pace index ────────────────────────────────────────────────
+# Compute a pace label per (race_date, race_number) by comparing the median
+# early sectional time of the field against the HKJC reference for that
+# venue/distance/class.  Same algorithm used in pace_recalc_v42.py.
+
+def _load_hkjc_reference():
+    """Import get_hkjc_standard from the v4.4 model module."""
+    import importlib.util
+    model_path = BASE / "race_day_analysis_v4.4.py"
+    if not model_path.exists():
+        return None
+    try:
+        spec = importlib.util.spec_from_file_location("_fg_model", model_path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod.get_hkjc_standard
+    except Exception:
+        return None
+
+
+def _classify_pace(dev: float | None) -> str:
+    if dev is None:
+        return "-"
+    if dev >= 0.50:   return "V.Slow"
+    if dev >= 0.35:   return "Slow"
+    if dev >= 0.20:   return "Sl.Slow"
+    if dev > -0.20:   return "Avg"
+    if dev >= -0.40:  return "Sl.Fast"
+    if dev > -1.00:   return "Fast"
+    return "V.Fast"
+
+
+def _build_pace_index(form_db: pd.DataFrame) -> dict:
+    """Return {(str(date), int(race_number)): {label, dev}} for every race."""
+    get_std = _load_hkjc_reference()
+    if get_std is None or "sectiontimes" not in form_db.columns:
+        return {}
+
+    pace_idx: dict = {}
+    for (rd, rnum), grp in form_db.groupby(["race_date", "race_number"]):
+        first = grp.iloc[0]
+        # Resolve venue
+        course = str(first.get("race_course", "")).upper()
+        if course.startswith("H"):
+            venue = "HV"
+        else:
+            venue = "ST"
+        # Resolve track type
+        trk = str(first.get("race_track", "")).strip()
+        track_type = "All Weather Track" if ("AWT" in trk.upper() or "AW" in trk.upper()) else "Turf"
+        try:
+            distance = int(first.get("distance"))
+        except (ValueError, TypeError):
+            continue
+        try:
+            rc_class = int(float(first.get("race_class", 0) or 0))
+        except (ValueError, TypeError):
+            rc_class = 0
+
+        ref = get_std(venue, distance, rc_class, track_type)
+        if not ref:
+            continue
+
+        # Median early-section time across all horses with parsable sectionals
+        early_times = []
+        for sect_str in grp["sectiontimes"].astype(str):
+            if not sect_str or sect_str in ("nan", "None", ""):
+                continue
+            parts = [p.strip() for p in sect_str.split(";") if p.strip()]
+            nums = []
+            for p in parts:
+                try:
+                    v = float(p)
+                    if 5.0 < v < 40.0:
+                        nums.append(v)
+                except ValueError:
+                    continue
+            if len(nums) >= 2:
+                early_times.append(sum(nums[:-1]))
+        if not early_times:
+            continue
+        import statistics
+        actual_early = statistics.median(early_times)
+        dev = actual_early - ref["early"]
+        pace_idx[(str(rd), int(rnum))] = {
+            "label": _classify_pace(dev),
+            "dev":   round(dev, 2),
+        }
+    return pace_idx
+
 
 
 def _fmt_positions(pos_str) -> str:
@@ -222,6 +315,9 @@ def build(date_iso: str) -> None:
             return {}
 
     race_idx = _build_race_index(form_db)
+    pace_idx = _build_pace_index(form_db)
+    if pace_idx:
+        print(f"  Pace index built for {len(pace_idx):,} historical races.")
 
     output = {"date": date_iso, "races": []}
 
@@ -242,6 +338,7 @@ def build(date_iso: str) -> None:
                 rd = row["race_date"]
                 rnum = row["race_number"]
                 ri = race_idx.get((str(rd), int(rnum)), {"top5": [], "margin_2nd": "-"})
+                pi = pace_idx.get((str(rd), int(rnum)), {})
 
                 try:
                     rtg = str(int(float(row["rating"]))) if pd.notna(row.get("rating")) else "?"
@@ -270,6 +367,8 @@ def build(date_iso: str) -> None:
                     "draw": str(int(float(row["draw"]))) if pd.notna(row.get("draw")) and str(row["draw"]).strip().replace(".", "", 1).isdigit() else "?",
                     "positions": _fmt_positions(row.get("running_positions")),
                     "margin": _fmt_margin(row.get("place"), row.get("lbw"), ri),
+                    "pace": pi.get("label", "-"),
+                    "pace_dev": pi.get("dev"),
                     "time": _fmt_time(row.get("finish_time_seconds")),
                     "top5": [(int(p), n) for p, n in ri.get("top5", [])],
                     "margin_2nd": ri.get("margin_2nd", "-"),
