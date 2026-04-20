@@ -3239,6 +3239,24 @@ def compute_speed_map(df, race, pace_label="Normal"):
         h["smap_advantage"] = round(advantage, 2)
         h["smap_notes"] = "; ".join(notes) if notes else "Neutral position"
 
+        # ── Pace-style benefit (empirical, from cache/pace_style_benefit.json) ──
+        # Negative bonus = faster = beneficiary.  Folded into smap_advantage
+        # using the inverse sign convention (positive advantage = better
+        # position, so we subtract the seconds-bonus scaled to the
+        # advantage axis).  Scaling: 0.1s pace bonus ≈ 1.0 advantage unit,
+        # consistent with SMAP_TIME_COEFF.
+        try:
+            from pace_utils import pace_style_bonus_seconds
+            pace_bonus_s = pace_style_bonus_seconds(
+                pace_label, style, distance=distance, venue=venue
+            )
+        except Exception:
+            pace_bonus_s = 0.0
+        h["pace_style_bonus_s"] = round(pace_bonus_s, 3)
+        if pace_bonus_s:
+            h["smap_advantage"] = round(h["smap_advantage"] - pace_bonus_s * 10.0, 2)
+            h["smap_notes"] += f"; pace×style {pace_bonus_s:+.2f}s"
+
         # Position score for model
         if style in ("Leader", "On-Pace"):
             pos_quality = col / n_cols

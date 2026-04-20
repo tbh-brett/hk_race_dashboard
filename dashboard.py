@@ -261,20 +261,27 @@ st.markdown("""
     .race-hdr-title { font-size: 1.15em; font-weight: 700; letter-spacing: 0.04em; margin-bottom: 4px; }
     .race-hdr-meta  { font-size: 0.82em; opacity: 0.65; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
-    /* Pace bar */
+    /* Pace bar — colour + fill track race tempo:
+       fast  → high fill, green  (good for closers / pressure races)
+       slow  → low  fill, red    (slow-run, leader-friendly)
+       avg   → mid  fill, amber  (neutral tempo)                          */
     .pace-bar-wrap { display: flex; align-items: center; gap: 7px; }
     .pace-bar-track {
         width: 72px; height: 6px; border-radius: 3px;
         background: rgba(128,128,128,0.2); overflow: hidden;
     }
-    .pace-bar-fill { height: 100%; border-radius: 3px; }
-    .pace-fast   { background: #ef4444; }
-    .pace-neutral{ background: #f59e0b; }
-    .pace-slow   { background: #22c55e; }
-    .pace-label  { font-size: 0.8em; font-weight: 700; }
-    .pace-label.fast   { color: #ef4444; }
-    .pace-label.neutral{ color: #f59e0b; }
-    .pace-label.slow   { color: #22c55e; }
+    .pace-bar-fill { height: 100%; border-radius: 3px; transition: width 0.25s; }
+    .pace-fast    { background: #22c55e; }  /* green  */
+    .pace-sl-fast { background: #86efac; }  /* light  green */
+    .pace-neutral { background: #f59e0b; }  /* amber */
+    .pace-sl-slow { background: #fca5a5; }  /* light  red   */
+    .pace-slow    { background: #ef4444; }  /* red    */
+    .pace-label           { font-size: 0.8em; font-weight: 700; }
+    .pace-label.fast      { color: #22c55e; }
+    .pace-label.sl-fast   { color: #4ade80; }
+    .pace-label.neutral   { color: #f59e0b; }
+    .pace-label.sl-slow   { color: #f87171; }
+    .pace-label.slow      { color: #ef4444; }
 
     /* ══ FIELD TOGGLE ══ */
     .field-toggle {
@@ -1538,21 +1545,49 @@ def _save_uploaded_racecard(uploaded_json: bytes, date_str: str) -> bool:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _pace_bar_html(pace: str, score: float) -> str:
-    """Render a compact inline pace bar."""
-    pace_lower = (pace or "").lower()
-    if "fast" in pace_lower:
-        cls, label, pct = "fast", "FAST", min(100, 50 + abs(score) * 25)
-    elif "slow" in pace_lower:
-        cls, label, pct = "slow", "SLOW", min(100, 50 + abs(score) * 25)
+    """Render a compact inline pace bar.
+
+    Fill width encodes race tempo on a single linear axis:
+        dev = -1.0s  →  ~100%  (very fast — full bar, green)
+        dev =  0.0s  →   50%   (neutral — half bar, amber)
+        dev = +1.0s  →   ~5%   (very slow — barely-filled, red)
+
+    Colour band is chosen from the predicted early-sectional deviation
+    `score` (seconds vs HKJC reference; negative = faster).
+    """
+    try:
+        s = float(score or 0.0)
+    except (TypeError, ValueError):
+        s = 0.0
+
+    # Linear fill: 50% at s=0, capped [5, 100]
+    width = max(5.0, min(100.0, 50.0 - s * 50.0))
+
+    # Class / label from deviation thresholds (match classify_pace bands)
+    if s <= -0.40:
+        cls, label = "fast",    "FAST"
+    elif s <= -0.20:
+        cls, label = "sl-fast", "SL.FAST"
+    elif s < 0.20:
+        cls, label = "neutral", "NEUTRAL"
+    elif s < 0.35:
+        cls, label = "sl-slow", "SL.SLOW"
     else:
-        cls, label, pct = "neutral", "NEUTRAL", 50
+        cls, label = "slow",    "SLOW"
+
+    # If caller already passed a descriptive pace string (e.g. "V.Fast",
+    # "Slow") prefer it for the visible label so UI matches historical text.
+    pace_txt = str(pace or "").strip()
+    if pace_txt and pace_txt.lower() not in ("neutral", "-", "n/a", "normal"):
+        label = pace_txt.upper()
+
     return (
         f'<span class="pace-bar-wrap">'
         f'<span class="pace-bar-track">'
-        f'<span class="pace-bar-fill pace-{cls}" style="width:{pct:.0f}%"></span>'
+        f'<span class="pace-bar-fill pace-{cls}" style="width:{width:.0f}%"></span>'
         f'</span>'
         f'<span class="pace-label {cls}">{label}</span>'
-        f'<span style="font-size:0.78em;opacity:0.55">({score:+.2f}s)</span>'
+        f'<span style="font-size:0.78em;opacity:0.55">({s:+.2f}s)</span>'
         f'</span>'
     )
 

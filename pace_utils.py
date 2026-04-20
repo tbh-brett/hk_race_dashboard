@@ -7,6 +7,8 @@ Single source of truth for:
   - Actual race-pace computation from a result-JSON race dict
   - Pace classification bands (7-band scale)
   - Running-style classifier from HKJC running-position calls
+  - Persistent pace index (cache/race_pace_index.json) — source of truth
+    for measured pace used by the Form Guide, speed map and dashboards.
 
 Channels (keep separate — never collapse into one number):
   A. Predicted pace (pre-race)  → pace label + pace_score (seconds)
@@ -16,8 +18,15 @@ Channels (keep separate — never collapse into one number):
                                   until predicted-pace accuracy ≥ 50% exact.
 """
 from __future__ import annotations
+import json
 import re
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+
+BASE = Path(__file__).parent
+CACHE_DIR = BASE / "cache"
+PACE_INDEX_PATH = CACHE_DIR / "race_pace_index.json"
 
 
 # ── HKJC reference sectional times (Good going) ──────────────────────────
@@ -231,19 +240,59 @@ def running_style_from_positions(positions: List[int]) -> str:
 
 
 # ── Post-race: actual race pace from a results-JSON race dict ────────────
+def _parse_sects(s) -> List[float]:
+    """Parse an HKJC 'sectiontimes' string (;-separated) into list of floats."""
+    if s is None:
+        return []
+    txt = str(s).strip()
+    if not txt or txt.lower() in ("nan", "none", ""):
+        return []
+    parts = [p.strip() for p in txt.split(";") if p.strip()]
+    out: List[float] = []
+    for p in parts:
+        try:
+            v = float(p)
+        except ValueError:
+            return []
+        if 5.0 < v < 40.0:
+            out.append(v)
+    return out
+
+
 def compute_actual_race_pace(race: dict, venue: str) -> dict:
-    """Given a race dict as produced by scrape_hkjc_results.scrape_race(),
-    return the same dict *augmented* with:
-      actual_going (canonical), actual_std_total, actual_std_early,
-      actual_std_adj, actual_winner_time, actual_dev, actual_pace_label,
-      actual_winner_style, actual_winner_positions.
-    Leaves the input dict unchanged; returns the new fields as a dict.
+    """Given a race dict as produced by scrape_hkjc_results.scrape_race()
+    (or the equivalent shape read from hkjc_results_updated.xlsx), return
+    the race augmented with measured-pace fields.
+
+    PRIMARY pace measure = WINNER'S TOTAL-TIME DEVIATION vs the HKJC
+    reference total time (going-adjusted).  This is the most robust
+    apples-to-apples comparison — single number vs single number — and
+    matches the user's request: "official sectional time in the results
+    page vs HKJC reference standard time".
+
+    SECONDARY display-only measure = winner's early-sectional time
+    (sum(winner_sects[:-1])), surfaced so the UI can show pace pressure at
+    the first-call markers.  Not used for classification because the
+    "early" column in HKJC_STD does not align with sum(sects[:-1]) at
+    every distance.
+
+    Returns a dict of fields; input `race` is NOT modified.
     """
     out = {
-        "actual_going": None, "actual_std_total": None, "actual_std_early": None,
-        "actual_std_adj": None, "actual_winner_time": None, "actual_dev": None,
-        "actual_pace_label": "N/A", "actual_winner_style": "N/A",
-        "actual_winner_positions": None,
+        # Canonical going
+        "actual_going": None,
+        # HKJC references
+        "actual_std_total": None, "actual_std_early": None, "actual_std_adj": None,
+        # Winner measurements
+        "actual_winner_time": None, "actual_winner_sects": None,
+        "actual_winner_early_s": None,
+        # Raw (pre-going) and going-adjusted deviations (TOTAL time = authoritative)
+        "actual_raw_dev_s": None, "actual_going_adj_s": None,
+        "actual_dev": None,              # ← authoritative (total-time, going-adjusted)
+        "actual_pace_label": "N/A",
+        "actual_source": None,           # "total_time" | None
+        # Winner style
+        "actual_winner_style": "N/A", "actual_winner_positions": None,
     }
 
     try:
@@ -254,52 +303,234 @@ def compute_actual_race_pace(race: dict, venue: str) -> dict:
     m = re.search(r"\d+", str(cls_raw))
     cls = int(m.group()) if m else 0
     is_awt = bool(race.get("is_awt"))
+    if not is_awt:
+        tt = str(race.get("track_type") or "").upper()
+        rc = str(race.get("race_course") or "").upper()
+        if "AWT" in tt or "ALL WEATHER" in tt or "AWT" in rc:
+            is_awt = True
+
     going = normalise_going(race.get("going"))
     std_total, std_early, vs_key, cls_used = std_lookup(venue, distance, cls, is_awt)
     offset = going_offset(going)
-    std_adj = (std_total + offset) if std_total is not None else None
+    std_total_adj = (std_total + offset) if std_total is not None else None
 
+    # Find winner's row
     winner_time = None
+    winner_sects: List[float] = []
     winner_positions = None
-    for row in race.get("runners", []):
+    runners = race.get("runners") or race.get("results") or race.get("horses") or []
+    for row in runners:
+        plc = row.get("place")
         try:
-            fp = int(row.get("place") or 0)
-        except (TypeError, ValueError):
+            fp = int(re.search(r"\d+", str(plc)).group()) if plc not in (None, "") else 0
+        except (AttributeError, TypeError, ValueError):
             fp = 0
         if fp == 1:
             wt = row.get("finish_time_seconds")
-            if wt is None or wt == 0:
+            if wt in (None, 0, ""):
                 wt = parse_finish_time(row.get("finish_time"))
             winner_time = wt
-            rp = row.get("running_position") or ""
+            winner_sects = _parse_sects(row.get("sectiontimes") or row.get("sectional_times"))
+            rp = row.get("running_position") or row.get("running_positions") or ""
             winner_positions = [int(x) for x in re.findall(r"\d+", str(rp))]
             break
 
-    dev = (winner_time - std_adj) if (winner_time and std_adj) else None
-    label = classify_pace(dev) if dev is not None else "N/A"
+    # Fallback: per-segment minimum across the whole field (= leader at each call)
+    if len(winner_sects) < 2:
+        all_sects = [s for s in (_parse_sects(r.get("sectiontimes") or r.get("sectional_times"))
+                                 for r in runners) if len(s) >= 2]
+        if all_sects:
+            n = min(len(s) for s in all_sects)
+            winner_sects = [min(s[i] for s in all_sects) for i in range(n)]
+
+    # If winner_time missing but we have sectionals, reconstruct it
+    if (winner_time is None or winner_time == 0) and len(winner_sects) >= 2:
+        winner_time = round(sum(winner_sects), 2)
+
+    # ── Primary: total-time deviation (going-adjusted) ──
+    raw_dev_total = None
+    dev_total = None
+    source = None
+    if winner_time and std_total is not None:
+        raw_dev_total = round(winner_time - std_total, 2)
+        dev_total = round(raw_dev_total - offset, 2)
+        source = "total_time"
+
+    # ── Winner's early-sectional time (sum of all segments except final 400m) ──
+    # Useful for UI display; not used for classification.
+    winner_early = None
+    if len(winner_sects) >= 2:
+        winner_early = round(sum(winner_sects[:-1]), 2)
+
+    label = classify_pace(dev_total) if dev_total is not None else "N/A"
     winner_style = running_style_from_positions(winner_positions) if winner_positions else "N/A"
 
     out.update({
-        "actual_going": going,
-        "actual_std_total": round(std_total, 2) if std_total else None,
-        "actual_std_early": round(std_early, 2) if std_early else None,
-        "actual_std_adj": round(std_adj, 2) if std_adj else None,
-        "actual_winner_time": round(winner_time, 2) if winner_time else None,
-        "actual_dev": round(dev, 2) if dev is not None else None,
-        "actual_pace_label": label,
-        "actual_winner_style": winner_style,
+        "actual_going":         going,
+        "actual_std_total":     round(std_total, 2) if std_total else None,
+        "actual_std_early":     round(std_early, 2) if std_early else None,
+        "actual_std_adj":       round(std_total_adj, 2) if std_total_adj else None,
+        "actual_winner_time":   round(winner_time, 2) if winner_time else None,
+        "actual_winner_sects":  [round(v, 2) for v in winner_sects] if winner_sects else None,
+        "actual_winner_early_s": winner_early,
+        "actual_raw_dev_s":     raw_dev_total,
+        "actual_going_adj_s":   round(offset, 3),
+        "actual_dev":           dev_total,
+        "actual_pace_label":    label,
+        "actual_source":        source,
+        "actual_winner_style":  winner_style,
         "actual_winner_positions": winner_positions,
     })
     return out
 
 
-def annotate_results_meeting(meeting: dict) -> dict:
-    """Mutates meeting dict in place — adds actual-pace fields to each race.
-    Returns the same dict for chaining."""
+# ── Persistent pace index (cache/race_pace_index.json) ────────────────────
+# Single source of truth used by the Form Guide (no recomputation per load)
+# and by the speed-map benefit analysis.
+
+def _pace_key(date_iso: str, race_number: int) -> str:
+    return f"{str(date_iso)[:10]}_R{int(race_number)}"
+
+
+def load_pace_index() -> dict:
+    if not PACE_INDEX_PATH.exists():
+        return {}
+    try:
+        with open(PACE_INDEX_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def save_pace_index(idx: dict) -> None:
+    CACHE_DIR.mkdir(exist_ok=True)
+    with open(PACE_INDEX_PATH, "w", encoding="utf-8") as f:
+        json.dump(idx, f, ensure_ascii=False, indent=1, sort_keys=True)
+
+
+def get_pace(idx: dict, date_iso: str, race_number: int) -> Optional[dict]:
+    return idx.get(_pace_key(date_iso, race_number))
+
+
+def upsert_pace(idx: dict, date_iso: str, race_number: int, pace_dict: dict) -> None:
+    idx[_pace_key(date_iso, race_number)] = pace_dict
+
+
+def annotate_results_meeting(meeting: dict, persist: bool = True) -> dict:
+    """Mutates meeting dict in place — adds actual-pace fields to each race,
+    and (when `persist=True`) upserts a compact entry into the persistent
+    pace index at cache/race_pace_index.json.  Returns the mutated meeting.
+    """
     venue = meeting.get("venue", "ST")
+    date_iso = (meeting.get("date") or meeting.get("race_date")
+                or meeting.get("meeting_date") or "")
+    date_iso = str(date_iso)[:10]
+
+    idx = load_pace_index() if persist else None
+    changed = False
+
     for race in meeting.get("races", []):
-        race.update(compute_actual_race_pace(race, venue))
+        pace = compute_actual_race_pace(race, venue)
+        race.update(pace)
+        rn = race.get("race_number") or race.get("race_no")
+        if persist and idx is not None and date_iso and rn is not None and pace.get("actual_dev") is not None:
+            upsert_pace(idx, date_iso, int(rn), {
+                "date":          date_iso,
+                "race_number":   int(rn),
+                "venue":         venue,
+                "distance":      race.get("distance"),
+                "race_class":    race.get("race_class"),
+                "is_awt":        bool(race.get("is_awt")) or "AWT" in str(race.get("track_type") or "").upper(),
+                "going":         pace["actual_going"],
+                "winner_sects":  pace["actual_winner_sects"],
+                "winner_early_s": pace["actual_winner_early_s"],
+                "winner_time_s": pace["actual_winner_time"],
+                "hkjc_std_early": pace["actual_std_early"],
+                "hkjc_std_total": pace["actual_std_total"],
+                "raw_dev_s":     pace["actual_raw_dev_s"],
+                "going_adj_s":   pace["actual_going_adj_s"],
+                "adj_dev_s":     pace["actual_dev"],
+                "label":         pace["actual_pace_label"],
+                "source":        pace["actual_source"],
+                "winner_style":  pace["actual_winner_style"],
+            })
+            changed = True
+
+    if changed:
+        save_pace_index(idx)
     return meeting
+
+
+# ── Pace-style benefit (applied to speed map + dashboards) ────────────────
+# Populated by _analyse_pace_benefit.py → cache/pace_style_benefit.json.
+# Seconds value is SUBTRACTED from a horse's projected time:
+#   negative = beneficiary (faster); positive = penalised.
+
+_PACE_GROUP = {
+    "Very Slow": "Slow", "Slow": "Slow", "Slightly Slow": "Slow",
+    "V.Slow": "Slow",  # short form
+    "Normal": "Avg", "Avg": "Avg",
+    "Slightly Fast": "Fast", "Fast": "Fast", "Very Fast": "Fast",
+    "Sl.Fast": "Fast", "Sl.Slow": "Slow", "V.Fast": "Fast",
+}
+
+# Prior (used until the empirical lookup is generated):
+_DEFAULT_BENEFIT = {
+    "Slow": {"Leader": -0.15, "On-Pace": -0.08, "Midfield": +0.05, "Closer": +0.15},
+    "Avg":  {"Leader":  0.00, "On-Pace":  0.00, "Midfield":  0.00, "Closer":  0.00},
+    "Fast": {"Leader": +0.15, "On-Pace": +0.08, "Midfield": -0.05, "Closer": -0.15},
+}
+
+_BENEFIT_CACHE: Optional[dict] = None
+
+
+def load_benefit() -> dict:
+    """Load the pace-style benefit lookup from disk (cached)."""
+    global _BENEFIT_CACHE
+    if _BENEFIT_CACHE is not None:
+        return _BENEFIT_CACHE
+    path = CACHE_DIR / "pace_style_benefit.json"
+    if path.exists():
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                _BENEFIT_CACHE = json.load(f)
+                return _BENEFIT_CACHE
+        except Exception:
+            pass
+    _BENEFIT_CACHE = {"_default": _DEFAULT_BENEFIT}
+    return _BENEFIT_CACHE
+
+
+def pace_group(label: str) -> str:
+    return _PACE_GROUP.get(str(label), "Avg")
+
+
+def pace_style_bonus_seconds(pace_label: str, style: str,
+                             distance: Optional[int] = None,
+                             venue: Optional[str] = None) -> float:
+    """Seconds adjustment for a horse given the predicted race pace and
+    their running style.  NEGATIVE = faster = beneficiary."""
+    data = load_benefit()
+    group = pace_group(pace_label)
+
+    # Distance-specific lookup if provided
+    if distance is not None:
+        if distance <= 1200:
+            band = "sprint"
+        elif distance <= 1600:
+            band = "mile"
+        else:
+            band = "route"
+        specific = None
+        if venue:
+            specific = data.get(f"{str(venue).upper()}_{band}")
+        if specific is None:
+            specific = data.get(band)
+        if specific and group in specific and style in specific[group]:
+            return float(specific[group][style])
+
+    default = data.get("_default", _DEFAULT_BENEFIT)
+    return float(default.get(group, {}).get(style, 0.0))
 
 
 # ── Pre-race: early-sectional pace prediction (v4.5) ─────────────────────
@@ -415,8 +646,11 @@ def predict_early_sectional_dev(horses: List[dict],
 
 __all__ = [
     "HKJC_STD", "GOING_NORMALISE", "GOING_OFFSET", "PACE_BANDS", "PACE_ORDER",
+    "PACE_INDEX_PATH",
     "normalise_going", "going_offset", "std_lookup", "parse_finish_time",
     "classify_pace", "pace_band_distance", "running_style_from_positions",
     "compute_actual_race_pace", "annotate_results_meeting",
     "predict_early_sectional_dev",
+    "load_pace_index", "save_pace_index", "get_pace", "upsert_pace",
+    "pace_style_bonus_seconds", "pace_group", "load_benefit",
 ]

@@ -69,111 +69,32 @@ def _build_race_index(form_db: pd.DataFrame) -> dict:
 
 
 # ── Measured race pace index ────────────────────────────────────────────────
-# Compute a pace label per (race_date, race_number) by comparing the median
-# early sectional time of the field against the HKJC reference for that
-# venue/distance/class.  Same algorithm used in pace_recalc_v42.py.
-
-def _load_hkjc_reference():
-    """Import get_hkjc_standard from the v4.4 model module."""
-    import importlib.util
-    model_path = BASE / "race_day_analysis_v4.4.py"
-    if not model_path.exists():
-        return None
-    try:
-        spec = importlib.util.spec_from_file_location("_fg_model", model_path)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return mod.get_hkjc_standard
-    except Exception:
-        return None
-
-
-def _classify_pace(dev: float | None) -> str:
-    if dev is None:
-        return "-"
-    if dev >= 0.50:   return "V.Slow"
-    if dev >= 0.35:   return "Slow"
-    if dev >= 0.20:   return "Sl.Slow"
-    if dev > -0.20:   return "Avg"
-    if dev >= -0.40:  return "Sl.Fast"
-    if dev > -1.00:   return "Fast"
-    return "V.Fast"
-
+# Single source of truth: cache/race_pace_index.json, built by
+# build_pace_index.py (and auto-upserted by scrape_hkjc_results.py on each
+# new meeting scrape).  We simply re-key it for the (date, race_number)
+# tuple lookup used in the form-guide builder below.
 
 def _build_pace_index(form_db: pd.DataFrame) -> dict:
-    """Return {(str(date), int(race_number)): {label, dev}} for every race."""
-    get_std = _load_hkjc_reference()
-    if get_std is None or "sectiontimes" not in form_db.columns:
+    """Return {(str(date), int(race_number)): {label, dev}} pulled from
+    the persistent pace cache.  `form_db` is unused but kept for API
+    compatibility."""
+    try:
+        from pace_utils import load_pace_index
+    except ImportError:
         return {}
-
-    pace_idx: dict = {}
-    for (rd, rnum), grp in form_db.groupby(["race_date", "race_number"]):
-        first = grp.iloc[0]
-        # Resolve venue
-        course = str(first.get("race_course", "")).upper()
-        if course.startswith("H"):
-            venue = "HV"
-        else:
-            venue = "ST"
-        # Resolve track type
-        trk = str(first.get("race_track", "")).strip()
-        track_type = "All Weather Track" if ("AWT" in trk.upper() or "AW" in trk.upper()) else "Turf"
+    raw = load_pace_index()
+    out: dict = {}
+    for key, entry in raw.items():
+        # key = "YYYY-MM-DD_R{n}"
         try:
-            distance = int(first.get("distance"))
-        except (ValueError, TypeError):
+            d, rn = key.split("_R")
+            out[(d, int(rn))] = {
+                "label": entry.get("label", "-"),
+                "dev":   entry.get("adj_dev_s"),
+            }
+        except ValueError:
             continue
-        try:
-            rc_class = int(float(first.get("race_class", 0) or 0))
-        except (ValueError, TypeError):
-            rc_class = 0
-
-        ref = get_std(venue, distance, rc_class, track_type)
-        if not ref:
-            continue
-
-        # Use the WINNER's sectional times (place=1) — these match the
-        # official "Sectional Time" row posted on HKJC's results page,
-        # which shows the race leader's splits.  Fall back to the fastest
-        # per-segment horse if the winner's sectionals are missing.
-        def _parse_sects(s):
-            if not s or s in ("nan", "None", ""):
-                return []
-            parts = [p.strip() for p in str(s).split(";") if p.strip()]
-            out = []
-            for p in parts:
-                try:
-                    v = float(p)
-                    if 5.0 < v < 40.0:
-                        out.append(v)
-                except ValueError:
-                    return []
-            return out
-
-        winner_sects: list[float] = []
-        winner_rows = grp[grp["place_num"] == 1]
-        if not winner_rows.empty:
-            winner_sects = _parse_sects(winner_rows.iloc[0].get("sectiontimes", ""))
-
-        # Fallback: leader-at-each-split (min across field at each index)
-        if len(winner_sects) < 2:
-            all_sects = [s for s in (_parse_sects(x) for x in grp["sectiontimes"].astype(str)) if len(s) >= 2]
-            if not all_sects:
-                continue
-            n = min(len(s) for s in all_sects)
-            winner_sects = [min(s[i] for s in all_sects) for i in range(n)]
-
-        if len(winner_sects) < 2:
-            continue
-
-        # Early = all sections except the final 400m segment (matches
-        # HKJC reference: early = total - last_400).
-        actual_early = sum(winner_sects[:-1])
-        dev = actual_early - ref["early"]
-        pace_idx[(str(rd), int(rnum))] = {
-            "label": _classify_pace(dev),
-            "dev":   round(dev, 2),
-        }
-    return pace_idx
+    return out
 
 
 
