@@ -265,14 +265,25 @@ st.markdown("""
        fast  → high fill, green  (good for closers / pressure races)
        slow  → low  fill, red    (slow-run, leader-friendly)
        avg   → mid  fill, amber  (neutral tempo)                          */
-    .pace-bar-wrap { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; }
-    .pace-bar-track {
-        width: 110px; height: 9px; border-radius: 5px;
-        background: rgba(128,128,128,0.25);
-        border: 1px solid rgba(128,128,128,0.35);
-        overflow: hidden; flex-shrink: 0;
+    .pace-bar-wrap {
+        display: inline-flex; align-items: center; gap: 7px;
+        flex-shrink: 0; vertical-align: middle;
     }
-    .pace-bar-fill { height: 100%; border-radius: 5px; transition: width 0.25s; }
+    .pace-bar-track {
+        display: inline-block;
+        width: 110px; height: 10px; border-radius: 5px;
+        background: rgba(128,128,128,0.22);
+        border: 1px solid rgba(128,128,128,0.45);
+        overflow: hidden; flex-shrink: 0;
+        vertical-align: middle;
+        position: relative;
+    }
+    .pace-bar-fill {
+        display: block;
+        height: 100%; min-height: 8px;
+        border-radius: 5px 0 0 5px;
+        transition: width 0.25s;
+    }
     .pace-fast    { background: #22c55e; }  /* green  */
     .pace-sl-fast { background: #86efac; }  /* light  green */
     .pace-neutral { background: #f59e0b; }  /* amber */
@@ -284,6 +295,31 @@ st.markdown("""
     .pace-label.neutral   { color: #f59e0b; }
     .pace-label.sl-slow   { color: #f87171; }
     .pace-label.slow      { color: #ef4444; }
+
+    /* ══ THEMED RACE-CARD TABLE (Styler HTML) ══
+       Used in place of st.dataframe for the primary race cards so that
+       light/dark mode CSS actually applies (glide-data-grid canvas cannot
+       be themed via CSS).                                                */
+    .themed-table { margin: 2px 0 10px 0; overflow-x: auto; }
+    .themed-table table {
+        width: 100%; border-collapse: collapse;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-size: 0.82em;
+    }
+    .themed-table th, .themed-table td {
+        padding: 6px 10px; border-bottom: 1px solid rgba(128,128,128,0.18);
+        white-space: nowrap;
+    }
+    .themed-table th {
+        background: rgba(230,57,70,0.10);
+        color: inherit; font-weight: 700; text-align: center;
+        letter-spacing: 0.03em; text-transform: uppercase; font-size: 0.78em;
+        border-bottom: 1px solid rgba(230,57,70,0.35);
+    }
+    .themed-table tbody tr:hover { background: rgba(230,57,70,0.06); }
+    .themed-table tbody tr:nth-child(even) {
+        background: rgba(128,128,128,0.05);
+    }
 
     /* ══ FIELD TOGGLE ══ */
     .field-toggle {
@@ -498,6 +534,22 @@ h1, h2, h3, h4, h5, h6, .page-title { color: #111 !important; }
 table, th, td { color: #1a1a1a !important; }
 .stDataFrame, [data-testid="stDataFrame"] { background-color: #fff !important; }
 [data-testid="stDataFrame"] div { color: #1a1a1a !important; }
+/* Note: st.dataframe (glide-data-grid canvas) cannot be themed via CSS.
+   Race-card tables now render as HTML via `.themed-table` which does
+   respect these variables.                                                */
+/* Inline HTML tables we control (speed map, research panel, themed-table) */
+[data-testid="stMarkdownContainer"] table { background-color: transparent !important; }
+[data-testid="stMarkdownContainer"] th,
+[data-testid="stMarkdownContainer"] td { color: #1a1a1a !important; }
+.themed-table table { background: #ffffff !important; }
+.themed-table th { background: rgba(230,57,70,0.08) !important; color: #1a1a1a !important; }
+.themed-table tbody tr:nth-child(even) { background: #f7f7f5 !important; }
+.themed-table tbody tr:hover { background: #fff1f2 !important; }
+/* Speed map header bars use inline #2C3E50 → soften to readable slate on light */
+[data-testid="stMarkdownContainer"] td[style*="#2C3E50"] {
+    background: #334155 !important;  /* keep readable slate header */
+    color: #fff !important;
+}
 /* Inputs / buttons */
 .stButton > button,
 .stDownloadButton > button {
@@ -1250,20 +1302,43 @@ def _render_pace_research_panel(race: dict):
         distance = int(race.get("distance") or 0)
     except (TypeError, ValueError):
         distance = 0
-    band = "sprint" if distance <= 1200 else ("mile" if distance <= 1600 else "route")
-    # Venue: ST vs HV — use is_awt flag + course hint.
-    venue = "HV" if str(race.get("race_course", "")).upper().startswith("H") else "ST"
 
-    # Lookup priority: ST_band / HV_band → band → _default
+    # Venue from session-stashed meeting_venue (set in page_race_day).
+    # race.race_course is the rail config ("A"/"B"/"C"), NOT venue.
+    venue_str = str(st.session_state.get("_rd_meeting_venue", "")).upper()
+    if "HAPPY VALLEY" in venue_str or venue_str.strip() == "HV":
+        venue = "HV"
+    elif "SHA TIN" in venue_str or venue_str.strip() == "ST":
+        venue = "ST"
+    else:
+        venue = "ST"  # fallback
+
+    # Distance bands differ by venue:
+    #   HV has no 1400-1600 races → 2 bands: Sprint (≤1200) / Route (>1200)
+    #   ST has 3 bands: Sprint (≤1200) / Mile (1400-1600) / Route (≥1650)
+    if venue == "HV":
+        band = "sprint" if distance <= 1200 else "route"
+        band_label = "SPRINT (≤1200m)" if band == "sprint" else "MIDDLE+ (>1200m)"
+    else:
+        if distance <= 1200:
+            band, band_label = "sprint", "SPRINT (≤1200m)"
+        elif distance <= 1600:
+            band, band_label = "mile", "MILE (1400-1600m)"
+        else:
+            band, band_label = "route", "ROUTE (≥1650m)"
+
+    # Lookup priority: venue_band → band → _default
     key_specific = f"{venue}_{band}"
     tbl = data.get(key_specific) or data.get(band) or data.get("_default") or {}
     if not tbl:
         return
 
-    scope_label = (
-        f"{venue} {band.upper()}" if key_specific in data
-        else (band.upper() if band in data else "overall")
-    )
+    if key_specific in data:
+        scope_label = f"{venue} {band_label}"
+    elif band in data:
+        scope_label = f"All venues · {band_label}"
+    else:
+        scope_label = "Overall average"
 
     styles = ["Leader", "On-Pace", "Midfield", "Closer"]
     groups = ["Slow", "Avg", "Fast"]
@@ -1319,9 +1394,13 @@ def _render_pace_research_panel(race: dict):
     📈 Empirical pace × style benefit — {scope_label}{sample_note}
   </div>
   <div style="opacity:0.6;font-size:0.8em;margin-bottom:6px">
-    Seconds adjusted per runner based on historical top-3 rate vs baseline (Avg pace).
-    Negative = <span style="color:#1D9E75;font-weight:600">faster</span>,
-    positive = <span style="color:#C0392B;font-weight:600">slower</span>.
+    Seconds adjusted per runner vs baseline (Avg pace).
+    <span style="color:#1D9E75;font-weight:600">negative = faster</span>,
+    <span style="color:#C0392B;font-weight:600">positive = slower</span>.
+    &nbsp;·&nbsp; <b>ET model</b> folds this bonus directly into each horse's
+    <i>projected_time</i> (via <code>smap_advantage × 0.10 s</code>).
+    &nbsp;·&nbsp; <b>SARR model</b> uses a separate style × venue fit score
+    (independent of predicted pace) — so SARR ranking will not always reflect this table.
   </div>
   <table style="border-collapse:collapse;width:100%;font-size:0.88em;">
     <thead>
@@ -1476,12 +1555,15 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
                       .set_properties(**{"text-align": "center"}) \
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
 
-    # Unique key per (model, race) so Streamlit's column-reorder state
-    # for the SARR table doesn't bleed into the ET table and vice versa.
-    st.dataframe(
-        styled, use_container_width=True, hide_index=True,
-        key=f"rd_et_table_{race['race_number']}",
-    )
+    # Render as HTML (via Styler) so light/dark mode CSS actually applies
+    # to cell backgrounds — glide-data-grid (st.dataframe) draws to canvas
+    # and cannot be themed via CSS variables.
+    try:
+        _html = styled.hide(axis="index").to_html()
+    except Exception:
+        _html = df.to_html(index=False, escape=False)
+    st.markdown(f'<div class="themed-table">{_html}</div>',
+                unsafe_allow_html=True)
 
     # BB alerts
     for p, bbe in bb_alerts:
@@ -1506,6 +1588,11 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
     # ── Race header ───────────────────────────────────────────────────────
     cls_str = f"Class {race.get('race_class', '')}" if race.get('race_class') else "Group"
     surface = "AWT" if race.get("is_awt") else "Turf"
+    # Pull pace from paired ET race when present (SARR doesn't compute pace itself)
+    pace_src = et_race or race
+    pace_html = _pace_bar_html(
+        pace_src.get("pace", "Neutral"), pace_src.get("pace_score", 0.0)
+    )
     st.markdown(
         f'<div class="race-hdr-block">'
         f'<div class="race-hdr-title">R{race["race_number"]} — {race.get("race_name", "")}'
@@ -1513,6 +1600,7 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
         f'<div class="race-hdr-meta">'
         f'<span>{race.get("distance", "?")}m {surface} ({race.get("race_course", "")})</span>'
         f'<span>{cls_str}</span>'
+        f'<span>Pace: {pace_html}</span>'
         f'<span style="margin-left:auto;opacity:0.5">{race.get("runners", len(picks))} runners</span>'
         f'</div></div>',
         unsafe_allow_html=True,
@@ -1617,11 +1705,13 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
                       .set_properties(**{"text-align": "center"}) \
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
 
-    # Unique per-(model, race) key — see render_race_card for rationale.
-    st.dataframe(
-        styled, use_container_width=True, hide_index=True,
-        key=f"rd_sarr_table_{race['race_number']}",
-    )
+    # Render as HTML so light/dark mode CSS applies (see ET render above).
+    try:
+        _html = styled.hide(axis="index").to_html()
+    except Exception:
+        _html = df.to_html(index=False, escape=False)
+    st.markdown(f'<div class="themed-table">{_html}</div>',
+                unsafe_allow_html=True)
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
 
@@ -2237,6 +2327,12 @@ def page_race_day(selected):
         return
 
     data = load_meeting_data(selected["file"])
+
+    # Stash meeting venue for render_speed_map → _render_pace_research_panel.
+    # race_course field is the rail/track config ("A", "B", etc.), NOT venue.
+    st.session_state["_rd_meeting_venue"] = str(
+        data.get("meeting_venue") or data.get("meeting_title") or ""
+    )
 
     _date_match = re.search(r"(\d{8})", str(selected["file"]))
     date_str = _date_match.group(1) if _date_match else ""
