@@ -1405,39 +1405,28 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
         result = subprocess.run(
             cmd, env=env, cwd=str(BASE),
             capture_output=True, text=True, encoding="utf-8",
-            timeout=300,
+            timeout=900,
         )
 
         if result.returncode == 0:
-            st.success(f"ET pipeline complete for {date_str}!")
-            with st.expander("ET pipeline output"):
-                st.code(result.stdout[-3000:] if len(result.stdout) > 3000
+            st.success(f"Pipeline complete for {date_str} (ET + SARR)")
+            with st.expander("Pipeline output"):
+                st.code(result.stdout[-4000:] if len(result.stdout) > 4000
                         else result.stdout)
         else:
-            st.error(f"ET pipeline failed (exit code {result.returncode})")
+            st.error(f"Pipeline failed (exit code {result.returncode})")
             with st.expander("Error output"):
                 st.code(result.stderr[-2000:] if result.stderr else result.stdout[-2000:])
 
-    # ── Run SARR model (independent, always runs after ET) ──
-    sarr_script = BASE / "sarr_raceday.py"
-    if sarr_script.exists():
-        with st.spinner(f"Running SARR analysis for {date_str}..."):
-            sarr_cmd = [PYTHON, str(sarr_script), "--date", date_str]
-            sarr_result = subprocess.run(
-                sarr_cmd, env=env, cwd=str(BASE),
-                capture_output=True, text=True, encoding="utf-8",
-                timeout=300,
-            )
-            if sarr_result.returncode == 0:
-                st.success(f"SARR analysis complete for {date_str}!")
-                with st.expander("SARR output"):
-                    st.code(sarr_result.stdout[-2000:] if len(sarr_result.stdout) > 2000
-                            else sarr_result.stdout)
-            else:
-                st.warning(f"SARR analysis failed (non-critical)")
-                with st.expander("SARR error"):
-                    st.code(sarr_result.stderr[-1500:] if sarr_result.stderr
-                            else sarr_result.stdout[-1500:])
+    # NOTE: run_meeting.py already runs SARR as step 4c — no separate call needed.
+    # Verify SARR output actually landed on disk and warn if it didn't.
+    sarr_json = REPORTS / f"race_day_report_{date_str.replace('-', '')}_SARR.json"
+    if not sarr_json.exists():
+        st.warning(
+            f"SARR JSON not found at {sarr_json.name}. "
+            "Re-run analysis or run `python sarr_raceday.py --date "
+            f"{date_str}` manually."
+        )
 
     # ── Clear data caches so SARR / ET JSONs are picked up immediately ──
     try:
