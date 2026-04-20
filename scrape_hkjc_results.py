@@ -337,6 +337,16 @@ def scrape_meeting_results(date_str: str,
     print(f"  {len(races)} races, "
           f"{sum(len(r['runners']) for r in races)} total runners")
 
+    # v4.5: auto-append to master DB (hkjc_results_updated.xlsx). Previously
+    # only the dashboard button appended; schedulers left the DB stale.
+    try:
+        from db_utils import append_results_to_db
+        n = append_results_to_db(out_path, verbose=True)
+        if n is not None:
+            print(f"  DB append: {n} rows merged into hkjc_results_updated.xlsx")
+    except Exception as e:
+        print(f"  (DB append skipped: {e})")
+
     return output
 
 

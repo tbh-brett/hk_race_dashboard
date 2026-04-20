@@ -3654,6 +3654,16 @@ def page_results():
 
     # ── Results table ────────────────────────────────────────────────────
     runners = race.get("runners", [])
+
+    # v4.5: per-horse running lane (from running_position_photos OCR).
+    try:
+        from lane_utils import load_race_lanes, lane_colour, LANE_BUCKETS, has_lane_data
+        _lane_map = load_race_lanes(selected_dc, int(selected_rn)) or {}
+        _has_lanes = bool(_lane_map)
+    except Exception:
+        _lane_map = {}
+        _has_lanes = False
+
     res_rows = []
     for r in runners:
         hname = r.get("horse_name", "")
@@ -3661,7 +3671,8 @@ def page_results():
         m_rank = model_ranks.get((race["race_number"], hname.upper()), "—")
         positions_list = r.get("positions", [])
         running_pos = "-".join(p for p in positions_list if p) if positions_list else r.get("running_position", "")
-        res_rows.append({
+        lane_rec = _lane_map.get(hname.upper(), {}) if _has_lanes else {}
+        row = {
             "Place": r.get("place", ""),
             "No": r.get("horse_no", ""),
             "Horse": hname,
@@ -3675,9 +3686,70 @@ def page_results():
             "Finish Time": r.get("finish_time", ""),
             "Win Odds": r.get("win_odds", ""),
             "LBW": r.get("lbw", ""),
-        })
+        }
+        if _has_lanes:
+            row["Lane"] = lane_rec.get("avg_bucket") or "—"
+            row["Ground (m)"] = (f"{lane_rec.get('ground_lost_m'):+.1f}"
+                                  if isinstance(lane_rec.get("ground_lost_m"), (int, float))
+                                  else "—")
+        res_rows.append(row)
 
-    st.dataframe(pd.DataFrame(res_rows), use_container_width=True, hide_index=True)
+    _res_df = pd.DataFrame(res_rows)
+    if _has_lanes:
+        _colour_map = {name: col for name, col, _ in LANE_BUCKETS}
+        def _lane_style(val):
+            col = _colour_map.get(val)
+            if not col:
+                return ""
+            return f"background-color:{col}1f;color:{col};font-weight:600"
+        try:
+            _styled = _res_df.style.map(_lane_style, subset=["Lane"])
+            st.dataframe(_styled, use_container_width=True, hide_index=True)
+        except Exception:
+            st.dataframe(_res_df, use_container_width=True, hide_index=True)
+        # Lane legend + per-call breakdown
+        _legend_html = " &nbsp; ".join(
+            f"<span style='display:inline-block;width:10px;height:10px;"
+            f"background:{col};border-radius:2px;vertical-align:middle'></span> "
+            f"<span style='font-size:12px'>{name}</span>"
+            for name, col, _ in LANE_BUCKETS)
+        st.markdown(
+            f"<div style='margin:6px 0 4px 0;font-size:12px;opacity:0.8'>"
+            f"<b>Lane</b> (from HKJC running-position photo, x_frac): {_legend_html} "
+            f"&nbsp;·&nbsp; <i>Ground</i> = approx. extra metres travelled vs rail over the race."
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+        # Per-call breakdown for horses with frame data
+        _per_call_rows = []
+        for r in runners:
+            lane_rec = _lane_map.get(r.get("horse_name", "").upper())
+            if not lane_rec or not lane_rec.get("bucket_at"):
+                continue
+            bc = lane_rec["bucket_at"]
+            _per_call_rows.append({
+                "Horse": r.get("horse_name", ""),
+                "Start": bc.get("613") or bc.get("start") or "—",
+                "800M": bc.get("800M") or "—",
+                "400M": bc.get("400M") or "—",
+                "200M": bc.get("200M") or "—",
+                "Avg": lane_rec.get("avg_bucket") or "—",
+            })
+        if _per_call_rows:
+            with st.expander(f"🛤️ Running lane per call ({len(_per_call_rows)} horses)", expanded=False):
+                _pc_df = pd.DataFrame(_per_call_rows)
+                try:
+                    _pc_styled = _pc_df.style.map(_lane_style,
+                        subset=[c for c in ["Start", "800M", "400M", "200M", "Avg"] if c in _pc_df.columns])
+                    st.dataframe(_pc_styled, use_container_width=True, hide_index=True)
+                except Exception:
+                    st.dataframe(_pc_df, use_container_width=True, hide_index=True)
+    else:
+        st.dataframe(_res_df, use_container_width=True, hide_index=True)
+        st.caption(
+            "🛤️ Running-lane breakdown unavailable — no OCR JSON for this race "
+            "(running_position_photos/" + selected_dc + "/R" + str(selected_rn) + ".json missing)."
+        )
 
     _xl_bytes = _results_json_to_excel_bytes(REPORTS / f"results_{selected_dc}.json")
     if _xl_bytes:
