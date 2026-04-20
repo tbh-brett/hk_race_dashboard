@@ -1,0 +1,468 @@
+{
+  "date": "2026-04-19",
+  "race_number": 8,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "621",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "AURORA PATCH",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 3,
+          "cx": 139,
+          "cy": 557,
+          "x_frac": 0.19375,
+          "conf": 0.826,
+          "match_score": 1.0,
+          "ocr_text": "Aurora Patch",
+          "band_label": "200M",
+          "y_in_band": 0.738
+        }
+      ],
+      "ocr_texts": [
+        "Aurora Patch"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.738,
+      "avg_x_frac": 0.194,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "BEAUTY GLORY",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 351,
+          "cy": 101,
+          "x_frac": 0.4875,
+          "conf": 0.874,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Glory",
+          "band_label": "621",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 1,
+          "cx": 458,
+          "cy": 249,
+          "x_frac": 0.6368055555555555,
+          "conf": 0.805,
+          "match_score": 0.917,
+          "ocr_text": "Beauty Giory",
+          "band_label": "800M",
+          "y_in_band": 0.792
+        },
+        {
+          "band_idx": 2,
+          "cx": 614,
+          "cy": 391,
+          "x_frac": 0.8527777777777777,
+          "conf": 0.858,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Glory",
+          "band_label": "400M",
+          "y_in_band": 0.74
+        }
+      ],
+      "ocr_texts": [
+        "Beauty Glory",
+        "Beauty Giory",
+        "Beauty Glory"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.761,
+      "avg_x_frac": 0.659,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "IGOR STRAVINSKY",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 169,
+          "cy": 99,
+          "x_frac": 0.23541666666666666,
+          "conf": 0.912,
+          "match_score": 0.929,
+          "ocr_text": "gorStravinsky",
+          "band_label": "621",
+          "y_in_band": 0.736
+        },
+        {
+          "band_idx": 1,
+          "cx": 347,
+          "cy": 250,
+          "x_frac": 0.4826388888888889,
+          "conf": 0.814,
+          "match_score": 0.966,
+          "ocr_text": "IgorStravinsky",
+          "band_label": "800M",
+          "y_in_band": 0.799
+        },
+        {
+          "band_idx": 2,
+          "cx": 518,
+          "cy": 396,
+          "x_frac": 0.7194444444444444,
+          "conf": 0.921,
+          "match_score": 0.929,
+          "ocr_text": "gorStravinsky",
+          "band_label": "400M",
+          "y_in_band": 0.773
+        },
+        {
+          "band_idx": 3,
+          "cx": 474,
+          "cy": 561,
+          "x_frac": 0.6583333333333333,
+          "conf": 0.851,
+          "match_score": 0.889,
+          "ocr_text": "gorStravinsk",
+          "band_label": "200M",
+          "y_in_band": 0.762
+        }
+      ],
+      "ocr_texts": [
+        "gorStravinsky",
+        "IgorStravinsky",
+        "gorStravinsky",
+        "gorStravinsk"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.768,
+      "avg_x_frac": 0.524,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LADY'S CHOICE",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 290,
+          "cy": 249,
+          "x_frac": 0.40347222222222223,
+          "conf": 0.891,
+          "match_score": 0.917,
+          "ocr_text": "LadysChoice",
+          "band_label": "800M",
+          "y_in_band": 0.792
+        },
+        {
+          "band_idx": 2,
+          "cx": 434,
+          "cy": 329,
+          "x_frac": 0.6027777777777777,
+          "conf": 0.858,
+          "match_score": 0.917,
+          "ocr_text": "LadysChoice",
+          "band_label": "400M",
+          "y_in_band": 0.327
+        }
+      ],
+      "ocr_texts": [
+        "LadysChoice",
+        "LadysChoice"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.559,
+      "avg_x_frac": 0.503,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MR ENERGIA",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 394,
+          "cy": 44,
+          "x_frac": 0.5472222222222223,
+          "conf": 0.776,
+          "match_score": 0.947,
+          "ocr_text": "MrEnergia",
+          "band_label": "621",
+          "y_in_band": 0.281
+        },
+        {
+          "band_idx": 1,
+          "cx": 389,
+          "cy": 277,
+          "x_frac": 0.5409722222222222,
+          "conf": 0.832,
+          "match_score": 1.0,
+          "ocr_text": "Mr Energia",
+          "band_label": "800M",
+          "y_in_band": 0.98
+        },
+        {
+          "band_idx": 2,
+          "cx": 420,
+          "cy": 411,
+          "x_frac": 0.5840277777777778,
+          "conf": 0.824,
+          "match_score": 0.824,
+          "ocr_text": "Energia",
+          "band_label": "400M",
+          "y_in_band": 0.873
+        }
+      ],
+      "ocr_texts": [
+        "MrEnergia",
+        "Mr Energia",
+        "Energia"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.711,
+      "avg_x_frac": 0.557,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MUST GO",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 258,
+          "cy": 44,
+          "x_frac": 0.3590277777777778,
+          "conf": 0.781,
+          "match_score": 0.923,
+          "ocr_text": "MustGo",
+          "band_label": "621",
+          "y_in_band": 0.281
+        },
+        {
+          "band_idx": 1,
+          "cx": 274,
+          "cy": 193,
+          "x_frac": 0.38125,
+          "conf": 0.844,
+          "match_score": 0.923,
+          "ocr_text": "MustGo",
+          "band_label": "800M",
+          "y_in_band": 0.416
+        },
+        {
+          "band_idx": 2,
+          "cx": 305,
+          "cy": 329,
+          "x_frac": 0.4236111111111111,
+          "conf": 0.823,
+          "match_score": 0.923,
+          "ocr_text": "MustGo",
+          "band_label": "400M",
+          "y_in_band": 0.327
+        }
+      ],
+      "ocr_texts": [
+        "MustGo",
+        "MustGo",
+        "MustGo"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.341,
+      "avg_x_frac": 0.388,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PI LEGEND",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 98,
+          "cy": 100,
+          "x_frac": 0.1361111111111111,
+          "conf": 0.746,
+          "match_score": 0.824,
+          "ocr_text": "PfLegend",
+          "band_label": "621",
+          "y_in_band": 0.744
+        },
+        {
+          "band_idx": 1,
+          "cx": 272,
+          "cy": 271,
+          "x_frac": 0.3784722222222222,
+          "conf": 0.809,
+          "match_score": 0.8,
+          "ocr_text": "Legend",
+          "band_label": "800M",
+          "y_in_band": 0.94
+        },
+        {
+          "band_idx": 2,
+          "cx": 368,
+          "cy": 410,
+          "x_frac": 0.5118055555555555,
+          "conf": 0.786,
+          "match_score": 1.0,
+          "ocr_text": "PI Legend",
+          "band_label": "400M",
+          "y_in_band": 0.867
+        }
+      ],
+      "ocr_texts": [
+        "PfLegend",
+        "Legend",
+        "PI Legend"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.85,
+      "avg_x_frac": 0.342,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "POWER KOEPP",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 327,
+          "cy": 275,
+          "x_frac": 0.4548611111111111,
+          "conf": 0.894,
+          "match_score": 0.952,
+          "ocr_text": "PowerKoepp",
+          "band_label": "800M",
+          "y_in_band": 0.966
+        },
+        {
+          "band_idx": 2,
+          "cx": 463,
+          "cy": 401,
+          "x_frac": 0.64375,
+          "conf": 0.906,
+          "match_score": 0.952,
+          "ocr_text": "PowerKoepp",
+          "band_label": "400M",
+          "y_in_band": 0.807
+        },
+        {
+          "band_idx": 3,
+          "cx": 392,
+          "cy": 575,
+          "x_frac": 0.5447916666666667,
+          "conf": 0.784,
+          "match_score": 0.857,
+          "ocr_text": "PowerKoepo",
+          "band_label": "200M",
+          "y_in_band": 0.843
+        }
+      ],
+      "ocr_texts": [
+        "PowerKoepp",
+        "PowerKoepp",
+        "PowerKoepo"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.872,
+      "avg_x_frac": 0.548,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ROMANTIC SON",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 93,
+          "cy": 256,
+          "x_frac": 0.12916666666666668,
+          "conf": 0.906,
+          "match_score": 0.957,
+          "ocr_text": "RomanticSon",
+          "band_label": "800M",
+          "y_in_band": 0.839
+        },
+        {
+          "band_idx": 2,
+          "cx": 109,
+          "cy": 331,
+          "x_frac": 0.15208333333333332,
+          "conf": 0.869,
+          "match_score": 0.957,
+          "ocr_text": "RomanticSon",
+          "band_label": "400M",
+          "y_in_band": 0.34
+        }
+      ],
+      "ocr_texts": [
+        "RomanticSon",
+        "RomanticSon"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.59,
+      "avg_x_frac": 0.141,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 48,
+    "matched_horses": 9,
+    "field_size": 11,
+    "coverage": 0.818,
+    "parsed_at": "2026-04-20T12:27:37"
+  }
+}

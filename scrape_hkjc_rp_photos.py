@@ -192,12 +192,15 @@ def main() -> int:
 
     total = {"ok": 0, "skipped": 0, "missing": 0, "error": 0}
     meeting_days = 0
+    dates_with_photos: List[date] = []
     for d in dates:
         counts = scrape_date(session, d, force=args.force, max_races=args.max_races)
         for k, v in counts.items():
             total[k] += v
         if counts["ok"] or counts["skipped"]:
             meeting_days += 1
+        if counts["ok"]:
+            dates_with_photos.append(d)
 
     print()
     print(f"Done. Processed {len(dates)} date(s), {meeting_days} meeting day(s).")
@@ -206,6 +209,31 @@ def main() -> int:
         f"missing={total['missing']} error={total['error']}"
     )
     print(f"Photos saved under: {PHOTOS_DIR}")
+
+    # Auto-OCR newly downloaded photos (v4.5+).
+    if dates_with_photos:
+        print()
+        print(f"Auto-OCR: running parse_rp_photos.py on {len(dates_with_photos)} date(s)...")
+        try:
+            import subprocess
+            for d in dates_with_photos:
+                ds = d.isoformat()
+                r = subprocess.run(
+                    [sys.executable, str(BASE_DIR / "parse_rp_photos.py"), "--date", ds],
+                    cwd=str(BASE_DIR),
+                    capture_output=True,
+                    text=True,
+                    timeout=600,
+                )
+                if r.returncode == 0:
+                    print(f"  OCR {ds}: OK")
+                else:
+                    print(f"  OCR {ds}: FAILED rc={r.returncode}")
+                    if r.stderr:
+                        print(f"    {r.stderr.strip().splitlines()[-1]}")
+        except Exception as e:
+            print(f"  (Auto-OCR skipped: {e})")
+
     return 0 if total["error"] == 0 else 1
 
 

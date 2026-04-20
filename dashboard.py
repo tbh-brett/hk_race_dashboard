@@ -3729,7 +3729,6 @@ def page_results():
             bc = lane_rec["bucket_at"]
             _per_call_rows.append({
                 "Horse": r.get("horse_name", ""),
-                "Start": bc.get("613") or bc.get("start") or "—",
                 "800M": bc.get("800M") or "—",
                 "400M": bc.get("400M") or "—",
                 "200M": bc.get("200M") or "—",
@@ -3740,7 +3739,7 @@ def page_results():
                 _pc_df = pd.DataFrame(_per_call_rows)
                 try:
                     _pc_styled = _pc_df.style.map(_lane_style,
-                        subset=[c for c in ["Start", "800M", "400M", "200M", "Avg"] if c in _pc_df.columns])
+                        subset=[c for c in ["800M", "400M", "200M", "Avg"] if c in _pc_df.columns])
                     st.dataframe(_pc_styled, use_container_width=True, hide_index=True)
                 except Exception:
                     st.dataframe(_pc_df, use_container_width=True, hide_index=True)
@@ -4796,6 +4795,9 @@ def page_form_guide():
                     "margin": str(run.get("margin", "-")),
                     "ftime": str(run.get("time", "-")),
                     "top5": top5,
+                    "lane_avg": run.get("lane_avg"),
+                    "lane_at":  run.get("lane_at") or {},
+                    "ground_lost_m": run.get("ground_lost_m"),
                 })
         else:
             for _, row in horse_hist.iterrows():
@@ -4888,6 +4890,28 @@ def page_form_guide():
                 )
                 comment_cell = _run_commentary_lookup(dc, rnum, hname).get("short", "") or ""
 
+            # v4.5: lane cell — coloured dot + 800/400/200 mini-track
+            lane_avg = dr.get("lane_avg")
+            lane_at = dr.get("lane_at") or {}
+            gl = dr.get("ground_lost_m")
+            if lane_avg or lane_at:
+                try:
+                    from lane_utils import lane_colour as _lc
+                except Exception:
+                    _lc = lambda _b: "#888"
+                def _dot(b):
+                    if not b:
+                        return '<span style="display:inline-block;width:8px;height:8px;background:#444;border-radius:50%;margin:0 1px;opacity:0.3"></span>'
+                    return (f'<span title="{b}" style="display:inline-block;'
+                            f'width:8px;height:8px;background:{_lc(b)};'
+                            f'border-radius:50%;margin:0 1px"></span>')
+                dots = _dot(lane_at.get("800M")) + _dot(lane_at.get("400M")) + _dot(lane_at.get("200M"))
+                gl_txt = f"{gl:+.0f}" if isinstance(gl, (int, float)) else ""
+                lane_cell = (f'<span title="800m / 400m / 200m  (avg={lane_avg or "?"}, '
+                             f'ground={gl_txt}m)">{dots}</span>')
+            else:
+                lane_cell = "&mdash;"
+
             html_rows.append(
                 f'<tr class="form-data-row">'
                 f'<td>{date_disp}</td>'
@@ -4897,13 +4921,14 @@ def page_form_guide():
                 f'<td class="td-left">{jock}</td>'
                 f'<td>{rtg}</td><td>{wt}</td><td>{gate}</td>'
                 f'<td class="td-pos">{pos}</td>'
+                f'<td>{lane_cell}</td>'
                 f'<td>{margin_cell}</td>'
                 f'<td>{ftime}</td>'
                 f'<td>{vid_cell}</td>'
                 f'<td class="td-left form-comment">{comment_cell}</td>'
                 f'</tr>'
                 f'<tr class="top5-row">'
-                f'<td colspan="16">{t5_html}</td>'
+                f'<td colspan="17">{t5_html}</td>'
                 f'</tr>'
             )
 
@@ -4937,7 +4962,7 @@ def page_form_guide():
             '<thead><tr>'
             '<th>Date</th><th>Pl</th><th>Dist</th><th>Trk</th><th>Crs</th>'
             '<th>Gng</th><th>Cls</th><th class="th-left">Jockey</th>'
-            '<th>Rtg</th><th>Wt</th><th>Gt</th><th>Pos</th><th>Mrgn</th><th>Time</th>'
+            '<th>Rtg</th><th>Wt</th><th>Gt</th><th>Pos</th><th>Ln</th><th>Mrgn</th><th>Time</th>'
             '<th>Vid</th><th class="th-left">Comment</th>'
             '</tr></thead>'
             '<tbody>' + "".join(html_rows) + '</tbody>'

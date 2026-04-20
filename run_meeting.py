@@ -40,6 +40,10 @@ SCRAPER = BASE / "scrape_hkjc_racecard.py"
 VET_SCRAPER = BASE / "scrape_hkjc_vet.py"
 RESULTS_SCRAPER = BASE / "scrape_hkjc_results.py"
 BACKTEST = BASE / "backtest_model.py"
+INCIDENT_SCRAPER = BASE / "scrape_hkjc_incident_reports.py"
+RP_PHOTO_SCRAPER = BASE / "scrape_hkjc_rp_photos.py"
+COMMENTARY = BASE / "race_commentary.py"
+FORM_GUIDE_BUILDER = BASE / "build_form_guide.py"
 
 # Day-of-week names for meeting title
 DAY_NAMES = {
@@ -294,6 +298,26 @@ def run_analysis(script_path: Path) -> int:
     return result.returncode
 
 
+def run_sarr(date_str: str) -> int:
+    """Run the independent SARR race-day model. Non-fatal on failure."""
+    sarr_script = BASE / "sarr_raceday.py"
+    if not sarr_script.exists():
+        print("  (SARR script not found — skipping)")
+        return 0
+    print(f"\n{'='*60}")
+    print(f"[4c] RUNNING SARR MODEL — {date_str}")
+    print(f"{'='*60}\n")
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    r = subprocess.run(
+        [PYTHON, str(sarr_script), "--date", date_str],
+        env=env, cwd=str(BASE), capture_output=False,
+    )
+    if r.returncode != 0:
+        print(f"  (SARR exited {r.returncode} — non-fatal)")
+    return r.returncode
+
+
 def run_results_scraper(date_str: str) -> Path:
     """Run scrape_hkjc_results.py and return the output JSON path."""
     date_compact = date_str.replace("-", "")
@@ -338,6 +362,73 @@ def run_backtest(date_str: str) -> Path:
     return json_out
 
 
+def run_form_guide_builder(date_str: str) -> Path:
+    """Pre-build form guide JSON cache so dashboard can render per-run video + commentary."""
+    out_path = BASE / "cache" / f"form_guide_{date_str}.json"
+    print(f"\n{'='*60}")
+    print(f"[3.5] BUILDING FORM GUIDE CACHE — {date_str}")
+    print(f"{'='*60}")
+    cmd = [PYTHON, str(FORM_GUIDE_BUILDER), date_str]
+    env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
+    result = subprocess.run(cmd, env=env, cwd=str(BASE), capture_output=False)
+    if result.returncode != 0:
+        print(f"WARNING: Form guide builder failed (exit code {result.returncode})")
+    elif out_path.exists():
+        print(f"  ✓ Form guide cache: {out_path.name}")
+    return out_path
+
+
+def run_incident_scraper(date_str: str) -> Path:
+    """Scrape HKJC Racing Incident Report + Comments on Running."""
+    date_compact = date_str.replace("-", "")
+    out_path = BASE / "reports" / f"incidents_{date_compact}.json"
+    print(f"\n{'='*60}")
+    print(f"[5c] SCRAPING INCIDENT REPORTS — {date_str}")
+    print(f"{'='*60}")
+    cmd = [PYTHON, str(INCIDENT_SCRAPER), "--date", date_str]
+    env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
+    result = subprocess.run(cmd, env=env, cwd=str(BASE), capture_output=False)
+    if result.returncode != 0:
+        print(f"WARNING: Incident scraper failed (exit code {result.returncode})")
+    elif out_path.exists():
+        print(f"  ✓ Incidents: {out_path.name}")
+    return out_path
+
+
+def run_rp_photo_scraper(date_str: str) -> Path:
+    """Scrape running position photos."""
+    date_compact = date_str.replace("-", "")
+    out_dir = BASE / "running_position_photos" / date_compact
+    print(f"\n{'='*60}")
+    print(f"[5d] SCRAPING RUNNING POSITION PHOTOS — {date_str}")
+    print(f"{'='*60}")
+    cmd = [PYTHON, str(RP_PHOTO_SCRAPER), "--date", date_str]
+    env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
+    result = subprocess.run(cmd, env=env, cwd=str(BASE), capture_output=False)
+    if result.returncode != 0:
+        print(f"WARNING: RP photo scraper failed (exit code {result.returncode})")
+    elif out_dir.exists():
+        print(f"  ✓ RP photos dir: {out_dir.relative_to(BASE)}")
+    return out_dir
+
+
+def run_commentary_generator(date_str: str) -> Path:
+    """Generate AI race commentary from results + incidents + RP photos."""
+    date_compact = date_str.replace("-", "")
+    out_path = BASE / "reports" / f"commentary_{date_compact}.json"
+    print(f"\n{'='*60}")
+    print(f"[5e] GENERATING RACE COMMENTARY — {date_str}")
+    print(f"{'='*60}")
+    cmd = [PYTHON, str(COMMENTARY), "--date", date_str]
+    env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
+    result = subprocess.run(cmd, env=env, cwd=str(BASE), capture_output=False)
+    if result.returncode != 0:
+        print(f"WARNING: Commentary generator failed (exit code {result.returncode})")
+    elif out_path.exists():
+        print(f"  ✓ Commentary: {out_path.name}")
+    return out_path
+
+
 def main():
     args = parse_args()
 
@@ -367,6 +458,9 @@ def main():
         if args.post_race:
             run_results_scraper(args.date)
             run_backtest(args.date)
+            run_incident_scraper(args.date)
+            run_rp_photo_scraper(args.date)
+            run_commentary_generator(args.date)
         return
 
     # Step 2: Detect venue and scrape vet records
@@ -391,6 +485,18 @@ def main():
     # Step 4: Run analysis
     rc = run_analysis(script)
 
+    # Step 4b: Build form guide cache so dashboard can render per-run video + commentary
+    try:
+        run_form_guide_builder(args.date)
+    except Exception as e:
+        print(f"WARNING: Form guide cache build failed: {e}")
+
+    # Step 4c: Run SARR (independent, always runs after ET)
+    try:
+        run_sarr(args.date)
+    except Exception as e:
+        print(f"WARNING: SARR run failed: {e}")
+
     v_tag = model_ver.replace('v', 'v') if model_ver else 'v3.4.8'
     if rc == 0:
         json_path = BASE / "reports" / f"race_day_report_{date_compact}_{v_tag}.json"
@@ -407,17 +513,27 @@ def main():
                 print(f"  VPdf: reports/vet_report_{date_compact}.pdf")
         print(f"{'='*60}")
 
-        # Post-race: scrape results + backtest
+        # Post-race: scrape results + backtest + incidents + RP + commentary
         if args.post_race:
             results_json = run_results_scraper(args.date)
             if results_json.exists():
                 bt_json = run_backtest(args.date)
+                # Incident reports, RP photos, then commentary (order matters —
+                # commentary needs all three inputs)
+                inc_json = run_incident_scraper(args.date)
+                rp_dir = run_rp_photo_scraper(args.date)
+                comm_json = run_commentary_generator(args.date)
                 print(f"\n{'='*60}")
                 print("POST-RACE COMPLETE")
-                if results_json.exists():
-                    print(f"  Results: reports/results_{date_compact}.json")
+                print(f"  Results:    reports/results_{date_compact}.json")
                 if bt_json.exists():
-                    print(f"  Backtest: reports/backtest_{date_compact}.json")
+                    print(f"  Backtest:   reports/backtest_{date_compact}.json")
+                if inc_json.exists():
+                    print(f"  Incidents:  reports/incidents_{date_compact}.json")
+                if rp_dir.exists():
+                    print(f"  RP photos:  running_position_photos/{date_compact}/")
+                if comm_json.exists():
+                    print(f"  Commentary: reports/commentary_{date_compact}.json")
                 print(f"{'='*60}")
             else:
                 print("\nSkipping backtest — no results scraped.")

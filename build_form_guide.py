@@ -186,6 +186,41 @@ def build(date_iso: str) -> None:
     form_db = _load_form_db()
     print(f"  {len(form_db):,} records loaded.")
 
+    # v4.5: lane cache keyed by (date_compact, race_number) → {HORSE_UPPER: rec}
+    try:
+        from lane_utils import load_race_lanes
+        def _lane_for(date_iso_str: str, rn: int):
+            dc = date_iso_str.replace("-", "")
+            return load_race_lanes(dc, int(rn)) or {}
+        _LANE_CACHE: dict = {}
+        def _get_lane(date_iso_str, rn, horse_upper):
+            key = (date_iso_str, int(rn))
+            if key not in _LANE_CACHE:
+                _LANE_CACHE[key] = _lane_for(date_iso_str, rn)
+            return _LANE_CACHE[key].get(horse_upper)
+    except Exception as _lane_err:
+        print(f"  (lane_utils unavailable: {_lane_err})")
+        _get_lane = lambda *_a, **_k: None
+
+    def _lane_fields_for_run(rd, rnum, hname):
+        """Lookup lane record for a historical run; return display fields.
+        Empty dict when no OCR data exists for that past meeting.
+        """
+        try:
+            if pd.isna(rd) or pd.isna(rnum):
+                return {}
+            date_str = rd.isoformat() if hasattr(rd, "isoformat") else str(rd)
+            rec = _get_lane(date_str, rnum, hname.strip().upper())
+            if not rec:
+                return {}
+            return {
+                "lane_avg": rec.get("avg_bucket"),
+                "lane_at": rec.get("bucket_at") or {},
+                "ground_lost_m": rec.get("ground_lost_m"),
+            }
+        except Exception:
+            return {}
+
     race_idx = _build_race_index(form_db)
 
     output = {"date": date_iso, "races": []}
@@ -238,6 +273,7 @@ def build(date_iso: str) -> None:
                     "time": _fmt_time(row.get("finish_time_seconds")),
                     "top5": [(int(p), n) for p, n in ri.get("top5", [])],
                     "margin_2nd": ri.get("margin_2nd", "-"),
+                    **_lane_fields_for_run(rd, rnum, hname),
                 })
 
             horses_out.append({
