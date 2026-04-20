@@ -1752,6 +1752,7 @@ def page_overview():
                     "dist": race.get("distance", "?"),
                     "rank": pick.get("rank"),
                     "wp": pick.get("win_prob", 0),
+                    "horse_no": pick.get("horse_no", ""),
                 }
 
         trial_hits = []
@@ -1770,62 +1771,93 @@ def page_overview():
                 continue
             recent.sort(key=lambda x: x["date"], reverse=True)
             latest = recent[0]
-            comment = (latest.get("comment", "") or "").lower()
-            rp = latest.get("running_positions", [])
-            fp = rp[-1] if rp else None
-            sp = rp[0] if rp else None
-            n = latest.get("n_horses", 0)
 
-            is_concealed = (any(kw in comment for kw in _CONCEAL_KW)
-                            and not any(nk in comment for nk in _NEG_KW))
-            top_half = fp is not None and n > 0 and fp <= (n / 2)
-            has_pos = any(p in comment for p in _POS_PHRASES)
-            has_eased = "eased" in comment and not any(nk in comment for nk in _NEG_KW)
-            has_neg = any(nk in comment for nk in _NEG_KW)
-            pos_gained = (sp - fp) if sp is not None and fp is not None else 0
-            won_trial = fp == 1 and n and n >= 3
-
-            flag = ""
-            details = []
-            if is_concealed and top_half:
-                flag, details = "++", ["Concealed + top half"]
-            elif has_eased and has_pos:
-                flag, details = "++", ["Eased + strong finish"]
-            elif won_trial and is_concealed:
-                flag, details = "++", ["Won trial under hold"]
-            elif won_trial and has_pos:
-                flag, details = "+", ["Trial winner, positive"]
-            elif has_eased:
-                flag, details = "+", ["Eased (deliberately held)"]
-            elif has_pos and top_half:
-                flag, details = "+", ["Positive trial, top half"]
-            elif pos_gained >= 3:
-                flag, details = "+", [f"Gained {pos_gained} positions"]
-            elif is_concealed:
-                flag, details = "+", ["Concealed form"]
-            elif has_neg:
-                flag, details = "—", ["Negative trial signal"]
-
+            # Use the shared sentiment helper so Overview matches Form Guide
+            flag, reasons = _trial_sentiment(latest)
             if not flag:
                 continue
+
             ch = card_horses[horse.upper().strip()]
             trial_hits.append({
-                "race": ch["race"], "dist": ch["dist"], "horse": horse,
-                "rank": ch["rank"], "wp": ch["wp"], "flag": flag,
-                "detail": "; ".join(details), "date": latest["date"],
+                "race": ch["race"],
+                "dist": ch["dist"],
+                "horse": horse,
+                "horse_no": ch.get("horse_no", ""),
+                "rank": ch["rank"],
+                "wp": ch["wp"],
+                "flag": flag,
+                "detail": "; ".join(reasons),
+                "date": latest["date"],
+                "fp": latest.get("running_positions", [])[-1] if latest.get("running_positions") else None,
+                "n": latest.get("n_horses", 0),
+                "dist_m": latest.get("distance_m", 0),
             })
 
-        trial_hits.sort(key=lambda x: (0 if x["flag"] == "++" else 1 if x["flag"] == "+" else 2, x["race"]))
+        # Sort: ++ first (by race), then +, then -. Within each tier by race.
+        _TIER_ORDER = {"++": 0, "+": 1, "-": 2}
+        trial_hits.sort(key=lambda x: (_TIER_ORDER.get(x["flag"], 9), x["race"]))
+
         if trial_hits:
+            from collections import defaultdict as _dd
+            grouped = _dd(list)
             for th in trial_hits:
-                flag_colour = {"++": "#22c55e", "+": "#3b82f6", "—": "#ef4444"}.get(th["flag"], "#888")
-                rk_str = f"Rk#{th['rank']}" if th["rank"] else ""
+                grouped[th["flag"]].append(th)
+
+            _TIER_META = {
+                "++": ("🟢 Strong Positives",   "#22c55e", "rgba(34,197,94,0.10)"),
+                "+":  ("🟡 Positive",            "#86efac", "rgba(134,239,172,0.08)"),
+                "-":  ("🔴 Negative",            "#ef4444", "rgba(239,68,68,0.08)"),
+            }
+
+            # Tier counts header
+            count_cols = st.columns(3)
+            for i, tier in enumerate(("++", "+", "-")):
+                label, colour, _bg = _TIER_META[tier]
+                n_items = len(grouped.get(tier, []))
+                count_cols[i].markdown(
+                    f'<div style="text-align:center;padding:6px;'
+                    f'border:1px solid {colour};border-radius:6px;'
+                    f'background:{_TIER_META[tier][2]}">'
+                    f'<div style="font-size:0.85em;opacity:0.85">{label}</div>'
+                    f'<div style="font-size:1.4em;font-weight:800;color:{colour}">{n_items}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
+            # One compact block per tier — table-like rows
+            for tier in ("++", "+", "-"):
+                items = grouped.get(tier, [])
+                if not items:
+                    continue
+                label, colour, bg = _TIER_META[tier]
+                rows_html = []
+                for th in items:
+                    rk_str = f"#{th['rank']}" if th["rank"] else "—"
+                    hno = f"({th['horse_no']})" if th.get("horse_no") else ""
+                    wp = f"{th['wp']:.0f}%" if th["wp"] else "—"
+                    fp_str = f"{th['fp']}/{th['n']}" if th["fp"] else "—"
+                    dist_m_str = f"{th['dist_m']}m" if th.get("dist_m") else ""
+                    rows_html.append(
+                        f'<tr>'
+                        f'<td style="padding:3px 8px;color:{colour};font-weight:700">R{th["race"]}</td>'
+                        f'<td style="padding:3px 8px;font-weight:700">{th["horse"]}</td>'
+                        f'<td style="padding:3px 8px;opacity:0.7;font-size:0.85em">{hno}</td>'
+                        f'<td style="padding:3px 8px;text-align:center">{rk_str}</td>'
+                        f'<td style="padding:3px 8px;text-align:center;opacity:0.85">{wp}</td>'
+                        f'<td style="padding:3px 8px;opacity:0.7;font-size:0.85em">Last trial {th["date"][5:]} {dist_m_str} · {fp_str}</td>'
+                        f'<td style="padding:3px 8px;opacity:0.7;font-size:0.85em;font-style:italic">{th["detail"]}</td>'
+                        f'</tr>'
+                    )
                 st.markdown(
-                    f'**R{th["race"]}** {th["dist"]}m — '
-                    f'<span style="color:{flag_colour};font-weight:700">[{th["flag"]}]</span> '
-                    f'**{th["horse"]}** &nbsp; {rk_str} '
-                    f'Win% {th["wp"]:.1f} &nbsp; '
-                    f'<span style="font-size:0.85em;opacity:0.7">{th["detail"]} ({th["date"]})</span>',
+                    f'<div style="border-left:3px solid {colour};'
+                    f'background:{bg};border-radius:4px;'
+                    f'margin-bottom:10px;padding:6px 4px">'
+                    f'<div style="padding:2px 10px 4px 10px;'
+                    f'color:{colour};font-weight:700;font-size:0.9em">{label} ({len(items)})</div>'
+                    f'<table style="width:100%;border-collapse:collapse;font-size:0.9em">'
+                    + "".join(rows_html) + '</table></div>',
                     unsafe_allow_html=True,
                 )
         else:
@@ -2007,6 +2039,45 @@ def page_race_day(selected):
     race_numbers = [r["race_number"] for r in active_races]
     if "rd_active_race" not in st.session_state:
         st.session_state["rd_active_race"] = race_numbers[0] if race_numbers else None
+
+    # ── Horse search box (above tabs) ────────────────────────────────────
+    rd_search = st.text_input(
+        "🔍 Find horse",
+        value=st.session_state.get("rd_search", ""),
+        key="rd_search_input",
+        placeholder="Type a horse name to jump to their race…",
+        label_visibility="collapsed",
+    )
+    st.session_state["rd_search"] = rd_search
+    rd_q = (rd_search or "").strip().upper()
+    if rd_q:
+        match_races = []
+        for r in active_races:
+            for pool in (r.get("picks", []), r.get("speed_map", {}).get("grid", [])):
+                if any(rd_q in (p.get("horse_name", "") or "").upper() for p in pool):
+                    match_races.append(r["race_number"])
+                    break
+        if not match_races:
+            st.warning(f"No horse matching “{rd_search}” on this card.")
+        else:
+            # Auto-jump once per query change
+            last_q = st.session_state.get("_rd_search_last_q", "")
+            if last_q != rd_q:
+                st.session_state["rd_active_race"] = match_races[0]
+                st.session_state["_rd_search_last_q"] = rd_q
+                st.rerun()
+            chips = " ".join(
+                f'<span style="background:rgba(34,197,94,0.15);color:#22c55e;'
+                f'padding:2px 8px;border-radius:10px;font-size:0.85em;'
+                f'font-weight:700;margin-right:4px">R{rn}</span>'
+                for rn in match_races
+            )
+            st.markdown(
+                f'<div style="margin:-4px 0 8px 0">Found in: {chips}</div>',
+                unsafe_allow_html=True,
+            )
+    else:
+        st.session_state.pop("_rd_search_last_q", None)
 
     # Render tab row
     tab_cols = st.columns(len(race_numbers))
@@ -4595,6 +4666,72 @@ def page_form_guide():
     if active_idx >= len(races):
         active_idx = 0
 
+    # ── Horse search box ─────────────────────────────────────────────────
+    search_q = st.text_input(
+        "🔍 Find horse",
+        value=st.session_state.get("fg_search", ""),
+        key="fg_search_input",
+        placeholder="Type a horse name to jump to their race…",
+        label_visibility="collapsed",
+    )
+    st.session_state["fg_search"] = search_q
+    search_upper = (search_q or "").strip().upper()
+    matched_race_idx = None
+    matched_horse_uppers: set[str] = set()
+    if search_upper:
+        # Find races containing a horse whose name contains the query
+        # Use fg_cache if available (cheapest), otherwise racecard/picks.
+        def _race_horse_names(race_dict, race_num):
+            names = []
+            if fg_cache:
+                cached = next((r for r in fg_cache.get("races", [])
+                               if r.get("race_number") == race_num), None)
+                if cached:
+                    names.extend(h.get("horse_name", "") for h in cached.get("horses", []))
+            if racecard:
+                for rc_race in racecard.get("races", []):
+                    if rc_race.get("meta", {}).get("race_number") == race_num:
+                        names.extend(h.get("horse_name", "") for h in rc_race.get("horses", [])
+                                     if not h.get("is_standby"))
+                        break
+            names.extend(p.get("horse_name", "") for p in race_dict.get("picks", []))
+            return names
+
+        for i, r in enumerate(races):
+            names = _race_horse_names(r, r["race_number"])
+            hits = [n for n in names if n and search_upper in n.upper()]
+            if hits:
+                if matched_race_idx is None:
+                    matched_race_idx = i
+                matched_horse_uppers.update(h.upper().strip() for h in hits)
+        if matched_race_idx is None:
+            st.warning(f"No horse matching “{search_q}” on this card.")
+        else:
+            # Auto-jump only once per query change
+            last_q = st.session_state.get("_fg_search_last_q", "")
+            if last_q != search_upper:
+                st.session_state["fg_active_race"] = matched_race_idx
+                st.session_state["_fg_search_last_q"] = search_upper
+                active_idx = matched_race_idx
+                st.rerun()
+            else:
+                active_idx = st.session_state.get("fg_active_race", matched_race_idx)
+            # Show match chip(s)
+            match_chips = " ".join(
+                f'<span style="background:rgba(34,197,94,0.15);color:#22c55e;'
+                f'padding:2px 8px;border-radius:10px;font-size:0.85em;'
+                f'font-weight:700;margin-right:4px">R{r["race_number"]} · {len([n for n in _race_horse_names(r, r["race_number"]) if n.upper() in matched_horse_uppers])} match(es)</span>'
+                for r in races
+                if any(n.upper() in matched_horse_uppers for n in _race_horse_names(r, r["race_number"]))
+            )
+            st.markdown(
+                f'<div style="margin:-4px 0 8px 0">{match_chips}</div>',
+                unsafe_allow_html=True,
+            )
+    else:
+        # clear the sentinel when search is empty
+        st.session_state.pop("_fg_search_last_q", None)
+
     btn_cols = st.columns(len(races))
     for i, race in enumerate(races):
         with btn_cols[i]:
@@ -5084,13 +5221,12 @@ def _load_all_trial_horse_index() -> dict:
     return index
 
 
-def _trial_sentiment_badge(entry: dict) -> str:
-    """Classify a single trial entry as ++ / + / neutral / -.
+def _trial_sentiment(entry: dict) -> tuple[str, list[str]]:
+    """Return (flag, reasons) for a single trial entry.
 
-    Uses the same keyword lists as the Trial Standouts spotter
-    (``_CONCEAL_KW``, ``_NEG_KW``, ``_POS_PHRASES``) plus running-position
-    heuristics. Returns a short coloured HTML span (or an empty string if
-    the signal is neutral).
+    Flag is one of: "++", "+", "-", "" (empty = neutral / insufficient signal).
+    Used by both the Form Guide per-run badge and the Overview standouts list
+    so the two views always agree.
     """
     comment = (entry.get("comment", "") or "").lower()
     rp = entry.get("running_positions", []) or []
@@ -5101,27 +5237,83 @@ def _trial_sentiment_badge(entry: dict) -> str:
     has_pos = any(p in comment for p in _POS_PHRASES)
     has_neg = any(nk in comment for nk in _NEG_KW)
     is_concealed = any(kw in comment for kw in _CONCEAL_KW) and not has_neg
-    won = isinstance(fp, int) and fp == 1 and n >= 3
+    has_eased = "eased" in comment and not has_neg
     top_half = isinstance(fp, int) and n > 0 and fp <= max(1, n // 2)
+    won = isinstance(fp, int) and fp == 1 and n >= 3
     gained = (isinstance(sp, int) and isinstance(fp, int) and (sp - fp) >= 2)
-
-    # ++ : won OR (concealed run + top-half finish) OR (strong positive phrase + top-half)
-    if won or (is_concealed and top_half) or (has_pos and top_half):
-        return ('<span style="color:#22c55e;font-weight:800;'
-                'font-size:0.85em;margin-right:4px" '
-                'title="Very positive trial">++</span>')
-    # +  : any positive signal (top-half, concealed, gained ground, pos phrase)
-    if (top_half or is_concealed or has_pos or gained) and not has_neg:
-        return ('<span style="color:#86efac;font-weight:700;'
-                'font-size:0.85em;margin-right:4px" '
-                'title="Positive trial">+</span>')
-    # -  : explicit negative keywords OR bottom-quartile finish with no pos
     bottom_q = (isinstance(fp, int) and n >= 4 and fp >= n - 1)
-    if has_neg or (bottom_q and not has_pos and not is_concealed):
-        return ('<span style="color:#ef4444;font-weight:800;'
-                'font-size:0.85em;margin-right:4px" '
-                'title="Negative trial">&minus;</span>')
-    return ""
+
+    reasons: list[str] = []
+
+    # ── ++ tier ─────────────────────────────────────────────
+    if won and (is_concealed or has_pos):
+        reasons.append("Won under hold / with finish")
+        return "++", reasons
+    if won:
+        reasons.append("Won trial")
+        return "++", reasons
+    if is_concealed and top_half:
+        reasons.append("Concealed + top half")
+        return "++", reasons
+    if has_eased and has_pos:
+        reasons.append("Eased + strong finish")
+        return "++", reasons
+    if has_pos and top_half:
+        reasons.append("Positive phrase + top half")
+        return "++", reasons
+
+    # ── - tier (explicit negatives) ────────────────────────
+    if has_neg:
+        reasons.append("Negative trial signal")
+        return "-", reasons
+    if bottom_q and not has_pos and not is_concealed:
+        reasons.append(f"Bottom-quartile finish ({fp}/{n})")
+        return "-", reasons
+
+    # ── + tier (any positive signal) ───────────────────────
+    if has_eased:
+        reasons.append("Eased (deliberately held)")
+        return "+", reasons
+    if is_concealed:
+        reasons.append("Concealed form")
+        return "+", reasons
+    if gained:
+        reasons.append(f"Gained {(sp or 0) - (fp or 0)} positions")
+        return "+", reasons
+    if has_pos:
+        reasons.append("Positive phrase")
+        return "+", reasons
+    if top_half and not has_neg:
+        reasons.append(f"Top-half finish ({fp}/{n})")
+        return "+", reasons
+
+    return "", reasons
+
+
+def _trial_sentiment_badge(entry: dict) -> str:
+    """Compact coloured span of the sentiment flag for inline rendering.
+
+    Uses the shared ``_trial_sentiment`` helper so Form Guide and Overview
+    always agree on the flag.
+    """
+    flag, reasons = _trial_sentiment(entry)
+    if not flag:
+        return ""
+    title = "; ".join(reasons) if reasons else {
+        "++": "Very positive trial",
+        "+":  "Positive trial",
+        "-":  "Negative trial",
+    }.get(flag, "")
+    colour_weight = {
+        "++": ("#22c55e", 800),
+        "+":  ("#86efac", 700),
+        "-":  ("#ef4444", 800),
+    }[flag]
+    display = flag if flag != "-" else "&minus;"
+    colour, weight = colour_weight
+    return (f'<span style="color:{colour};font-weight:{weight};'
+            f'font-size:0.85em;margin-right:4px" '
+            f'title="{title}">{display}</span>')
 
 
 def _trial_compact_html(entries: list) -> str:
