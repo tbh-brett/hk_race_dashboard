@@ -1439,6 +1439,17 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                     st.code(sarr_result.stderr[-1500:] if sarr_result.stderr
                             else sarr_result.stdout[-1500:])
 
+    # ── Clear data caches so SARR / ET JSONs are picked up immediately ──
+    try:
+        st.cache_data.clear()
+    except Exception:
+        pass
+    # Force a full rerender so newly-written reports appear on every page
+    try:
+        st.rerun()
+    except Exception:
+        pass
+
 
 def _save_uploaded_racecard(uploaded_json: bytes, date_str: str) -> bool:
     """Save an uploaded racecard cache JSON and regenerate the Excel file.
@@ -5084,6 +5095,46 @@ def _load_all_trial_horse_index() -> dict:
     return index
 
 
+def _trial_sentiment_badge(entry: dict) -> str:
+    """Classify a single trial entry as ++ / + / neutral / -.
+
+    Uses the same keyword lists as the Trial Standouts spotter
+    (``_CONCEAL_KW``, ``_NEG_KW``, ``_POS_PHRASES``) plus running-position
+    heuristics. Returns a short coloured HTML span (or an empty string if
+    the signal is neutral).
+    """
+    comment = (entry.get("comment", "") or "").lower()
+    rp = entry.get("running_positions", []) or []
+    fp = rp[-1] if rp else None
+    sp = rp[0] if rp else None
+    n = entry.get("n_horses", 0) or 0
+
+    has_pos = any(p in comment for p in _POS_PHRASES)
+    has_neg = any(nk in comment for nk in _NEG_KW)
+    is_concealed = any(kw in comment for kw in _CONCEAL_KW) and not has_neg
+    won = isinstance(fp, int) and fp == 1 and n >= 3
+    top_half = isinstance(fp, int) and n > 0 and fp <= max(1, n // 2)
+    gained = (isinstance(sp, int) and isinstance(fp, int) and (sp - fp) >= 2)
+
+    # ++ : won OR (concealed run + top-half finish) OR (strong positive phrase + top-half)
+    if won or (is_concealed and top_half) or (has_pos and top_half):
+        return ('<span style="color:#22c55e;font-weight:800;'
+                'font-size:0.85em;margin-right:4px" '
+                'title="Very positive trial">++</span>')
+    # +  : any positive signal (top-half, concealed, gained ground, pos phrase)
+    if (top_half or is_concealed or has_pos or gained) and not has_neg:
+        return ('<span style="color:#86efac;font-weight:700;'
+                'font-size:0.85em;margin-right:4px" '
+                'title="Positive trial">+</span>')
+    # -  : explicit negative keywords OR bottom-quartile finish with no pos
+    bottom_q = (isinstance(fp, int) and n >= 4 and fp >= n - 1)
+    if has_neg or (bottom_q and not has_pos and not is_concealed):
+        return ('<span style="color:#ef4444;font-weight:800;'
+                'font-size:0.85em;margin-right:4px" '
+                'title="Negative trial">&minus;</span>')
+    return ""
+
+
 def _trial_compact_html(entries: list) -> str:
     """Render compact trial info for Form Guide horse cards."""
     if not entries:
@@ -5155,7 +5206,10 @@ def _trial_compact_html(entries: list) -> str:
         else:
             top4_html = ""
 
+        sentiment_html = _trial_sentiment_badge(e)
+
         rows_html.append(
+            f'{sentiment_html}'
             f'<span style="color:#6b7280;font-size:0.85em">{dt_disp}</span> '
             f'{dist}m '
             f'<span style="{pos_style}">{pos_str}</span>'
