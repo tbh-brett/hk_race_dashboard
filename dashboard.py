@@ -265,12 +265,14 @@ st.markdown("""
        fast  → high fill, green  (good for closers / pressure races)
        slow  → low  fill, red    (slow-run, leader-friendly)
        avg   → mid  fill, amber  (neutral tempo)                          */
-    .pace-bar-wrap { display: flex; align-items: center; gap: 7px; }
+    .pace-bar-wrap { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; }
     .pace-bar-track {
-        width: 72px; height: 6px; border-radius: 3px;
-        background: rgba(128,128,128,0.2); overflow: hidden;
+        width: 110px; height: 9px; border-radius: 5px;
+        background: rgba(128,128,128,0.25);
+        border: 1px solid rgba(128,128,128,0.35);
+        overflow: hidden; flex-shrink: 0;
     }
-    .pace-bar-fill { height: 100%; border-radius: 3px; transition: width 0.25s; }
+    .pace-bar-fill { height: 100%; border-radius: 5px; transition: width 0.25s; }
     .pace-fast    { background: #22c55e; }  /* green  */
     .pace-sl-fast { background: #86efac; }  /* light  green */
     .pace-neutral { background: #f59e0b; }  /* amber */
@@ -427,6 +429,104 @@ st.markdown("""
         padding-bottom: 3px;
     }
     .page-subtitle { font-size: 0.8em; opacity: 0.5; margin-bottom: 14px; }
+</style>
+""", unsafe_allow_html=True)
+
+
+# ── Light-mode toggle (persisted per-session) ─────────────────────────────────
+if "light_mode" not in st.session_state:
+    st.session_state["light_mode"] = False
+
+st.sidebar.markdown(
+    '<div class="sb-brand" style="padding:4px 14px 8px;border:none;margin-bottom:0">'
+    '<span style="font-size:0.78em;opacity:0.6;letter-spacing:0.06em;">APPEARANCE</span>'
+    '</div>', unsafe_allow_html=True
+)
+_lm_prev = st.session_state["light_mode"]
+_lm = st.sidebar.toggle(
+    "☀ Light mode" if not _lm_prev else "🌙 Dark mode",
+    value=_lm_prev,
+    key="__light_mode_toggle__",
+    help="Switch between light and dark dashboard theme",
+)
+if _lm != _lm_prev:
+    st.session_state["light_mode"] = _lm
+    st.rerun()
+
+if st.session_state["light_mode"]:
+    st.markdown("""
+<style>
+/* ══ LIGHT-MODE OVERRIDE ══ */
+html, body, .stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stHeader"],
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"] {
+    background-color: #fafaf7 !important;
+    color: #1a1a1a !important;
+}
+[data-testid="stSidebar"],
+[data-testid="stSidebarContent"] {
+    background-color: #f0ede6 !important;
+    color: #1a1a1a !important;
+}
+[data-testid="stSidebar"] * { color: #1a1a1a !important; }
+/* Headings / titles */
+h1, h2, h3, h4, h5, h6, .page-title { color: #111 !important; }
+/* Markdown bodies */
+.stMarkdown, [data-testid="stMarkdownContainer"],
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stMarkdownContainer"] span {
+    color: #1a1a1a !important;
+}
+/* Keep our coloured spans */
+.pace-label.fast     { color: #16803c !important; }
+.pace-label.sl-fast  { color: #16803c !important; }
+.pace-label.neutral  { color: #b45309 !important; }
+.pace-label.sl-slow  { color: #b91c1c !important; }
+.pace-label.slow     { color: #b91c1c !important; }
+/* Race header block */
+.race-hdr-block {
+    background: #ffffff !important;
+    border-left: 3px solid #e63946 !important;
+    color: #1a1a1a !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.race-hdr-meta, .race-hdr-title { color: #1a1a1a !important; }
+/* Tables */
+table, th, td { color: #1a1a1a !important; }
+.stDataFrame, [data-testid="stDataFrame"] { background-color: #fff !important; }
+[data-testid="stDataFrame"] div { color: #1a1a1a !important; }
+/* Inputs / buttons */
+.stButton > button,
+.stDownloadButton > button {
+    background-color: #fff !important;
+    color: #1a1a1a !important;
+    border: 1px solid rgba(0,0,0,0.2) !important;
+}
+.stButton > button:hover { background-color: #f3f3f3 !important; }
+input, textarea, select,
+[data-baseweb="input"] input,
+[data-baseweb="select"] * {
+    background-color: #fff !important;
+    color: #1a1a1a !important;
+}
+/* Expander, tabs */
+[data-testid="stExpander"] { background-color: #fff !important; }
+[data-baseweb="tab"] { color: #1a1a1a !important; }
+/* Pace bar — nudge track for legibility on light bg */
+.pace-bar-track {
+    background: rgba(0,0,0,0.08) !important;
+    border-color: rgba(0,0,0,0.15) !important;
+}
+/* Code / mono backgrounds */
+code, pre, .stCode {
+    background-color: #f3f3f3 !important;
+    color: #1a1a1a !important;
+}
+/* Alerts retain colour but softer backgrounds */
+[data-baseweb="notification"] { color: #1a1a1a !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1087,13 +1187,30 @@ def render_speed_map(race: dict):
     # Beneficiaries line
     bens = smap.get("beneficiaries", [])
     if bens:
-        ben_html = ' | '.join(
-            f'<span style="color:#1D9E75;font-weight:700;">{b["horse_name"]}</span>'
-            f' <span style="opacity:0.6;font-size:0.88em;">— {b.get("reason", "")}</span>'
-            for b in bens
-        )
-        html += (f'<div style="font-size:0.82em;margin-top:6px;">'
-                 f'★ Beneficiaries: {ben_html}</div>')
+        parts = []
+        for b in bens:
+            name = b.get("horse_name", "")
+            reason = b.get("reason", "") or "favourable position"
+            style = b.get("style", "")
+            bonus_s = b.get("pace_style_bonus_s", 0.0)
+            bonus_html = ""
+            if bonus_s:
+                col = "#1D9E75" if bonus_s < 0 else "#C0392B"
+                bonus_html = (
+                    f' <span style="color:{col};font-weight:600;font-size:0.86em">'
+                    f'[pace×style {bonus_s:+.2f}s]</span>'
+                )
+            style_html = (
+                f' <span style="opacity:0.55;font-size:0.82em">({style})</span>'
+                if style else ""
+            )
+            parts.append(
+                f'<span style="color:#1D9E75;font-weight:700;">{name}</span>'
+                f'{style_html}{bonus_html}'
+                f' <span style="opacity:0.6;font-size:0.88em;">— {reason}</span>'
+            )
+        html += (f'<div style="font-size:0.82em;margin-top:6px;line-height:1.5">'
+                 f'★ Beneficiaries: {" | ".join(parts)}</div>')
 
     # Speed map legend
     html += ('<div style="font-size:0.76em;margin-top:4px;opacity:0.55;">'
@@ -1103,6 +1220,122 @@ def render_speed_map(race: dict):
 
     html += '</div>'
     st.markdown(html, unsafe_allow_html=True)
+
+    # ── Empirical pace×style research panel ───────────────────────────────
+    _render_pace_research_panel(race)
+
+
+@st.cache_data(ttl=3600)
+def _load_pace_benefit_cache() -> dict:
+    """Read cache/pace_style_benefit.json once per hour."""
+    path = BASE / "cache" / "pace_style_benefit.json"
+    if not path.exists():
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _render_pace_research_panel(race: dict):
+    """Render the empirical pace×style benefit lookup for the current
+    race's (venue, distance-band) slice, sourced from
+    cache/pace_style_benefit.json (built by _analyse_pace_benefit.py)."""
+    data = _load_pace_benefit_cache()
+    if not data:
+        return
+
+    try:
+        distance = int(race.get("distance") or 0)
+    except (TypeError, ValueError):
+        distance = 0
+    band = "sprint" if distance <= 1200 else ("mile" if distance <= 1600 else "route")
+    # Venue: ST vs HV — use is_awt flag + course hint.
+    venue = "HV" if str(race.get("race_course", "")).upper().startswith("H") else "ST"
+
+    # Lookup priority: ST_band / HV_band → band → _default
+    key_specific = f"{venue}_{band}"
+    tbl = data.get(key_specific) or data.get(band) or data.get("_default") or {}
+    if not tbl:
+        return
+
+    scope_label = (
+        f"{venue} {band.upper()}" if key_specific in data
+        else (band.upper() if band in data else "overall")
+    )
+
+    styles = ["Leader", "On-Pace", "Midfield", "Closer"]
+    groups = ["Slow", "Avg", "Fast"]
+
+    # Current race predicted pace group
+    pace_label = str(race.get("pace") or "Normal")
+    try:
+        from pace_utils import pace_group
+        cur_group = pace_group(pace_label)
+    except Exception:
+        cur_group = "Avg"
+
+    # Build table HTML — seconds adjustment per (group, style)
+    def _cell(v):
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            return '<td style="padding:4px 8px;text-align:center;opacity:0.4">—</td>'
+        if v == 0:
+            return '<td style="padding:4px 8px;text-align:center;opacity:0.5">0.00</td>'
+        col = "#1D9E75" if v < 0 else "#C0392B"
+        return (f'<td style="padding:4px 8px;text-align:center;'
+                f'color:{col};font-weight:600">{v:+.2f}s</td>')
+
+    rows_html = ""
+    for g in groups:
+        rrow = tbl.get(g, {})
+        hl = "background:rgba(255,215,0,0.08);" if g == cur_group else ""
+        cells = "".join(_cell(rrow.get(s, 0.0)) for s in styles)
+        tag = "← predicted pace" if g == cur_group else ""
+        rows_html += (
+            f'<tr style="{hl}">'
+            f'<th style="padding:4px 8px;text-align:left;font-weight:600;">{g}</th>'
+            f'{cells}'
+            f'<td style="padding:4px 8px;opacity:0.55;font-size:0.8em">{tag}</td>'
+            f'</tr>'
+        )
+
+    samples = data.get("_samples", {}).get(band) if band in data.get("_samples", {}) else \
+              data.get("_samples", {}).get("_all", {})
+    sample_note = ""
+    if samples:
+        tot = sum(samples.get(g, {}).get(s, 0) for g in groups for s in styles)
+        sample_note = f" · n={tot:,} runner-rows"
+
+    panel = f"""
+<div style="margin:6px 0 12px 0;padding:10px 14px;
+            background:rgba(128,128,128,0.05);
+            border-left:3px solid #f59e0b;
+            border-radius:0 6px 6px 0;font-size:0.85em;">
+  <div style="font-weight:700;letter-spacing:0.03em;
+              font-size:0.88em;margin-bottom:6px;opacity:0.85;">
+    📈 Empirical pace × style benefit — {scope_label}{sample_note}
+  </div>
+  <div style="opacity:0.6;font-size:0.8em;margin-bottom:6px">
+    Seconds adjusted per runner based on historical top-3 rate vs baseline (Avg pace).
+    Negative = <span style="color:#1D9E75;font-weight:600">faster</span>,
+    positive = <span style="color:#C0392B;font-weight:600">slower</span>.
+  </div>
+  <table style="border-collapse:collapse;width:100%;font-size:0.88em;">
+    <thead>
+      <tr style="border-bottom:1px solid rgba(128,128,128,0.3)">
+        <th style="padding:4px 8px;text-align:left;opacity:0.7;">Pace</th>
+        {''.join(f'<th style="padding:4px 8px;text-align:center;opacity:0.7;">{s}</th>' for s in styles)}
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>{rows_html}</tbody>
+  </table>
+</div>
+"""
+    st.markdown(panel, unsafe_allow_html=True)
 
 
 def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int = 4,
@@ -2085,7 +2318,6 @@ def page_race_day(selected):
                     "Top Pick": top["horse_name"],
                     "Proj (s)": f"{top['projected_time']:.2f}",
                     "Win%": f"{top['win_prob']:.0f}%",
-                    "Risk": f"{top['risk_score']:.0f}({top['risk_tier'][0]})",
                     "2nd": picks[1]["horse_name"] if len(picks) > 1 else "—",
                     "3rd": picks[2]["horse_name"] if len(picks) > 2 else "—",
                     "4th": picks[3]["horse_name"] if len(picks) > 3 else "—",

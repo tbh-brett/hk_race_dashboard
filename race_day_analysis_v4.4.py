@@ -4179,6 +4179,11 @@ def main():
         n_rows_sm = smap[0]["_n_rows"] if smap else 3
         beneficiaries = speed_map_beneficiaries(smap, race, pace_label)
         ben_names = [b["horse_name"] for b in beneficiaries]
+        # Map horse_name → pace_style_bonus_s so beneficiary list can
+        # surface the empirical pace×style adjustment.
+        pace_bonus_by_name = {
+            sh["horse_name"]: sh.get("pace_style_bonus_s", 0.0) for sh in smap
+        }
         for sh in smap:
             smap_grid.append({
                 "horse_name": sh["horse_name"],
@@ -4190,14 +4195,25 @@ def main():
                 "notes": sh["smap_notes"],
                 "style": sh["dominant_style"],
                 "esz": round(sh["esz"], 1),
+                "pace_style_bonus_s": sh.get("pace_style_bonus_s", 0.0),
                 "is_beneficiary": sh["horse_name"] in ben_names,
             })
         beneficiary_list = []
         for b in beneficiaries:
+            reasons_list = b.get("reasons", []) or []
+            if isinstance(reasons_list, str):
+                reasons_list = [reasons_list]
+            reason_str = "; ".join(r for r in reasons_list if r)
+            if not reason_str:
+                reason_str = b.get("reason", "") or "favourable position"
+            bonus_s = pace_bonus_by_name.get(b["horse_name"], 0.0)
             beneficiary_list.append({
                 "horse_name": b["horse_name"],
                 "horse_no": b["horse_no"],
-                "reason": b.get("reason", ""),
+                "style": b.get("style", ""),
+                "advantage": b.get("advantage", 0.0),
+                "pace_style_bonus_s": round(bonus_s, 3),
+                "reason": reason_str,
             })
 
         json_data["races"].append({
