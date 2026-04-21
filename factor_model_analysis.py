@@ -122,6 +122,29 @@ def load() -> pd.DataFrame:
     or_sum = df.groupby(["race_date", "race_number"])["imp_raw"].transform("sum")
     df["imp_fair"] = df["imp_raw"] / or_sum
 
+    # --- Class step (HK: Class 1 best, Class 5 lowest; "0" = Group/Griffin) ----
+    # Lower class number = higher grade. A step-UP in class = class_num drops.
+    cls_raw = df["race_class"].astype(str).str.strip()
+    cls_num = pd.to_numeric(cls_raw, errors="coerce")
+    df["class_num"] = cls_num
+    df["prev_class_num"] = df.groupby("horse_id")["class_num"].shift(1)
+    df["class_delta"] = df["class_num"] - df["prev_class_num"]  # positive = stepped DOWN
+    # Human-friendly label
+    def _class_step_label(d):
+        if pd.isna(d):
+            return "first_run"
+        if d <= -1:
+            return "step_up"        # moved to higher grade
+        if d >= 1:
+            return "step_down"      # moved to lower grade
+        return "same_class"
+    df["class_step"] = df["class_delta"].apply(_class_step_label)
+
+    # Next-race outcome (for validation: did a step-up stick?)
+    df["next_place_num"] = df.groupby("horse_id")["place_num"].shift(-1)
+    df["next_win"] = (df["next_place_num"] == 1).astype("Int64")
+    df["next_plc"] = (df["next_place_num"].between(1, 3)).astype("Int64")
+
     return df
 
 
@@ -345,6 +368,52 @@ def main():
             t = summarise(tmp, col + "_b", min_n=50, topk=None)
             tbl(md, f"Bucketed: {col}", t)
             j_w[col + "_bucket"] = t.reset_index().astype(str).to_dict(orient="records")
+
+        # ─── Class step-up / step-down tables ─────────────────────────
+        # 1. Overall step outcome (baseline)
+        t = summarise(dW, "class_step", min_n=50, topk=None)
+        tbl(md, "Class step — baseline (first_run / step_up / same / step_down)", t)
+        j_w["class_step"] = t.reset_index().astype(str).to_dict(orient="records")
+
+        # 2. Class step × trainer (who wins after class moves?)
+        t = summarise(dW, ["trainer", "class_step"], min_n=15, topk=40)
+        tbl(md, "Trainer × class step (min N=15)", t)
+        j_w["trainer_x_class_step"] = t.reset_index().astype(str).to_dict(orient="records")
+
+        # 3. Trainer × class-rising specifically (step_up horses only)
+        up = dW[dW["class_step"] == "step_up"]
+        t = summarise(up, "trainer", min_n=10, topk=25)
+        tbl(md, "Trainer — horses stepping UP in class (min N=10)", t)
+        j_w["trainer_class_up"] = t.reset_index().astype(str).to_dict(orient="records")
+
+        # 4. Trainer × class-dropping (step_down)
+        dn = dW[dW["class_step"] == "step_down"]
+        t = summarise(dn, "trainer", min_n=10, topk=25)
+        tbl(md, "Trainer — horses stepping DOWN in class (min N=10)", t)
+        j_w["trainer_class_down"] = t.reset_index().astype(str).to_dict(orient="records")
+
+        # 5. Follow-up race after a step-up: did it stick?
+        #    We can't use the full summarise() (which uses win/imp_fair of THIS run);
+        #    instead produce a simple table keyed on trainer measuring win/plc of the
+        #    *next* race after a step-up.
+        up2 = dW[(dW["class_step"] == "step_up") & dW["next_place_num"].notna()].copy()
+        if len(up2):
+            gby = up2.groupby("trainer")
+            followup = gby.agg(
+                N=("next_win", "size"),
+                NextWin_pct=("next_win", "mean"),
+                NextPlc_pct=("next_plc", "mean"),
+            )
+            followup = followup[followup["N"] >= 10].sort_values("NextPlc_pct", ascending=False).head(25)
+            followup = followup.round({"NextWin_pct": 3, "NextPlc_pct": 3})
+            tbl(md, "Trainer — follow-up race *after* a class step-up (min N=10)", followup)
+            j_w["trainer_class_up_followup"] = (
+                followup.reset_index().astype(str).to_dict(orient="records"))
+
+        # 6. Jockey × class step (jockeys change often, weaker signal but still useful)
+        t = summarise(dW, ["jockey", "class_step"], min_n=15, topk=40)
+        tbl(md, "Jockey × class step (min N=15)", t)
+        j_w["jockey_x_class_step"] = t.reset_index().astype(str).to_dict(orient="records")
 
         json_out[wname] = j_w
 

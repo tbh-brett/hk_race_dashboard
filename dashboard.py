@@ -2066,6 +2066,7 @@ def _build_horse_attribute_lookup() -> dict:
             "sire":      str(row.get("sire", "")).strip() if pd.notna(row.get("sire")) else "",
             "dam_sire":  str(row.get("dam_sire", "")).strip() if pd.notna(row.get("dam_sire")) else "",
             "last_date": row.get("race_date"),
+            "last_race_class": str(row.get("race_class", "")).strip() if pd.notna(row.get("race_class")) else "",
             "rating":    _fnum(row.get("rating")),
             "prev_rating":        _fnum(p.get("rating")) if p is not None else None,
             "declared_weight":    _fnum(row.get("declared_weight")),
@@ -2090,6 +2091,7 @@ def _compute_factor_edges(races: list[dict], window: str = "current_season_25_26
         rn = race.get("race_number")
         dist_b = _dist_bucket_label(race.get("distance"))
         going  = str(race.get("going", "")).strip()
+        today_class = str(race.get("race_class", "")).strip()
         for pick in race.get("picks", [])[:top_n_per_race]:
             hn_u = str(pick.get("horse_name", "")).upper().strip()
             jockey = str(pick.get("jockey", "")).strip()
@@ -2097,6 +2099,17 @@ def _compute_factor_edges(races: list[dict], window: str = "current_season_25_26
             trainer = a.get("trainer", "")
             sire     = a.get("sire", "")
             dam_sire = a.get("dam_sire", "")
+            last_class = a.get("last_race_class", "")
+            # Classify today's class move (HK: lower number = higher grade)
+            class_step = ""
+            try:
+                if last_class and today_class:
+                    lc = float(last_class); tc = float(today_class)
+                    if tc < lc:   class_step = "step_up"
+                    elif tc > lc: class_step = "step_down"
+                    else:         class_step = "same_class"
+            except (TypeError, ValueError):
+                class_step = ""
 
             signals: list[tuple[str, str, float]] = []   # (label, colour, score contrib)
 
@@ -2123,6 +2136,25 @@ def _compute_factor_edges(races: list[dict], window: str = "current_season_25_26
                     signals.append((f"Trn IV {iv:.2f}"
                                     + (f" A/E {ae:.2f}" if ae else ""),
                                     "#86efac", score))
+
+            # Trainer × class step — only when today's run is a genuine class move
+            if trainer and class_step in ("step_up", "step_down"):
+                tcs_row = _factor_lookup(
+                    win.get("trainer_x_class_step", []),
+                    ["trainer", "class_step"], [trainer, class_step],
+                )
+                if tcs_row:
+                    iv = _fnum(tcs_row.get("IV"))
+                    ae = _fnum(tcs_row.get("A_E"))
+                    n  = _fnum(tcs_row.get("N"))
+                    # Need a real sample + clear out-performance
+                    if iv and iv >= 1.6 and n and n >= 15:
+                        score = (iv - 1.0) * 0.6
+                        if ae and ae >= 1.3: score += 0.5
+                        arrow = "↑" if class_step == "step_up" else "↓"
+                        signals.append((
+                            f"Trn{arrow}Class IV {iv:.2f} (N={int(n)})",
+                            "#22c55e" if iv >= 2.5 else "#86efac", score))
 
             # Jockey × Trainer
             jt_row = _factor_lookup(win.get("jockey_x_trainer", []),
@@ -2214,6 +2246,7 @@ def _compute_factor_edges(races: list[dict], window: str = "current_season_25_26
                 "trainer": trainer,
                 "sire": sire,
                 "dam_sire": dam_sire,
+                "class_step": class_step,
                 "signals": signals,
                 "score": round(total_score, 2),
                 "tier": tier,
@@ -7153,8 +7186,8 @@ def page_data_analysis():
 
     # ── Tabs ───────────────────────────────────────────
     tab_names = ["Summary", "Jockeys", "Trainers", "Jockey × Trainer",
-                 "Pedigree", "Form & Context", "Draw / Dist / Going",
-                 "Benchmark ML", "Methodology"]
+                 "Pedigree", "Class Moves", "Form & Context",
+                 "Draw / Dist / Going", "Benchmark ML", "Methodology"]
     tabs = st.tabs(tab_names)
 
     def _style_df(df: pd.DataFrame):
@@ -7239,17 +7272,38 @@ def page_data_analysis():
             )
 
     with tabs[1]:
+        st.info("**What this shows:** each rider's historical Win%, IV and A/E "
+                "over the selected window. IV > 1 means they win more often than "
+                "their field share; A/E > 1 means the market consistently "
+                "under-prices them. ROI is the flat-$1 win-bet return — a negative "
+                "ROI can still be useful if the A/E is above 1 (edge exists but "
+                "betting at tote price gives the edge back to the pool).")
         _show_table("jockey", "Jockey", min_n_default=30, min_n_max=500)
 
     with tabs[2]:
+        st.info("**What this shows:** trainer strike-rate and market edge. "
+                "Trainers rarely change mid-season so signals here are more "
+                "stable than jockey signals. Look for yards with A/E > 1.15 and "
+                "positive ROI — these are stables the tote systematically "
+                "under-rates.")
         _show_table("trainer", "Trainer", min_n_default=30, min_n_max=500)
 
     with tabs[3]:
+        st.info("**What this shows:** specific jockey-trainer partnerships. "
+                "Hong Kong stables have strong preferences for certain riders, "
+                "and those partnerships often significantly out-perform the "
+                "tote's expectation. Pairs with A/E > 1.3 at N ≥ 15 are the "
+                "sharpest book-able combinations.")
         _show_table("jockey_x_trainer", "Jockey × Trainer",
                     min_n_default=15, min_n_max=100)
         st.caption("Tip: look at A/E and ROI together to spot yards the market mis-prices.")
 
     with tabs[4]:
+        st.info("**What this shows:** pedigree-level strike rates. Sire and "
+                "dam-sire effects are small individually (the market prices "
+                "name-brand sires efficiently), but sire × distance and sire × "
+                "going buckets frequently reveal breeding bias the market "
+                "ignores — e.g. a sprint-bred sire over-achieving at 1400m.")
         st.markdown("**Sire**")
         _show_table("sire", "Sire", min_n_default=25, min_n_max=200)
         st.markdown("**Dam sire**")
@@ -7259,7 +7313,73 @@ def page_data_analysis():
         st.markdown("**Sire × going**")
         _show_table("sire_x_going", "Sire × going", 20, 100)
 
+    # ── Class Moves tab (NEW) ────────────────────────────────
     with tabs[5]:
+        st.info(
+            "**What this shows:** how horses perform when they **step up** "
+            "(promoted to a higher-grade race, e.g. Class 4 → Class 3), **step "
+            "down** (demoted), or stay in the same class. Because trainers — "
+            "unlike jockeys — stay with a horse long-term, this table isolates "
+            "which yards are best at placing their horses in the *right* race. "
+            "An A/E > 1.3 on step-up runners means the trainer is being "
+            "rewarded for an under-priced class promotion; the market typically "
+            "over-reacts to a class rise and under-bets these horses."
+        )
+        st.markdown("##### Baseline: what happens after a class move?")
+        _show_table("class_step", "class_step", min_n_default=50, min_n_max=2000)
+
+        st.markdown("##### Trainer × class move — who handles promotions best?")
+        st.caption(
+            "Trainers at the top of this table are consistently winning with "
+            "horses stepping up a grade — a strong positive indicator when one "
+            "of their runners is in today's card promoted from its last race."
+        )
+        _show_table("trainer_x_class_step", "trainer × class_step",
+                    min_n_default=15, min_n_max=100)
+
+        st.markdown("##### Trainer — horses stepping UP in class only")
+        _show_table("trainer_class_up", "trainer (step-up only)",
+                    min_n_default=10, min_n_max=50)
+
+        st.markdown("##### Trainer — horses stepping DOWN in class only")
+        _show_table("trainer_class_down", "trainer (step-down only)",
+                    min_n_default=10, min_n_max=50)
+
+        st.markdown("##### Follow-up race *after* a class step-up")
+        st.caption(
+            "Did the promotion stick? This table scores the race **after** a "
+            "horse was stepped up. A trainer with a high NextPlc% is not just "
+            "winning one race with a promoted horse — they're permanently "
+            "improving the horse. This is the truest test of a class-placement "
+            "skill."
+        )
+        df_fu = _get_factor_df(window, "trainer_class_up_followup", mtime)
+        if df_fu.empty:
+            st.caption("No follow-up data for this window.")
+        else:
+            for c in ("N", "NextWin_pct", "NextPlc_pct"):
+                if c in df_fu.columns:
+                    df_fu[c] = pd.to_numeric(df_fu[c], errors="coerce")
+            df_fu = df_fu.sort_values("NextPlc_pct", ascending=False)
+            fmt = {"NextWin_pct": "{:.1%}", "NextPlc_pct": "{:.1%}", "N": "{:.0f}"}
+            st.dataframe(df_fu.style.format(fmt, na_rep="—"),
+                         use_container_width=True, hide_index=True)
+
+        st.markdown("##### Jockey × class move (supplementary)")
+        st.caption(
+            "Weaker signal than trainer × class (jockeys change between runs) "
+            "but useful when the same rider keeps the mount through a promotion."
+        )
+        _show_table("jockey_x_class_step", "jockey × class_step",
+                    min_n_default=15, min_n_max=100)
+
+    with tabs[6]:
+        st.info("**What this shows:** features that describe a horse's *state* "
+                "coming into today — recent form (last 3 runs), freshness, "
+                "rating change since last start, weight change, career "
+                "experience, age, and gear switches. These are the "
+                "short-horizon signals the market incorporates last, so shifts "
+                "here frequently reveal under-bet runners.")
         st.markdown("**Rolling last-3 win rate**")
         _show_table("last3_win_bucket", "last3_win", 50, 2000)
         st.markdown("**Days off (freshness)**")
@@ -7275,7 +7395,14 @@ def page_data_analysis():
         st.markdown("**Gear change**")
         _show_table("gear_change", "gear", 50, 5000)
 
-    with tabs[6]:
+    with tabs[7]:
+        st.info("**What this shows:** the structural course / draw / distance "
+                "biases in HKJC. Inside draws (1-3) historically over-perform "
+                "field share, especially at Happy Valley; some trainers/jockeys "
+                "also have distance sweet-spots. Use these as a context filter "
+                "on top-picks — a good runner badly drawn is a downgrade; a "
+                "mediocre runner perfectly drawn at its preferred distance is "
+                "an upgrade.")
         st.markdown("**Draw bucket**")
         _show_table("draw_bucket", "draw", 50, 5000)
         st.markdown("**Draw number**")
@@ -7290,7 +7417,14 @@ def page_data_analysis():
         st.markdown("**Trainer × distance**")
         _show_table("trainer_x_dist_bucket", "trainer×distance", 20, 200)
 
-    with tabs[7]:
+    with tabs[8]:
+        st.info("**What this shows:** an independent GradientBoosted classifier "
+                "trained on every factor in this page (no time/relativity "
+                "features). Its purpose is a **sanity check**: if the model's "
+                "AUC approaches the market's AUC, our factor set captures most "
+                "of the public information; the gap is the remaining market "
+                "inefficiency. Use the feature-importance chart to prioritise "
+                "which factors to trust most.")
         st.markdown("#### Benchmark Gradient-Boosted classifier")
         bench = tables.get("benchmark_model", {}) or {}
         if not bench or "error" in bench:
@@ -7317,7 +7451,7 @@ def page_data_analysis():
                          .sort_values("Importance", ascending=True))
                 st.bar_chart(fdf.set_index("Feature"))
 
-    with tabs[8]:
+    with tabs[9]:
         st.markdown("""
 #### Methodology
 
@@ -7354,6 +7488,169 @@ per bucket per time window.
 - This model is independent of the time/relativity projection; blend via
   the Race Day page (ET ∩ SARR) for the strongest signal.
 """)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Live Odds page
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _load_live_odds_snapshots(date_compact: str, venue: str) -> list[dict]:
+    """Load all JSON snapshots for a given meeting, sorted by scraped_at."""
+    import json as _json
+    d = BASE / "cache" / "live_odds" / date_compact
+    if not d.exists():
+        return []
+    snaps = []
+    for fp in sorted(d.glob(f"{venue}_R*.json")):
+        try:
+            snaps.append(_json.loads(fp.read_text(encoding="utf-8")))
+        except Exception:
+            pass
+    return snaps
+
+
+def page_live_odds():
+    """Live odds snapshots scraped from bet.hkjc.com, with drift vs first snapshot.
+
+    Each race has one or more snapshots per meeting (overnight + intraday). The
+    panel shows the latest Win / Place odds and the % change in Win odds since
+    the earliest snapshot — a large drop in Win odds means money is coming in
+    on that horse (a "market move")."""
+    import json as _json
+
+    st.markdown("## 💹 Live Odds")
+    st.info(
+        "Win / Place odds scraped from **bet.hkjc.com**. Each race may have "
+        "multiple snapshots; this panel shows the latest odds and the drift "
+        "vs the earliest snapshot for the same race.  "
+        "**Odds drop = money flowing in** (market confidence rising). "
+        "Odds drift out = market losing confidence. Use as informational "
+        "market-consensus signal — not a standalone prediction."
+    )
+
+    root = BASE / "cache" / "live_odds"
+    if not root.exists() or not any(root.iterdir()):
+        st.warning(
+            "No snapshots yet. Run:\n\n"
+            "`python scrape_hkjc_live_odds.py --date YYYY-MM-DD --venue HV`"
+        )
+        return
+
+    # Discover available meetings (YYYYMMDD folders with at least one JSON)
+    meetings = []
+    for d in sorted(root.iterdir(), reverse=True):
+        if not d.is_dir():
+            continue
+        for fp in d.glob("*.json"):
+            name = fp.stem  # e.g. HV_R01_153726
+            parts = name.split("_")
+            if len(parts) >= 2:
+                meetings.append((d.name, parts[0]))
+                break
+    meetings = sorted(set(meetings), reverse=True)
+    if not meetings:
+        st.warning("No valid snapshots found in `cache/live_odds/`.")
+        return
+
+    labels = [f"{ymd[:4]}-{ymd[4:6]}-{ymd[6:]} · {v}" for ymd, v in meetings]
+    pick = st.selectbox("Meeting", labels, index=0, key="liveodds_meeting")
+    ymd, venue = meetings[labels.index(pick)]
+
+    snaps = _load_live_odds_snapshots(ymd, venue)
+    if not snaps:
+        st.warning("No snapshots for this meeting.")
+        return
+
+    # Group by race
+    from collections import defaultdict
+    by_race: dict[int, list[dict]] = defaultdict(list)
+    for s in snaps:
+        try:
+            by_race[int(s["race_no"])].append(s)
+        except Exception:
+            pass
+    for rn in by_race:
+        by_race[rn].sort(key=lambda s: s.get("scraped_at", ""))
+
+    races = sorted(by_race.keys())
+    st.caption(
+        f"**{len(races)} races** · {sum(len(v) for v in by_race.values())} snapshots total"
+    )
+
+    # Meeting-level drift summary: biggest Win-odds drops across all races
+    movers = []
+    for rn in races:
+        rows = by_race[rn]
+        if len(rows) < 2:
+            continue
+        first = {h["no"]: h for h in rows[0]["odds"]}
+        last  = {h["no"]: h for h in rows[-1]["odds"]}
+        for no, h in last.items():
+            try:
+                lw = float(h.get("win") or "nan")
+                fw = float(first.get(no, {}).get("win") or "nan")
+                if lw == lw and fw == fw and fw > 0:
+                    pct = (lw - fw) / fw * 100
+                    movers.append({
+                        "Race": rn, "No": no, "Horse": h.get("horse", ""),
+                        "First Win": fw, "Latest Win": lw, "Δ%": round(pct, 1),
+                    })
+            except Exception:
+                pass
+    if movers:
+        import pandas as _pd
+        df_mov = _pd.DataFrame(movers).sort_values("Δ%").head(15)
+        with st.expander("🔥 Top market movers (biggest Win-odds drops across meeting)",
+                         expanded=False):
+            st.dataframe(df_mov, hide_index=True, use_container_width=True)
+
+    # Per-race panels
+    for rn in races:
+        rows = by_race[rn]
+        latest = rows[-1]
+        earliest = rows[0]
+        hdr_bits = [f"**Race {rn}**"]
+        if latest.get("race_info"):
+            hdr_bits.append(latest["race_info"])
+        st.markdown("### " + " · ".join(hdr_bits))
+
+        meta_bits = [f"{len(rows)} snapshot(s)"]
+        if latest.get("last_update"):
+            meta_bits.append(latest["last_update"])
+        st.caption(" · ".join(meta_bits))
+
+        # Build drift table
+        first_by_no = {h["no"]: h for h in earliest["odds"]}
+        table = []
+        for h in latest["odds"]:
+            no = h["no"]
+            w_last = h.get("win", "")
+            p_last = h.get("place", "")
+            w_first = first_by_no.get(no, {}).get("win", "")
+            try:
+                fw = float(w_first)
+                lw = float(w_last)
+                drift_pct = (lw - fw) / fw * 100 if fw > 0 else None
+            except (TypeError, ValueError):
+                drift_pct = None
+            table.append({
+                "No": no,
+                "Horse": h.get("horse", ""),
+                "Win (first)": w_first,
+                "Win (latest)": w_last,
+                "Place": p_last,
+                "Δ Win %": None if drift_pct is None else round(drift_pct, 1),
+            })
+        import pandas as _pd
+        df = _pd.DataFrame(table)
+        # Sort by latest win odds ascending (favourites first)
+        try:
+            df["_sort"] = _pd.to_numeric(df["Win (latest)"], errors="coerce")
+            df = df.sort_values("_sort", na_position="last").drop(columns="_sort")
+        except Exception:
+            pass
+        st.dataframe(df, hide_index=True, use_container_width=True)
+        st.markdown("")
 
 
 def page_pdf_builder():
@@ -7559,6 +7856,7 @@ def main():
         ("Data Analysis",  "🔬 Data Analysis"),
         ("Results",        "🏆 Results"),
         ("Live Feed",      "📡 Live Feed"),
+        ("Live Odds",      "💹 Live Odds"),
         ("Blackbook",      "📓 Blackbook"),
         ("Trials",         "🎽 Trials"),
         ("Backtest",       "🧪 Backtest"),
@@ -7592,6 +7890,8 @@ def main():
         page_data_analysis()
     elif page == "Live Feed":
         page_live_feed()
+    elif page == "Live Odds":
+        page_live_odds()
     elif page == "Form Guide":
         page_form_guide()
     elif page == "Trials":
