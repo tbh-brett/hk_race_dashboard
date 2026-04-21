@@ -7128,6 +7128,23 @@ def page_data_analysis():
     mtime = _factor_tables_mtime()
     tables = _load_factor_tables_cached(mtime)
 
+    # Quick diagnostic — if class-step tables are missing, user probably
+    # has a stale deployment and should trigger a redeploy or regenerate.
+    _cls_keys = ("class_step", "trainer_x_class_step",
+                 "trainer_class_up", "trainer_class_down")
+    _has_cls = any(
+        (tables.get(w, {}) or {}).get(k)
+        for w in ("current_season_25_26", "all_time", "last_90d")
+        for k in _cls_keys
+    )
+    if tables and not _has_cls:
+        st.error(
+            "⚠️ Factor tables are loaded but **class-step keys are missing**. "
+            "This means the deployed `reports/factor_analysis_tables.json` is "
+            "out of date. Click **Regenerate** below (if available) or pull "
+            "the latest commit and redeploy."
+        )
+
     # ── Header: regenerate + metadata ───────────────────────
     c1, c2, c3 = st.columns([2, 1, 1])
     with c1:
@@ -7220,8 +7237,10 @@ def page_data_analysis():
                     min_n_max: int = 500):
         df = _get_factor_df(window, key, mtime)
         if df.empty:
-            st.caption(f"No data for {label} in this window.")
+            st.caption(f"No data for {label} in this window "
+                       f"(key `{key}` missing or empty).")
             return
+        total_rows = len(df)
         cc1, cc2 = st.columns([1, 2])
         with cc1:
             min_n = st.slider(f"Min N ({label})",
@@ -7234,7 +7253,11 @@ def page_data_analysis():
         if "IV" in df.columns:
             df = df.sort_values("IV", ascending=False)
         with cc2:
-            st.caption(f"{len(df)} rows after min-N filter")
+            st.caption(f"{len(df)} of {total_rows} rows after min-N filter")
+        if df.empty:
+            st.info(f"No rows with N ≥ {min_n}. Lower the Min-N slider "
+                    f"(table has {total_rows} rows in total).")
+            return
         st.dataframe(_style_df(df), use_container_width=True, hide_index=True)
 
     # ── Summary tab ───────────────────────────────────
@@ -7509,6 +7532,32 @@ def _load_live_odds_snapshots(date_compact: str, venue: str) -> list[dict]:
     return snaps
 
 
+def _run_live_odds_scraper(date_iso: str, venue: str, races: str) -> tuple[int, str]:
+    """Run scrape_hkjc_live_odds.py as a subprocess. Returns (returncode, log)."""
+    import subprocess
+    script = BASE / "scrape_hkjc_live_odds.py"
+    if not script.exists():
+        return 1, f"scrape_hkjc_live_odds.py not found at {script}"
+    cmd = [sys.executable, str(script),
+           "--date", date_iso, "--venue", venue, "--races", races]
+    # On Streamlit Cloud, Playwright Chromium may not be installed.
+    # Try to install on demand (idempotent, ~30s first time).
+    try:
+        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"],
+                       capture_output=True, text=True, timeout=180, cwd=str(BASE))
+    except Exception:
+        pass
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True,
+                           timeout=600, cwd=str(BASE))
+        log = (r.stdout or "") + ("\n" + r.stderr if r.stderr else "")
+        return r.returncode, log
+    except subprocess.TimeoutExpired:
+        return 124, "Scraper timed out after 10 min."
+    except Exception as e:
+        return 1, f"{type(e).__name__}: {e}"
+
+
 def page_live_odds():
     """Live odds snapshots scraped from bet.hkjc.com, with drift vs first snapshot.
 
@@ -7528,10 +7577,52 @@ def page_live_odds():
         "market-consensus signal — not a standalone prediction."
     )
 
+    # ── Scraper controls ────────────────────────────────────────────────
+    import datetime as _dt
+    with st.expander("🔄 Run scraper now", expanded=False):
+        st.caption(
+            "Fetches a fresh snapshot from bet.hkjc.com. Run it several times "
+            "during the day (e.g. overnight + 1h before post) to build a drift "
+            "history. First run on a new host ~30s extra while Playwright "
+            "installs Chromium."
+        )
+        sc1, sc2, sc3, sc4 = st.columns([1.3, 0.9, 1.1, 1])
+        with sc1:
+            scr_date = st.date_input(
+                "Meeting date", value=_dt.date.today(), key="liveodds_scr_date",
+            )
+        with sc2:
+            scr_venue = st.selectbox(
+                "Venue", ["HV", "ST"], index=0, key="liveodds_scr_venue",
+            )
+        with sc3:
+            scr_races = st.text_input(
+                "Races", value="1-11", key="liveodds_scr_races",
+                help="e.g. 1-11 or 1,2,3",
+            )
+        with sc4:
+            st.write("")
+            st.write("")
+            run_btn = st.button("▶ Run scraper", type="primary",
+                                use_container_width=True, key="liveodds_run_btn")
+        if run_btn:
+            with st.spinner(f"Scraping {scr_venue} {scr_date} races {scr_races}…"):
+                rc, log = _run_live_odds_scraper(
+                    scr_date.isoformat(), scr_venue, scr_races)
+            if rc == 0:
+                st.success("Scrape complete.")
+            else:
+                st.error(f"Scraper exited {rc}")
+            if log.strip():
+                with st.expander("Scraper log", expanded=(rc != 0)):
+                    st.code(log[-4000:])
+            st.rerun()
+
     root = BASE / "cache" / "live_odds"
     if not root.exists() or not any(root.iterdir()):
         st.warning(
-            "No snapshots yet. Run:\n\n"
+            "No snapshots yet. Use **Run scraper now** above to create one, "
+            "or run the scraper locally:\n\n"
             "`python scrape_hkjc_live_odds.py --date YYYY-MM-DD --venue HV`"
         )
         return
