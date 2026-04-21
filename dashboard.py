@@ -1919,10 +1919,24 @@ def _pace_bar_html(pace: str, score: float) -> str:
 
 FACTOR_TABLES_PATH = BASE / "reports" / "factor_analysis_tables.json"
 
+# Numeric columns inside factor_analysis_tables.json (stored as strings on disk).
+_FACTOR_NUMERIC_COLS = ("N", "Wins", "IV", "A_E", "ROI",
+                        "Win_pct", "Plc_pct", "Base_win", "Exp_mkt")
 
-@st.cache_data(ttl=600)
-def _load_factor_tables() -> dict:
-    """Load factor_analysis_tables.json produced by factor_model_analysis.py."""
+
+def _factor_tables_mtime() -> float:
+    """Returns the mtime of the factor tables file (0.0 if missing).
+    Used as a cache key so caches invalidate automatically when the file changes."""
+    try:
+        return FACTOR_TABLES_PATH.stat().st_mtime
+    except OSError:
+        return 0.0
+
+
+@st.cache_data(show_spinner=False)
+def _load_factor_tables_cached(_mtime: float) -> dict:
+    """Load factor_analysis_tables.json. `_mtime` is part of the cache key so
+    updates on disk invalidate the cache without a manual clear."""
     if not FACTOR_TABLES_PATH.exists():
         return {}
     try:
@@ -1930,6 +1944,62 @@ def _load_factor_tables() -> dict:
             return json.load(f)
     except (OSError, json.JSONDecodeError):
         return {}
+
+
+def _load_factor_tables(_mtime: float | None = None) -> dict:
+    """Public accessor: mtime is fetched automatically so every caller sees
+    the freshest parsed JSON without needing to pass the mtime explicitly."""
+    return _load_factor_tables_cached(
+        _mtime if _mtime is not None else _factor_tables_mtime()
+    )
+
+
+@st.cache_data(show_spinner=False)
+def _get_factor_df(window: str, key: str, _mtime: float = 0.0) -> pd.DataFrame:
+    """Return the factor table `window/key` as a numeric-typed DataFrame.
+    Cached per (window, key, mtime) so switching tabs / adjusting min-N
+    sliders never reparses the JSON or recasts columns."""
+    tables = _load_factor_tables_cached(_mtime)
+    rows = (tables.get(window) or {}).get(key, [])
+    if not rows:
+        return pd.DataFrame()
+    df = pd.DataFrame(rows)
+    for c in _FACTOR_NUMERIC_COLS:
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+    return df
+
+
+@st.cache_data(show_spinner=False)
+def _get_factor_summary_edges(window: str, _mtime: float = 0.0) -> pd.DataFrame:
+    """Pre-aggregated 'top edges' table for the Summary tab.
+    Cached per (window, mtime) so Streamlit reruns (slider moves, tab switches)
+    don't recompute the 9-table scan every time."""
+    combined: list[pd.DataFrame] = []
+    sources = ("jockey", "trainer", "sire", "dam_sire",
+               "jockey_x_trainer", "sire_x_dist_bucket", "sire_x_going",
+               "jockey_x_dist_bucket", "trainer_x_dist_bucket")
+    for k in sources:
+        df = _get_factor_df(window, k, _mtime)
+        if df.empty or "A_E" not in df.columns or "N" not in df.columns:
+            continue
+        sub = df[(df["A_E"] >= 1.2) & (df["N"] >= 30)].copy()
+        if sub.empty:
+            continue
+        meta_cols = [c for c in sub.columns if c not in _FACTOR_NUMERIC_COLS]
+        sub["Bucket"] = (sub[meta_cols].astype(str).agg(" · ".join, axis=1)
+                         if meta_cols else "")
+        sub["Factor"] = k
+        combined.append(sub[["Factor", "Bucket", "N", "Win_pct",
+                             "IV", "A_E", "ROI"]])
+    if not combined:
+        return pd.DataFrame()
+    out = (pd.concat(combined, ignore_index=True)
+             .sort_values("A_E", ascending=False)
+             .head(30)
+             .reset_index(drop=True))
+    out = out.rename(columns={"Win_pct": "Win%", "A_E": "A/E"})
+    return out
 
 
 def _dist_bucket_label(dist) -> str:
@@ -7000,7 +7070,12 @@ def _build_pdfbuilder_pdf(meeting_data: dict, selected_races: list[int],
 
 
 def page_data_analysis():
-    """Factor-analysis browser backed by reports/factor_analysis_tables.json."""
+    """Factor-analysis browser backed by reports/factor_analysis_tables.json.
+
+    All heavy work (JSON parse, numeric casting, Summary aggregation) is cached
+    per (window, key, file-mtime) so UI interactions (sliders, tab switches)
+    do NOT re-run the analysis pipeline — they only re-filter cached DataFrames.
+    """
     st.markdown('<div class="page-title">Data Analysis</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="page-subtitle">Independent factor model — jockey / trainer / '
@@ -7008,16 +7083,18 @@ def page_data_analysis():
         unsafe_allow_html=True,
     )
 
-    tables = _load_factor_tables()
+    mtime = _factor_tables_mtime()
+    tables = _load_factor_tables_cached(mtime)
 
     # ── Header: regenerate + metadata ───────────────────────
     c1, c2, c3 = st.columns([2, 1, 1])
     with c1:
-        if FACTOR_TABLES_PATH.exists():
+        if mtime > 0:
             import datetime as _dt
-            mtime = _dt.datetime.fromtimestamp(FACTOR_TABLES_PATH.stat().st_mtime)
-            st.caption(f"Last generated: **{mtime:%Y-%m-%d %H:%M}** · source: "
-                       f"`reports/factor_analysis_tables.json`")
+            mt = _dt.datetime.fromtimestamp(mtime)
+            st.caption(f"Last generated: **{mt:%Y-%m-%d %H:%M}** · source: "
+                       f"`reports/factor_analysis_tables.json` · "
+                       f"tables served from in-memory cache")
         else:
             st.warning("Factor tables not found. Click **Regenerate** to build them.")
     with c2:
@@ -7030,7 +7107,15 @@ def page_data_analysis():
             index=0, key="da_window",
         )
     with c3:
-        if st.button("Regenerate", use_container_width=True, key="da_regen"):
+        # The Regenerate button only makes sense locally — on Streamlit Cloud
+        # the file system is ephemeral and the xlsx source isn't deployed.
+        can_regen = (os.environ.get("STREAMLIT_SERVER_HEADLESS") != "true"
+                     or (BASE / "hkjc_results_updated.xlsx").exists())
+        if st.button("Regenerate", use_container_width=True,
+                     key="da_regen", disabled=not can_regen,
+                     help=None if can_regen
+                          else "Regeneration disabled on hosted deployment "
+                               "— run factor_model_analysis.py locally and commit."):
             with st.spinner("Running factor_model_analysis.py …"):
                 try:
                     import subprocess
@@ -7040,19 +7125,22 @@ def page_data_analysis():
                     )
                     if r.returncode == 0:
                         st.success("Regenerated.")
+                        # Clear only factor caches — leaves form/results caches alone.
+                        _load_factor_tables_cached.clear()
+                        _get_factor_df.clear()
+                        _get_factor_summary_edges.clear()
+                        st.rerun()
                     else:
                         st.error(f"Exit {r.returncode}")
-                        st.code(r.stderr[-2000:] or r.stdout[-2000:])
+                        st.code((r.stderr or r.stdout)[-2000:])
                 except (OSError, subprocess.TimeoutExpired) as e:
                     st.error(str(e))
-                st.cache_data.clear()
-                st.rerun()
 
     if not tables:
+        st.info("No factor tables available yet. If you're running locally, "
+                "click **Regenerate** above or run "
+                "`python factor_model_analysis.py` in a terminal.")
         return
-
-    w = tables.get(window, {}) or {}
-    bench = tables.get("benchmark_model", {}) or {}
 
     # ── Tabs ───────────────────────────────────────────
     tab_names = ["Summary", "Jockeys", "Trainers", "Jockey × Trainer",
@@ -7060,45 +7148,33 @@ def page_data_analysis():
                  "Benchmark ML", "Methodology"]
     tabs = st.tabs(tab_names)
 
-    def _rows_to_df(rows: list[dict]) -> pd.DataFrame:
-        if not rows:
-            return pd.DataFrame()
-        df = pd.DataFrame(rows)
-        for col in ("N", "Wins", "IV", "A_E", "ROI", "Win_pct", "Plc_pct",
-                    "Base_win", "Exp_mkt"):
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors="coerce")
-        return df
-
     def _style_df(df: pd.DataFrame):
-        if df.empty:
+        if df is None or df.empty:
             return df
         num_fmt = {}
-        if "Win_pct" in df: num_fmt["Win_pct"] = "{:.1%}"
-        if "Plc_pct" in df: num_fmt["Plc_pct"] = "{:.1%}"
-        if "Base_win" in df: num_fmt["Base_win"] = "{:.3f}"
-        if "IV" in df:     num_fmt["IV"] = "{:.2f}"
-        if "A_E" in df:    num_fmt["A_E"] = "{:.2f}"
-        if "ROI" in df:    num_fmt["ROI"] = "{:+.2%}"
-        if "N" in df:      num_fmt["N"] = "{:.0f}"
-        if "Wins" in df:   num_fmt["Wins"] = "{:.0f}"
-        if "Exp_mkt" in df: num_fmt["Exp_mkt"] = "{:.1f}"
+        for col, fmt in (("Win_pct", "{:.1%}"), ("Plc_pct", "{:.1%}"),
+                         ("Base_win", "{:.3f}"), ("IV", "{:.2f}"),
+                         ("A_E", "{:.2f}"), ("ROI", "{:+.2%}"),
+                         ("N", "{:.0f}"), ("Wins", "{:.0f}"),
+                         ("Exp_mkt", "{:.1f}")):
+            if col in df.columns:
+                num_fmt[col] = fmt
         sty = df.style.format(num_fmt, na_rep="—")
-        if "IV" in df:
-            sty = sty.background_gradient(subset=["IV"], cmap="RdYlGn",
-                                          vmin=0.5, vmax=3.0)
-        if "A_E" in df:
-            sty = sty.background_gradient(subset=["A_E"], cmap="RdYlGn",
-                                          vmin=0.7, vmax=1.8)
-        if "ROI" in df:
-            sty = sty.background_gradient(subset=["ROI"], cmap="RdYlGn",
-                                          vmin=-0.4, vmax=0.4)
+        # Guard background_gradient against all-NaN slices (which raise).
+        for col, (vmin, vmax) in (("IV", (0.5, 3.0)),
+                                  ("A_E", (0.7, 1.8)),
+                                  ("ROI", (-0.4, 0.4))):
+            if col in df.columns and df[col].notna().any():
+                try:
+                    sty = sty.background_gradient(subset=[col], cmap="RdYlGn",
+                                                  vmin=vmin, vmax=vmax)
+                except (ValueError, TypeError):
+                    pass
         return sty
 
     def _show_table(key: str, label: str, min_n_default: int = 30,
                     min_n_max: int = 500):
-        rows = w.get(key, [])
-        df = _rows_to_df(rows)
+        df = _get_factor_df(window, key, mtime)
         if df.empty:
             st.caption(f"No data for {label} in this window.")
             return
@@ -7106,11 +7182,12 @@ def page_data_analysis():
         with cc1:
             min_n = st.slider(f"Min N ({label})",
                               min_value=10, max_value=min_n_max,
-                              value=min_n_default, step=5,
+                              value=min(min_n_default, min_n_max),
+                              step=5,
                               key=f"da_minn_{key}_{window}")
-        if "N" in df:
+        if "N" in df.columns:
             df = df[df["N"] >= min_n]
-        if "IV" in df:
+        if "IV" in df.columns:
             df = df.sort_values("IV", ascending=False)
         with cc2:
             st.caption(f"{len(df)} rows after min-N filter")
@@ -7130,43 +7207,25 @@ def page_data_analysis():
             ("jockey", "Jockeys"), ("trainer", "Trainers"),
             ("sire", "Sires"), ("dam_sire", "Dam-sires"),
         ]):
-            df = _rows_to_df(w.get(k, []))
+            df = _get_factor_df(window, k, mtime)
+            top_iv = (df["IV"].max() if (not df.empty and "IV" in df.columns
+                                          and df["IV"].notna().any()) else None)
             [c1, c2, c3, c4][i].metric(
                 label, f"{len(df)} rows",
-                delta=f"Top IV {df['IV'].max():.2f}" if not df.empty and "IV" in df else None,
+                delta=f"Top IV {top_iv:.2f}" if top_iv is not None else None,
             )
 
         st.markdown("#### Top edges in this window (A/E ≥ 1.2, N ≥ 30)")
-        combined = []
-        for k in ("jockey", "trainer", "sire", "dam_sire",
-                  "jockey_x_trainer", "sire_x_dist_bucket", "sire_x_going",
-                  "jockey_x_dist_bucket", "trainer_x_dist_bucket"):
-            for r in w.get(k, []):
-                ae = _fnum(r.get("A_E")); n = _fnum(r.get("N"))
-                if ae is None or n is None or n < 30 or ae < 1.2:
-                    continue
-                # Build label from whatever keys exist
-                keylab = " · ".join(str(r.get(kk, "")) for kk in r.keys()
-                                    if kk not in ("N","Wins","Win_pct","Plc_pct",
-                                                  "Base_win","Exp_mkt","IV","A_E","ROI"))
-                combined.append({
-                    "Factor": k,
-                    "Bucket": keylab,
-                    "N": int(n),
-                    "Win%": _fnum(r.get("Win_pct")),
-                    "IV": _fnum(r.get("IV")),
-                    "A/E": ae,
-                    "ROI": _fnum(r.get("ROI")),
-                })
-        if combined:
-            cdf = pd.DataFrame(combined).sort_values("A/E", ascending=False).head(30)
+        cdf = _get_factor_summary_edges(window, mtime)
+        if cdf.empty:
+            st.caption("No rows met the A/E ≥ 1.2 threshold.")
+        else:
             st.dataframe(
                 cdf.style.format({"Win%": "{:.1%}", "IV": "{:.2f}",
-                                  "A/E": "{:.2f}", "ROI": "{:+.2%}"}),
+                                  "A/E": "{:.2f}", "ROI": "{:+.2%}",
+                                  "N": "{:.0f}"}),
                 use_container_width=True, hide_index=True,
             )
-        else:
-            st.caption("No rows met the A/E ≥ 1.2 threshold.")
 
     with tabs[1]:
         _show_table("jockey", "Jockey", min_n_default=30, min_n_max=500)
@@ -7222,6 +7281,7 @@ def page_data_analysis():
 
     with tabs[7]:
         st.markdown("#### Benchmark Gradient-Boosted classifier")
+        bench = tables.get("benchmark_model", {}) or {}
         if not bench or "error" in bench:
             st.warning(bench.get("error", "No benchmark output available."))
         else:
