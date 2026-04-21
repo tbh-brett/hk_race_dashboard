@@ -251,6 +251,14 @@ def scrape_race(session: requests.Session, date_str: str,
     if not runners:
         return None
 
+    # v4.6 — parse dividend table from the same page (no extra HTTP cost)
+    dividends: List[Dict] = []
+    try:
+        from scrape_hkjc_dividends import parse_dividends
+        dividends = parse_dividends(local_html)
+    except Exception as e:
+        print(f"  (dividend parse skipped: {e})")
+
     sect_html = fetch_html(session, SECTIONAL_URL,
                            {"racedate": date_ui, "RaceNo": str(race_no)})
     sectionals = parse_sectional_table(sect_html) if sect_html else {}
@@ -283,6 +291,7 @@ def scrape_race(session: requests.Session, date_str: str,
         "is_awt": header.get("is_awt", False),
         "going": header.get("going", ""),
         "runners": runners,
+        "dividends": dividends,
     }
 
 
@@ -336,6 +345,28 @@ def scrape_meeting_results(date_str: str,
     print(f"\n✓ Results saved: {out_path.name}")
     print(f"  {len(races)} races, "
           f"{sum(len(r['runners']) for r in races)} total runners")
+
+    # v4.6 — also emit standalone dividends JSON (sibling file used by
+    # analyze_betting_edge.py and the Model Bets dashboard page).
+    try:
+        div_out = {
+            "date": date_str,
+            "venue": venue,
+            "scraped_at": output["scraped_at"],
+            "n_races": len(races),
+            "races": [
+                {"race_number": r["race_number"],
+                 "dividends": r.get("dividends", [])}
+                for r in races
+            ],
+        }
+        div_path = REPORTS_DIR / f"dividends_{date_compact}.json"
+        with open(div_path, "w", encoding="utf-8") as f:
+            json.dump(div_out, f, ensure_ascii=False, indent=2)
+        n_divs = sum(len(r.get("dividends", [])) for r in races)
+        print(f"  Dividends: {n_divs} rows → {div_path.name}")
+    except Exception as e:
+        print(f"  (dividend file skipped: {e})")
 
     # v4.5: auto-append to master DB (hkjc_results_updated.xlsx). Previously
     # only the dashboard button appended; schedulers left the DB stale.

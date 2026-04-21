@@ -7744,10 +7744,299 @@ def page_live_odds():
         st.markdown("")
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Model Bets page — filter-based tickets + live track record
+# ─────────────────────────────────────────────────────────────────────────────
+def page_model_bets():
+    """Filter-based betting recommendations + sustained performance tracker."""
+    from betting_strategy import (build_meeting_tickets, log_meeting_picks,
+                                     settle_picks_log, load_picks_log,
+                                     EDGE_CFG, APRIL_DATES)
+
+    st.markdown('<div class="page-title">🎯 Model Bets</div>',
+                unsafe_allow_html=True)
+    st.markdown(
+        '<div class="page-subtitle">Filter-driven tickets &middot; Live '
+        'track record &middot; Strategy sweep</div>',
+        unsafe_allow_html=True,
+    )
+
+    tabs = st.tabs(
+        ["📋 Today's Tickets", "📈 Track Record", "🧪 Strategy Sweep",
+         "🔧 Filter Rules"]
+    )
+
+    # ── TAB 1 — Today's / selected meeting tickets ──────────────────────────
+    with tabs[0]:
+        meetings = load_available_meetings()
+        if not meetings:
+            st.info("No analysed meetings found. Run a Model Analysis first.")
+        else:
+            options = {m["title"]: m for m in meetings}
+            sel_title = st.selectbox("Select meeting:", list(options.keys()),
+                                        index=0, key="mb_meeting")
+            sel = options[sel_title]
+            date_str = sel["date_str"]
+
+            col_a, col_b = st.columns([3, 1])
+            with col_b:
+                log_clicked = st.button("💾 Save picks to log",
+                                            key="mb_log_btn",
+                                            use_container_width=True)
+            with col_a:
+                st.caption(
+                    f"**{sel_title}** · {sel['n_races']} races · "
+                    f"model {sel.get('model_version', '?')}"
+                )
+
+            with st.spinner("Building tickets…"):
+                items = build_meeting_tickets(date_str)
+
+            if log_clicked:
+                n = log_meeting_picks(date_str, sel.get("venue", ""), items)
+                st.success(f"Logged {n} tickets to reports/model_picks_log.jsonl")
+
+            if not items:
+                st.warning("No ET report loaded for this meeting.")
+            else:
+                # Build display table
+                rows = []
+                for it in items:
+                    t = it["ticket"]
+                    b = t.get("banker") or {}
+                    legs_str = ", ".join(
+                        f"#{l['horse_no']} {l['horse_name']}"
+                        for l in t.get("legs", [])
+                    )
+                    banker_str = ""
+                    if b:
+                        sp = b.get("win_odds")
+                        banker_str = (f"#{b['horse_no']} {b['horse_name']} "
+                                        f"(p {b.get('p_model',0):.2f}"
+                                        + (f", SP {sp:.1f}" if sp else "")
+                                        + ")")
+                    rows.append({
+                        "R": it["race_number"],
+                        "Class": str(it.get("race_class") or ""),
+                        "Dist": it.get("distance"),
+                        "Play": t["play"],
+                        "Banker": banker_str,
+                        "Legs": legs_str,
+                        "Stake": t.get("stake_units", 0),
+                        "Why": t.get("reason", ""),
+                    })
+                df = pd.DataFrame(rows)
+                # Colour-code Play column via a simple icon prefix
+                play_icons = {
+                    "WIN": "🟢 WIN",
+                    "QIN_BANKER": "🔵 QIN",
+                    "QPL_BANKER": "🟣 QPL",
+                    "PLACE": "🟡 PLACE",
+                    "SKIP": "⚫ SKIP",
+                }
+                df["Play"] = df["Play"].map(lambda p: play_icons.get(p, p))
+                st.dataframe(df, hide_index=True, use_container_width=True)
+
+                non_skip = [it for it in items
+                             if it["ticket"]["play"] != "SKIP"]
+                st.markdown(
+                    f"**{len(non_skip)} / {len(items)}** races flagged for a "
+                    f"bet. Non-skip plays: "
+                    f"{', '.join(sorted(set(it['ticket']['play'] for it in non_skip))) or '—'}"
+                )
+
+                with st.expander("How these picks are decided"):
+                    st.markdown(
+                        "Tickets follow the April 2026 edge analysis (59 races, "
+                        "real HKJC dividends):\n\n"
+                        f"1. **QPL banker + 2 legs** — when SARR + ET agree "
+                        f"top-3 AND composite gap ≥ {EDGE_CFG['qpl_gap_min']:.2f}. "
+                        "Small sample (+88% ROI on 5 bets) but strongest single signal.\n"
+                        f"2. **WIN single** on composite #1 when Cls 3–5 and "
+                        f"SP {EDGE_CFG['win_sp_min']:.0f}–{EDGE_CFG['win_sp_max']:.0f}. "
+                        "Main driver (+120% ROI, 43% strike in April).\n"
+                        f"3. **QIN banker + 2 legs** — same class/SP window as WIN but *without* "
+                        "the mutual-top-3 signal; takes the bigger QIN dividend since the "
+                        "model lacks the extra 'top-3' conviction (+10% ROI).\n"
+                        "4. **PLACE single** — same class/SP window but low composite gap — "
+                        "safer exposure when conviction is diluted.\n"
+                        "5. **Skip** — Cls 0/2 races, SP < 3 (chalk) or > 8 (long shot), "
+                        "p_model < 0.20."
+                    )
+
+    # ── TAB 2 — Track record from picks log ────────────────────────────────
+    with tabs[1]:
+        result = settle_picks_log()
+        log = result["rows"]
+        s = result["summary"]
+
+        if not log:
+            st.info("No logged picks yet. Use the 'Save picks to log' button "
+                      "on the Tickets tab to start a track record.")
+        else:
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Total bets", s["bets"])
+            m2.metric("Hit rate",
+                       f"{s['hit_rate']*100:.1f}%",
+                       delta=f"{s['hits']} wins")
+            m3.metric("Return", f"${s['return']:.2f}",
+                       delta=f"stake ${s['stake']:.1f}")
+            m4.metric("ROI", f"{s['roi']*100:+.1f}%",
+                       delta=f"{s['pending']} pending" if s['pending'] else None)
+
+            st.markdown("#### By filter rule")
+            br_rows = []
+            for k, v in s["by_filter"].items():
+                roi = (v["ret"]-v["stake"])/v["stake"] if v["stake"] else 0
+                hr = v["hits"]/v["bets"] if v["bets"] else 0
+                br_rows.append({
+                    "Filter": k,
+                    "Bets": v["bets"],
+                    "Hits": v["hits"],
+                    "Hit %": f"{hr*100:.1f}%",
+                    "Stake": f"${v['stake']:.1f}",
+                    "Return": f"${v['ret']:.2f}",
+                    "ROI": f"{roi*100:+.1f}%",
+                })
+            if br_rows:
+                st.dataframe(pd.DataFrame(br_rows), hide_index=True,
+                              use_container_width=True)
+
+            # Equity curve by date
+            settled = [r for r in log if r.get("status") == "settled"]
+            if settled:
+                st.markdown("#### Equity curve (cumulative P/L)")
+                settled_sorted = sorted(settled, key=lambda r: (r["date"], r["race_number"]))
+                cum_stake = cum_ret = 0.0
+                curve_rows = []
+                for r in settled_sorted:
+                    cum_stake += r["stake"]
+                    cum_ret   += r["return"]
+                    curve_rows.append({
+                        "pick": f"{r['date']} R{r['race_number']}",
+                        "cum_pnl": cum_ret - cum_stake,
+                    })
+                curve_df = pd.DataFrame(curve_rows)
+                st.line_chart(curve_df.set_index("pick")["cum_pnl"])
+
+            with st.expander(f"Full log ({len(log)} rows)"):
+                log_rows = []
+                for r in log:
+                    b_str = (f"#{r.get('banker_no')} {r.get('banker_name','')}"
+                                if r.get("banker_no") else "")
+                    legs = r.get("legs") or []
+                    legs_str = ", ".join(
+                        f"#{l.get('no')} {l.get('name','')}" for l in legs
+                    )
+                    status = r.get("status", "")
+                    if r.get("hit") is True:
+                        status_icon = "✅"
+                    elif r.get("hit") is False:
+                        status_icon = "❌"
+                    else:
+                        status_icon = "⏳"
+                    log_rows.append({
+                        "Date": r["date"],
+                        "R": r["race_number"],
+                        "Play": r["play"],
+                        "Banker": b_str,
+                        "Legs": legs_str,
+                        "Fin": r.get("banker_finish"),
+                        "Stake": r.get("stake", r.get("stake_units", 0)),
+                        "Return": f"${r.get('return', 0):.2f}" if r.get("status")=="settled" else "-",
+                        "Hit": status_icon,
+                        "Filter": r.get("filter", ""),
+                    })
+                st.dataframe(pd.DataFrame(log_rows), hide_index=True,
+                                use_container_width=True)
+
+    # ── TAB 3 — Strategy sweep (reads pre-computed analysis) ───────────────
+    with tabs[2]:
+        st.markdown("#### April 2026 strategy sweep — real HKJC dividends")
+        sweep_path = REPORTS / "betting_edge_analysis.json"
+        if not sweep_path.exists():
+            st.info("Run `python analyze_betting_edge.py` to generate "
+                      "the sweep report.")
+        else:
+            try:
+                sweep = json.loads(sweep_path.read_text(encoding="utf-8"))
+            except Exception as e:
+                st.error(f"Could not load sweep JSON: {e}")
+                sweep = None
+            if sweep:
+                agg = sweep.get("aggregate", {})
+                sweep_rows = []
+                for strat, a in agg.items():
+                    bets = a.get("bets", 0)
+                    stake = a.get("stake", 0.0)
+                    ret = a.get("ret", 0.0)
+                    hits = a.get("hits", 0)
+                    roi = (ret - stake) / stake if stake else 0
+                    hr = hits / bets if bets else 0
+                    sweep_rows.append({
+                        "Strategy": strat,
+                        "Bets": bets,
+                        "Hit %": f"{hr*100:.1f}%",
+                        "Stake": f"{stake:.1f}",
+                        "Return": f"{ret:.2f}",
+                        "ROI": f"{roi*100:+.1f}%",
+                        "_roi_num": roi,
+                    })
+                sweep_rows.sort(key=lambda r: -r["_roi_num"])
+                df = pd.DataFrame([{k: v for k, v in r.items()
+                                        if k != "_roi_num"}
+                                       for r in sweep_rows])
+                st.dataframe(df, hide_index=True, use_container_width=True)
+                st.caption(
+                    "All rows use flat 1-unit stake per race. Dividends are "
+                    "real HK$1 multipliers from `reports/dividends_*.json`."
+                )
+
+                st.markdown("#### QIN vs QPL under the same filters")
+                st.markdown(
+                    "Same structure (banker + 3 legs), different win condition. "
+                    "QIN requires banker **top-2**; QPL requires banker **top-3**. "
+                    "When the model agrees with SARR strongly, it's far better at "
+                    "'finishes top-3' than 'finishes top-2', so QPL captures the "
+                    "edge even at a smaller dividend. In the odds-5-8 band without "
+                    "mutual agreement, QIN's bigger dividend wins."
+                )
+                qin_qpl = pd.DataFrame([
+                    {"Filter": "All April races", "QIN ROI": "-37%", "QPL ROI": "-44%", "Better": "QIN"},
+                    {"Filter": "Cls 3-5 only",    "QIN ROI": "-32%", "QPL ROI": "-42%", "Better": "QIN"},
+                    {"Filter": "SP 5-8 band",     "QIN ROI": "+10%", "QPL ROI": "-21%", "Better": "QIN"},
+                    {"Filter": "Gap ≥ 0.08",      "QIN ROI": "-18%", "QPL ROI": "-27%", "Better": "QIN"},
+                    {"Filter": "Mutual top-3",    "QIN ROI": "-46%", "QPL ROI": "+22%", "Better": "QPL"},
+                    {"Filter": "Mutual + gap ≥ 0.08", "QIN ROI": "-36%", "QPL ROI": "+88%", "Better": "QPL"},
+                ])
+                st.dataframe(qin_qpl, hide_index=True, use_container_width=True)
+
+    # ── TAB 4 — Filter rules ────────────────────────────────────────────────
+    with tabs[3]:
+        st.markdown("#### Current edge configuration")
+        st.markdown(
+            "These thresholds are hard-coded in `betting_strategy.EDGE_CFG` and "
+            "drive every recommendation on the Tickets tab. Tune them if later "
+            "months of data suggest a shift."
+        )
+        st.code(json.dumps({k: (list(v) if isinstance(v, set) else v)
+                                for k, v in EDGE_CFG.items()},
+                               indent=2),
+                  language="json")
+        st.markdown(
+            "**Sustainability:** the nightly scrape now pulls dividends "
+            "automatically (see `scrape_hkjc_results.py`). "
+            "`reports/dividends_YYYYMMDD.json` is written alongside "
+            "`results_YYYYMMDD.json` for every meeting — no extra cron job "
+            "needed. After results land, click **Save picks to log** on the "
+            "Tickets tab to add that meeting's tickets to the long-run log, "
+            "then revisit the Track Record tab to see settled P/L."
+        )
+
+
 def page_pdf_builder():
     """Custom PDF Builder — select races, pick bankers, generate notes, export."""
     st.markdown("## \U0001f4c4 PDF Builder")
-
     meetings = load_available_meetings()
     if not meetings:
         st.info("No analysed meetings available. Run an analysis first.")
@@ -7948,6 +8237,7 @@ def main():
         ("Results",        "🏆 Results"),
         ("Live Feed",      "📡 Live Feed"),
         ("Live Odds",      "💹 Live Odds"),
+        ("Model Bets",     "🎯 Model Bets"),
         ("Blackbook",      "📓 Blackbook"),
         ("Trials",         "🎽 Trials"),
         ("Backtest",       "🧪 Backtest"),
@@ -7983,6 +8273,8 @@ def main():
         page_live_feed()
     elif page == "Live Odds":
         page_live_odds()
+    elif page == "Model Bets":
+        page_model_bets()
     elif page == "Form Guide":
         page_form_guide()
     elif page == "Trials":
