@@ -1923,6 +1923,15 @@ FACTOR_TABLES_PATH = BASE / "reports" / "factor_analysis_tables.json"
 _FACTOR_NUMERIC_COLS = ("N", "Wins", "IV", "A_E", "ROI",
                         "Win_pct", "Plc_pct", "Base_win", "Exp_mkt")
 
+# matplotlib is required by pandas Styler.background_gradient. On hosts where
+# it's missing (e.g. minimal Streamlit Cloud images) the gradient call itself
+# succeeds but rendering the styler later raises ImportError. Detect once.
+try:
+    import matplotlib  # noqa: F401
+    _HAS_MPL = True
+except ImportError:
+    _HAS_MPL = False
+
 
 def _factor_tables_mtime() -> float:
     """Returns the mtime of the factor tables file (0.0 if missing).
@@ -7160,16 +7169,18 @@ def page_data_analysis():
             if col in df.columns:
                 num_fmt[col] = fmt
         sty = df.style.format(num_fmt, na_rep="—")
-        # Guard background_gradient against all-NaN slices (which raise).
-        for col, (vmin, vmax) in (("IV", (0.5, 3.0)),
-                                  ("A_E", (0.7, 1.8)),
-                                  ("ROI", (-0.4, 0.4))):
-            if col in df.columns and df[col].notna().any():
-                try:
-                    sty = sty.background_gradient(subset=[col], cmap="RdYlGn",
-                                                  vmin=vmin, vmax=vmax)
-                except (ValueError, TypeError):
-                    pass
+        # background_gradient needs matplotlib; if absent, skip heatmap styling
+        # entirely (it raises lazily during st.dataframe render, not here).
+        if _HAS_MPL:
+            for col, (vmin, vmax) in (("IV", (0.5, 3.0)),
+                                      ("A_E", (0.7, 1.8)),
+                                      ("ROI", (-0.4, 0.4))):
+                if col in df.columns and df[col].notna().any():
+                    try:
+                        sty = sty.background_gradient(subset=[col], cmap="RdYlGn",
+                                                      vmin=vmin, vmax=vmax)
+                    except (ValueError, TypeError, ImportError):
+                        pass
         return sty
 
     def _show_table(key: str, label: str, min_n_default: int = 30,
