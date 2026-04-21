@@ -922,8 +922,9 @@ def _load_results_json(date_compact: str) -> dict | None:
 CACHE_DIR = BASE / "cache"
 FORM_COLS = [
     "horse_name", "race_date", "race_number", "race_track", "race_course",
-    "going", "race_class", "jockey", "rating", "draw", "running_positions",
+    "going", "race_class", "jockey", "trainer", "rating", "draw", "running_positions",
     "place", "lbw", "finish_time_seconds", "distance", "actual_weight",
+    "sire", "dam_sire", "current_rating", "last_rating", "declared_weight",
 ]
 
 
@@ -1914,6 +1915,233 @@ def _pace_bar_html(pace: str, score: float) -> str:
 # Overview page — Home / wagering briefing
 # ══════════════════════════════════════════════════════════════════════════════
 
+# ── Factor-analysis helpers (shared by Overview section + Data Analysis page)
+
+FACTOR_TABLES_PATH = BASE / "reports" / "factor_analysis_tables.json"
+
+
+@st.cache_data(ttl=600)
+def _load_factor_tables() -> dict:
+    """Load factor_analysis_tables.json produced by factor_model_analysis.py."""
+    if not FACTOR_TABLES_PATH.exists():
+        return {}
+    try:
+        with open(FACTOR_TABLES_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _dist_bucket_label(dist) -> str:
+    try:
+        d = float(dist)
+    except (TypeError, ValueError):
+        return ""
+    if d <= 1050:   return "1000"
+    if d <= 1250:   return "1200"
+    if d <= 1450:   return "1400"
+    if d <= 1700:   return "1600"
+    if d <= 2000:   return "1800"
+    return "2000+"
+
+
+def _factor_lookup(rows: list[dict], key_fields: list[str], key_vals: list) -> dict | None:
+    """Find the first row whose `key_fields` all match `key_vals` (case-insensitive)."""
+    if not rows:
+        return None
+    targets = [str(v).strip().upper() for v in key_vals]
+    for r in rows:
+        if all(str(r.get(k, "")).strip().upper() == t for k, t in zip(key_fields, targets)):
+            return r
+    return None
+
+
+def _fnum(v, default=None):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
+@st.cache_data(ttl=120)
+def _build_horse_attribute_lookup() -> dict:
+    """horse_name_upper → {trainer, sire, dam_sire, last_date, rating, prev_rating, declared_weight, prev_decl_weight}."""
+    df = _load_form_db()
+    if df.empty:
+        return {}
+    if "trainer" not in df.columns:
+        return {}
+    # Take latest row per horse
+    df = df.sort_values("race_date")
+    latest = df.groupby("horse_name_upper").tail(1).set_index("horse_name_upper")
+    # Second-latest for delta calcs
+    second_df = df.groupby("horse_name_upper").tail(2)
+    prev = (second_df.groupby("horse_name_upper")
+                    .head(1)   # earliest of the last two
+                    .set_index("horse_name_upper"))
+    out: dict = {}
+    for name, row in latest.iterrows():
+        p = prev.loc[name] if name in prev.index else None
+        out[name] = {
+            "trainer":   str(row.get("trainer", "")).strip() if pd.notna(row.get("trainer")) else "",
+            "sire":      str(row.get("sire", "")).strip() if pd.notna(row.get("sire")) else "",
+            "dam_sire":  str(row.get("dam_sire", "")).strip() if pd.notna(row.get("dam_sire")) else "",
+            "last_date": row.get("race_date"),
+            "rating":    _fnum(row.get("rating")),
+            "prev_rating":        _fnum(p.get("rating")) if p is not None else None,
+            "declared_weight":    _fnum(row.get("declared_weight")),
+            "prev_decl_weight":   _fnum(p.get("declared_weight")) if p is not None else None,
+        }
+    return out
+
+
+def _compute_factor_edges(races: list[dict], window: str = "current_season_25_26",
+                          top_n_per_race: int = 6) -> list[dict]:
+    """For each top-N pick on the card, compute factor-edge signals from
+    `factor_analysis_tables.json` and the horse attribute lookup."""
+    tables = _load_factor_tables()
+    win = tables.get(window) or tables.get("all_time") or {}
+    if not win:
+        return []
+    attrs = _build_horse_attribute_lookup()
+    today = date.today()
+
+    edges: list[dict] = []
+    for race in races:
+        rn = race.get("race_number")
+        dist_b = _dist_bucket_label(race.get("distance"))
+        going  = str(race.get("going", "")).strip()
+        for pick in race.get("picks", [])[:top_n_per_race]:
+            hn_u = str(pick.get("horse_name", "")).upper().strip()
+            jockey = str(pick.get("jockey", "")).strip()
+            a = attrs.get(hn_u, {})
+            trainer = a.get("trainer", "")
+            sire     = a.get("sire", "")
+            dam_sire = a.get("dam_sire", "")
+
+            signals: list[tuple[str, str, float]] = []   # (label, colour, score contrib)
+
+            # Jockey
+            j_row = _factor_lookup(win.get("jockey", []), ["jockey"], [jockey])
+            if j_row:
+                iv = _fnum(j_row.get("IV"))
+                ae = _fnum(j_row.get("A_E"))
+                if iv and iv >= 1.5:
+                    score = (iv - 1.0) * 0.8
+                    if ae and ae >= 1.10: score += 0.4
+                    signals.append((f"Jky IV {iv:.2f}"
+                                    + (f" A/E {ae:.2f}" if ae else ""),
+                                    "#22c55e" if iv >= 2.0 else "#86efac", score))
+
+            # Trainer
+            t_row = _factor_lookup(win.get("trainer", []), ["trainer"], [trainer]) if trainer else None
+            if t_row:
+                iv = _fnum(t_row.get("IV"))
+                ae = _fnum(t_row.get("A_E"))
+                if iv and iv >= 1.20:
+                    score = (iv - 1.0) * 0.5
+                    if ae and ae >= 1.15: score += 0.3
+                    signals.append((f"Trn IV {iv:.2f}"
+                                    + (f" A/E {ae:.2f}" if ae else ""),
+                                    "#86efac", score))
+
+            # Jockey × Trainer
+            jt_row = _factor_lookup(win.get("jockey_x_trainer", []),
+                                    ["jockey", "trainer"], [jockey, trainer]) \
+                     if jockey and trainer else None
+            if jt_row:
+                iv = _fnum(jt_row.get("IV"))
+                ae = _fnum(jt_row.get("A_E"))
+                n  = _fnum(jt_row.get("N"))
+                if iv and iv >= 2.0 and n and n >= 15:
+                    score = (iv - 1.0) * 0.6
+                    if ae and ae >= 1.2: score += 0.5
+                    signals.append((f"J×T IV {iv:.2f} (N={int(n)})",
+                                    "#22c55e" if iv >= 3.0 else "#86efac", score))
+
+            # Sire × distance bucket (falls back to sire-only)
+            if sire:
+                sd_row = _factor_lookup(win.get("sire_x_dist_bucket", []),
+                                        ["sire", "dist_bucket"], [sire, dist_b])
+                if sd_row:
+                    iv = _fnum(sd_row.get("IV")); ae = _fnum(sd_row.get("A_E"))
+                    if iv and iv >= 1.6:
+                        score = (iv - 1.0) * 0.5
+                        if ae and ae >= 1.3: score += 0.4
+                        signals.append((f"Sire@{dist_b}m IV {iv:.2f}",
+                                        "#86efac", score))
+                else:
+                    s_row = _factor_lookup(win.get("sire", []), ["sire"], [sire])
+                    if s_row:
+                        iv = _fnum(s_row.get("IV")); ae = _fnum(s_row.get("A_E"))
+                        if iv and iv >= 1.8:
+                            score = (iv - 1.0) * 0.4
+                            if ae and ae >= 1.3: score += 0.4
+                            signals.append((f"Sire IV {iv:.2f}"
+                                            + (f" A/E {ae:.2f}" if ae else ""),
+                                            "#86efac", score))
+
+            # Dam sire
+            if dam_sire:
+                ds_row = _factor_lookup(win.get("dam_sire", []),
+                                        ["dam_sire"], [dam_sire])
+                if ds_row:
+                    iv = _fnum(ds_row.get("IV")); ae = _fnum(ds_row.get("A_E"))
+                    if iv and iv >= 1.8:
+                        score = (iv - 1.0) * 0.4
+                        if ae and ae >= 1.3: score += 0.4
+                        signals.append((f"DamSire IV {iv:.2f}", "#86efac", score))
+
+            # Days-off freshness (120+ has A/E ≈ 1.44)
+            last_d = a.get("last_date")
+            if last_d:
+                try:
+                    days = (today - last_d).days
+                except TypeError:
+                    days = None
+                if days is not None:
+                    if days >= 120:
+                        signals.append((f"Fresh {days}d (+edge)", "#22c55e", 0.6))
+                    elif days <= 14:
+                        signals.append((f"Quick b/u {days}d", "#ef4444", -0.4))
+
+            # Rating delta (+2 or more ⇒ IV ~2.0)
+            cr = a.get("rating"); pr = a.get("prev_rating")
+            if cr is not None and pr is not None:
+                dr = cr - pr
+                if dr >= 2:
+                    signals.append((f"Rtg Δ +{int(dr)}", "#22c55e", 0.5))
+                elif dr <= -2:
+                    signals.append((f"Rtg Δ {int(dr)}", "#ef4444", -0.3))
+
+            if not signals:
+                continue
+
+            total_score = sum(s[2] for s in signals)
+            # Tier
+            if total_score >= 1.6 and len([s for s in signals if s[2] > 0]) >= 3:
+                tier = "green"
+            elif total_score >= 0.9:
+                tier = "amber"
+            else:
+                tier = "none"
+
+            edges.append({
+                "race": rn,
+                "rank": pick.get("rank"),
+                "horse_no": pick.get("horse_no", ""),
+                "horse": pick.get("horse_name", ""),
+                "jockey": jockey,
+                "trainer": trainer,
+                "sire": sire,
+                "dam_sire": dam_sire,
+                "signals": signals,
+                "score": round(total_score, 2),
+                "tier": tier,
+            })
+    return edges
+
+
 def _overview_find_today_meeting() -> dict | None:
     """Find the most recent (or today's) meeting report."""
     meetings = load_available_meetings()
@@ -2113,6 +2341,83 @@ def page_overview():
             st.caption("No mutual top-4 picks between ET and SARR.")
     else:
         st.caption("SARR analysis not available for this meeting.")
+
+    st.markdown("---")
+
+    # ── Section 2b: Factor-edge picks from historical analysis ─────────
+    st.markdown("### 🔬 Factor Edges Today")
+    st.caption(
+        "Independent data-analysis signal (jockey / trainer / pedigree / "
+        "form-context IVs from `reports/factor_analysis_tables.json`). "
+        "Uses current season by default. See the **Data Analysis** page for full tables."
+    )
+
+    fe_window = st.radio(
+        "Reference window",
+        options=["current_season_25_26", "last_90d", "all_time"],
+        format_func=lambda s: {"current_season_25_26": "Current season",
+                               "last_90d": "Last 90 days",
+                               "all_time": "All-time"}[s],
+        index=0, horizontal=True, key="overview_fe_window",
+    )
+
+    edges = _compute_factor_edges(races, window=fe_window, top_n_per_race=6)
+    if not edges:
+        if not FACTOR_TABLES_PATH.exists():
+            st.info(
+                "Factor analysis tables not found. Run "
+                "`python factor_model_analysis.py` or use the Regenerate "
+                "button on the Data Analysis page."
+            )
+        else:
+            st.caption("No runners with qualifying factor edges on today's card.")
+    else:
+        edges.sort(key=lambda e: (-e["score"], e["race"], e.get("rank") or 99))
+        rows_html = []
+        for e in edges:
+            if e["tier"] == "green":
+                bg = "rgba(34,197,94,0.14)"; name_c = "#22c55e"
+            elif e["tier"] == "amber":
+                bg = "rgba(245,158,11,0.12)"; name_c = "#f59e0b"
+            else:
+                bg = "transparent"; name_c = "inherit"
+            sig_html = " · ".join(
+                f'<span style="color:{c};font-weight:600">{label}</span>'
+                for label, c, _ in e["signals"]
+            )
+            rk_str = f"#{e['rank']}" if e.get("rank") else "—"
+            hno = f"({e['horse_no']})" if e.get("horse_no") not in ("", None) else ""
+            pedigree = " · ".join(x for x in [e["sire"], e["dam_sire"]] if x)
+            rows_html.append(
+                f'<tr style="background:{bg}">'
+                f'<td style="padding:5px 8px;font-weight:700">R{e["race"]}</td>'
+                f'<td style="padding:5px 8px;text-align:center;opacity:0.7">{rk_str}</td>'
+                f'<td style="padding:5px 8px;color:{name_c};font-weight:700">'
+                f'{e["horse"]} <span style="opacity:0.55;font-weight:400">{hno}</span></td>'
+                f'<td style="padding:5px 8px;opacity:0.85">{e["jockey"]} / {e["trainer"] or "?"}</td>'
+                f'<td style="padding:5px 8px;opacity:0.6;font-size:0.85em">{pedigree}</td>'
+                f'<td style="padding:5px 8px;text-align:right;font-weight:700">{e["score"]:+.2f}</td>'
+                f'<td style="padding:5px 8px;font-size:0.9em">{sig_html}</td>'
+                f'</tr>'
+            )
+        st.markdown(
+            '<table style="width:100%;border-collapse:collapse;font-size:0.92em">'
+            '<thead><tr style="border-bottom:2px solid rgba(128,128,128,0.3)">'
+            '<th style="text-align:left;padding:6px">Race</th>'
+            '<th style="text-align:center;padding:6px">Rk</th>'
+            '<th style="text-align:left;padding:6px">Horse</th>'
+            '<th style="text-align:left;padding:6px">Jky / Trn</th>'
+            '<th style="text-align:left;padding:6px">Sire · Dam-sire</th>'
+            '<th style="text-align:right;padding:6px">Edge</th>'
+            '<th style="text-align:left;padding:6px">Signals</th>'
+            '</tr></thead><tbody>'
+            + "".join(rows_html)
+            + '</tbody></table>'
+            '<div style="margin-top:6px;font-size:0.78em;opacity:0.6">'
+            '🟢 3+ positive signals &amp; score ≥ 1.6 &nbsp; 🟡 score ≥ 0.9 &nbsp; · '
+            'Thresholds: Jky IV ≥ 1.5, Trn IV ≥ 1.2, J×T IV ≥ 2.0 (N≥15), Sire@dist IV ≥ 1.6</div>',
+            unsafe_allow_html=True,
+        )
 
     st.markdown("---")
 
@@ -2317,7 +2622,7 @@ def page_overview():
 
 def page_race_day(selected):
     if selected is None:
-        st.markdown('<div class="page-title">Race Day Analysis</div>', unsafe_allow_html=True)
+        st.markdown('<div class="page-title">Model Analysis</div>', unsafe_allow_html=True)
         st.info("No meetings available. Use the sidebar to run your first analysis.")
         return
 
@@ -6694,6 +6999,292 @@ def _build_pdfbuilder_pdf(meeting_data: dict, selected_races: list[int],
     return buf.getvalue()
 
 
+def page_data_analysis():
+    """Factor-analysis browser backed by reports/factor_analysis_tables.json."""
+    st.markdown('<div class="page-title">Data Analysis</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="page-subtitle">Independent factor model — jockey / trainer / '
+        'pedigree / form-context impact on HKJC outcomes</div>',
+        unsafe_allow_html=True,
+    )
+
+    tables = _load_factor_tables()
+
+    # ── Header: regenerate + metadata ───────────────────────
+    c1, c2, c3 = st.columns([2, 1, 1])
+    with c1:
+        if FACTOR_TABLES_PATH.exists():
+            import datetime as _dt
+            mtime = _dt.datetime.fromtimestamp(FACTOR_TABLES_PATH.stat().st_mtime)
+            st.caption(f"Last generated: **{mtime:%Y-%m-%d %H:%M}** · source: "
+                       f"`reports/factor_analysis_tables.json`")
+        else:
+            st.warning("Factor tables not found. Click **Regenerate** to build them.")
+    with c2:
+        window = st.selectbox(
+            "Window",
+            options=["current_season_25_26", "last_90d", "all_time"],
+            format_func=lambda s: {"current_season_25_26": "Current season 25/26",
+                                   "last_90d": "Last 90 days",
+                                   "all_time": "All-time"}[s],
+            index=0, key="da_window",
+        )
+    with c3:
+        if st.button("Regenerate", use_container_width=True, key="da_regen"):
+            with st.spinner("Running factor_model_analysis.py …"):
+                try:
+                    import subprocess
+                    r = subprocess.run(
+                        [sys.executable, "factor_model_analysis.py"],
+                        cwd=str(BASE), capture_output=True, text=True, timeout=600,
+                    )
+                    if r.returncode == 0:
+                        st.success("Regenerated.")
+                    else:
+                        st.error(f"Exit {r.returncode}")
+                        st.code(r.stderr[-2000:] or r.stdout[-2000:])
+                except (OSError, subprocess.TimeoutExpired) as e:
+                    st.error(str(e))
+                st.cache_data.clear()
+                st.rerun()
+
+    if not tables:
+        return
+
+    w = tables.get(window, {}) or {}
+    bench = tables.get("benchmark_model", {}) or {}
+
+    # ── Tabs ───────────────────────────────────────────
+    tab_names = ["Summary", "Jockeys", "Trainers", "Jockey × Trainer",
+                 "Pedigree", "Form & Context", "Draw / Dist / Going",
+                 "Benchmark ML", "Methodology"]
+    tabs = st.tabs(tab_names)
+
+    def _rows_to_df(rows: list[dict]) -> pd.DataFrame:
+        if not rows:
+            return pd.DataFrame()
+        df = pd.DataFrame(rows)
+        for col in ("N", "Wins", "IV", "A_E", "ROI", "Win_pct", "Plc_pct",
+                    "Base_win", "Exp_mkt"):
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+        return df
+
+    def _style_df(df: pd.DataFrame):
+        if df.empty:
+            return df
+        num_fmt = {}
+        if "Win_pct" in df: num_fmt["Win_pct"] = "{:.1%}"
+        if "Plc_pct" in df: num_fmt["Plc_pct"] = "{:.1%}"
+        if "Base_win" in df: num_fmt["Base_win"] = "{:.3f}"
+        if "IV" in df:     num_fmt["IV"] = "{:.2f}"
+        if "A_E" in df:    num_fmt["A_E"] = "{:.2f}"
+        if "ROI" in df:    num_fmt["ROI"] = "{:+.2%}"
+        if "N" in df:      num_fmt["N"] = "{:.0f}"
+        if "Wins" in df:   num_fmt["Wins"] = "{:.0f}"
+        if "Exp_mkt" in df: num_fmt["Exp_mkt"] = "{:.1f}"
+        sty = df.style.format(num_fmt, na_rep="—")
+        if "IV" in df:
+            sty = sty.background_gradient(subset=["IV"], cmap="RdYlGn",
+                                          vmin=0.5, vmax=3.0)
+        if "A_E" in df:
+            sty = sty.background_gradient(subset=["A_E"], cmap="RdYlGn",
+                                          vmin=0.7, vmax=1.8)
+        if "ROI" in df:
+            sty = sty.background_gradient(subset=["ROI"], cmap="RdYlGn",
+                                          vmin=-0.4, vmax=0.4)
+        return sty
+
+    def _show_table(key: str, label: str, min_n_default: int = 30,
+                    min_n_max: int = 500):
+        rows = w.get(key, [])
+        df = _rows_to_df(rows)
+        if df.empty:
+            st.caption(f"No data for {label} in this window.")
+            return
+        cc1, cc2 = st.columns([1, 2])
+        with cc1:
+            min_n = st.slider(f"Min N ({label})",
+                              min_value=10, max_value=min_n_max,
+                              value=min_n_default, step=5,
+                              key=f"da_minn_{key}_{window}")
+        if "N" in df:
+            df = df[df["N"] >= min_n]
+        if "IV" in df:
+            df = df.sort_values("IV", ascending=False)
+        with cc2:
+            st.caption(f"{len(df)} rows after min-N filter")
+        st.dataframe(_style_df(df), use_container_width=True, hide_index=True)
+
+    # ── Summary tab ───────────────────────────────────
+    with tabs[0]:
+        st.markdown("#### What's in the factor model")
+        st.markdown("""
+- **IV** (Impact Value) = Win% ÷ field-size baseline. `>1` = over-performs its field share.
+- **A/E** = Actual wins ÷ market-expected wins. `>1` = market underestimates (real edge); `≈1` = already priced in.
+- **ROI** = flat `$1` win-bet return.
+- Metrics are computed per bucket with `win_odds` available.
+""")
+        c1, c2, c3, c4 = st.columns(4)
+        for i, (k, label) in enumerate([
+            ("jockey", "Jockeys"), ("trainer", "Trainers"),
+            ("sire", "Sires"), ("dam_sire", "Dam-sires"),
+        ]):
+            df = _rows_to_df(w.get(k, []))
+            [c1, c2, c3, c4][i].metric(
+                label, f"{len(df)} rows",
+                delta=f"Top IV {df['IV'].max():.2f}" if not df.empty and "IV" in df else None,
+            )
+
+        st.markdown("#### Top edges in this window (A/E ≥ 1.2, N ≥ 30)")
+        combined = []
+        for k in ("jockey", "trainer", "sire", "dam_sire",
+                  "jockey_x_trainer", "sire_x_dist_bucket", "sire_x_going",
+                  "jockey_x_dist_bucket", "trainer_x_dist_bucket"):
+            for r in w.get(k, []):
+                ae = _fnum(r.get("A_E")); n = _fnum(r.get("N"))
+                if ae is None or n is None or n < 30 or ae < 1.2:
+                    continue
+                # Build label from whatever keys exist
+                keylab = " · ".join(str(r.get(kk, "")) for kk in r.keys()
+                                    if kk not in ("N","Wins","Win_pct","Plc_pct",
+                                                  "Base_win","Exp_mkt","IV","A_E","ROI"))
+                combined.append({
+                    "Factor": k,
+                    "Bucket": keylab,
+                    "N": int(n),
+                    "Win%": _fnum(r.get("Win_pct")),
+                    "IV": _fnum(r.get("IV")),
+                    "A/E": ae,
+                    "ROI": _fnum(r.get("ROI")),
+                })
+        if combined:
+            cdf = pd.DataFrame(combined).sort_values("A/E", ascending=False).head(30)
+            st.dataframe(
+                cdf.style.format({"Win%": "{:.1%}", "IV": "{:.2f}",
+                                  "A/E": "{:.2f}", "ROI": "{:+.2%}"}),
+                use_container_width=True, hide_index=True,
+            )
+        else:
+            st.caption("No rows met the A/E ≥ 1.2 threshold.")
+
+    with tabs[1]:
+        _show_table("jockey", "Jockey", min_n_default=30, min_n_max=500)
+
+    with tabs[2]:
+        _show_table("trainer", "Trainer", min_n_default=30, min_n_max=500)
+
+    with tabs[3]:
+        _show_table("jockey_x_trainer", "Jockey × Trainer",
+                    min_n_default=15, min_n_max=100)
+        st.caption("Tip: look at A/E and ROI together to spot yards the market mis-prices.")
+
+    with tabs[4]:
+        st.markdown("**Sire**")
+        _show_table("sire", "Sire", min_n_default=25, min_n_max=200)
+        st.markdown("**Dam sire**")
+        _show_table("dam_sire", "Dam sire", min_n_default=25, min_n_max=200)
+        st.markdown("**Sire × distance bucket**")
+        _show_table("sire_x_dist_bucket", "Sire × distance", 20, 100)
+        st.markdown("**Sire × going**")
+        _show_table("sire_x_going", "Sire × going", 20, 100)
+
+    with tabs[5]:
+        st.markdown("**Rolling last-3 win rate**")
+        _show_table("last3_win_bucket", "last3_win", 50, 2000)
+        st.markdown("**Days off (freshness)**")
+        _show_table("days_off_bucket", "days_off", 50, 5000)
+        st.markdown("**Rating delta vs previous run**")
+        _show_table("rating_delta_bucket", "rating_delta", 50, 5000)
+        st.markdown("**Declared-weight change vs previous run**")
+        _show_table("decl_wt_chg_bucket", "decl_wt_chg", 50, 3000)
+        st.markdown("**Career runs (pre)**")
+        _show_table("career_runs_pre_bucket", "career_runs", 50, 5000)
+        st.markdown("**Age (effective)**")
+        _show_table("age_eff", "age", 50, 3000)
+        st.markdown("**Gear change**")
+        _show_table("gear_change", "gear", 50, 5000)
+
+    with tabs[6]:
+        st.markdown("**Draw bucket**")
+        _show_table("draw_bucket", "draw", 50, 5000)
+        st.markdown("**Draw number**")
+        _show_table("draw_num_bucket", "draw_num", 50, 5000)
+        st.markdown("**Draw × course × distance**")
+        _show_table("draw_bucket_x_race_course_x_dist_bucket",
+                    "draw×course×dist", 30, 500)
+        st.markdown("**Distance × going**")
+        _show_table("dist_bucket_x_going", "dist×going", 50, 2000)
+        st.markdown("**Jockey × distance**")
+        _show_table("jockey_x_dist_bucket", "jockey×distance", 20, 200)
+        st.markdown("**Trainer × distance**")
+        _show_table("trainer_x_dist_bucket", "trainer×distance", 20, 200)
+
+    with tabs[7]:
+        st.markdown("#### Benchmark Gradient-Boosted classifier")
+        if not bench or "error" in bench:
+            st.warning(bench.get("error", "No benchmark output available."))
+        else:
+            bc1, bc2, bc3, bc4 = st.columns(4)
+            bc1.metric("Train / Test", f'{bench.get("n_train","?")} / {bench.get("n_test","?")}')
+            bc2.metric("Top-1 hit rate",
+                       f'{100*_fnum(bench.get("top1_model"), 0):.1f}%',
+                       delta=f'Market {100*_fnum(bench.get("top1_market"),0):.1f}%')
+            bc3.metric("AUC",
+                       f'{_fnum(bench.get("auc_model"),0):.3f}',
+                       delta=f'Market {_fnum(bench.get("auc_market"),0):.3f}')
+            bc4.metric("Log-loss",
+                       f'{_fnum(bench.get("logloss_model"),0):.3f}',
+                       delta=f'Market {_fnum(bench.get("logloss_market"),0):.3f}',
+                       delta_color="inverse")
+
+            st.markdown("**Feature importance (one-hot collapsed)**")
+            feat = bench.get("feat_imp_top25", {}) or {}
+            if feat:
+                fdf = (pd.DataFrame(list(feat.items()),
+                                    columns=["Feature", "Importance"])
+                         .sort_values("Importance", ascending=True))
+                st.bar_chart(fdf.set_index("Feature"))
+
+    with tabs[8]:
+        st.markdown("""
+#### Methodology
+
+**Pipeline**: [`factor_model_analysis.py`](factor_model_analysis.py) reads
+`hkjc_results_updated.xlsx`, engineers rolling-form / days-off / rating-delta /
+weight-change / market-implied probability features, then aggregates metrics
+per bucket per time window.
+
+**Windows produced**
+- `all_time` — full history available
+- `current_season_25_26` — from 2025-09-01
+- `last_90d` — most-recent 90 days
+
+**Feature engineering (no leakage — all shifts use previous runs only)**
+- Rolling last-3 Win% / top-3% / avg finishing position
+- Days since last run (freshness)
+- Rating delta vs previous run
+- Declared-weight change vs previous run
+- Effective age (recovered from `horse_id` when missing)
+- Market-implied fair probability (per-race overround removed)
+
+**How to use on race day**
+1. The **Overview** page surfaces signals automatically ("Factor Edges Today").
+2. Tiers combine multiple independent factors:
+   - 🟢 **Green** — 3+ positive signals, composite score ≥ 1.6
+   - 🟡 **Amber** — composite score ≥ 0.9
+3. A green runner at ≥ 4-1 market price is usually the best A/E candidate.
+
+**Known limits**
+- Dam-sire and sire categories are sparse for new bloodlines; small-N rows
+  will look extreme — always check `N` before acting.
+- Odds are closing HKJC tote (post-race), not live. Live odds integration is
+  tracked separately.
+- This model is independent of the time/relativity projection; blend via
+  the Race Day page (ET ∩ SARR) for the strongest signal.
+""")
+
+
 def page_pdf_builder():
     """Custom PDF Builder — select races, pick bankers, generate notes, export."""
     st.markdown("## \U0001f4c4 PDF Builder")
@@ -6891,18 +7482,22 @@ def main():
 
     # ── Navigation ────────────────────────────────────────────────────────
     NAV_ITEMS = [
-        ("Overview",     "🏁 Overview"),
-        ("Race Day",     "📊 Race Day"),
-        ("Live Feed",    "📡 Live Feed"),
-        ("Form Guide",   "📖 Form Guide"),
-        ("Trials",       "🎽 Trials"),
-        ("Backtest",     "🧪 Backtest"),
-        ("Results",      "🏆 Results"),
-        ("Blackbook",    "📓 Blackbook"),
-        ("PDF Builder",  "📄 PDF Builder"),
+        ("Overview",       "🏁 Overview"),
+        ("Form Guide",     "📖 Form Guide"),
+        ("Model Analysis", "📊 Model Analysis"),
+        ("Data Analysis",  "🔬 Data Analysis"),
+        ("Results",        "🏆 Results"),
+        ("Live Feed",      "📡 Live Feed"),
+        ("Blackbook",      "📓 Blackbook"),
+        ("Trials",         "🎽 Trials"),
+        ("Backtest",       "🧪 Backtest"),
+        ("PDF Builder",    "📄 PDF Builder"),
     ]
     if "nav_page" not in st.session_state:
         st.session_state["nav_page"] = "Overview"
+    # Migrate old nav-key if persisted
+    if st.session_state["nav_page"] == "Race Day":
+        st.session_state["nav_page"] = "Model Analysis"
 
     for page_name, label in NAV_ITEMS:
         is_active = st.session_state["nav_page"] == page_name
@@ -6919,9 +7514,11 @@ def main():
 
     if page == "Overview":
         page_overview()
-    elif page == "Race Day":
+    elif page == "Model Analysis":
         selected = sidebar_race_day()
         page_race_day(selected)
+    elif page == "Data Analysis":
+        page_data_analysis()
     elif page == "Live Feed":
         page_live_feed()
     elif page == "Form Guide":
