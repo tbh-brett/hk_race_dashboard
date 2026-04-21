@@ -6,6 +6,7 @@ pandas>=2.0
 numpy>=1.24
 openpyxl>=3.1          # Excel read/write
 matplotlib>=3.7        # Required by pandas Styler.background_gradient (Data Analysis heatmaps)
+tabulate>=0.9          # Required by pandas DataFrame.to_markdown (factor_model_analysis regenerate)
 
 # Network & scraping
 requests>=2.31

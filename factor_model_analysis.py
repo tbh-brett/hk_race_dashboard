@@ -279,7 +279,17 @@ def tbl(md_lines, title, df_: pd.DataFrame):
     if df_ is None or len(df_) == 0:
         md_lines.append("_no rows meet min-N threshold_\n")
         return
-    md_lines.append(df_.to_markdown())
+    try:
+        md_lines.append(df_.to_markdown())
+    except ImportError:
+        # `tabulate` optional dep missing — fall back to a simple pipe table
+        # so the whole regeneration doesn't abort.
+        cols = list(df_.columns)
+        md_lines.append("| " + " | ".join(str(c) for c in cols) + " |")
+        md_lines.append("| " + " | ".join("---" for _ in cols) + " |")
+        for _, row in df_.iterrows():
+            md_lines.append("| " + " | ".join(
+                "" if pd.isna(v) else str(v) for v in row) + " |")
     md_lines.append("")
 
 
