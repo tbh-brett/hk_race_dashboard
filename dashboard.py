@@ -7933,6 +7933,46 @@ def page_my_bets():
     # ── TAB 1 — Submit ──────────────────────────────────────────────────
     with tabs[0]:
         st.markdown("### Submit a new bet")
+
+        # Friendly labels + inline "how to enter" hints per bet type
+        _BET_TYPE_LABELS = {
+            "WIN":        "Win (single horse)",
+            "PLACE":      "Place (single horse)",
+            "QIN":        "Quinella — box across selections",
+            "QPL":        "Quinella Place — box across selections",
+            "QIN_BANKER": "Quinella Banker — 1 banker × N legs",
+            "QPL_BANKER": "Quinella Place Banker — 1 banker × N legs",
+            "TRIO":       "Trio — box across selections (C(n,3) combos)",
+            "F4_BOX":     "First 4 Box — box across selections (C(n,4) combos)",
+        }
+        _BET_TYPE_HELP = {
+            "WIN":        "Enter ONE horse number in *Selections*. "
+                          "Wins if that horse finishes 1st.",
+            "PLACE":      "Enter ONE horse number in *Selections*. "
+                          "Wins if that horse finishes 1st–3rd.",
+            "QIN":        "Enter 2+ horse numbers in *Selections* "
+                          "(e.g. `2,5,7` = 3 combos: 2-5, 2-7, 5-7). "
+                          "Wins if any pair finishes 1st+2nd in either order.",
+            "QPL":        "Enter 2+ horse numbers in *Selections* "
+                          "(e.g. `2,5,7` = 3 combos). "
+                          "Wins if any pair both finish 1st–3rd.",
+            "QIN_BANKER": "Enter ONE banker in *Banker*, then 1+ other horses "
+                          "in *Legs* (e.g. banker=4, legs=`2,5,7` = 3 combos: "
+                          "4-2, 4-5, 4-7). Wins if banker finishes 1st-or-2nd "
+                          "AND one of the legs takes the other placing.",
+            "QPL_BANKER": "Enter ONE banker in *Banker*, then 1+ other horses "
+                          "in *Legs* (e.g. banker=4, legs=`2,5,7` = 3 combos). "
+                          "Wins whenever banker + one of the legs both finish "
+                          "1st–3rd. HKJC bundles this with QIN_BANKER as "
+                          "\"1 banker × 3 legs = 6 bets\" — log each leg "
+                          "separately here if you want per-pool PnL.",
+            "TRIO":       "Enter 3+ horse numbers in *Selections*. "
+                          "Wins if any triple matches top-3 in any order.",
+            "F4_BOX":     "Enter 4+ horse numbers in *Selections*. "
+                          "Wins if any 4 of them are the top-4 finishers "
+                          "in any order.",
+        }
+
         with st.form("my_bets_submit_form", clear_on_submit=True):
             c1, c2, c3 = st.columns([1.2, 0.7, 0.8])
             with c1:
@@ -7947,13 +7987,12 @@ def page_my_bets():
                 race = st.number_input("Race #", min_value=1, max_value=12,
                                             step=1, value=1,
                                             key="mb_submit_race")
-            c4, c5 = st.columns([1, 1])
+            c4, c5 = st.columns([1.4, 0.6])
             with c4:
                 bet_type = st.selectbox(
-                    "Bet type", ub.BET_TYPES, index=2,
-                    help=("WIN/PLACE: single horse · QIN/QPL: box across "
-                            "selections · *_BANKER: banker + legs · "
-                            "F4_BOX: box first-4 · TRIO: box first-3"),
+                    "Bet type", ub.BET_TYPES,
+                    index=ub.BET_TYPES.index("QIN"),
+                    format_func=lambda t: _BET_TYPE_LABELS.get(t, t),
                     key="mb_submit_type",
                 )
             with c5:
@@ -7961,21 +8000,37 @@ def page_my_bets():
                     "Stake (HK$)", min_value=10.0, step=10.0, value=20.0,
                     key="mb_submit_stake",
                 )
+
+            # Contextual hint for the selected bet type
+            st.info(f"**How to enter {_BET_TYPE_LABELS.get(bet_type, bet_type)}**  \n"
+                    f"{_BET_TYPE_HELP.get(bet_type, '')}")
+
             needs_banker = bet_type in ("QIN_BANKER", "QPL_BANKER")
             banker_no = None
             if needs_banker:
-                banker_no = st.number_input(
-                    "Banker horse #", min_value=1, max_value=14,
-                    step=1, value=1, key="mb_submit_banker",
-                )
+                bcol, _ = st.columns([0.4, 1.6])
+                with bcol:
+                    banker_no = st.number_input(
+                        "Banker horse #", min_value=1, max_value=14,
+                        step=1, value=1, key="mb_submit_banker",
+                        help="The horse you think is most likely to place; "
+                             "combined with each of your legs.",
+                    )
             sels_text = st.text_input(
-                ("Legs (comma-sep horse #s)" if needs_banker else
+                ("Legs (comma-sep horse #s, excl. banker)" if needs_banker else
                   "Selections (comma-sep horse #s)"),
                 placeholder="e.g. 2,5,7",
                 key="mb_submit_sels",
+                help=("Pair/triple combos are generated automatically. "
+                      "You DO NOT need to list the banker here."
+                      if needs_banker else
+                      "For WIN/PLACE enter one number; for box bets enter "
+                      "all horses you want pairs/triples generated from."),
             )
             notes = st.text_area("Notes (optional)", height=60,
-                                    key="mb_submit_notes")
+                                    key="mb_submit_notes",
+                                    placeholder="e.g. \"HKJC bundle: QIN+QPL "
+                                                "1 banker × 3 sels\"")
             submit = st.form_submit_button("💾 Save bet",
                                                 use_container_width=True,
                                                 type="primary")
@@ -7983,18 +8038,50 @@ def page_my_bets():
                 try:
                     sels = [int(x.strip()) for x in sels_text.split(",")
                               if x.strip()]
-                    if not sels and bet_type not in ("WIN", "PLACE"):
-                        st.error("Need at least one selection.")
-                    else:
-                        bid = ub.submit_bet(
-                            meeting_date=mdate.strftime("%Y%m%d"),
-                            venue=venue, race_number=int(race),
-                            bet_type=bet_type,
-                            selections=sels or [banker_no],
-                            banker=int(banker_no) if needs_banker else None,
-                            stake_hkd=float(stake), notes=notes,
-                        )
-                        st.success(f"Bet saved (id {bid[:6]}…)")
+                    # Validation per bet type
+                    if bet_type in ("WIN", "PLACE"):
+                        if len(sels) != 1:
+                            st.error(f"{bet_type} requires exactly ONE "
+                                     f"selection (got {len(sels)}).")
+                            st.stop()
+                    elif bet_type in ("QIN", "QPL"):
+                        if len(sels) < 2:
+                            st.error(f"{bet_type} box requires 2+ "
+                                     f"selections (got {len(sels)}).")
+                            st.stop()
+                    elif bet_type in ("QIN_BANKER", "QPL_BANKER"):
+                        if not banker_no:
+                            st.error("Banker horse # is required.")
+                            st.stop()
+                        if len(sels) < 1:
+                            st.error("Need 1+ leg horses.")
+                            st.stop()
+                        if banker_no in sels:
+                            st.error(f"Banker ({banker_no}) must not appear "
+                                     f"in legs.")
+                            st.stop()
+                    elif bet_type == "TRIO":
+                        if len(sels) < 3:
+                            st.error("TRIO box requires 3+ selections.")
+                            st.stop()
+                    elif bet_type == "F4_BOX":
+                        if len(sels) < 4:
+                            st.error("F4 box requires 4+ selections.")
+                            st.stop()
+
+                    bid = ub.submit_bet(
+                        meeting_date=mdate.strftime("%Y%m%d"),
+                        venue=venue, race_number=int(race),
+                        bet_type=bet_type,
+                        selections=sels or [banker_no],
+                        banker=int(banker_no) if needs_banker else None,
+                        stake_hkd=float(stake), notes=notes,
+                    )
+                    st.success(
+                        f"✅ Bet saved (id {bid[:6]}…) — "
+                        f"{_BET_TYPE_LABELS.get(bet_type, bet_type)}, "
+                        f"${float(stake):.0f}."
+                    )
                 except ValueError as e:
                     st.error(str(e))
 
