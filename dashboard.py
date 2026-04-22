@@ -4550,19 +4550,36 @@ def page_results():
         positions_list = r.get("positions", [])
         running_pos = "-".join(p for p in positions_list if p) if positions_list else r.get("running_position", "")
         lane_rec = _lane_map.get(hname.upper(), {}) if _has_lanes else {}
+
+        # Numeric coercion for clean sorting in Streamlit header-click
+        def _to_float(v):
+            if v in (None, "", "---", "-"):
+                return None
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                return None
+        def _to_int(v):
+            if v in (None, "", "---", "-"):
+                return None
+            try:
+                return int(v)
+            except (TypeError, ValueError):
+                return None
+
         row = {
-            "Place": r.get("place", ""),
-            "No": r.get("horse_no", ""),
+            "Place": _to_int(r.get("place")),
+            "No": _to_int(r.get("horse_no")),
             "Horse": hname,
             "BB": "BB" if in_bb else "",
-            "Model Rk": m_rank,
+            "Model Rk": m_rank if isinstance(m_rank, int) else (_to_int(m_rank) or "—"),
             "Jockey": r.get("jockey", ""),
             "Trainer": r.get("trainer", ""),
-            "Wt": r.get("actual_weight", ""),
-            "Draw": r.get("draw", ""),
+            "Wt": _to_int(r.get("actual_weight")),
+            "Draw": _to_int(r.get("draw")),
             "Running Pos": running_pos,
             "Finish Time": r.get("finish_time", ""),
-            "Win Odds": r.get("win_odds", ""),
+            "Win Odds": _to_float(r.get("win_odds")),
             "LBW": r.get("lbw", ""),
         }
         if _has_lanes:
@@ -4573,6 +4590,14 @@ def page_results():
         res_rows.append(row)
 
     _res_df = pd.DataFrame(res_rows)
+    # Model Rk is mixed int / "—" — guard by converting plain ints to Int64 later
+    _res_col_cfg = {
+        "Place":    st.column_config.NumberColumn(format="%d"),
+        "No":       st.column_config.NumberColumn(format="%d"),
+        "Wt":       st.column_config.NumberColumn(format="%d"),
+        "Draw":     st.column_config.NumberColumn(format="%d"),
+        "Win Odds": st.column_config.NumberColumn(format="%.1f"),
+    }
     if _has_lanes:
         _colour_map = {name: col for name, col, _ in LANE_BUCKETS}
         def _lane_style(val):
@@ -4582,9 +4607,11 @@ def page_results():
             return f"background-color:{col}1f;color:{col};font-weight:600"
         try:
             _styled = _res_df.style.map(_lane_style, subset=["Lane"])
-            st.dataframe(_styled, use_container_width=True, hide_index=True)
+            st.dataframe(_styled, use_container_width=True, hide_index=True,
+                            column_config=_res_col_cfg)
         except Exception:
-            st.dataframe(_res_df, use_container_width=True, hide_index=True)
+            st.dataframe(_res_df, use_container_width=True, hide_index=True,
+                            column_config=_res_col_cfg)
         # Lane legend + per-call breakdown
         _legend_html = " &nbsp; ".join(
             f"<span style='display:inline-block;width:10px;height:10px;"
@@ -4622,7 +4649,8 @@ def page_results():
                 except Exception:
                     st.dataframe(_pc_df, use_container_width=True, hide_index=True)
     else:
-        st.dataframe(_res_df, use_container_width=True, hide_index=True)
+        st.dataframe(_res_df, use_container_width=True, hide_index=True,
+                        column_config=_res_col_cfg)
         st.caption(
             "🛤️ Running-lane breakdown unavailable — no OCR JSON for this race "
             "(running_position_photos/" + selected_dc + "/R" + str(selected_rn) + ".json missing)."
@@ -7691,9 +7719,22 @@ def page_live_odds():
     if movers:
         import pandas as _pd
         df_mov = _pd.DataFrame(movers).sort_values("Δ%").head(15)
+        # Coerce numeric columns for sort correctness
+        for col in ("Race", "No"):
+            if col in df_mov.columns:
+                df_mov[col] = _pd.to_numeric(df_mov[col], errors="coerce").astype("Int64")
         with st.expander("🔥 Top market movers (biggest Win-odds drops across meeting)",
                          expanded=False):
-            st.dataframe(df_mov, hide_index=True, use_container_width=True)
+            st.dataframe(
+                df_mov, hide_index=True, use_container_width=True,
+                column_config={
+                    "Race": st.column_config.NumberColumn(format="%d"),
+                    "No":   st.column_config.NumberColumn(format="%d"),
+                    "First Win":  st.column_config.NumberColumn(format="%.1f"),
+                    "Latest Win": st.column_config.NumberColumn(format="%.1f"),
+                    "Δ%": st.column_config.NumberColumn(format="%+.1f%%"),
+                },
+            )
 
     # Per-race panels
     for rn in races:
@@ -7718,30 +7759,291 @@ def page_live_odds():
             w_last = h.get("win", "")
             p_last = h.get("place", "")
             w_first = first_by_no.get(no, {}).get("win", "")
+            # Coerce to numeric up-front so column sorts work in Streamlit
+            def _fnum(v):
+                try:
+                    return float(v)
+                except (TypeError, ValueError):
+                    return None
+            w_first_n = _fnum(w_first)
+            w_last_n = _fnum(w_last)
+            p_last_n = _fnum(p_last)
             try:
-                fw = float(w_first)
-                lw = float(w_last)
-                drift_pct = (lw - fw) / fw * 100 if fw > 0 else None
+                no_n = int(no)
             except (TypeError, ValueError):
-                drift_pct = None
+                no_n = None
+            drift_pct = None
+            if w_first_n is not None and w_last_n is not None and w_first_n > 0:
+                drift_pct = round((w_last_n - w_first_n) / w_first_n * 100, 1)
             table.append({
-                "No": no,
+                "No": no_n,
                 "Horse": h.get("horse", ""),
-                "Win (first)": w_first,
-                "Win (latest)": w_last,
-                "Place": p_last,
-                "Δ Win %": None if drift_pct is None else round(drift_pct, 1),
+                "Win (first)": w_first_n,
+                "Win (latest)": w_last_n,
+                "Place": p_last_n,
+                "Δ Win %": drift_pct,
             })
         import pandas as _pd
         df = _pd.DataFrame(table)
-        # Sort by latest win odds ascending (favourites first)
+        # Default order: favourites first (ascending latest Win odds)
         try:
-            df["_sort"] = _pd.to_numeric(df["Win (latest)"], errors="coerce")
-            df = df.sort_values("_sort", na_position="last").drop(columns="_sort")
+            df = df.sort_values("Win (latest)", na_position="last",
+                                    kind="mergesort").reset_index(drop=True)
         except Exception:
             pass
-        st.dataframe(df, hide_index=True, use_container_width=True)
+        st.dataframe(
+            df, hide_index=True, use_container_width=True,
+            column_config={
+                "No": st.column_config.NumberColumn("No", format="%d"),
+                "Win (first)":  st.column_config.NumberColumn(format="%.1f"),
+                "Win (latest)": st.column_config.NumberColumn(format="%.1f"),
+                "Place":        st.column_config.NumberColumn(format="%.1f"),
+                "Δ Win %":      st.column_config.NumberColumn(format="%+.1f%%"),
+            },
+        )
         st.markdown("")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# My Bets page — personal wager tracker (submit / edit / settle / summary)
+# ─────────────────────────────────────────────────────────────────────────────
+def page_my_bets():
+    """User-submitted bets, auto-settled vs reports/dividends_*.json."""
+    import user_bets as ub
+    import datetime as _dt
+
+    st.markdown('<div class="page-title">💰 My Bets</div>',
+                unsafe_allow_html=True)
+    st.markdown(
+        '<div class="page-subtitle">Personal wager log · auto-settled from '
+        'HKJC dividends · timeline performance view</div>',
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "Every bet you log here is saved to `reports/user_bets_log.jsonl`. "
+        "Once the results & dividends for its meeting are scraped, the bet "
+        "is automatically settled (return + PnL computed)."
+    )
+
+    tabs = st.tabs(
+        ["➕ New bet", "📒 Open bets", "✅ Settled history", "📊 Summary"]
+    )
+
+    # ── TAB 1 — Submit ──────────────────────────────────────────────────
+    with tabs[0]:
+        st.markdown("### Submit a new bet")
+        with st.form("my_bets_submit_form", clear_on_submit=True):
+            c1, c2, c3 = st.columns([1.2, 0.7, 0.8])
+            with c1:
+                mdate = st.date_input(
+                    "Meeting date", value=_dt.date.today(),
+                    key="mb_submit_date",
+                )
+            with c2:
+                venue = st.selectbox("Venue", ["HV", "ST"],
+                                         key="mb_submit_venue")
+            with c3:
+                race = st.number_input("Race #", min_value=1, max_value=12,
+                                            step=1, value=1,
+                                            key="mb_submit_race")
+            c4, c5 = st.columns([1, 1])
+            with c4:
+                bet_type = st.selectbox(
+                    "Bet type", ub.BET_TYPES, index=2,
+                    help=("WIN/PLACE: single horse · QIN/QPL: box across "
+                            "selections · *_BANKER: banker + legs · "
+                            "F4_BOX: box first-4 · TRIO: box first-3"),
+                    key="mb_submit_type",
+                )
+            with c5:
+                stake = st.number_input(
+                    "Stake (HK$)", min_value=10.0, step=10.0, value=20.0,
+                    key="mb_submit_stake",
+                )
+            needs_banker = bet_type in ("QIN_BANKER", "QPL_BANKER")
+            banker_no = None
+            if needs_banker:
+                banker_no = st.number_input(
+                    "Banker horse #", min_value=1, max_value=14,
+                    step=1, value=1, key="mb_submit_banker",
+                )
+            sels_text = st.text_input(
+                ("Legs (comma-sep horse #s)" if needs_banker else
+                  "Selections (comma-sep horse #s)"),
+                placeholder="e.g. 2,5,7",
+                key="mb_submit_sels",
+            )
+            notes = st.text_area("Notes (optional)", height=60,
+                                    key="mb_submit_notes")
+            submit = st.form_submit_button("💾 Save bet",
+                                                use_container_width=True,
+                                                type="primary")
+            if submit:
+                try:
+                    sels = [int(x.strip()) for x in sels_text.split(",")
+                              if x.strip()]
+                    if not sels and bet_type not in ("WIN", "PLACE"):
+                        st.error("Need at least one selection.")
+                    else:
+                        bid = ub.submit_bet(
+                            meeting_date=mdate.strftime("%Y%m%d"),
+                            venue=venue, race_number=int(race),
+                            bet_type=bet_type,
+                            selections=sels or [banker_no],
+                            banker=int(banker_no) if needs_banker else None,
+                            stake_hkd=float(stake), notes=notes,
+                        )
+                        st.success(f"Bet saved (id {bid[:6]}…)")
+                except ValueError as e:
+                    st.error(str(e))
+
+    rows = ub.load_bets(settle=True)
+
+    # ── TAB 2 — Open bets (edit / delete) ───────────────────────────────
+    with tabs[1]:
+        open_rows = [r for r in rows if r.get("status") != "settled"]
+        if not open_rows:
+            st.info("No open bets. Use the **New bet** tab to add one.")
+        else:
+            open_rows.sort(key=lambda r: (r.get("meeting_date",""), r.get("race_number",0)))
+            st.markdown(f"**{len(open_rows)} open** bet(s)")
+            for r in open_rows:
+                with st.expander(
+                    (f"{r['meeting_date']} · {r['venue']} R{r['race_number']} · "
+                      f"{r['bet_type']} · ${r['stake_hkd']:.0f}"),
+                    expanded=False,
+                ):
+                    st.write({
+                        "Selections": r.get("selections"),
+                        "Banker":     r.get("banker"),
+                        "Created":    r.get("created_at"),
+                        "Notes":      r.get("notes"),
+                    })
+                    cdel, cref = st.columns([1, 1])
+                    with cdel:
+                        if st.button("🗑️ Delete",
+                                          key=f"mb_del_{r['bet_id']}"):
+                            ub.delete_bet(r["bet_id"])
+                            st.rerun()
+                    with cref:
+                        new_stake = st.number_input(
+                            "Adjust stake", min_value=10.0, step=10.0,
+                            value=float(r["stake_hkd"]),
+                            key=f"mb_stake_{r['bet_id']}",
+                        )
+                        if st.button("💾 Update",
+                                          key=f"mb_upd_{r['bet_id']}"):
+                            ub.edit_bet(r["bet_id"],
+                                         stake_hkd=float(new_stake))
+                            st.rerun()
+
+    # ── TAB 3 — Settled history ─────────────────────────────────────────
+    with tabs[2]:
+        settled_rows = [r for r in rows if r.get("status") == "settled"]
+        if not settled_rows:
+            st.info("No settled bets yet. They settle automatically once "
+                       "`reports/dividends_YYYYMMDD.json` exists for the meeting.")
+        else:
+            settled_rows.sort(key=lambda r: r.get("settled_at", ""),
+                                 reverse=True)
+            table = []
+            for r in settled_rows:
+                table.append({
+                    "Date":    r["meeting_date"],
+                    "R":       r["race_number"],
+                    "Type":    r["bet_type"],
+                    "Sels":    ",".join(str(x) for x in r.get("selections", [])),
+                    "Banker":  r.get("banker") or "",
+                    "Stake":   float(r["stake_hkd"]),
+                    "Return":  float(r.get("return_hkd", 0)),
+                    "PnL":     float(r.get("pnl_hkd", 0)),
+                    "Hit":     "✅" if r.get("hit") else "❌",
+                    "Notes":   r.get("notes", ""),
+                })
+            st.dataframe(
+                pd.DataFrame(table), hide_index=True, use_container_width=True,
+                column_config={
+                    "R":      st.column_config.NumberColumn(format="%d"),
+                    "Stake":  st.column_config.NumberColumn(format="$%.0f"),
+                    "Return": st.column_config.NumberColumn(format="$%.2f"),
+                    "PnL":    st.column_config.NumberColumn(format="%+.2f"),
+                },
+            )
+
+    # ── TAB 4 — Summary & timeline ──────────────────────────────────────
+    with tabs[3]:
+        if not rows:
+            st.info("No bets logged yet.")
+        else:
+            win_opts = {"Last 7 days": "7d", "Last 30 days": "30d",
+                           "Year-to-date": "ytd", "All time": "all"}
+            win_label = st.radio("Timeline", list(win_opts.keys()),
+                                      horizontal=True, index=3,
+                                      key="mb_summary_win")
+            filt = ub.filter_by_window(rows, win_opts[win_label])
+            s = ub.summarise(filt)
+
+            m1, m2, m3, m4, m5 = st.columns(5)
+            m1.metric("Bets", s["total_bets"],
+                        delta=f"{s['open']} open" if s["open"] else None)
+            m2.metric("Stake", f"${s['stake']:.0f}")
+            m3.metric("Return", f"${s['return']:.2f}",
+                        delta=f"PnL {s['pnl']:+.2f}")
+            m4.metric("ROI",
+                        f"{s['roi']*100:+.1f}%" if s["stake"] else "—")
+            m5.metric("Hit rate",
+                        f"{s['hit_rate']*100:.1f}%",
+                        delta=f"{s['hits']} wins")
+
+            if s["by_type"]:
+                st.markdown("#### By bet type")
+                bt_rows = []
+                for bt, v in s["by_type"].items():
+                    bt_rows.append({
+                        "Type":   bt,
+                        "Bets":   v["bets"],
+                        "Hits":   v["hits"],
+                        "Hit %":  (v["hits"]/v["bets"]*100) if v["bets"] else 0.0,
+                        "Stake":  v["stake"],
+                        "Return": v["ret"],
+                        "PnL":    v["ret"] - v["stake"],
+                        "ROI %":  ((v["ret"]-v["stake"])/v["stake"]*100)
+                                        if v["stake"] else 0.0,
+                    })
+                st.dataframe(
+                    pd.DataFrame(bt_rows).sort_values("ROI %", ascending=False),
+                    hide_index=True, use_container_width=True,
+                    column_config={
+                        "Bets":   st.column_config.NumberColumn(format="%d"),
+                        "Hits":   st.column_config.NumberColumn(format="%d"),
+                        "Hit %":  st.column_config.NumberColumn(format="%.1f%%"),
+                        "Stake":  st.column_config.NumberColumn(format="$%.0f"),
+                        "Return": st.column_config.NumberColumn(format="$%.2f"),
+                        "PnL":    st.column_config.NumberColumn(format="%+.2f"),
+                        "ROI %":  st.column_config.NumberColumn(format="%+.1f%%"),
+                    },
+                )
+
+            # Equity curve (cumulative PnL by settled_at)
+            settled_sorted = sorted(
+                [r for r in filt if r.get("status") == "settled"],
+                key=lambda r: r.get("settled_at", ""),
+            )
+            if settled_sorted:
+                import pandas as _pd
+                cum = 0.0
+                curve = []
+                for r in settled_sorted:
+                    cum += float(r.get("pnl_hkd", 0))
+                    curve.append({
+                        "When":  r.get("settled_at", ""),
+                        "PnL $": r.get("pnl_hkd", 0),
+                        "Cumulative $": round(cum, 2),
+                    })
+                df_c = _pd.DataFrame(curve)
+                st.markdown("#### Cumulative PnL")
+                st.line_chart(df_c.set_index("When")["Cumulative $"],
+                                 use_container_width=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -7811,18 +8113,32 @@ def page_model_bets():
                     banker_str = ""
                     if b:
                         sp = b.get("win_odds")
+                        edge = b.get("edge")
                         banker_str = (f"#{b['horse_no']} {b['horse_name']} "
                                         f"(p {b.get('p_model',0):.2f}"
                                         + (f", SP {sp:.1f}" if sp else "")
+                                        + (f", edge {edge:.2f}" if edge else "")
                                         + ")")
+                    # Flag the extras / hedge / F4 as a single marker column
+                    markers = []
+                    if t.get("extras"):
+                        markers.append(f"💎{len(t['extras'])} value")
+                    if t.get("hedge"):
+                        markers.append("🛡️ hedge")
+                    if t.get("f4"):
+                        markers.append("⭐ F4")
                     rows.append({
                         "R": it["race_number"],
                         "Class": str(it.get("race_class") or ""),
                         "Dist": it.get("distance"),
                         "Play": t["play"],
+                        "Conf": t.get("confidence", "low"),
                         "Banker": banker_str,
                         "Legs": legs_str,
-                        "Stake": t.get("stake_units", 0),
+                        "Combos": t.get("n_combos", 0),
+                        "Stake (u)": t.get("stake_units", 0),
+                        "HKD min": t.get("stake_hkd_min", 0),
+                        "Overlays": " ".join(markers),
                         "Why": t.get("reason", ""),
                     })
                 df = pd.DataFrame(rows)
@@ -7832,10 +8148,71 @@ def page_model_bets():
                     "QIN_BANKER": "🔵 QIN",
                     "QPL_BANKER": "🟣 QPL",
                     "PLACE": "🟡 PLACE",
+                    "F4_BOX_TOP5": "⭐ F4",
                     "SKIP": "⚫ SKIP",
                 }
                 df["Play"] = df["Play"].map(lambda p: play_icons.get(p, p))
-                st.dataframe(df, hide_index=True, use_container_width=True)
+                conf_icons = {"max": "🔥 max", "high": "🟢 high",
+                                "med": "🟡 med", "low": "⚪ low"}
+                df["Conf"] = df["Conf"].map(lambda c: conf_icons.get(c, c))
+                st.dataframe(
+                    df, hide_index=True, use_container_width=True,
+                    column_config={
+                        "R":         st.column_config.NumberColumn(format="%d"),
+                        "Dist":      st.column_config.NumberColumn(format="%d"),
+                        "Combos":    st.column_config.NumberColumn(format="%d"),
+                        "Stake (u)": st.column_config.NumberColumn(format="%.1f"),
+                        "HKD min":   st.column_config.NumberColumn(format="$%.0f"),
+                    },
+                )
+
+                # ── Overlays panel: Value / Hedge / F4 detail ───────────
+                overlays_rows = []
+                for it in items:
+                    t = it["ticket"]
+                    rn = it["race_number"]
+                    for ex in t.get("extras", []):
+                        overlays_rows.append({
+                            "R": rn, "Type": "💎 VALUE WIN",
+                            "Detail": (f"#{ex['horse_no']} {ex['horse_name']} "
+                                        f"SP {ex.get('sp') or '—'}, "
+                                        f"edge {ex.get('edge')}"),
+                            "Stake (u)": ex.get("stake_units", 0),
+                            "Reason": ex.get("reason", ""),
+                        })
+                    if t.get("hedge"):
+                        h = t["hedge"]
+                        pair_str = " · ".join(
+                            f"#{a}-{c}" for a, _, c, _ in h.get("pairs", [])
+                        )
+                        overlays_rows.append({
+                            "R": rn, "Type": "🛡️ HEDGE",
+                            "Detail": f"QIN pairs: {pair_str}",
+                            "Stake (u)": h.get("stake_units", 0),
+                            "Reason": h.get("reason", ""),
+                        })
+                    if t.get("f4"):
+                        f4 = t["f4"]
+                        names = ", ".join(f"#{h['horse_no']}"
+                                             for h in f4.get("horses", []))
+                        overlays_rows.append({
+                            "R": rn, "Type": "⭐ F4 BOX",
+                            "Detail": f"Top-5 box: {names}",
+                            "Stake (u)": f4.get("stake_units", 0),
+                            "Reason": f4.get("reason", ""),
+                        })
+                if overlays_rows:
+                    with st.expander(f"🔍 Overlays & extras "
+                                        f"({len(overlays_rows)} rows)",
+                                        expanded=False):
+                        st.dataframe(
+                            pd.DataFrame(overlays_rows),
+                            hide_index=True, use_container_width=True,
+                            column_config={
+                                "R": st.column_config.NumberColumn(format="%d"),
+                                "Stake (u)": st.column_config.NumberColumn(format="%.2f"),
+                            },
+                        )
 
                 non_skip = [it for it in items
                              if it["ticket"]["play"] != "SKIP"]
@@ -7845,24 +8222,31 @@ def page_model_bets():
                     f"{', '.join(sorted(set(it['ticket']['play'] for it in non_skip))) or '—'}"
                 )
 
-                with st.expander("How these picks are decided"):
-                    st.markdown(
-                        "Tickets follow the April 2026 edge analysis (59 races, "
-                        "real HKJC dividends):\n\n"
-                        f"1. **QPL banker + 2 legs** — when SARR + ET agree "
-                        f"top-3 AND composite gap ≥ {EDGE_CFG['qpl_gap_min']:.2f}. "
-                        "Small sample (+88% ROI on 5 bets) but strongest single signal.\n"
-                        f"2. **WIN single** on composite #1 when Cls 3–5 and "
-                        f"SP {EDGE_CFG['win_sp_min']:.0f}–{EDGE_CFG['win_sp_max']:.0f}. "
-                        "Main driver (+120% ROI, 43% strike in April).\n"
-                        f"3. **QIN banker + 2 legs** — same class/SP window as WIN but *without* "
-                        "the mutual-top-3 signal; takes the bigger QIN dividend since the "
-                        "model lacks the extra 'top-3' conviction (+10% ROI).\n"
-                        "4. **PLACE single** — same class/SP window but low composite gap — "
-                        "safer exposure when conviction is diluted.\n"
-                        "5. **Skip** — Cls 0/2 races, SP < 3 (chalk) or > 8 (long shot), "
-                        "p_model < 0.20."
-                    )
+                with st.expander("How these picks are decided (v4.7)"):
+                    st.markdown(f"""
+**Priority order** (first rule that fires, wins):
+
+1. **🔵 QIN banker** — _primary_. Cls 3–5, SP {EDGE_CFG['qin_sp_min']:.0f}–{EDGE_CFG['qin_sp_max']:.0f}, p_mod ≥ {EDGE_CFG['banker_pmodel_min']:.2f}.
+   - **Legs: {EDGE_CFG['legs_min']}–{EDGE_CFG['legs_max']}** chosen from gap to #2
+     (`gap ≥ 0.10 → 2 legs` · `gap ≥ 0.04 → 3 legs` · `else 4 legs`).
+   - **Stake: 1u base** + 1u per conviction signal
+     (mutual-top3, gap ≥ 0.08, top-1 edge ≥ 1.2), capped at {EDGE_CFG['stake_cap']:.0f}u.
+2. **🟢 WIN single** — Cls 3–5, SP in band, **top-1 edge ≥ 1.2** and p_mod ≥ 0.25.
+   Stake 2u when edge ≥ 1.4 else 1u.
+3. **🟣 QPL banker** — narrow fallback when (1)+(2) didn't fire: needs
+   SARR+ET mutual-top3 AND gap ≥ {EDGE_CFG['qpl_gap_min']:.2f} (raised from 0.08).
+4. **🟡 PLACE** — same class/SP band but gap < 0.04 (low conviction safety), 0.5u.
+5. **⭐ F4 box top-5** — ultra-high conviction overlay: field ≥ {EDGE_CFG['f4_field_min']},
+   mutual+gap ≥ {EDGE_CFG['f4_gap_min']:.2f}, top-5 p-mass ≥ {EDGE_CFG['f4_top5_mass_min']:.2f}.
+   Added alongside primary play at {EDGE_CFG['f4_stake']}u × 5 combos.
+6. **💎 Value overlays** — any non-top runner with edge ≥ {EDGE_CFG['value_edge_min']:.2f}
+   and p_mod ≥ {EDGE_CFG['value_pmodel_min']:.2f} gets a WIN 0.5u suggestion.
+7. **🛡️ Hedge** — when banker SP < {EDGE_CFG['hedge_trigger_sp']:.1f} (hot fav),
+   box rank {EDGE_CFG['hedge_rank_range'][0]}-{EDGE_CFG['hedge_rank_range'][1]} runners
+   with SP ≥ {EDGE_CFG['hedge_longshot_min']:.0f} as cheap longshot cover.
+
+**Why this priority?** April 2026 post-mortem: QIN Cls3-5 SP3-8 was +10% ROI on 29 bets (most reliable). QPL mutual+gap was only 5 bets — strong but tiny sample. F4 box was +133% incl. a 65x outlier → kept but gated hard.
+""")
 
     # ── TAB 2 — Track record from picks log ────────────────────────────────
     with tabs[1]:
@@ -7893,14 +8277,24 @@ def page_model_bets():
                     "Filter": k,
                     "Bets": v["bets"],
                     "Hits": v["hits"],
-                    "Hit %": f"{hr*100:.1f}%",
-                    "Stake": f"${v['stake']:.1f}",
-                    "Return": f"${v['ret']:.2f}",
-                    "ROI": f"{roi*100:+.1f}%",
+                    "Hit %": hr * 100,
+                    "Stake": v["stake"],
+                    "Return": v["ret"],
+                    "ROI %": roi * 100,
                 })
             if br_rows:
-                st.dataframe(pd.DataFrame(br_rows), hide_index=True,
-                              use_container_width=True)
+                st.dataframe(
+                    pd.DataFrame(br_rows), hide_index=True,
+                    use_container_width=True,
+                    column_config={
+                        "Bets": st.column_config.NumberColumn(format="%d"),
+                        "Hits": st.column_config.NumberColumn(format="%d"),
+                        "Hit %":  st.column_config.NumberColumn(format="%.1f%%"),
+                        "Stake":  st.column_config.NumberColumn(format="$%.1f"),
+                        "Return": st.column_config.NumberColumn(format="$%.2f"),
+                        "ROI %":  st.column_config.NumberColumn(format="%+.1f%%"),
+                    },
+                )
 
             # Equity curve by date
             settled = [r for r in log if r.get("status") == "settled"]
@@ -7935,20 +8329,33 @@ def page_model_bets():
                         status_icon = "❌"
                     else:
                         status_icon = "⏳"
+                    try:
+                        rn_int = int(r.get("race_number"))
+                    except (TypeError, ValueError):
+                        rn_int = None
                     log_rows.append({
                         "Date": r["date"],
-                        "R": r["race_number"],
+                        "R": rn_int,
                         "Play": r["play"],
                         "Banker": b_str,
                         "Legs": legs_str,
                         "Fin": r.get("banker_finish"),
-                        "Stake": r.get("stake", r.get("stake_units", 0)),
-                        "Return": f"${r.get('return', 0):.2f}" if r.get("status")=="settled" else "-",
+                        "Stake": float(r.get("stake", r.get("stake_units", 0)) or 0),
+                        "Return": float(r.get("return", 0) or 0)
+                                    if r.get("status") == "settled" else None,
                         "Hit": status_icon,
                         "Filter": r.get("filter", ""),
                     })
-                st.dataframe(pd.DataFrame(log_rows), hide_index=True,
-                                use_container_width=True)
+                st.dataframe(
+                    pd.DataFrame(log_rows), hide_index=True,
+                    use_container_width=True,
+                    column_config={
+                        "R":      st.column_config.NumberColumn(format="%d"),
+                        "Fin":    st.column_config.NumberColumn(format="%d"),
+                        "Stake":  st.column_config.NumberColumn(format="$%.2f"),
+                        "Return": st.column_config.NumberColumn(format="$%.2f"),
+                    },
+                )
 
     # ── TAB 3 — Strategy sweep (reads pre-computed analysis) ───────────────
     with tabs[2]:
@@ -7976,17 +8383,23 @@ def page_model_bets():
                     sweep_rows.append({
                         "Strategy": strat,
                         "Bets": bets,
-                        "Hit %": f"{hr*100:.1f}%",
-                        "Stake": f"{stake:.1f}",
-                        "Return": f"{ret:.2f}",
-                        "ROI": f"{roi*100:+.1f}%",
-                        "_roi_num": roi,
+                        "Hit %": hr * 100,
+                        "Stake": stake,
+                        "Return": ret,
+                        "ROI %": roi * 100,
                     })
-                sweep_rows.sort(key=lambda r: -r["_roi_num"])
-                df = pd.DataFrame([{k: v for k, v in r.items()
-                                        if k != "_roi_num"}
-                                       for r in sweep_rows])
-                st.dataframe(df, hide_index=True, use_container_width=True)
+                sweep_rows.sort(key=lambda r: -r["ROI %"])
+                st.dataframe(
+                    pd.DataFrame(sweep_rows), hide_index=True,
+                    use_container_width=True,
+                    column_config={
+                        "Bets":   st.column_config.NumberColumn(format="%d"),
+                        "Hit %":  st.column_config.NumberColumn(format="%.1f%%"),
+                        "Stake":  st.column_config.NumberColumn(format="%.1f"),
+                        "Return": st.column_config.NumberColumn(format="%.2f"),
+                        "ROI %":  st.column_config.NumberColumn(format="%+.1f%%"),
+                    },
+                )
                 st.caption(
                     "All rows use flat 1-unit stake per race. Dividends are "
                     "real HK$1 multipliers from `reports/dividends_*.json`."
@@ -8238,6 +8651,7 @@ def main():
         ("Live Feed",      "📡 Live Feed"),
         ("Live Odds",      "💹 Live Odds"),
         ("Model Bets",     "🎯 Model Bets"),
+        ("My Bets",        "💰 My Bets"),
         ("Blackbook",      "📓 Blackbook"),
         ("Trials",         "🎽 Trials"),
         ("Backtest",       "🧪 Backtest"),
@@ -8275,6 +8689,8 @@ def main():
         page_live_odds()
     elif page == "Model Bets":
         page_model_bets()
+    elif page == "My Bets":
+        page_my_bets()
     elif page == "Form Guide":
         page_form_guide()
     elif page == "Trials":

@@ -790,16 +790,70 @@ def _csv_dump(path: str, meetings: list[dict]):
 
 # Edge thresholds derived from April 2026 analysis.
 EDGE_CFG = {
+    # ------------------------------------------------------------------
+    # Core class / SP gates (April 2026 empirical edges)
+    # ------------------------------------------------------------------
     "win_class_ok":       {"3", "4", "5"},
     "win_sp_min":         3.0,
     "win_sp_max":         8.0,
     "place_sp_max":       8.0,
-    "qpl_mutual_required": True,
-    "qpl_gap_min":        0.08,
     "qin_sp_min":         3.0,
     "qin_sp_max":         8.0,
     "qin_class_ok":       {"3", "4", "5"},
     "banker_pmodel_min":  0.20,
+
+    # ------------------------------------------------------------------
+    # QPL banker — now a narrow fallback only when QIN isn't fireable
+    # ------------------------------------------------------------------
+    "qpl_mutual_required": True,
+    "qpl_gap_min":        0.10,        # raised: only extreme conviction
+
+    # ------------------------------------------------------------------
+    # Flexible leg count (was hardcoded 2)
+    # ------------------------------------------------------------------
+    "legs_min":           2,
+    "legs_max":           4,
+    "legs_gap_tight":     0.030,       # gap between consecutive legs < this
+                                        # → keep the extra leg (field is spread)
+    "leg_min_pmodel":     0.05,
+
+    # ------------------------------------------------------------------
+    # Value gates (market edge flagging)
+    # ------------------------------------------------------------------
+    "value_edge_min":     1.25,        # overlay: edge ≥ this → value pick
+    "value_pmodel_min":   0.10,
+    "chalk_edge_max":     0.90,        # top pick trading as overbet favourite
+    "chalk_sp_max":       3.0,         # SP < this is the "hot fav" band
+
+    # ------------------------------------------------------------------
+    # Confidence-based stake sizing (multipliers on the 1u base)
+    # Output is in units; dashboard converts to HKD at $10/unit.
+    # ------------------------------------------------------------------
+    "stake_base":         1.0,
+    "stake_bonus_mutual": 1.0,         # +1u if SARR & ET agree top-3
+    "stake_bonus_gap":    1.0,         # +1u if top-1 gap to #2 ≥ 0.08
+    "stake_bonus_value":  1.0,         # +1u if top-1 edge ≥ 1.2
+    "stake_cap":          5.0,         # cap regardless of signals
+
+    # ------------------------------------------------------------------
+    # F4 box top-5 — ultra-high conviction only
+    # ------------------------------------------------------------------
+    "f4_field_min":       10,
+    "f4_top5_mass_min":   0.55,        # sum of p_model over top-5 ≥ this
+    "f4_gap_min":         0.05,        # top-1 gap to #2
+    "f4_stake":           0.5,         # 0.5u = ~$5 per combo if base is $10
+
+    # ------------------------------------------------------------------
+    # Hedge (longshot cover): when banker SP is very short, cheap cover
+    # on composite-rank 4-6 horses with SP ≥ 10.
+    # ------------------------------------------------------------------
+    "hedge_trigger_sp":   4.0,         # banker SP below → consider hedge
+    "hedge_longshot_min": 10.0,        # cover candidate SP ≥ this
+    "hedge_rank_range":   (4, 6),      # composite rank range for cover legs
+    "hedge_stake":        0.2,         # per pair
+
+    # HKD-per-unit conversion (dashboard consumes this)
+    "hkd_per_unit":       10.0,
 }
 
 
@@ -816,31 +870,175 @@ def _mutual_top3(top: dict) -> bool:
     return top["sarr_rank"] <= 3 and top.get("et_rank", 99) <= 3
 
 
+def _choose_n_legs(rows: list[dict], gap_top12: float) -> int:
+    """Pick 2-4 legs based on field spread.
+
+    - gap_top12 ≥ 0.10: very concentrated → 2 legs (cheap, high per-combo ROI)
+    - gap_top12 ≥ 0.04: standard → 3 legs
+    - otherwise: 4 legs (field is spread, wider net required)
+    Clamped by EDGE_CFG["legs_min"/"legs_max"] and available runners.
+    """
+    available = max(0, len(rows) - 1)
+    if gap_top12 >= 0.10:
+        n = 2
+    elif gap_top12 >= 0.04:
+        n = 3
+    else:
+        n = 4
+    n = max(EDGE_CFG["legs_min"], min(n, EDGE_CFG["legs_max"]))
+    return min(n, available)
+
+
+def _value_overlays(rows: list[dict]) -> list[dict]:
+    """Flag non-top runners that show market value (edge ≥ threshold)."""
+    out = []
+    if not rows:
+        return out
+    top_no = rows[0]["horse_no"]
+    for r in rows[1:]:
+        edge = r.get("edge")
+        if edge is None:
+            continue
+        if (edge >= EDGE_CFG["value_edge_min"]
+                and r["p_model"] >= EDGE_CFG["value_pmodel_min"]
+                and r["horse_no"] != top_no):
+            out.append(r)
+    return out[:3]   # cap at 3 overlays to avoid scatter
+
+
+def _compute_stake_units(top: dict, mutual: bool, gap: float) -> tuple[float, list[str]]:
+    """Scale stake by conviction signals. Returns (units, reasons)."""
+    units = EDGE_CFG["stake_base"]
+    reasons = [f"base {units:.1f}u"]
+    if mutual:
+        units += EDGE_CFG["stake_bonus_mutual"]
+        reasons.append(f"+{EDGE_CFG['stake_bonus_mutual']:.1f}u mutual-top3")
+    if gap >= 0.08:
+        units += EDGE_CFG["stake_bonus_gap"]
+        reasons.append(f"+{EDGE_CFG['stake_bonus_gap']:.1f}u gap {gap:.2f}")
+    edge = top.get("edge")
+    if edge is not None and edge >= 1.2:
+        units += EDGE_CFG["stake_bonus_value"]
+        reasons.append(f"+{EDGE_CFG['stake_bonus_value']:.1f}u edge {edge:.2f}")
+    units = min(units, EDGE_CFG["stake_cap"])
+    return round(units, 2), reasons
+
+
+def _confidence_tier(units: float) -> str:
+    if units >= 4.0: return "max"
+    if units >= 3.0: return "high"
+    if units >= 2.0: return "med"
+    return "low"
+
+
+def _maybe_f4_box(race: dict, rows: list[dict], mutual: bool,
+                    gap: float) -> Optional[dict]:
+    """Evaluate F4 box top-5 eligibility.
+
+    F4 is the Pick-4 finish in any-order exacta-style bet. Here we interpret
+    "F4 box top-5" as boxing the top-5 composite picks as a 4-horse box
+    (i.e. the user plays first-4 box over their top-5 → C(5,4)=5 combinations,
+    at 0.5u per combination). Fires ONLY on ultra-high conviction to keep
+    variance bounded.
+    """
+    cls = _class_key(race)
+    if cls not in EDGE_CFG["win_class_ok"]:
+        return None
+    if len(rows) < 5:
+        return None
+    if not mutual:
+        return None
+    if gap < EDGE_CFG["f4_gap_min"]:
+        return None
+    field = len(rows)
+    if field < EDGE_CFG["f4_field_min"]:
+        return None
+    top5_mass = sum(r.get("p_model", 0.0) for r in rows[:5])
+    if top5_mass < EDGE_CFG["f4_top5_mass_min"]:
+        return None
+    return {
+        "play": "F4_BOX_TOP5",
+        "horses": rows[:5],
+        "n_combos": 5,                                   # C(5,4)
+        "stake_units_per_combo": EDGE_CFG["f4_stake"],
+        "stake_units": EDGE_CFG["f4_stake"] * 5,
+        "reason": (f"Cls{cls}, field {field}, mutual+gap {gap:.2f}, "
+                    f"top-5 p-mass {top5_mass:.2f}"),
+    }
+
+
+def _maybe_hedge(top: dict, rows: list[dict]) -> Optional[dict]:
+    """Longshot cover: when banker is a short-priced favourite, box
+    composite-rank 4-6 horses with SP ≥ 10 as cheap insurance."""
+    sp = top.get("win_odds")
+    if sp is None or sp >= EDGE_CFG["hedge_trigger_sp"]:
+        return None
+    lo, hi = EDGE_CFG["hedge_rank_range"]
+    candidates = []
+    for r in rows:
+        rank = r.get("composite_rank", 99)
+        r_sp = r.get("win_odds")
+        if lo <= rank <= hi and r_sp is not None \
+                and r_sp >= EDGE_CFG["hedge_longshot_min"]:
+            candidates.append(r)
+    if len(candidates) < 2:
+        return None
+    from itertools import combinations
+    pairs = list(combinations(candidates[:3], 2))
+    return {
+        "type": "QIN_LONGSHOT_COVER",
+        "pairs": [(a["horse_no"], a["horse_name"],
+                    b["horse_no"], b["horse_name"]) for a, b in pairs],
+        "stake_units_per_pair": EDGE_CFG["hedge_stake"],
+        "stake_units": EDGE_CFG["hedge_stake"] * len(pairs),
+        "reason": (f"Banker SP {sp:.1f} — covering rank {lo}-{hi} "
+                    f"longshots (SP≥{EDGE_CFG['hedge_longshot_min']})"),
+    }
+
+
 def build_model_ticket(race: dict, rows: list[dict],
                         live_odds: Optional[dict] = None) -> dict:
-    """
-    Return the single recommended ticket for a race based on the filter rules
-    from the April edge analysis.
+    """Return the recommended ticket for a race.
 
-    Output:
+    Philosophy (post-user-feedback v4.7):
+      • QIN is primary (flexible legs 2-4, scaled stake) — positive ROI edge.
+      • QPL is a narrow fallback only when QIN isn't fireable + strong mutual+gap.
+      • F4 box top-5 fires only on ultra-high conviction (bounded variance).
+      • Value overlays added as `extras` when any non-top runner has edge ≥ 1.25.
+      • Stakes scale with conviction (base 1u → up to 5u).
+      • Hedge added when banker is a hot favourite (SP < 4): cheap longshot cover.
+
+    Output schema:
         {
-            "play":       "WIN" | "QIN_BANKER" | "QPL_BANKER" | "PLACE" | "SKIP",
-            "banker":     runner dict or None,
-            "legs":       list of runner dicts (may be empty),
-            "stake_units": float  (1.0 = base unit),
-            "reason":     str,
-            "filter":     str tag (e.g. "Cls3-5+SP3-8" or "mutual+gap")
+            "play": "WIN" | "QIN_BANKER" | "QPL_BANKER" | "PLACE"
+                      | "F4_BOX_TOP5" | "SKIP",
+            "banker":   runner | None,
+            "legs":     [runner, ...],   # 2-4 typically
+            "n_combos": int,              # number of $10-min combos
+            "stake_units":         float, # primary stake total
+            "stake_units_per_combo": float, # usually stake/n_combos
+            "stake_hkd_min":       float, # HKD at $10/unit (informational)
+            "confidence":  "low"|"med"|"high"|"max",
+            "stake_reasons": [str],
+            "extras":       [ {play,horse,stake_units,reason}, ... ],
+            "hedge":        dict | None,
+            "f4":           dict | None,  # F4 box plan if eligible
+            "reason":      str,
+            "filter":      str,
         }
     """
     if not rows:
-        return {"play": "SKIP", "banker": None, "legs": [],
-                "stake_units": 0.0, "reason": "no runners", "filter": "no_rows"}
+        return {"play": "SKIP", "banker": None, "legs": [], "n_combos": 0,
+                "stake_units": 0.0, "stake_units_per_combo": 0.0,
+                "stake_hkd_min": 0.0, "confidence": "low",
+                "stake_reasons": [], "extras": [], "hedge": None, "f4": None,
+                "reason": "no runners", "filter": "no_rows"}
 
     top = rows[0]
     top2 = rows[1] if len(rows) > 1 else None
     cls = _class_key(race)
 
-    # Odds: prefer live, fall back to composite row's stored win_odds
+    # Odds: prefer live, fall back to stored win_odds on the row
     sp = top.get("win_odds")
     if live_odds and top["horse_no"] in live_odds:
         sp = live_odds[top["horse_no"]]
@@ -849,82 +1047,134 @@ def build_model_ticket(race: dict, rows: list[dict],
     gap = (top["p_model"] - top2["p_model"]) if top2 else 0.0
     pmodel = top.get("p_model", 0.0)
 
-    reasons = []
-
-    # --- Priority 1: QPL banker (conviction trade) ---
-    # The rarest but highest-ROI signal when model + SARR agree strongly.
-    if (EDGE_CFG["qpl_mutual_required"] and mutual
-            and gap >= EDGE_CFG["qpl_gap_min"]
-            and pmodel >= EDGE_CFG["banker_pmodel_min"]):
-        # Banker + next 2 legs by composite (small field keeps dividend intact)
-        legs = [r for r in rows[1:3]]
-        return {
-            "play": "QPL_BANKER",
-            "banker": top, "legs": legs,
-            "stake_units": 1.0,
-            "reason": (f"SARR+ET agree top-3; gap {gap:.2f} >= "
-                        f"{EDGE_CFG['qpl_gap_min']}"),
-            "filter": "mutual+gap",
-        }
-
-    # --- Priority 2: WIN single on #1 (Cls3-5 in SP sweet spot) ---
-    if (cls in EDGE_CFG["win_class_ok"] and sp is not None
-            and EDGE_CFG["win_sp_min"] <= sp <= EDGE_CFG["win_sp_max"]):
-        return {
+    value_overlays = _value_overlays(rows)
+    extras: list[dict] = []
+    for v in value_overlays:
+        extras.append({
             "play": "WIN",
-            "banker": top, "legs": [],
-            "stake_units": 1.0,
-            "reason": f"Cls{cls}, SP {sp:.1f} inside {EDGE_CFG['win_sp_min']}-{EDGE_CFG['win_sp_max']}",
-            "filter": "Cls3-5+SP3-8",
+            "horse_no": v["horse_no"],
+            "horse_name": v["horse_name"],
+            "sp": v.get("win_odds"),
+            "edge": v.get("edge"),
+            "stake_units": 0.5,
+            "reason": (f"value overlay: edge {v['edge']:.2f} "
+                        f"p_mod {v['p_model']:.2f}"),
+        })
+
+    f4_plan = _maybe_f4_box(race, rows, mutual, gap)
+
+    def _finalize(play: str, banker, legs, filter_tag, reason_str,
+                    base_units: Optional[float] = None,
+                    stake_reasons: Optional[list] = None,
+                    n_combos_override: Optional[int] = None):
+        units = base_units if base_units is not None else EDGE_CFG["stake_base"]
+        n_combos = n_combos_override if n_combos_override is not None else \
+            (len(legs) if play in ("QIN_BANKER", "QPL_BANKER") and legs else 1)
+        per_combo = units / n_combos if n_combos else units
+        hedge = _maybe_hedge(banker, rows) if play == "QIN_BANKER" and banker else None
+        return {
+            "play":   play,
+            "banker": banker,
+            "legs":   legs,
+            "n_combos": n_combos,
+            "stake_units":           round(units, 2),
+            "stake_units_per_combo": round(per_combo, 2),
+            "stake_hkd_min":         round(units * EDGE_CFG["hkd_per_unit"], 1),
+            "confidence": _confidence_tier(units),
+            "stake_reasons": stake_reasons or [],
+            "extras": extras,
+            "hedge":  hedge,
+            "f4":     f4_plan,
+            "reason": reason_str,
+            "filter": filter_tag,
         }
 
-    # --- Priority 3: QIN banker (market-edge trade, no mutual required) ---
-    # When the top pick is in the odds-5-8 band AND we DON'T have the
-    # mutual-top-3 signal, QIN's bigger dividend outperforms QPL (+10% vs -21%).
+    # ───────────────────────────────────────────────────────────────
+    # Priority 1: QIN banker (primary, flexible legs, scaled stake)
+    # ───────────────────────────────────────────────────────────────
     if (cls in EDGE_CFG["qin_class_ok"] and sp is not None
             and EDGE_CFG["qin_sp_min"] <= sp <= EDGE_CFG["qin_sp_max"]
-            and pmodel >= EDGE_CFG["banker_pmodel_min"] and not mutual):
-        legs = [r for r in rows[1:3]]
-        return {
-            "play": "QIN_BANKER",
-            "banker": top, "legs": legs,
-            "stake_units": 1.0,
-            "reason": f"Cls{cls}, SP {sp:.1f} band — QIN dividend premium",
-            "filter": "Cls3-5+SP3-8+no-mutual",
-        }
+            and pmodel >= EDGE_CFG["banker_pmodel_min"]):
+        n_legs = _choose_n_legs(rows, gap)
+        legs = rows[1:1 + n_legs]
+        units, reasons = _compute_stake_units(top, mutual, gap)
+        filt = f"QIN Cls{cls}+SP{EDGE_CFG['qin_sp_min']:.0f}-{EDGE_CFG['qin_sp_max']:.0f}"
+        if mutual: filt += "+mutual"
+        return _finalize(
+            "QIN_BANKER", top, legs, filt,
+            (f"Cls{cls}, SP {sp:.1f}; {n_legs} legs (gap {gap:.2f}); "
+             + ", ".join(reasons)),
+            base_units=units, stake_reasons=reasons,
+        )
 
-    # --- Priority 4: PLACE single (low-variance bankroll smoother) ---
-    # Only fires when SP is within the win-band but conviction is low (gap<0.04).
-    # Disabled as a pure-fallback on chalk (SP<3) — that subset bleeds -38% ROI.
+    # ───────────────────────────────────────────────────────────────
+    # Priority 2: WIN single on value-overlay top pick
+    # Used when top-pick's edge itself is strong (not chalk).
+    # ───────────────────────────────────────────────────────────────
+    top_edge = top.get("edge")
+    if (cls in EDGE_CFG["win_class_ok"] and sp is not None
+            and EDGE_CFG["win_sp_min"] <= sp <= EDGE_CFG["win_sp_max"]
+            and top_edge is not None and top_edge >= 1.2
+            and pmodel >= 0.25):
+        units = 2.0 if top_edge >= 1.4 else 1.0
+        reasons = [f"WIN value — edge {top_edge:.2f}"]
+        return _finalize(
+            "WIN", top, [], "WIN value (edge≥1.2)",
+            f"Cls{cls}, SP {sp:.1f}, edge {top_edge:.2f} → WIN {units:.0f}u",
+            base_units=units, stake_reasons=reasons, n_combos_override=1,
+        )
+
+    # ───────────────────────────────────────────────────────────────
+    # Priority 3: QPL banker — narrow fallback on extreme mutual+gap
+    # when QIN wasn't fireable (e.g. SP outside band).
+    # ───────────────────────────────────────────────────────────────
+    if (mutual and gap >= EDGE_CFG["qpl_gap_min"]
+            and pmodel >= EDGE_CFG["banker_pmodel_min"]):
+        n_legs = max(3, _choose_n_legs(rows, gap))
+        legs = rows[1:1 + n_legs]
+        units, reasons = _compute_stake_units(top, mutual, gap)
+        return _finalize(
+            "QPL_BANKER", top, legs, "QPL mutual+gap (fallback)",
+            f"Extreme mutual+gap {gap:.2f}, {n_legs} legs; "
+            + ", ".join(reasons),
+            base_units=units, stake_reasons=reasons,
+        )
+
+    # ───────────────────────────────────────────────────────────────
+    # Priority 4: PLACE safety (Cls3-5 + SP in band + low conviction gap)
+    # ───────────────────────────────────────────────────────────────
     if (cls in EDGE_CFG["win_class_ok"] and sp is not None
             and EDGE_CFG["win_sp_min"] <= sp <= EDGE_CFG["place_sp_max"]
             and gap < 0.04):
-        return {
-            "play": "PLACE",
-            "banker": top, "legs": [],
-            "stake_units": 0.5,
-            "reason": (f"Cls{cls}, SP {sp:.1f} in band but low gap "
-                        f"{gap:.2f} — take PLACE for safety"),
-            "filter": "Cls3-5+SP3-8 (low-gap place)",
-        }
+        return _finalize(
+            "PLACE", top, [], "PLACE low-gap safety",
+            f"Cls{cls}, SP {sp:.1f}, low gap {gap:.2f} → PLACE",
+            base_units=0.5, stake_reasons=["base 0.5u (low conviction)"],
+            n_combos_override=1,
+        )
 
-    # --- Skip: edge too thin for any play ---
+    # ───────────────────────────────────────────────────────────────
+    # SKIP — no edge. F4 plan (if any) still surfaced via extras.
+    # ───────────────────────────────────────────────────────────────
+    skip_reasons = []
     if cls not in EDGE_CFG["win_class_ok"]:
-        reasons.append(f"Cls{cls} outside sweet spot")
+        skip_reasons.append(f"Cls{cls} outside sweet spot")
     if sp is None:
-        reasons.append("no odds")
-    elif sp > EDGE_CFG["win_sp_max"]:
-        reasons.append(f"SP {sp:.1f} > {EDGE_CFG['win_sp_max']}")
-    elif sp < EDGE_CFG["win_sp_min"]:
-        reasons.append(f"SP {sp:.1f} < {EDGE_CFG['win_sp_min']} (chalk)")
+        skip_reasons.append("no odds")
+    elif sp > EDGE_CFG["qin_sp_max"]:
+        skip_reasons.append(f"SP {sp:.1f} > {EDGE_CFG['qin_sp_max']}")
+    elif sp < EDGE_CFG["qin_sp_min"]:
+        skip_reasons.append(f"SP {sp:.1f} < {EDGE_CFG['qin_sp_min']} (chalk)")
     if pmodel < EDGE_CFG["banker_pmodel_min"]:
-        reasons.append(f"p_model {pmodel:.2f} low")
+        skip_reasons.append(f"p_model {pmodel:.2f} low")
 
     return {
         "play": "SKIP",
-        "banker": None, "legs": [],
-        "stake_units": 0.0,
-        "reason": "; ".join(reasons) or "no edge",
+        "banker": None, "legs": [], "n_combos": 0,
+        "stake_units": 0.0, "stake_units_per_combo": 0.0,
+        "stake_hkd_min": 0.0, "confidence": "low",
+        "stake_reasons": [], "extras": extras, "hedge": None, "f4": f4_plan,
+        "reason": "; ".join(skip_reasons) or "no edge",
         "filter": "no_edge",
     }
 
@@ -985,6 +1235,8 @@ def _ticket_log_row(date_compact: str, venue: str, meeting_item: dict) -> dict:
     """Normalise a meeting_item (from build_meeting_tickets) into a log row."""
     t = meeting_item["ticket"]
     b = t.get("banker") or {}
+    hedge = t.get("hedge") or {}
+    f4 = t.get("f4") or {}
     return {
         "date": date_compact,
         "venue": venue,
@@ -995,14 +1247,36 @@ def _ticket_log_row(date_compact: str, venue: str, meeting_item: dict) -> dict:
         "play":       t["play"],
         "filter":     t.get("filter"),
         "stake_units": t.get("stake_units", 0.0),
+        "stake_units_per_combo": t.get("stake_units_per_combo", 0.0),
+        "n_combos":   t.get("n_combos", 0),
+        "stake_hkd_min": t.get("stake_hkd_min", 0.0),
+        "confidence": t.get("confidence", "low"),
+        "stake_reasons": t.get("stake_reasons", []),
         "banker_no":  b.get("horse_no"),
         "banker_name": b.get("horse_name"),
         "banker_sp":  b.get("win_odds"),
         "banker_pmodel": b.get("p_model"),
+        "banker_edge": b.get("edge"),
         "legs": [
-            {"no": l["horse_no"], "name": l["horse_name"]}
+            {"no": l["horse_no"], "name": l["horse_name"],
+             "sp": l.get("win_odds"), "edge": l.get("edge")}
             for l in t.get("legs", [])
         ],
+        "extras": t.get("extras", []),
+        "hedge": ({
+            "type": hedge.get("type"),
+            "pairs": hedge.get("pairs"),
+            "stake_units": hedge.get("stake_units"),
+            "reason": hedge.get("reason"),
+        } if hedge else None),
+        "f4": ({
+            "play": f4.get("play"),
+            "horses": [{"no": h["horse_no"], "name": h["horse_name"]}
+                         for h in f4.get("horses", [])],
+            "n_combos": f4.get("n_combos"),
+            "stake_units": f4.get("stake_units"),
+            "reason": f4.get("reason"),
+        } if f4 else None),
         "reason":     t.get("reason"),
     }
 
