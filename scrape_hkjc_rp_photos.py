@@ -199,8 +199,18 @@ def main() -> int:
             total[k] += v
         if counts["ok"] or counts["skipped"]:
             meeting_days += 1
-        if counts["ok"]:
-            dates_with_photos.append(d)
+        # v4.6: also trigger OCR when photos already existed on disk but no
+        # corresponding .json parse output — previously only NEW downloads
+        # triggered OCR, so re-runs of an already-scraped meeting (or any
+        # interrupted OCR) never re-parsed. Union `ok` with "has-photos-but-
+        # missing-json" set.
+        ymd = d.strftime("%Y%m%d")
+        dir_d = PHOTOS_DIR / ymd
+        jpgs = sorted(dir_d.glob("R*.jpg")) if dir_d.exists() else []
+        needs_ocr = any(not j.with_suffix(".json").exists() for j in jpgs)
+        if counts["ok"] or needs_ocr:
+            if d not in dates_with_photos:
+                dates_with_photos.append(d)
 
     print()
     print(f"Done. Processed {len(dates)} date(s), {meeting_days} meeting day(s).")

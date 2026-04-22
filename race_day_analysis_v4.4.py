@@ -3057,16 +3057,21 @@ def compute_speed_map(df, race, pace_label="Normal"):
 
     Returns list of dicts with smap_col, smap_row, smap_advantage, etc.
 
-    Grid rules (uniform for all races):
+    Grid rules (v4.6, 2026-04-22):
       - 3 rows: RAIL (1), middle (2), WIDE (3). Max 3-4 horses on WIDE row.
-      - 5-6 columns (length): 5 for ≤10 runners, 6 for 11+.
+      - Columns (length): ceil(field/2.5), clamped [4,6]. 12-runner → 5 cols.
       - Column (front/back) driven by ESZ: lowest ESZ → front, highest → back.
-      - Row (rail/wide) driven by DRAW: low draw → rail, high draw → wide.
-        BUT: wide-drawn speed horses (Leader/On-Pace with good ESZ) push forward
-        and stay wide. Wide-drawn closers drop back to find a better lane toward
-        rail/middle. All horses PREFER less ground (rail) but are forced wide
-        by suboptimal draw gates.
+      - Contested-lead redistribution: if pace is Fast/Very Fast AND ≥3 horses
+        end up in the front column, the 3rd+ (by ESZ rank) get demoted one
+        column back with note "pressed back under lead contest". This reflects
+        the real outcome where several "leaders" can't all lead and shuffle.
+      - Row (rail/wide) driven by DRAW within column. HV wide-speed refinement:
+        gate ≥0.8N AND ESZ < -0.5 at HV → jockey concedes, rails up (push
+        back one col, rail row, +0.1 advantage note "wide gate conceded").
       - ST 1000m straight: draw reversed (gate 1 = widest).
+      - Pace-reactive advantage weighting: multipliers applied to advantage
+        terms based on pace_label (fast pace amplifies closer/back bonuses,
+        slow pace inverts).
     """
 
     field_size = len(df)
@@ -3077,12 +3082,29 @@ def compute_speed_map(df, race, pace_label="Normal"):
     venue = MEETING_VENUE
     is_straight = (venue == "ST" and distance == 1000)
 
-    # ── Fixed grid: 3 rows, N cols ──
-    # Choose n_cols so each column gets ~3 horses → all 3 rows fill naturally.
-    # ceil(field/3) keeps columns ≈ 3 deep; cap 3-6 for visual size.
+    # ── Grid (v4.6): boost resolution — ceil(field/2.5), clamp [4,6] ──
+    # 8-runner → 4 cols, 10-runner → 4 cols, 12-runner → 5 cols, 14-runner → 6.
     n_rows = 3
-    n_cols = max(3, min(6, math.ceil(field_size / 3)))
+    n_cols = max(4, min(6, math.ceil(field_size / 2.5)))
     wide_cap = 4  # max horses on WIDE row
+
+    # ── Pace-reactive advantage multipliers (v4.6) ──
+    # Fast pace (front collapses): back-half horses benefit, front-rail horses
+    # less so. Slow pace: opposite. Drives the .mult_* scalars below.
+    is_fast = str(pace_label).lower() in ("fast", "very fast", "slightly fast")
+    is_slow = str(pace_label).lower() in ("slow", "very slow", "slightly slow")
+    if is_fast:
+        mult_closer_back = 1.5
+        mult_leader_rail = 0.7
+        mult_wide_fwd_pen = 0.7   # wide-forward penalty diluted under hot pace
+    elif is_slow:
+        mult_closer_back = 0.6
+        mult_leader_rail = 1.4
+        mult_wide_fwd_pen = 1.3
+    else:
+        mult_closer_back = 1.0
+        mult_leader_rail = 1.0
+        mult_wide_fwd_pen = 1.0
 
     # ── 1. Build horse list ──
     horses = []
@@ -3104,7 +3126,6 @@ def compute_speed_map(df, race, pace_label="Normal"):
         })
 
     # ── 2. Assign column by ESZ (front-to-back) ──
-    # Sort by ESZ ascending: most negative (fastest early speed) → front
     horses.sort(key=lambda h: h["esz"])
     horses_per_col = max(1, math.ceil(field_size / n_cols))
 
@@ -3112,10 +3133,34 @@ def compute_speed_map(df, race, pace_label="Normal"):
         col = n_cols - (i // horses_per_col)
         h["smap_col"] = max(1, min(n_cols, col))
 
+    # ── 2b. Contested-lead redistribution (v4.6) ──
+    # Under hot pace (Fast/Very Fast) with ≥3 horses assigned to the front
+    # column, only the 2 strongest by ESZ keep the lead. The rest drop one
+    # column (but not below col 2). Flag them as "pressed back".
+    pressed_back = set()
+    if is_fast:
+        front_horses = [h for h in horses if h["smap_col"] == n_cols]
+        if len(front_horses) >= 3:
+            # Keep 2 most aggressive leaders; demote the rest
+            front_horses.sort(key=lambda h: h["esz"])  # lowest ESZ = fastest
+            for h in front_horses[2:]:
+                h["smap_col"] = max(2, n_cols - 1)
+                pressed_back.add(h["horse_no"])
+
+    # ── 2c. HV wide-speed-draw: jockey concedes + rails up (v4.6) ──
+    # At HV (tight turns), a wide-drawn natural speed horse won't usually push
+    # forward wide all race — the jockey typically concedes and rails up. Push
+    # them back one col and flag for rail row priority.
+    hv_conceded = set()
+    if venue == "HV" and not is_straight:
+        for h in horses:
+            if (h["draw"] >= field_size * 0.8
+                    and h["esz"] < -0.5
+                    and h["smap_col"] >= n_cols - 1):
+                h["smap_col"] = max(2, h["smap_col"] - 1)
+                hv_conceded.add(h["horse_no"])
+
     # ── 3. Assign row by DRAW rank within each column ──
-    # Within each column the lowest-draw horse gets RAIL, next gets W2,
-    # highest-draw gets WIDE. This mirrors real jockey behavior — everyone
-    # settles inside, and only the widest-drawn in each pace group stays out.
     grid = {}
 
     for col in range(n_cols, 0, -1):
@@ -3123,11 +3168,15 @@ def compute_speed_map(df, race, pace_label="Normal"):
         if not col_horses:
             continue
 
-        # Sort within column by draw: low draw → rail priority
-        if is_straight:
-            col_horses.sort(key=lambda h: -h["draw"])  # ST 1000m reversed
-        else:
-            col_horses.sort(key=lambda h: h["draw"])
+        # Sort within column: HV-conceded → rail first; else draw-based
+        def _row_sort_key(h):
+            if h["horse_no"] in hv_conceded:
+                return (0, 0)  # rail priority
+            if is_straight:
+                return (1, -h["draw"])  # ST 1000m reversed
+            return (1, h["draw"])
+
+        col_horses.sort(key=_row_sort_key)
 
         # Assign rows sequentially: 1st → RAIL, 2nd → W2, 3rd → WIDE
         for idx, h in enumerate(col_horses):
@@ -3182,28 +3231,36 @@ def compute_speed_map(df, race, pace_label="Normal"):
         col = h["smap_col"]
         row = h["smap_row"]
 
+        # v4.6 flags
+        if h["horse_no"] in pressed_back:
+            notes.append("Pressed back under lead contest — lucky trip if pace collapses")
+            advantage += 0.2 * mult_closer_back
+        if h["horse_no"] in hv_conceded:
+            notes.append(f"Wide gate {h['draw']} conceded + rail trip at HV")
+            advantage += 0.1
+
         # a. Rail at bends saves ground
         if not is_straight:
             if row == 1 and col >= n_cols - 1:
                 if style in ("Leader", "On-Pace"):
                     notes.append("Inside + forward — saves ground at bend")
-                    advantage += 0.5
+                    advantage += 0.5 * mult_leader_rail
             elif row == 3 and col >= n_cols - 1:
                 notes.append("Wide + forward — loses ground at bend")
-                advantage -= 0.4
+                advantage -= 0.4 * mult_wide_fwd_pen
 
         # b. Style-position alignment
         if style == "Leader":
             if col >= n_cols - 1 and row <= 2:
                 notes.append("Leader on rail — controlling position")
-                advantage += 0.3
+                advantage += 0.3 * mult_leader_rail
         elif style == "Closer":
             if col <= 2 and row >= 2:
                 notes.append("Closer behind — clear running room for late surge")
-                advantage += 0.3
+                advantage += 0.3 * mult_closer_back
             elif col <= 2 and row == 1:
                 notes.append("Closer on rail — saves ground, needs clear run")
-                advantage += 0.1
+                advantage += 0.1 * mult_closer_back
         elif style in ("Midfield", "On-Pace"):
             if row == 1 and 2 <= col <= n_cols - 2:
                 has_cover = (grid.get((col + 1, row)) is not None
@@ -3214,18 +3271,19 @@ def compute_speed_map(df, race, pace_label="Normal"):
 
         # c. Wide draw + forward = energy cost
         if not is_straight and h["draw"] > field_size * 0.7 and col >= n_cols - 1:
-            notes.append(f"Wide draw ({h['draw']}) pushing forward — uses energy")
-            advantage -= 0.3
+            if h["horse_no"] not in hv_conceded:
+                notes.append(f"Wide draw ({h['draw']}) pushing forward — uses energy")
+                advantage -= 0.3 * mult_wide_fwd_pen
 
         # d. Low draw + speed = ideal rail
         if not is_straight and h["draw"] <= max(2, field_size * 0.2) and h["esz"] < -0.3:
             notes.append("Inside draw + natural speed — ideal rail position")
-            advantage += 0.3
+            advantage += 0.3 * mult_leader_rail
 
         # e. HV tight turns penalty
         if venue == "HV" and not is_straight and row == 3:
             notes.append("Wide at HV — extra ground on tight turns")
-            advantage -= 0.3
+            advantage -= 0.3 * mult_wide_fwd_pen
 
         # f. ST 1000m straight-specific
         if is_straight:

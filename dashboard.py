@@ -7927,11 +7927,76 @@ def page_my_bets():
     )
 
     tabs = st.tabs(
-        ["➕ New bet", "📒 Open bets", "✅ Settled history", "📊 Summary"]
+        ["➕ New bet", "📒 Open bets", "✅ Settled history",
+         "📊 Summary", "🆚 vs Model"]
     )
 
     # ── TAB 1 — Submit ──────────────────────────────────────────────────
     with tabs[0]:
+        # ── Statement import expander ────────────────────────────────
+        with st.expander("📥 Import bookie statement (.txt)", expanded=False):
+            st.caption(
+                "Upload the text file downloaded from your HKJC account "
+                "(Account Records) — every Quinella + Quinella Place bundle "
+                "is split into a QIN + QPL record (½ debit each). "
+                "Already-imported bets (by bookie ref #) are skipped."
+            )
+            up = st.file_uploader("Statement .txt", type=["txt"],
+                                  key="mb_stmt_upload")
+            if up is not None:
+                import tempfile
+                import parse_acct_statement as pas
+                with tempfile.NamedTemporaryFile(
+                        mode="wb", suffix=".txt", delete=False) as f:
+                    f.write(up.read())
+                    tmp_path = Path(f.name)
+                try:
+                    cprev, cimp = st.columns([1, 1])
+                    with cprev:
+                        preview = st.button(
+                            "🔍 Preview only",
+                            key="mb_stmt_prev",
+                            use_container_width=True,
+                        )
+                    with cimp:
+                        do_import = st.button(
+                            "✅ Import now",
+                            key="mb_stmt_imp",
+                            type="primary",
+                            use_container_width=True,
+                        )
+                    if preview:
+                        parsed = pas.parse_statement(tmp_path)
+                        st.info(f"Parsed {len(parsed)} bet block(s).")
+                        if parsed:
+                            st.dataframe(
+                                pd.DataFrame(parsed),
+                                hide_index=True,
+                                use_container_width=True,
+                            )
+                    if do_import:
+                        summary = pas.import_statement(tmp_path)
+                        st.success(
+                            f"Inserted **{summary['inserted']}** record(s); "
+                            f"skipped **{summary['skipped']}** "
+                            f"(from {summary['total_blocks']} blocks)."
+                        )
+                        if summary["inserted_details"]:
+                            st.dataframe(
+                                pd.DataFrame(summary["inserted_details"]),
+                                hide_index=True,
+                                use_container_width=True,
+                            )
+                        if summary["skipped_refs"]:
+                            st.caption(
+                                "Skipped refs: "
+                                + ", ".join(summary["skipped_refs"])
+                            )
+                finally:
+                    try:
+                        tmp_path.unlink(missing_ok=True)
+                    except Exception:
+                        pass
         st.markdown("### Submit a new bet")
 
         # Friendly labels + inline "how to enter" hints per bet type
@@ -8232,6 +8297,155 @@ def page_my_bets():
                 st.markdown("#### Cumulative PnL")
                 st.line_chart(df_c.set_index("When")["Cumulative $"],
                                  use_container_width=True)
+
+    # ── TAB 5 — vs Model (ROI comparison & deviation notes) ─────────────
+    with tabs[4]:
+        st.markdown("### Your bets vs the model")
+        st.caption(
+            "For each user bet we load that meeting's race_day_report (v4.4). "
+            "We compare your selections to the model's top picks for that "
+            "race and compute ROI on both sides. Helps answer: *am I "
+            "out-performing the model when I deviate, or not?*"
+        )
+        settled = [r for r in rows if r.get("status") == "settled"]
+        if not settled:
+            st.info("No settled bets yet. Come back after meetings settle.")
+        else:
+            # Load model reports cache
+            import json as _json
+            reports_by_date: dict[str, dict] = {}
+            for r in settled:
+                d = r.get("meeting_date")
+                if not d or d in reports_by_date:
+                    continue
+                p = BASE / "reports" / f"race_day_report_{d}_v4.4.json"
+                if p.exists():
+                    try:
+                        reports_by_date[d] = _json.loads(
+                            p.read_text(encoding="utf-8"))
+                    except Exception:
+                        pass
+
+            def _top_picks(rep: dict, race_no: int) -> list[dict]:
+                """Return picks list sorted by rank for that race."""
+                for race in rep.get("races", []):
+                    if race.get("race_number") == race_no:
+                        picks = race.get("picks") or []
+                        picks_sorted = sorted(
+                            picks, key=lambda p: p.get("rank", 99))
+                        return picks_sorted
+                return []
+
+            # Build comparison rows
+            rows_cmp = []
+            for b in settled:
+                rep = reports_by_date.get(b.get("meeting_date"))
+                if not rep:
+                    continue
+                picks = _top_picks(rep, int(b.get("race_number") or 0))
+                top_nos = [int(p.get("horse_no") or 0) for p in picks[:3]
+                           if p.get("horse_no")]
+                top3_set = set(top_nos)
+                sels_set = set(int(x) for x in (b.get("selections") or []))
+                if b.get("banker"):
+                    sels_set.add(int(b["banker"]))
+                overlap = len(sels_set & top3_set)
+                deviation = len(sels_set - top3_set)
+                user_pnl = float(b.get("pnl_hkd") or 0)
+                user_stake = float(b.get("stake_hkd") or 0)
+                rows_cmp.append({
+                    "Date":        b["meeting_date"],
+                    "Venue":       b["venue"],
+                    "R":           b["race_number"],
+                    "Bet":         b["bet_type"],
+                    "Your sel":    ",".join(str(x) for x in sorted(sels_set)),
+                    "Model top3":  ",".join(str(x) for x in top_nos),
+                    "Overlap":     overlap,
+                    "Deviation":   deviation,
+                    "Stake $":     user_stake,
+                    "Your PnL $":  round(user_pnl, 2),
+                    "ROI %":       ((user_pnl / user_stake * 100)
+                                    if user_stake else 0),
+                })
+            if not rows_cmp:
+                st.warning("No model reports (v4.4) found for your settled "
+                           "meetings — nothing to compare.")
+            else:
+                df_cmp = pd.DataFrame(rows_cmp)
+                # Aggregate: sum over all rows, and by deviation bucket
+                def _bucket(dev: int) -> str:
+                    if dev == 0:
+                        return "🟢 fully aligned"
+                    if dev == 1:
+                        return "🟡 1 off model"
+                    return "🔴 deviated ≥2"
+                df_cmp["Alignment"] = df_cmp["Deviation"].map(_bucket)
+
+                agg = (df_cmp.groupby("Alignment")
+                       .agg(Bets=("Your PnL $", "size"),
+                            Stake=("Stake $", "sum"),
+                            PnL=("Your PnL $", "sum"))
+                       .reset_index())
+                agg["ROI %"] = (agg["PnL"] / agg["Stake"] * 100).round(1)
+
+                st.markdown("#### Alignment buckets (your PnL by deviation)")
+                st.dataframe(
+                    agg, hide_index=True, use_container_width=True,
+                    column_config={
+                        "Bets":  st.column_config.NumberColumn(format="%d"),
+                        "Stake": st.column_config.NumberColumn(format="$%.0f"),
+                        "PnL":   st.column_config.NumberColumn(format="%+.2f"),
+                        "ROI %": st.column_config.NumberColumn(format="%+.1f%%"),
+                    },
+                )
+
+                st.markdown("#### Per-bet comparison")
+                st.dataframe(
+                    df_cmp.sort_values(["Date", "R"]),
+                    hide_index=True, use_container_width=True,
+                    column_config={
+                        "Stake $":    st.column_config.NumberColumn(format="$%.0f"),
+                        "Your PnL $": st.column_config.NumberColumn(format="%+.2f"),
+                        "ROI %":      st.column_config.NumberColumn(format="%+.1f%%"),
+                    },
+                )
+
+                # Best deviations (hits) / worst deviations (misses)
+                deviated = df_cmp[df_cmp["Deviation"] > 0]
+                if not deviated.empty:
+                    wins = deviated[deviated["Your PnL $"] > 0].nlargest(
+                        5, "Your PnL $")
+                    losses = deviated[deviated["Your PnL $"] < 0].nsmallest(
+                        5, "Your PnL $")
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        st.markdown("##### 🎯 Deviated & hit (top 5)")
+                        if wins.empty:
+                            st.caption("None yet.")
+                        else:
+                            st.dataframe(
+                                wins[["Date", "R", "Bet", "Your sel",
+                                      "Model top3", "Your PnL $"]],
+                                hide_index=True, use_container_width=True,
+                            )
+                    with c2:
+                        st.markdown("##### ⚠️ Deviated & missed (bottom 5)")
+                        if losses.empty:
+                            st.caption("None yet.")
+                        else:
+                            st.dataframe(
+                                losses[["Date", "R", "Bet", "Your sel",
+                                        "Model top3", "Your PnL $"]],
+                                hide_index=True, use_container_width=True,
+                            )
+
+                st.markdown(
+                    "**How to read this:** the alignment bucket ROI tells you "
+                    "whether your deviations from the model are earning or "
+                    "costing you. If 🟢 *fully aligned* > 🔴 *deviated ≥2*, "
+                    "stick to the model. If the reverse, your discretionary "
+                    "reads are adding edge."
+                )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
