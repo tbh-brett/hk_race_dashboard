@@ -1,0 +1,486 @@
+{
+  "date": "2026-01-04",
+  "race_number": 8,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "321",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "BABY CRYSTAL",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 181,
+          "cy": 131,
+          "x_frac": 0.25243055555555555,
+          "conf": 0.886,
+          "match_score": 1.0,
+          "ocr_text": "Baby Crystal",
+          "band_label": "800M",
+          "y_in_band": 0.0
+        },
+        {
+          "band_idx": 1,
+          "cx": 187,
+          "cy": 256,
+          "x_frac": 0.25972222222222224,
+          "conf": 0.828,
+          "match_score": 0.957,
+          "ocr_text": "Baby Crysta",
+          "band_label": "800M",
+          "y_in_band": 0.839
+        }
+      ],
+      "ocr_texts": [
+        "Baby Crystal",
+        "Baby Crysta"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.419,
+      "avg_x_frac": 0.256,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "BEAUTY WAVES",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 199,
+          "cy": 107,
+          "x_frac": 0.2763888888888889,
+          "conf": 0.888,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Waves",
+          "band_label": "321",
+          "y_in_band": 0.802
+        },
+        {
+          "band_idx": 1,
+          "cx": 242,
+          "cy": 250,
+          "x_frac": 0.3368055555555556,
+          "conf": 0.858,
+          "match_score": 0.957,
+          "ocr_text": "BeautyWaves",
+          "band_label": "800M",
+          "y_in_band": 0.799
+        }
+      ],
+      "ocr_texts": [
+        "Beauty Waves",
+        "BeautyWaves"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.8,
+      "avg_x_frac": 0.307,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CHATEAUNEUF",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 254,
+          "cy": 143,
+          "x_frac": 0.3527777777777778,
+          "conf": 0.899,
+          "match_score": 1.0,
+          "ocr_text": "Chateauneuf",
+          "band_label": "800M",
+          "y_in_band": 0.081
+        },
+        {
+          "band_idx": 2,
+          "cx": 317,
+          "cy": 292,
+          "x_frac": 0.4409722222222222,
+          "conf": 0.848,
+          "match_score": 1.0,
+          "ocr_text": "Chateauneuf",
+          "band_label": "400M",
+          "y_in_band": 0.08
+        }
+      ],
+      "ocr_texts": [
+        "Chateauneuf",
+        "Chateauneuf"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.081,
+      "avg_x_frac": 0.397,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "COLOURFUL KING",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 346,
+          "cy": 119,
+          "x_frac": 0.48055555555555557,
+          "conf": 0.842,
+          "match_score": 0.963,
+          "ocr_text": "ColourfulKing",
+          "band_label": "321",
+          "y_in_band": 0.901
+        },
+        {
+          "band_idx": 1,
+          "cx": 382,
+          "cy": 270,
+          "x_frac": 0.5305555555555556,
+          "conf": 0.851,
+          "match_score": 0.929,
+          "ocr_text": "ColourfuT King",
+          "band_label": "800M",
+          "y_in_band": 0.933
+        },
+        {
+          "band_idx": 2,
+          "cx": 424,
+          "cy": 421,
+          "x_frac": 0.5888888888888889,
+          "conf": 0.887,
+          "match_score": 0.963,
+          "ocr_text": "ColourfulKing",
+          "band_label": "400M",
+          "y_in_band": 0.94
+        }
+      ],
+      "ocr_texts": [
+        "ColourfulKing",
+        "ColourfuT King",
+        "ColourfulKing"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.925,
+      "avg_x_frac": 0.533,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "INVINCIBLE SAGE",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 282,
+          "cy": 38,
+          "x_frac": 0.39166666666666666,
+          "conf": 0.863,
+          "match_score": 1.0,
+          "ocr_text": "Invincible Sage",
+          "band_label": "321",
+          "y_in_band": 0.231
+        }
+      ],
+      "ocr_texts": [
+        "Invincible Sage"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.231,
+      "avg_x_frac": 0.392,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "LADY'S CHOICE",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 397,
+          "cy": 30,
+          "x_frac": 0.5520833333333334,
+          "conf": 0.808,
+          "match_score": 0.917,
+          "ocr_text": ".ady'sChoice",
+          "band_label": "321",
+          "y_in_band": 0.165
+        },
+        {
+          "band_idx": 1,
+          "cx": 397,
+          "cy": 169,
+          "x_frac": 0.5513888888888889,
+          "conf": 0.883,
+          "match_score": 0.96,
+          "ocr_text": "Lady'sChoice",
+          "band_label": "800M",
+          "y_in_band": 0.255
+        }
+      ],
+      "ocr_texts": [
+        ".ady'sChoice",
+        "Lady'sChoice"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.21,
+      "avg_x_frac": 0.552,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "MAGIC CONTROL",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 339,
+          "cy": 32,
+          "x_frac": 0.47152777777777777,
+          "conf": 0.832,
+          "match_score": 1.0,
+          "ocr_text": "Magic Control",
+          "band_label": "321",
+          "y_in_band": 0.182
+        },
+        {
+          "band_idx": 2,
+          "cx": 293,
+          "cy": 323,
+          "x_frac": 0.40694444444444444,
+          "conf": 0.818,
+          "match_score": 0.8,
+          "ocr_text": "MagleControl",
+          "band_label": "400M",
+          "y_in_band": 0.287
+        }
+      ],
+      "ocr_texts": [
+        "Magic Control",
+        "MagleControl"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.234,
+      "avg_x_frac": 0.439,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "STELLAR EXPRESS",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 112,
+          "cy": 131,
+          "x_frac": 0.15555555555555556,
+          "conf": 0.845,
+          "match_score": 0.846,
+          "ocr_text": "llarExpress",
+          "band_label": "800M",
+          "y_in_band": 0.0
+        },
+        {
+          "band_idx": 1,
+          "cx": 130,
+          "cy": 270,
+          "x_frac": 0.18125,
+          "conf": 0.867,
+          "match_score": 1.0,
+          "ocr_text": "Stellar Express",
+          "band_label": "800M",
+          "y_in_band": 0.933
+        },
+        {
+          "band_idx": 2,
+          "cx": 114,
+          "cy": 423,
+          "x_frac": 0.15902777777777777,
+          "conf": 0.873,
+          "match_score": 1.0,
+          "ocr_text": "Stellar Express",
+          "band_label": "400M",
+          "y_in_band": 0.953
+        }
+      ],
+      "ocr_texts": [
+        "llarExpress",
+        "Stellar Express",
+        "Stellar Express"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.629,
+      "avg_x_frac": 0.165,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VICTOR THE WINNER",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 305,
+          "cy": 249,
+          "x_frac": 0.42430555555555555,
+          "conf": 0.925,
+          "match_score": 0.938,
+          "ocr_text": "VictorTheWinner",
+          "band_label": "800M",
+          "y_in_band": 0.792
+        },
+        {
+          "band_idx": 2,
+          "cx": 414,
+          "cy": 332,
+          "x_frac": 0.575,
+          "conf": 0.855,
+          "match_score": 1.0,
+          "ocr_text": "Victor The Winner",
+          "band_label": "400M",
+          "y_in_band": 0.347
+        }
+      ],
+      "ocr_texts": [
+        "VictorTheWinner",
+        "Victor The Winner"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.57,
+      "avg_x_frac": 0.5,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WE ARE HERO",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 282,
+          "cy": 120,
+          "x_frac": 0.39166666666666666,
+          "conf": 0.768,
+          "match_score": 1.0,
+          "ocr_text": "We Are Hero",
+          "band_label": "321",
+          "y_in_band": 0.909
+        },
+        {
+          "band_idx": 1,
+          "cx": 317,
+          "cy": 270,
+          "x_frac": 0.44027777777777777,
+          "conf": 0.803,
+          "match_score": 0.952,
+          "ocr_text": "WeAre Hero",
+          "band_label": "800M",
+          "y_in_band": 0.933
+        }
+      ],
+      "ocr_texts": [
+        "We Are Hero",
+        "WeAre Hero"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.921,
+      "avg_x_frac": 0.416,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WUNDERBAR",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 357,
+          "cy": 323,
+          "x_frac": 0.49583333333333335,
+          "conf": 0.893,
+          "match_score": 1.0,
+          "ocr_text": "Wunderbar",
+          "band_label": "400M",
+          "y_in_band": 0.287
+        },
+        {
+          "band_idx": 3,
+          "cx": 280,
+          "cy": 492,
+          "x_frac": 0.38958333333333334,
+          "conf": 0.862,
+          "match_score": 1.0,
+          "ocr_text": "Wunderbar",
+          "band_label": "200M",
+          "y_in_band": 0.36
+        }
+      ],
+      "ocr_texts": [
+        "Wunderbar",
+        "Wunderbar"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.324,
+      "avg_x_frac": 0.443,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 47,
+    "matched_horses": 11,
+    "field_size": 11,
+    "coverage": 1.0,
+    "parsed_at": "2026-04-22T15:44:50"
+  }
+}

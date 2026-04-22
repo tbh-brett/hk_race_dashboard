@@ -1,0 +1,712 @@
+{
+  "date": "2026-01-07",
+  "race_number": 4,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "328",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 500,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 465
+    },
+    {
+      "y_top": 500,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 551
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ACE POWER",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 255,
+          "cy": 400,
+          "x_frac": 0.3548611111111111,
+          "conf": 0.815,
+          "match_score": 0.941,
+          "ocr_text": "AcePower",
+          "band_label": "400M",
+          "y_in_band": 0.8
+        },
+        {
+          "band_idx": 4,
+          "cx": 206,
+          "cy": 556,
+          "x_frac": 0.2861111111111111,
+          "conf": 0.751,
+          "match_score": 0.941,
+          "ocr_text": "AcePower",
+          "band_label": null,
+          "y_in_band": 0.549
+        }
+      ],
+      "ocr_texts": [
+        "AcePower",
+        "AcePower"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.675,
+      "avg_x_frac": 0.32,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CAP LINER",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 455,
+          "cy": 103,
+          "x_frac": 0.6326388888888889,
+          "conf": 0.819,
+          "match_score": 1.0,
+          "ocr_text": "Cap Liner",
+          "band_label": "328",
+          "y_in_band": 0.769
+        },
+        {
+          "band_idx": 1,
+          "cx": 425,
+          "cy": 257,
+          "x_frac": 0.5909722222222222,
+          "conf": 0.875,
+          "match_score": 1.0,
+          "ocr_text": "Cap Liner",
+          "band_label": "800M",
+          "y_in_band": 0.846
+        },
+        {
+          "band_idx": 2,
+          "cx": 255,
+          "cy": 427,
+          "x_frac": 0.3541666666666667,
+          "conf": 0.785,
+          "match_score": 1.0,
+          "ocr_text": "Cap Liner",
+          "band_label": "400M",
+          "y_in_band": 0.98
+        },
+        {
+          "band_idx": 4,
+          "cx": 334,
+          "cy": 579,
+          "x_frac": 0.46458333333333335,
+          "conf": 0.855,
+          "match_score": 1.0,
+          "ocr_text": "Cap Liner",
+          "band_label": null,
+          "y_in_band": 0.775
+        }
+      ],
+      "ocr_texts": [
+        "Cap Liner",
+        "Cap Liner",
+        "Cap Liner",
+        "Cap Liner"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.842,
+      "avg_x_frac": 0.511,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CRYSTAL POWERFUL",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 210,
+          "cy": 102,
+          "x_frac": 0.2923611111111111,
+          "conf": 0.841,
+          "match_score": 0.968,
+          "ocr_text": "Crystal Powerfu",
+          "band_label": "328",
+          "y_in_band": 0.76
+        },
+        {
+          "band_idx": 1,
+          "cx": 275,
+          "cy": 180,
+          "x_frac": 0.3819444444444444,
+          "conf": 0.823,
+          "match_score": 0.938,
+          "ocr_text": "Crystai Powerful",
+          "band_label": "800M",
+          "y_in_band": 0.329
+        },
+        {
+          "band_idx": 2,
+          "cx": 226,
+          "cy": 334,
+          "x_frac": 0.3138888888888889,
+          "conf": 0.896,
+          "match_score": 1.0,
+          "ocr_text": "Crystal Powerful",
+          "band_label": "400M",
+          "y_in_band": 0.36
+        },
+        {
+          "band_idx": 4,
+          "cx": 460,
+          "cy": 545,
+          "x_frac": 0.6395833333333333,
+          "conf": 0.889,
+          "match_score": 1.0,
+          "ocr_text": "Crystal Powerful",
+          "band_label": null,
+          "y_in_band": 0.441
+        }
+      ],
+      "ocr_texts": [
+        "Crystal Powerfu",
+        "Crystai Powerful",
+        "Crystal Powerful",
+        "Crystal Powerful"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.472,
+      "avg_x_frac": 0.407,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FATAL BLOW",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 504,
+          "cy": 127,
+          "x_frac": 0.7006944444444444,
+          "conf": 0.804,
+          "match_score": 1.0,
+          "ocr_text": "Fatal Blow",
+          "band_label": "328",
+          "y_in_band": 0.967
+        },
+        {
+          "band_idx": 3,
+          "cx": 326,
+          "cy": 437,
+          "x_frac": 0.4534722222222222,
+          "conf": 0.814,
+          "match_score": 1.0,
+          "ocr_text": "Fatal Blow",
+          "band_label": "200M",
+          "y_in_band": 0.1
+        }
+      ],
+      "ocr_texts": [
+        "Fatal Blow",
+        "Fatal Blow"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.533,
+      "avg_x_frac": 0.577,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FORTUNE SUPERNOVA",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 585,
+          "cy": 126,
+          "x_frac": 0.8125,
+          "conf": 0.927,
+          "match_score": 1.0,
+          "ocr_text": "Fortune Supernova",
+          "band_label": "328",
+          "y_in_band": 0.959
+        },
+        {
+          "band_idx": 1,
+          "cx": 488,
+          "cy": 262,
+          "x_frac": 0.6784722222222223,
+          "conf": 0.867,
+          "match_score": 1.0,
+          "ocr_text": "Fortune Supernova",
+          "band_label": "800M",
+          "y_in_band": 0.879
+        },
+        {
+          "band_idx": 2,
+          "cx": 381,
+          "cy": 419,
+          "x_frac": 0.5298611111111111,
+          "conf": 0.898,
+          "match_score": 1.0,
+          "ocr_text": "Fortune Supernova",
+          "band_label": "400M",
+          "y_in_band": 0.927
+        },
+        {
+          "band_idx": 4,
+          "cx": 391,
+          "cy": 582,
+          "x_frac": 0.54375,
+          "conf": 0.877,
+          "match_score": 1.0,
+          "ocr_text": "Fortune Supernova",
+          "band_label": null,
+          "y_in_band": 0.804
+        }
+      ],
+      "ocr_texts": [
+        "Fortune Supernova",
+        "Fortune Supernova",
+        "Fortune Supernova",
+        "Fortune Supernova"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.892,
+      "avg_x_frac": 0.641,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FORTUNE WHISKEY",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 556,
+          "cy": 102,
+          "x_frac": 0.7722222222222223,
+          "conf": 0.859,
+          "match_score": 1.0,
+          "ocr_text": "Fortune Whiskey",
+          "band_label": "328",
+          "y_in_band": 0.76
+        },
+        {
+          "band_idx": 1,
+          "cx": 455,
+          "cy": 176,
+          "x_frac": 0.6326388888888889,
+          "conf": 0.893,
+          "match_score": 1.0,
+          "ocr_text": "Fortune Whiskey",
+          "band_label": "800M",
+          "y_in_band": 0.302
+        },
+        {
+          "band_idx": 2,
+          "cx": 311,
+          "cy": 415,
+          "x_frac": 0.43194444444444446,
+          "conf": 0.83,
+          "match_score": 1.0,
+          "ocr_text": "Fortune Whiskey",
+          "band_label": "400M",
+          "y_in_band": 0.9
+        },
+        {
+          "band_idx": 4,
+          "cx": 310,
+          "cy": 555,
+          "x_frac": 0.43159722222222224,
+          "conf": 0.885,
+          "match_score": 1.0,
+          "ocr_text": "Fortune Whiskey",
+          "band_label": null,
+          "y_in_band": 0.539
+        }
+      ],
+      "ocr_texts": [
+        "Fortune Whiskey",
+        "Fortune Whiskey",
+        "Fortune Whiskey",
+        "Fortune Whiskey"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.625,
+      "avg_x_frac": 0.567,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GREAT STATE",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 431,
+          "cy": 286,
+          "x_frac": 0.5986111111111111,
+          "conf": 0.804,
+          "match_score": 1.0,
+          "ocr_text": "Great State",
+          "band_label": "400M",
+          "y_in_band": 0.04
+        },
+        {
+          "band_idx": 2,
+          "cx": 437,
+          "cy": 429,
+          "x_frac": 0.6069444444444444,
+          "conf": 0.876,
+          "match_score": 1.0,
+          "ocr_text": "Great State",
+          "band_label": "400M",
+          "y_in_band": 0.993
+        }
+      ],
+      "ocr_texts": [
+        "Great State",
+        "Great State"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.516,
+      "avg_x_frac": 0.603,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "JOLLY COMPANION",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 286,
+          "cy": 102,
+          "x_frac": 0.3975694444444444,
+          "conf": 0.901,
+          "match_score": 0.966,
+          "ocr_text": "JollyCompanion",
+          "band_label": "328",
+          "y_in_band": 0.76
+        },
+        {
+          "band_idx": 1,
+          "cx": 350,
+          "cy": 257,
+          "x_frac": 0.4861111111111111,
+          "conf": 0.854,
+          "match_score": 1.0,
+          "ocr_text": "Jolly Companion",
+          "band_label": "800M",
+          "y_in_band": 0.846
+        }
+      ],
+      "ocr_texts": [
+        "JollyCompanion",
+        "Jolly Companion"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.803,
+      "avg_x_frac": 0.442,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KA YING RESILIENCE",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 135,
+          "cy": 106,
+          "x_frac": 0.18819444444444444,
+          "conf": 0.871,
+          "match_score": 1.0,
+          "ocr_text": "Ka Ying Resilience",
+          "band_label": "328",
+          "y_in_band": 0.793
+        },
+        {
+          "band_idx": 1,
+          "cx": 149,
+          "cy": 257,
+          "x_frac": 0.20694444444444443,
+          "conf": 0.848,
+          "match_score": 1.0,
+          "ocr_text": "Ka Ying Resilience",
+          "band_label": "800M",
+          "y_in_band": 0.846
+        },
+        {
+          "band_idx": 2,
+          "cx": 113,
+          "cy": 334,
+          "x_frac": 0.15694444444444444,
+          "conf": 0.868,
+          "match_score": 0.909,
+          "ocr_text": "Ying Resilience",
+          "band_label": "400M",
+          "y_in_band": 0.36
+        },
+        {
+          "band_idx": 3,
+          "cx": 215,
+          "cy": 484,
+          "x_frac": 0.2986111111111111,
+          "conf": 0.856,
+          "match_score": 1.0,
+          "ocr_text": "Ka Ying Resilience",
+          "band_label": "200M",
+          "y_in_band": 0.771
+        }
+      ],
+      "ocr_texts": [
+        "Ka Ying Resilience",
+        "Ka Ying Resilience",
+        "Ying Resilience",
+        "Ka Ying Resilience"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.693,
+      "avg_x_frac": 0.213,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MEGA BONUS",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 198,
+          "cy": 126,
+          "x_frac": 0.275,
+          "conf": 0.894,
+          "match_score": 1.0,
+          "ocr_text": "Mega Bonus",
+          "band_label": "328",
+          "y_in_band": 0.959
+        },
+        {
+          "band_idx": 1,
+          "cx": 219,
+          "cy": 261,
+          "x_frac": 0.30416666666666664,
+          "conf": 0.865,
+          "match_score": 1.0,
+          "ocr_text": "Mega Bonus",
+          "band_label": "800M",
+          "y_in_band": 0.872
+        },
+        {
+          "band_idx": 2,
+          "cx": 149,
+          "cy": 400,
+          "x_frac": 0.20694444444444443,
+          "conf": 0.841,
+          "match_score": 1.0,
+          "ocr_text": "Mega Bonus",
+          "band_label": "400M",
+          "y_in_band": 0.8
+        },
+        {
+          "band_idx": 3,
+          "cx": 281,
+          "cy": 484,
+          "x_frac": 0.3909722222222222,
+          "conf": 0.866,
+          "match_score": 0.947,
+          "ocr_text": "MegaBonus",
+          "band_label": "200M",
+          "y_in_band": 0.771
+        }
+      ],
+      "ocr_texts": [
+        "Mega Bonus",
+        "Mega Bonus",
+        "Mega Bonus",
+        "MegaBonus"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.851,
+      "avg_x_frac": 0.294,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SAVVY TWINKLE",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 378,
+          "cy": 118,
+          "x_frac": 0.5256944444444445,
+          "conf": 0.87,
+          "match_score": 1.0,
+          "ocr_text": "Savvy Twinkle",
+          "band_label": "328",
+          "y_in_band": 0.893
+        },
+        {
+          "band_idx": 2,
+          "cx": 348,
+          "cy": 282,
+          "x_frac": 0.48333333333333334,
+          "conf": 0.67,
+          "match_score": 0.8,
+          "ocr_text": "Sawy Tminkle",
+          "band_label": "400M",
+          "y_in_band": 0.013
+        },
+        {
+          "band_idx": 2,
+          "cx": 168,
+          "cy": 427,
+          "x_frac": 0.23402777777777778,
+          "conf": 0.826,
+          "match_score": 0.8,
+          "ocr_text": "Sawy Twinkie",
+          "band_label": "400M",
+          "y_in_band": 0.98
+        },
+        {
+          "band_idx": 4,
+          "cx": 235,
+          "cy": 578,
+          "x_frac": 0.3263888888888889,
+          "conf": 0.826,
+          "match_score": 1.0,
+          "ocr_text": "Savvy Twinkle",
+          "band_label": null,
+          "y_in_band": 0.765
+        }
+      ],
+      "ocr_texts": [
+        "Savvy Twinkle",
+        "Sawy Tminkle",
+        "Sawy Twinkie",
+        "Savvy Twinkle"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.663,
+      "avg_x_frac": 0.392,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SUPERB BOY",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 301,
+          "cy": 127,
+          "x_frac": 0.41875,
+          "conf": 0.887,
+          "match_score": 1.0,
+          "ocr_text": "Superb Boy",
+          "band_label": "328",
+          "y_in_band": 0.967
+        },
+        {
+          "band_idx": 1,
+          "cx": 281,
+          "cy": 267,
+          "x_frac": 0.3902777777777778,
+          "conf": 0.832,
+          "match_score": 1.0,
+          "ocr_text": "Superb Boy",
+          "band_label": "800M",
+          "y_in_band": 0.913
+        },
+        {
+          "band_idx": 2,
+          "cx": 103,
+          "cy": 406,
+          "x_frac": 0.14375,
+          "conf": 0.89,
+          "match_score": 0.947,
+          "ocr_text": "SuperbBoy",
+          "band_label": "400M",
+          "y_in_band": 0.84
+        },
+        {
+          "band_idx": 4,
+          "cx": 121,
+          "cy": 552,
+          "x_frac": 0.16805555555555557,
+          "conf": 0.815,
+          "match_score": 1.0,
+          "ocr_text": "Superb Boy",
+          "band_label": null,
+          "y_in_band": 0.51
+        }
+      ],
+      "ocr_texts": [
+        "Superb Boy",
+        "Superb Boy",
+        "SuperbBoy",
+        "Superb Boy"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.807,
+      "avg_x_frac": 0.28,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 67,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-04-22T15:45:25"
+  }
+}

@@ -1,0 +1,630 @@
+{
+  "date": "2026-03-29",
+  "race_number": 8,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "561",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ALL'S WELL",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 611,
+          "cy": 97,
+          "x_frac": 0.8493055555555555,
+          "conf": 0.783,
+          "match_score": 1.0,
+          "ocr_text": "All's Well",
+          "band_label": "561",
+          "y_in_band": 0.719
+        },
+        {
+          "band_idx": 3,
+          "cx": 379,
+          "cy": 443,
+          "x_frac": 0.5263888888888889,
+          "conf": 0.813,
+          "match_score": 1.0,
+          "ocr_text": "All's Well",
+          "band_label": "200M",
+          "y_in_band": 0.076
+        }
+      ],
+      "ocr_texts": [
+        "All's Well",
+        "All's Well"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.397,
+      "avg_x_frac": 0.688,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "BRILLIANT EXPRESS",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 643,
+          "cy": 25,
+          "x_frac": 0.8930555555555556,
+          "conf": 0.785,
+          "match_score": 0.875,
+          "ocr_text": "BrilianfExpress",
+          "band_label": "561",
+          "y_in_band": 0.124
+        },
+        {
+          "band_idx": 1,
+          "cx": 457,
+          "cy": 252,
+          "x_frac": 0.6357638888888889,
+          "conf": 0.844,
+          "match_score": 0.97,
+          "ocr_text": "Briliant Express",
+          "band_label": "800M",
+          "y_in_band": 0.812
+        },
+        {
+          "band_idx": 2,
+          "cx": 381,
+          "cy": 419,
+          "x_frac": 0.5302083333333333,
+          "conf": 0.84,
+          "match_score": 1.0,
+          "ocr_text": "Brilliant Express",
+          "band_label": "400M",
+          "y_in_band": 0.927
+        },
+        {
+          "band_idx": 3,
+          "cx": 239,
+          "cy": 574,
+          "x_frac": 0.3326388888888889,
+          "conf": 0.857,
+          "match_score": 1.0,
+          "ocr_text": "Brilliant Express",
+          "band_label": "200M",
+          "y_in_band": 0.837
+        }
+      ],
+      "ocr_texts": [
+        "BrilianfExpress",
+        "Briliant Express",
+        "Brilliant Express",
+        "Brilliant Express"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.675,
+      "avg_x_frac": 0.598,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CALIFORNIA WAVES",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 579,
+          "cy": 25,
+          "x_frac": 0.8041666666666667,
+          "conf": 0.849,
+          "match_score": 1.0,
+          "ocr_text": "California Waves",
+          "band_label": "561",
+          "y_in_band": 0.124
+        },
+        {
+          "band_idx": 1,
+          "cx": 386,
+          "cy": 173,
+          "x_frac": 0.5361111111111111,
+          "conf": 0.815,
+          "match_score": 1.0,
+          "ocr_text": "California Waves",
+          "band_label": "800M",
+          "y_in_band": 0.282
+        },
+        {
+          "band_idx": 2,
+          "cx": 327,
+          "cy": 332,
+          "x_frac": 0.4548611111111111,
+          "conf": 0.852,
+          "match_score": 0.857,
+          "ocr_text": "iforniaWaves",
+          "band_label": "400M",
+          "y_in_band": 0.347
+        }
+      ],
+      "ocr_texts": [
+        "California Waves",
+        "California Waves",
+        "iforniaWaves"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.251,
+      "avg_x_frac": 0.598,
+      "wide_frames": 0,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "DO YOU JUST",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 330,
+          "cy": 100,
+          "x_frac": 0.4583333333333333,
+          "conf": 0.816,
+          "match_score": 0.952,
+          "ocr_text": "DoYou Just",
+          "band_label": "561",
+          "y_in_band": 0.744
+        },
+        {
+          "band_idx": 2,
+          "cx": 227,
+          "cy": 416,
+          "x_frac": 0.31527777777777777,
+          "conf": 0.844,
+          "match_score": 1.0,
+          "ocr_text": "Do You Just",
+          "band_label": "400M",
+          "y_in_band": 0.907
+        },
+        {
+          "band_idx": 3,
+          "cx": 224,
+          "cy": 529,
+          "x_frac": 0.31180555555555556,
+          "conf": 0.838,
+          "match_score": 1.0,
+          "ocr_text": "Do You Just",
+          "band_label": "200M",
+          "y_in_band": 0.576
+        }
+      ],
+      "ocr_texts": [
+        "DoYou Just",
+        "Do You Just",
+        "Do You Just"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.742,
+      "avg_x_frac": 0.362,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LADY'S LOVE",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 554,
+          "cy": 98,
+          "x_frac": 0.7701388888888889,
+          "conf": 0.863,
+          "match_score": 1.0,
+          "ocr_text": "Lady's Love",
+          "band_label": "561",
+          "y_in_band": 0.727
+        },
+        {
+          "band_idx": 2,
+          "cx": 416,
+          "cy": 285,
+          "x_frac": 0.5788194444444444,
+          "conf": 0.885,
+          "match_score": 0.952,
+          "ocr_text": "Lady'sLove",
+          "band_label": "400M",
+          "y_in_band": 0.033
+        },
+        {
+          "band_idx": 3,
+          "cx": 448,
+          "cy": 442,
+          "x_frac": 0.6232638888888888,
+          "conf": 0.852,
+          "match_score": 0.952,
+          "ocr_text": "Lady'sLove",
+          "band_label": "200M",
+          "y_in_band": 0.07
+        },
+        {
+          "band_idx": 3,
+          "cx": 412,
+          "cy": 554,
+          "x_frac": 0.5722222222222222,
+          "conf": 0.816,
+          "match_score": 1.0,
+          "ocr_text": "Lady's Love",
+          "band_label": "200M",
+          "y_in_band": 0.721
+        }
+      ],
+      "ocr_texts": [
+        "Lady's Love",
+        "Lady'sLove",
+        "Lady'sLove",
+        "Lady's Love"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.388,
+      "avg_x_frac": 0.636,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LUCKY DOCTOR",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 452,
+          "cy": 100,
+          "x_frac": 0.6284722222222222,
+          "conf": 0.843,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Doctor",
+          "band_label": "561",
+          "y_in_band": 0.744
+        },
+        {
+          "band_idx": 2,
+          "cx": 358,
+          "cy": 285,
+          "x_frac": 0.49722222222222223,
+          "conf": 0.899,
+          "match_score": 0.909,
+          "ocr_text": "LuckyDocto",
+          "band_label": "400M",
+          "y_in_band": 0.033
+        },
+        {
+          "band_idx": 2,
+          "cx": 435,
+          "cy": 419,
+          "x_frac": 0.6048611111111111,
+          "conf": 0.788,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Doctor",
+          "band_label": "400M",
+          "y_in_band": 0.927
+        },
+        {
+          "band_idx": 3,
+          "cx": 464,
+          "cy": 544,
+          "x_frac": 0.6444444444444445,
+          "conf": 0.87,
+          "match_score": 0.957,
+          "ocr_text": "LuckyDoctor",
+          "band_label": "200M",
+          "y_in_band": 0.663
+        }
+      ],
+      "ocr_texts": [
+        "Lucky Doctor",
+        "LuckyDocto",
+        "Lucky Doctor",
+        "LuckyDoctor"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.592,
+      "avg_x_frac": 0.594,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LUCKY SAM GOR",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 506,
+          "cy": 29,
+          "x_frac": 0.7034722222222223,
+          "conf": 0.803,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Sam Gor",
+          "band_label": "561",
+          "y_in_band": 0.157
+        },
+        {
+          "band_idx": 1,
+          "cx": 368,
+          "cy": 243,
+          "x_frac": 0.5118055555555555,
+          "conf": 0.848,
+          "match_score": 0.96,
+          "ocr_text": "Lucky SamGor",
+          "band_label": "800M",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 2,
+          "cx": 289,
+          "cy": 395,
+          "x_frac": 0.4013888888888889,
+          "conf": 0.889,
+          "match_score": 0.96,
+          "ocr_text": "Lucky SamGor",
+          "band_label": "400M",
+          "y_in_band": 0.767
+        },
+        {
+          "band_idx": 3,
+          "cx": 208,
+          "cy": 552,
+          "x_frac": 0.28888888888888886,
+          "conf": 0.811,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Sam Gor",
+          "band_label": "200M",
+          "y_in_band": 0.709
+        }
+      ],
+      "ocr_texts": [
+        "Lucky Sam Gor",
+        "Lucky SamGor",
+        "Lucky SamGor",
+        "Lucky Sam Gor"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.596,
+      "avg_x_frac": 0.476,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ROMANTIC GLADIATOR",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 319,
+          "cy": 260,
+          "x_frac": 0.44305555555555554,
+          "conf": 0.738,
+          "match_score": 0.8,
+          "ocr_text": "ROMACADIATOR",
+          "band_label": "800M",
+          "y_in_band": 0.866
+        }
+      ],
+      "ocr_texts": [
+        "ROMACADIATOR"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.866,
+      "avg_x_frac": 0.443,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SALON S",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 136,
+          "cy": 97,
+          "x_frac": 0.18888888888888888,
+          "conf": 0.731,
+          "match_score": 0.923,
+          "ocr_text": "SalonS",
+          "band_label": "561",
+          "y_in_band": 0.719
+        },
+        {
+          "band_idx": 1,
+          "cx": 119,
+          "cy": 241,
+          "x_frac": 0.16597222222222222,
+          "conf": 0.822,
+          "match_score": 0.923,
+          "ocr_text": "SalonS",
+          "band_label": "800M",
+          "y_in_band": 0.738
+        },
+        {
+          "band_idx": 2,
+          "cx": 121,
+          "cy": 395,
+          "x_frac": 0.16875,
+          "conf": 0.773,
+          "match_score": 0.923,
+          "ocr_text": "SalonS",
+          "band_label": "400M",
+          "y_in_band": 0.767
+        }
+      ],
+      "ocr_texts": [
+        "SalonS",
+        "SalonS",
+        "SalonS"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.741,
+      "avg_x_frac": 0.175,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SUNNY DA BEST",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 413,
+          "cy": 29,
+          "x_frac": 0.5736111111111111,
+          "conf": 0.89,
+          "match_score": 1.0,
+          "ocr_text": "Sunny Da Best",
+          "band_label": "561",
+          "y_in_band": 0.157
+        },
+        {
+          "band_idx": 1,
+          "cx": 274,
+          "cy": 175,
+          "x_frac": 0.38125,
+          "conf": 0.841,
+          "match_score": 0.96,
+          "ocr_text": "Suny Da Best",
+          "band_label": "800M",
+          "y_in_band": 0.295
+        },
+        {
+          "band_idx": 2,
+          "cx": 220,
+          "cy": 331,
+          "x_frac": 0.3055555555555556,
+          "conf": 0.848,
+          "match_score": 0.96,
+          "ocr_text": "SunnyDa Best",
+          "band_label": "400M",
+          "y_in_band": 0.34
+        },
+        {
+          "band_idx": 3,
+          "cx": 187,
+          "cy": 468,
+          "x_frac": 0.2604166666666667,
+          "conf": 0.868,
+          "match_score": 0.96,
+          "ocr_text": "SunnyDa Best",
+          "band_label": "200M",
+          "y_in_band": 0.221
+        }
+      ],
+      "ocr_texts": [
+        "Sunny Da Best",
+        "Suny Da Best",
+        "SunnyDa Best",
+        "SunnyDa Best"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.253,
+      "avg_x_frac": 0.38,
+      "wide_frames": 0,
+      "rail_frames": 4,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "URANUS STAR",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 216,
+          "cy": 97,
+          "x_frac": 0.30069444444444443,
+          "conf": 0.846,
+          "match_score": 1.0,
+          "ocr_text": "Uranus Star",
+          "band_label": "561",
+          "y_in_band": 0.719
+        },
+        {
+          "band_idx": 1,
+          "cx": 182,
+          "cy": 239,
+          "x_frac": 0.2534722222222222,
+          "conf": 0.814,
+          "match_score": 1.0,
+          "ocr_text": "Uranus Star",
+          "band_label": "800M",
+          "y_in_band": 0.725
+        },
+        {
+          "band_idx": 2,
+          "cx": 170,
+          "cy": 394,
+          "x_frac": 0.23680555555555555,
+          "conf": 0.866,
+          "match_score": 1.0,
+          "ocr_text": "Uranus Star",
+          "band_label": "400M",
+          "y_in_band": 0.76
+        }
+      ],
+      "ocr_texts": [
+        "Uranus Star",
+        "Uranus Star",
+        "Uranus Star"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.735,
+      "avg_x_frac": 0.264,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 65,
+    "matched_horses": 11,
+    "field_size": 12,
+    "coverage": 0.917,
+    "parsed_at": "2026-04-22T16:32:25"
+  }
+}

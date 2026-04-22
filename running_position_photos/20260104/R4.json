@@ -1,0 +1,543 @@
+{
+  "date": "2026-01-04",
+  "race_number": 4,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "317",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "BEAUTY THUNDER",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 182,
+          "cy": 101,
+          "x_frac": 0.25277777777777777,
+          "conf": 0.863,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Thunder",
+          "band_label": "317",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 1,
+          "cx": 153,
+          "cy": 174,
+          "x_frac": 0.21354166666666666,
+          "conf": 0.808,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Thunder",
+          "band_label": "800M",
+          "y_in_band": 0.289
+        },
+        {
+          "band_idx": 2,
+          "cx": 193,
+          "cy": 329,
+          "x_frac": 0.26875,
+          "conf": 0.866,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Thunder",
+          "band_label": "400M",
+          "y_in_band": 0.327
+        },
+        {
+          "band_idx": 3,
+          "cx": 253,
+          "cy": 481,
+          "x_frac": 0.35208333333333336,
+          "conf": 0.868,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Thunder",
+          "band_label": "200M",
+          "y_in_band": 0.297
+        }
+      ],
+      "ocr_texts": [
+        "Beauty Thunder",
+        "Beauty Thunder",
+        "Beauty Thunder",
+        "Beauty Thunder"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.416,
+      "avg_x_frac": 0.272,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DAILY TROPHY",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 469,
+          "cy": 243,
+          "x_frac": 0.6513888888888889,
+          "conf": 0.885,
+          "match_score": 1.0,
+          "ocr_text": "Daily Trophy",
+          "band_label": "800M",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 3,
+          "cx": 387,
+          "cy": 565,
+          "x_frac": 0.5381944444444444,
+          "conf": 0.682,
+          "match_score": 0.909,
+          "ocr_text": "DalyTrophy",
+          "band_label": "200M",
+          "y_in_band": 0.785
+        }
+      ],
+      "ocr_texts": [
+        "Daily Trophy",
+        "DalyTrophy"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.768,
+      "avg_x_frac": 0.595,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DAY DAY VICTORY",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 139,
+          "cy": 127,
+          "x_frac": 0.19375,
+          "conf": 0.901,
+          "match_score": 0.966,
+          "ocr_text": "DayDay Victory",
+          "band_label": "317",
+          "y_in_band": 0.967
+        },
+        {
+          "band_idx": 1,
+          "cx": 147,
+          "cy": 242,
+          "x_frac": 0.2048611111111111,
+          "conf": 0.82,
+          "match_score": 1.0,
+          "ocr_text": "Day Day Victory",
+          "band_label": "800M",
+          "y_in_band": 0.745
+        },
+        {
+          "band_idx": 2,
+          "cx": 153,
+          "cy": 381,
+          "x_frac": 0.21319444444444444,
+          "conf": 0.9,
+          "match_score": 1.0,
+          "ocr_text": "Day Day Victory",
+          "band_label": "400M",
+          "y_in_band": 0.673
+        }
+      ],
+      "ocr_texts": [
+        "DayDay Victory",
+        "Day Day Victory",
+        "Day Day Victory"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.795,
+      "avg_x_frac": 0.204,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GLACIATED",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 3,
+          "cx": 410,
+          "cy": 441,
+          "x_frac": 0.5694444444444444,
+          "conf": 0.847,
+          "match_score": 1.0,
+          "ocr_text": "Glaciated",
+          "band_label": "200M",
+          "y_in_band": 0.064
+        },
+        {
+          "band_idx": 3,
+          "cx": 344,
+          "cy": 575,
+          "x_frac": 0.4777777777777778,
+          "conf": 0.812,
+          "match_score": 1.0,
+          "ocr_text": "Glaciated",
+          "band_label": "200M",
+          "y_in_band": 0.843
+        }
+      ],
+      "ocr_texts": [
+        "Glaciated",
+        "Glaciated"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.454,
+      "avg_x_frac": 0.524,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HINOKAMI KAGURA",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 352,
+          "cy": 124,
+          "x_frac": 0.4888888888888889,
+          "conf": 0.821,
+          "match_score": 0.897,
+          "ocr_text": "HinokamlKagura",
+          "band_label": "317",
+          "y_in_band": 0.942
+        },
+        {
+          "band_idx": 1,
+          "cx": 556,
+          "cy": 268,
+          "x_frac": 0.7729166666666667,
+          "conf": 0.9,
+          "match_score": 1.0,
+          "ocr_text": "Hinokami Kagura",
+          "band_label": "800M",
+          "y_in_band": 0.919
+        },
+        {
+          "band_idx": 3,
+          "cx": 547,
+          "cy": 432,
+          "x_frac": 0.7604166666666666,
+          "conf": 0.864,
+          "match_score": 1.0,
+          "ocr_text": "Hinokami Kagura",
+          "band_label": "200M",
+          "y_in_band": 0.012
+        },
+        {
+          "band_idx": 3,
+          "cx": 601,
+          "cy": 567,
+          "x_frac": 0.8354166666666667,
+          "conf": 0.814,
+          "match_score": 1.0,
+          "ocr_text": "Hinokami Kagura",
+          "band_label": "200M",
+          "y_in_band": 0.797
+        }
+      ],
+      "ocr_texts": [
+        "HinokamlKagura",
+        "Hinokami Kagura",
+        "Hinokami Kagura",
+        "Hinokami Kagura"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.667,
+      "avg_x_frac": 0.714,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "JUICY DRAGON",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 211,
+          "cy": 266,
+          "x_frac": 0.29305555555555557,
+          "conf": 0.726,
+          "match_score": 0.909,
+          "ocr_text": "uicyDragon",
+          "band_label": "800M",
+          "y_in_band": 0.906
+        },
+        {
+          "band_idx": 2,
+          "cx": 150,
+          "cy": 404,
+          "x_frac": 0.20833333333333334,
+          "conf": 0.834,
+          "match_score": 1.0,
+          "ocr_text": "Juicy Dragon",
+          "band_label": "400M",
+          "y_in_band": 0.827
+        },
+        {
+          "band_idx": 3,
+          "cx": 174,
+          "cy": 543,
+          "x_frac": 0.2423611111111111,
+          "conf": 0.837,
+          "match_score": 0.87,
+          "ocr_text": "luicyDragon",
+          "band_label": "200M",
+          "y_in_band": 0.657
+        }
+      ],
+      "ocr_texts": [
+        "uicyDragon",
+        "Juicy Dragon",
+        "luicyDragon"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.797,
+      "avg_x_frac": 0.248,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KOLACHI",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 620,
+          "cy": 267,
+          "x_frac": 0.8611111111111112,
+          "conf": 0.861,
+          "match_score": 1.0,
+          "ocr_text": "Kolachi",
+          "band_label": "800M",
+          "y_in_band": 0.913
+        },
+        {
+          "band_idx": 2,
+          "cx": 654,
+          "cy": 418,
+          "x_frac": 0.9090277777777778,
+          "conf": 0.852,
+          "match_score": 1.0,
+          "ocr_text": "Kolachi",
+          "band_label": "400M",
+          "y_in_band": 0.92
+        }
+      ],
+      "ocr_texts": [
+        "Kolachi",
+        "Kolachi"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.917,
+      "avg_x_frac": 0.885,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MONTA FRUTTA",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 369,
+          "cy": 268,
+          "x_frac": 0.5131944444444444,
+          "conf": 0.84,
+          "match_score": 1.0,
+          "ocr_text": "Monta Frutta",
+          "band_label": "800M",
+          "y_in_band": 0.919
+        },
+        {
+          "band_idx": 3,
+          "cx": 151,
+          "cy": 570,
+          "x_frac": 0.20972222222222223,
+          "conf": 0.883,
+          "match_score": 1.0,
+          "ocr_text": "Monta Frutta",
+          "band_label": "200M",
+          "y_in_band": 0.814
+        }
+      ],
+      "ocr_texts": [
+        "Monta Frutta",
+        "Monta Frutta"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.867,
+      "avg_x_frac": 0.361,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SUPREME SEA",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 242,
+          "cy": 101,
+          "x_frac": 0.33611111111111114,
+          "conf": 0.84,
+          "match_score": 0.952,
+          "ocr_text": "Supreme Se",
+          "band_label": "317",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 1,
+          "cx": 210,
+          "cy": 176,
+          "x_frac": 0.2923611111111111,
+          "conf": 0.85,
+          "match_score": 1.0,
+          "ocr_text": "Supreme Sea",
+          "band_label": "800M",
+          "y_in_band": 0.302
+        },
+        {
+          "band_idx": 2,
+          "cx": 93,
+          "cy": 389,
+          "x_frac": 0.12986111111111112,
+          "conf": 0.855,
+          "match_score": 0.9,
+          "ocr_text": "SupremeSe",
+          "band_label": "400M",
+          "y_in_band": 0.727
+        },
+        {
+          "band_idx": 3,
+          "cx": 84,
+          "cy": 543,
+          "x_frac": 0.11666666666666667,
+          "conf": 0.834,
+          "match_score": 0.952,
+          "ocr_text": "SupremeSea",
+          "band_label": "200M",
+          "y_in_band": 0.657
+        }
+      ],
+      "ocr_texts": [
+        "Supreme Se",
+        "Supreme Sea",
+        "SupremeSe",
+        "SupremeSea"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.61,
+      "avg_x_frac": 0.219,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THUNDER PRINCE",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 306,
+          "cy": 101,
+          "x_frac": 0.42569444444444443,
+          "conf": 0.879,
+          "match_score": 1.0,
+          "ocr_text": "Thunder Prince",
+          "band_label": "317",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 1,
+          "cx": 294,
+          "cy": 268,
+          "x_frac": 0.40902777777777777,
+          "conf": 0.82,
+          "match_score": 1.0,
+          "ocr_text": "Thunder.Prince",
+          "band_label": "800M",
+          "y_in_band": 0.919
+        },
+        {
+          "band_idx": 2,
+          "cx": 229,
+          "cy": 404,
+          "x_frac": 0.31805555555555554,
+          "conf": 0.87,
+          "match_score": 0.963,
+          "ocr_text": "Thunder Prnce",
+          "band_label": "400M",
+          "y_in_band": 0.827
+        }
+      ],
+      "ocr_texts": [
+        "Thunder Prince",
+        "Thunder.Prince",
+        "Thunder Prnce"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.833,
+      "avg_x_frac": 0.384,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 63,
+    "matched_horses": 10,
+    "field_size": 12,
+    "coverage": 0.833,
+    "parsed_at": "2026-04-22T15:44:27"
+  }
+}

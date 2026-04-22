@@ -1,0 +1,753 @@
+{
+  "date": "2026-03-25",
+  "race_number": 1,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "545",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ALL ARE MINE",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 433,
+          "cy": 280,
+          "x_frac": 0.6013888888888889,
+          "conf": 0.794,
+          "match_score": 1.0,
+          "ocr_text": "All Are Mine",
+          "band_label": "400M",
+          "y_in_band": 0.0
+        },
+        {
+          "band_idx": 3,
+          "cx": 446,
+          "cy": 441,
+          "x_frac": 0.6204861111111111,
+          "conf": 0.799,
+          "match_score": 1.0,
+          "ocr_text": "All Are Mine",
+          "band_label": "200M",
+          "y_in_band": 0.064
+        },
+        {
+          "band_idx": 3,
+          "cx": 360,
+          "cy": 589,
+          "x_frac": 0.5,
+          "conf": 0.799,
+          "match_score": 1.0,
+          "ocr_text": "All Are Mine",
+          "band_label": "200M",
+          "y_in_band": 0.924
+        }
+      ],
+      "ocr_texts": [
+        "All Are Mine",
+        "All Are Mine",
+        "All Are Mine"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.329,
+      "avg_x_frac": 0.574,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CHATEAU LE PECHE",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 504,
+          "cy": 254,
+          "x_frac": 0.7006944444444444,
+          "conf": 0.877,
+          "match_score": 1.0,
+          "ocr_text": "Chateau Le Peche",
+          "band_label": "800M",
+          "y_in_band": 0.826
+        },
+        {
+          "band_idx": 2,
+          "cx": 582,
+          "cy": 418,
+          "x_frac": 0.8083333333333333,
+          "conf": 0.856,
+          "match_score": 1.0,
+          "ocr_text": "Chateau Le Peche",
+          "band_label": "400M",
+          "y_in_band": 0.92
+        },
+        {
+          "band_idx": 3,
+          "cx": 583,
+          "cy": 570,
+          "x_frac": 0.8097222222222222,
+          "conf": 0.868,
+          "match_score": 1.0,
+          "ocr_text": "Chateau Le Peche",
+          "band_label": "200M",
+          "y_in_band": 0.814
+        }
+      ],
+      "ocr_texts": [
+        "Chateau Le Peche",
+        "Chateau Le Peche",
+        "Chateau Le Peche"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.853,
+      "avg_x_frac": 0.773,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CONSPIRACY WITNESS",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 254,
+          "cy": 117,
+          "x_frac": 0.3527777777777778,
+          "conf": 0.923,
+          "match_score": 1.0,
+          "ocr_text": "Conspiracy Witness",
+          "band_label": "545",
+          "y_in_band": 0.884
+        },
+        {
+          "band_idx": 1,
+          "cx": 249,
+          "cy": 268,
+          "x_frac": 0.34652777777777777,
+          "conf": 0.888,
+          "match_score": 1.0,
+          "ocr_text": "Conspiracy Witness",
+          "band_label": "800M",
+          "y_in_band": 0.919
+        },
+        {
+          "band_idx": 3,
+          "cx": 331,
+          "cy": 439,
+          "x_frac": 0.4597222222222222,
+          "conf": 0.904,
+          "match_score": 1.0,
+          "ocr_text": "Conspiracy Witness",
+          "band_label": "200M",
+          "y_in_band": 0.052
+        },
+        {
+          "band_idx": 3,
+          "cx": 396,
+          "cy": 556,
+          "x_frac": 0.55,
+          "conf": 0.912,
+          "match_score": 1.0,
+          "ocr_text": "Conspiracy Witness",
+          "band_label": "200M",
+          "y_in_band": 0.733
+        }
+      ],
+      "ocr_texts": [
+        "Conspiracy Witness",
+        "Conspiracy Witness",
+        "Conspiracy Witness",
+        "Conspiracy Witness"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.647,
+      "avg_x_frac": 0.427,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GOLDEN FAIRY",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 129,
+          "cy": 46,
+          "x_frac": 0.17916666666666667,
+          "conf": 0.826,
+          "match_score": 1.0,
+          "ocr_text": "Golden Fairy",
+          "band_label": "545",
+          "y_in_band": 0.298
+        },
+        {
+          "band_idx": 1,
+          "cx": 121,
+          "cy": 179,
+          "x_frac": 0.16875,
+          "conf": 0.884,
+          "match_score": 1.0,
+          "ocr_text": "Golden Fairy",
+          "band_label": "800M",
+          "y_in_band": 0.322
+        },
+        {
+          "band_idx": 2,
+          "cx": 210,
+          "cy": 321,
+          "x_frac": 0.2923611111111111,
+          "conf": 0.869,
+          "match_score": 0.87,
+          "ocr_text": "Golden Fain",
+          "band_label": "400M",
+          "y_in_band": 0.273
+        },
+        {
+          "band_idx": 3,
+          "cx": 461,
+          "cy": 546,
+          "x_frac": 0.6409722222222223,
+          "conf": 0.871,
+          "match_score": 1.0,
+          "ocr_text": "Golden Fairy",
+          "band_label": "200M",
+          "y_in_band": 0.674
+        }
+      ],
+      "ocr_texts": [
+        "Golden Fairy",
+        "Golden Fairy",
+        "Golden Fain",
+        "Golden Fairy"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.392,
+      "avg_x_frac": 0.32,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "JOYFUL PROSPERITY",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 388,
+          "cy": 120,
+          "x_frac": 0.5388888888888889,
+          "conf": 0.91,
+          "match_score": 1.0,
+          "ocr_text": "Joyful Prosperity",
+          "band_label": "545",
+          "y_in_band": 0.909
+        },
+        {
+          "band_idx": 1,
+          "cx": 100,
+          "cy": 254,
+          "x_frac": 0.1388888888888889,
+          "conf": 0.901,
+          "match_score": 1.0,
+          "ocr_text": "Joyful Prosperity",
+          "band_label": "800M",
+          "y_in_band": 0.826
+        },
+        {
+          "band_idx": 2,
+          "cx": 140,
+          "cy": 410,
+          "x_frac": 0.19444444444444445,
+          "conf": 0.923,
+          "match_score": 1.0,
+          "ocr_text": "Joyful Prosperity",
+          "band_label": "400M",
+          "y_in_band": 0.867
+        },
+        {
+          "band_idx": 3,
+          "cx": 113,
+          "cy": 566,
+          "x_frac": 0.15694444444444444,
+          "conf": 0.876,
+          "match_score": 0.97,
+          "ocr_text": "Joyfu Prosperity",
+          "band_label": "200M",
+          "y_in_band": 0.791
+        }
+      ],
+      "ocr_texts": [
+        "Joyful Prosperity",
+        "Joyful Prosperity",
+        "Joyful Prosperity",
+        "Joyfu Prosperity"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.848,
+      "avg_x_frac": 0.257,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KASA PAPA",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 296,
+          "cy": 41,
+          "x_frac": 0.4111111111111111,
+          "conf": 0.815,
+          "match_score": 1.0,
+          "ocr_text": "Kasa Papa",
+          "band_label": "545",
+          "y_in_band": 0.256
+        },
+        {
+          "band_idx": 1,
+          "cx": 268,
+          "cy": 244,
+          "x_frac": 0.37222222222222223,
+          "conf": 0.809,
+          "match_score": 1.0,
+          "ocr_text": "Kasa Papa",
+          "band_label": "800M",
+          "y_in_band": 0.758
+        },
+        {
+          "band_idx": 2,
+          "cx": 285,
+          "cy": 412,
+          "x_frac": 0.39652777777777776,
+          "conf": 0.879,
+          "match_score": 1.0,
+          "ocr_text": "Kasa Papa",
+          "band_label": "400M",
+          "y_in_band": 0.88
+        },
+        {
+          "band_idx": 3,
+          "cx": 247,
+          "cy": 585,
+          "x_frac": 0.34375,
+          "conf": 0.848,
+          "match_score": 1.0,
+          "ocr_text": "Kasa Papa",
+          "band_label": "200M",
+          "y_in_band": 0.901
+        }
+      ],
+      "ocr_texts": [
+        "Kasa Papa",
+        "Kasa Papa",
+        "Kasa Papa",
+        "Kasa Papa"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.699,
+      "avg_x_frac": 0.381,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MANAGEMENT FOLKS",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 375,
+          "cy": 41,
+          "x_frac": 0.5215277777777778,
+          "conf": 0.915,
+          "match_score": 1.0,
+          "ocr_text": "Management Folks",
+          "band_label": "545",
+          "y_in_band": 0.256
+        },
+        {
+          "band_idx": 1,
+          "cx": 360,
+          "cy": 244,
+          "x_frac": 0.5,
+          "conf": 0.848,
+          "match_score": 1.0,
+          "ocr_text": "Management Folks",
+          "band_label": "800M",
+          "y_in_band": 0.758
+        },
+        {
+          "band_idx": 2,
+          "cx": 372,
+          "cy": 324,
+          "x_frac": 0.5166666666666667,
+          "conf": 0.867,
+          "match_score": 1.0,
+          "ocr_text": "Management Folks",
+          "band_label": "400M",
+          "y_in_band": 0.293
+        },
+        {
+          "band_idx": 3,
+          "cx": 199,
+          "cy": 541,
+          "x_frac": 0.2763888888888889,
+          "conf": 0.914,
+          "match_score": 1.0,
+          "ocr_text": "Management Folks",
+          "band_label": "200M",
+          "y_in_band": 0.645
+        }
+      ],
+      "ocr_texts": [
+        "Management Folks",
+        "Management Folks",
+        "Management Folks",
+        "Management Folks"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.488,
+      "avg_x_frac": 0.454,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MR ALADDIN",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 478,
+          "cy": 41,
+          "x_frac": 0.6645833333333333,
+          "conf": 0.878,
+          "match_score": 0.947,
+          "ocr_text": "MrAladdin",
+          "band_label": "545",
+          "y_in_band": 0.256
+        },
+        {
+          "band_idx": 2,
+          "cx": 316,
+          "cy": 316,
+          "x_frac": 0.4388888888888889,
+          "conf": 0.854,
+          "match_score": 1.0,
+          "ocr_text": "Mr Aladdin",
+          "band_label": "400M",
+          "y_in_band": 0.24
+        }
+      ],
+      "ocr_texts": [
+        "MrAladdin",
+        "Mr Aladdin"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.248,
+      "avg_x_frac": 0.552,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "PERFECT PAIRING",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 456,
+          "cy": 110,
+          "x_frac": 0.6333333333333333,
+          "conf": 0.862,
+          "match_score": 0.933,
+          "ocr_text": "Perfect Paining",
+          "band_label": "545",
+          "y_in_band": 0.826
+        },
+        {
+          "band_idx": 1,
+          "cx": 379,
+          "cy": 274,
+          "x_frac": 0.5270833333333333,
+          "conf": 0.782,
+          "match_score": 0.933,
+          "ocr_text": "Perfect Paining",
+          "band_label": "800M",
+          "y_in_band": 0.96
+        },
+        {
+          "band_idx": 3,
+          "cx": 395,
+          "cy": 441,
+          "x_frac": 0.5486111111111112,
+          "conf": 0.814,
+          "match_score": 0.968,
+          "ocr_text": "Perfect Pairning",
+          "band_label": "200M",
+          "y_in_band": 0.064
+        },
+        {
+          "band_idx": 3,
+          "cx": 309,
+          "cy": 584,
+          "x_frac": 0.42916666666666664,
+          "conf": 0.818,
+          "match_score": 0.897,
+          "ocr_text": "PertectPairing",
+          "band_label": "200M",
+          "y_in_band": 0.895
+        }
+      ],
+      "ocr_texts": [
+        "Perfect Paining",
+        "Perfect Paining",
+        "Perfect Pairning",
+        "PertectPairing"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.686,
+      "avg_x_frac": 0.535,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ROMANTIC FANTASY",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 219,
+          "cy": 43,
+          "x_frac": 0.30486111111111114,
+          "conf": 0.876,
+          "match_score": 1.0,
+          "ocr_text": "Romantic Fantasy",
+          "band_label": "545",
+          "y_in_band": 0.273
+        },
+        {
+          "band_idx": 1,
+          "cx": 198,
+          "cy": 179,
+          "x_frac": 0.27569444444444446,
+          "conf": 0.881,
+          "match_score": 1.0,
+          "ocr_text": "Romantic Fantasy",
+          "band_label": "800M",
+          "y_in_band": 0.322
+        },
+        {
+          "band_idx": 2,
+          "cx": 183,
+          "cy": 385,
+          "x_frac": 0.25416666666666665,
+          "conf": 0.902,
+          "match_score": 1.0,
+          "ocr_text": "Romantic Fantasy",
+          "band_label": "400M",
+          "y_in_band": 0.7
+        },
+        {
+          "band_idx": 3,
+          "cx": 131,
+          "cy": 541,
+          "x_frac": 0.18263888888888888,
+          "conf": 0.857,
+          "match_score": 1.0,
+          "ocr_text": "Romantic Fantasy",
+          "band_label": "200M",
+          "y_in_band": 0.645
+        }
+      ],
+      "ocr_texts": [
+        "Romantic Fantasy",
+        "Romantic Fantasy",
+        "Romantic Fantasy",
+        "Romantic Fantasy"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.485,
+      "avg_x_frac": 0.254,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ROSEWOOD FLEETFOOT",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 175,
+          "cy": 117,
+          "x_frac": 0.24375,
+          "conf": 0.862,
+          "match_score": 1.0,
+          "ocr_text": "Rosewood Fleetfoot",
+          "band_label": "545",
+          "y_in_band": 0.884
+        },
+        {
+          "band_idx": 1,
+          "cx": 169,
+          "cy": 245,
+          "x_frac": 0.23472222222222222,
+          "conf": 0.859,
+          "match_score": 1.0,
+          "ocr_text": "Rosewood Fleetfoot",
+          "band_label": "800M",
+          "y_in_band": 0.765
+        },
+        {
+          "band_idx": 2,
+          "cx": 222,
+          "cy": 411,
+          "x_frac": 0.30833333333333335,
+          "conf": 0.91,
+          "match_score": 1.0,
+          "ocr_text": "Rosewood Fleetfoot",
+          "band_label": "400M",
+          "y_in_band": 0.873
+        },
+        {
+          "band_idx": 3,
+          "cx": 278,
+          "cy": 563,
+          "x_frac": 0.3861111111111111,
+          "conf": 0.905,
+          "match_score": 1.0,
+          "ocr_text": "Rosewood Fleetfoot",
+          "band_label": "200M",
+          "y_in_band": 0.773
+        }
+      ],
+      "ocr_texts": [
+        "Rosewood Fleetfoot",
+        "Rosewood Fleetfoot",
+        "Rosewood Fleetfoot",
+        "Rosewood Fleetfoot"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.824,
+      "avg_x_frac": 0.293,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SUPER HONG KONG",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 323,
+          "cy": 120,
+          "x_frac": 0.44930555555555557,
+          "conf": 0.868,
+          "match_score": 1.0,
+          "ocr_text": "Super Hong Kong",
+          "band_label": "545",
+          "y_in_band": 0.909
+        },
+        {
+          "band_idx": 1,
+          "cx": 315,
+          "cy": 271,
+          "x_frac": 0.4375,
+          "conf": 0.861,
+          "match_score": 0.966,
+          "ocr_text": "Super HongKong",
+          "band_label": "800M",
+          "y_in_band": 0.94
+        },
+        {
+          "band_idx": 2,
+          "cx": 412,
+          "cy": 420,
+          "x_frac": 0.5722222222222222,
+          "conf": 0.846,
+          "match_score": 1.0,
+          "ocr_text": "Super Hong Kong",
+          "band_label": "400M",
+          "y_in_band": 0.933
+        },
+        {
+          "band_idx": 3,
+          "cx": 480,
+          "cy": 571,
+          "x_frac": 0.6673611111111111,
+          "conf": 0.85,
+          "match_score": 1.0,
+          "ocr_text": "Super Hong Kong",
+          "band_label": "200M",
+          "y_in_band": 0.82
+        }
+      ],
+      "ocr_texts": [
+        "Super Hong Kong",
+        "Super HongKong",
+        "Super Hong Kong",
+        "Super Hong Kong"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.9,
+      "avg_x_frac": 0.532,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 76,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-04-22T16:31:19"
+  }
+}

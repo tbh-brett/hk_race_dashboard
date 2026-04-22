@@ -1,0 +1,435 @@
+{
+  "date": "2026-01-18",
+  "race_number": 3,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "356",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "CASA OF HONOR",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 123,
+          "cy": 123,
+          "x_frac": 0.17152777777777778,
+          "conf": 0.749,
+          "match_score": 0.917,
+          "ocr_text": "CasaOfHonor",
+          "band_label": "356",
+          "y_in_band": 0.934
+        }
+      ],
+      "ocr_texts": [
+        "CasaOfHonor"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.934,
+      "avg_x_frac": 0.172,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CITY GOLD BANNER",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 174,
+          "cy": 319,
+          "x_frac": 0.24166666666666667,
+          "conf": 0.855,
+          "match_score": 1.0,
+          "ocr_text": "City Gold Banner",
+          "band_label": "400M",
+          "y_in_band": 0.26
+        },
+        {
+          "band_idx": 3,
+          "cx": 114,
+          "cy": 552,
+          "x_frac": 0.15833333333333333,
+          "conf": 0.837,
+          "match_score": 1.0,
+          "ocr_text": "City Gold Banner",
+          "band_label": "200M",
+          "y_in_band": 0.709
+        }
+      ],
+      "ocr_texts": [
+        "City Gold Banner",
+        "City Gold Banner"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.484,
+      "avg_x_frac": 0.2,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "E HO HO",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 247,
+          "cy": 243,
+          "x_frac": 0.34375,
+          "conf": 0.785,
+          "match_score": 0.833,
+          "ocr_text": "EHoHo",
+          "band_label": "800M",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 3,
+          "cx": 357,
+          "cy": 563,
+          "x_frac": 0.49583333333333335,
+          "conf": 0.598,
+          "match_score": 0.833,
+          "ocr_text": "EHoHo",
+          "band_label": "200M",
+          "y_in_band": 0.773
+        }
+      ],
+      "ocr_texts": [
+        "EHoHo",
+        "EHoHo"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.762,
+      "avg_x_frac": 0.42,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FAST RESPONDER",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 209,
+          "cy": 114,
+          "x_frac": 0.2902777777777778,
+          "conf": 0.902,
+          "match_score": 0.963,
+          "ocr_text": "FastResponder",
+          "band_label": "356",
+          "y_in_band": 0.86
+        },
+        {
+          "band_idx": 1,
+          "cx": 165,
+          "cy": 265,
+          "x_frac": 0.2298611111111111,
+          "conf": 0.862,
+          "match_score": 0.963,
+          "ocr_text": "FastResponder",
+          "band_label": "800M",
+          "y_in_band": 0.899
+        },
+        {
+          "band_idx": 2,
+          "cx": 92,
+          "cy": 417,
+          "x_frac": 0.1284722222222222,
+          "conf": 0.87,
+          "match_score": 0.963,
+          "ocr_text": "FastResponder",
+          "band_label": "400M",
+          "y_in_band": 0.913
+        },
+        {
+          "band_idx": 3,
+          "cx": 301,
+          "cy": 572,
+          "x_frac": 0.41805555555555557,
+          "conf": 0.892,
+          "match_score": 0.963,
+          "ocr_text": "FastResponder",
+          "band_label": "200M",
+          "y_in_band": 0.826
+        }
+      ],
+      "ocr_texts": [
+        "FastResponder",
+        "FastResponder",
+        "FastResponder",
+        "FastResponder"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.874,
+      "avg_x_frac": 0.267,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FORZA LEADER",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 289,
+          "cy": 140,
+          "x_frac": 0.4013888888888889,
+          "conf": 0.849,
+          "match_score": 1.0,
+          "ocr_text": "Forza Leader",
+          "band_label": "800M",
+          "y_in_band": 0.06
+        },
+        {
+          "band_idx": 1,
+          "cx": 303,
+          "cy": 262,
+          "x_frac": 0.4215277777777778,
+          "conf": 0.841,
+          "match_score": 0.957,
+          "ocr_text": "ForzaLeader",
+          "band_label": "800M",
+          "y_in_band": 0.879
+        }
+      ],
+      "ocr_texts": [
+        "Forza Leader",
+        "ForzaLeader"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.47,
+      "avg_x_frac": 0.411,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FUN N FUN TOGETHER",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 139,
+          "cy": 98,
+          "x_frac": 0.19305555555555556,
+          "conf": 0.863,
+          "match_score": 0.971,
+          "ocr_text": "Fun NFun Together",
+          "band_label": "356",
+          "y_in_band": 0.727
+        },
+        {
+          "band_idx": 2,
+          "cx": 165,
+          "cy": 424,
+          "x_frac": 0.22916666666666666,
+          "conf": 0.867,
+          "match_score": 1.0,
+          "ocr_text": "Fun N Fun Together",
+          "band_label": "400M",
+          "y_in_band": 0.96
+        },
+        {
+          "band_idx": 3,
+          "cx": 415,
+          "cy": 570,
+          "x_frac": 0.5770833333333333,
+          "conf": 0.867,
+          "match_score": 0.909,
+          "ocr_text": "FunNFunTogether",
+          "band_label": "200M",
+          "y_in_band": 0.814
+        }
+      ],
+      "ocr_texts": [
+        "Fun NFun Together",
+        "Fun N Fun Together",
+        "FunNFunTogether"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.834,
+      "avg_x_frac": 0.333,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SIGHT HERMOSO",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 161,
+          "cy": 171,
+          "x_frac": 0.22361111111111112,
+          "conf": 0.906,
+          "match_score": 1.0,
+          "ocr_text": "Sight Hermoso",
+          "band_label": "800M",
+          "y_in_band": 0.268
+        },
+        {
+          "band_idx": 2,
+          "cx": 118,
+          "cy": 394,
+          "x_frac": 0.16458333333333333,
+          "conf": 0.882,
+          "match_score": 1.0,
+          "ocr_text": "Sight Hermoso",
+          "band_label": "400M",
+          "y_in_band": 0.76
+        }
+      ],
+      "ocr_texts": [
+        "Sight Hermoso",
+        "Sight Hermoso"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.514,
+      "avg_x_frac": 0.194,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TACTICAL VICTORY",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 339,
+          "cy": 141,
+          "x_frac": 0.47152777777777777,
+          "conf": 0.911,
+          "match_score": 1.0,
+          "ocr_text": "Tactical Victory",
+          "band_label": "800M",
+          "y_in_band": 0.067
+        }
+      ],
+      "ocr_texts": [
+        "Tactical Victory"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.067,
+      "avg_x_frac": 0.472,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "THE UNIQUE STAR",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 214,
+          "cy": 289,
+          "x_frac": 0.29791666666666666,
+          "conf": 0.807,
+          "match_score": 1.0,
+          "ocr_text": "The Unique Star",
+          "band_label": "400M",
+          "y_in_band": 0.06
+        }
+      ],
+      "ocr_texts": [
+        "The Unique Star"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.06,
+      "avg_x_frac": 0.298,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "WHIZZ KID",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 186,
+          "cy": 243,
+          "x_frac": 0.2590277777777778,
+          "conf": 0.831,
+          "match_score": 1.0,
+          "ocr_text": "Whizz Kid",
+          "band_label": "800M",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 3,
+          "cx": 407,
+          "cy": 546,
+          "x_frac": 0.5659722222222222,
+          "conf": 0.874,
+          "match_score": 0.941,
+          "ocr_text": "WhizzKid",
+          "band_label": "200M",
+          "y_in_band": 0.674
+        }
+      ],
+      "ocr_texts": [
+        "Whizz Kid",
+        "WhizzKid"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.713,
+      "avg_x_frac": 0.412,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 42,
+    "matched_horses": 10,
+    "field_size": 11,
+    "coverage": 0.909,
+    "parsed_at": "2026-04-22T15:48:43"
+  }
+}

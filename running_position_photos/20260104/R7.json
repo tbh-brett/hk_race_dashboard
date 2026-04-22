@@ -1,0 +1,408 @@
+{
+  "date": "2026-01-04",
+  "race_number": 7,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "320",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "CHIU CHOW SPIRIT",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 429,
+          "cy": 131,
+          "x_frac": 0.5958333333333333,
+          "conf": 0.909,
+          "match_score": 1.0,
+          "ocr_text": "Chiu Chow Spirit",
+          "band_label": "800M",
+          "y_in_band": 0.0
+        },
+        {
+          "band_idx": 2,
+          "cx": 183,
+          "cy": 426,
+          "x_frac": 0.25416666666666665,
+          "conf": 0.86,
+          "match_score": 1.0,
+          "ocr_text": "Chiu Chow Spirit",
+          "band_label": "400M",
+          "y_in_band": 0.973
+        }
+      ],
+      "ocr_texts": [
+        "Chiu Chow Spirit",
+        "Chiu Chow Spirit"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.486,
+      "avg_x_frac": 0.425,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DARYL FLASH",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 194,
+          "cy": 401,
+          "x_frac": 0.2701388888888889,
+          "conf": 0.837,
+          "match_score": 0.909,
+          "ocr_text": "Daryi Flash",
+          "band_label": "400M",
+          "y_in_band": 0.807
+        }
+      ],
+      "ocr_texts": [
+        "Daryi Flash"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.807,
+      "avg_x_frac": 0.27,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KARMA",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 3,
+          "cx": 234,
+          "cy": 563,
+          "x_frac": 0.325,
+          "conf": 0.825,
+          "match_score": 1.0,
+          "ocr_text": "Karma",
+          "band_label": "200M",
+          "y_in_band": 0.773
+        }
+      ],
+      "ocr_texts": [
+        "Karma"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.773,
+      "avg_x_frac": 0.325,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SAGACIOUS LIFE",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 127,
+          "cy": 264,
+          "x_frac": 0.1763888888888889,
+          "conf": 0.774,
+          "match_score": 0.963,
+          "ocr_text": "Sagacous Life",
+          "band_label": "800M",
+          "y_in_band": 0.893
+        },
+        {
+          "band_idx": 2,
+          "cx": 115,
+          "cy": 418,
+          "x_frac": 0.1597222222222222,
+          "conf": 0.852,
+          "match_score": 1.0,
+          "ocr_text": "Sagacious Life",
+          "band_label": "400M",
+          "y_in_band": 0.92
+        },
+        {
+          "band_idx": 3,
+          "cx": 85,
+          "cy": 563,
+          "x_frac": 0.11875,
+          "conf": 0.878,
+          "match_score": 1.0,
+          "ocr_text": "Sagacious Life",
+          "band_label": "200M",
+          "y_in_band": 0.773
+        }
+      ],
+      "ocr_texts": [
+        "Sagacous Life",
+        "Sagacious Life",
+        "Sagacious Life"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.862,
+      "avg_x_frac": 0.152,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SOLEIL FIGHTER",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 115,
+          "cy": 394,
+          "x_frac": 0.1597222222222222,
+          "conf": 0.882,
+          "match_score": 1.0,
+          "ocr_text": "Soleil Fighter",
+          "band_label": "400M",
+          "y_in_band": 0.76
+        },
+        {
+          "band_idx": 3,
+          "cx": 139,
+          "cy": 557,
+          "x_frac": 0.19375,
+          "conf": 0.803,
+          "match_score": 0.963,
+          "ocr_text": "Soleil Fighte",
+          "band_label": "200M",
+          "y_in_band": 0.738
+        }
+      ],
+      "ocr_texts": [
+        "Soleil Fighter",
+        "Soleil Fighte"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.749,
+      "avg_x_frac": 0.177,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TOP DRAGON",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 418,
+          "cy": 105,
+          "x_frac": 0.5805555555555556,
+          "conf": 0.864,
+          "match_score": 0.947,
+          "ocr_text": "TopDragon",
+          "band_label": "320",
+          "y_in_band": 0.785
+        },
+        {
+          "band_idx": 1,
+          "cx": 287,
+          "cy": 265,
+          "x_frac": 0.39861111111111114,
+          "conf": 0.831,
+          "match_score": 1.0,
+          "ocr_text": "Top Dragon",
+          "band_label": "800M",
+          "y_in_band": 0.899
+        },
+        {
+          "band_idx": 2,
+          "cx": 245,
+          "cy": 427,
+          "x_frac": 0.340625,
+          "conf": 0.866,
+          "match_score": 0.947,
+          "ocr_text": "TopDragon",
+          "band_label": "400M",
+          "y_in_band": 0.98
+        },
+        {
+          "band_idx": 3,
+          "cx": 176,
+          "cy": 589,
+          "x_frac": 0.24479166666666666,
+          "conf": 0.796,
+          "match_score": 0.947,
+          "ocr_text": "TopDragon",
+          "band_label": "200M",
+          "y_in_band": 0.924
+        }
+      ],
+      "ocr_texts": [
+        "TopDragon",
+        "Top Dragon",
+        "TopDragon",
+        "TopDragon"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.897,
+      "avg_x_frac": 0.391,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WINDLORD",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 147,
+          "cy": 178,
+          "x_frac": 0.2048611111111111,
+          "conf": 0.813,
+          "match_score": 1.0,
+          "ocr_text": "Windlord",
+          "band_label": "800M",
+          "y_in_band": 0.315
+        }
+      ],
+      "ocr_texts": [
+        "Windlord"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.315,
+      "avg_x_frac": 0.205,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "WINFIELD",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 77,
+          "cy": 177,
+          "x_frac": 0.10694444444444444,
+          "conf": 0.83,
+          "match_score": 0.875,
+          "ocr_text": "Vinfield",
+          "band_label": "800M",
+          "y_in_band": 0.309
+        }
+      ],
+      "ocr_texts": [
+        "Vinfield"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.309,
+      "avg_x_frac": 0.107,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "YOUNG CHAMPION",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 348,
+          "cy": 134,
+          "x_frac": 0.48333333333333334,
+          "conf": 0.856,
+          "match_score": 1.0,
+          "ocr_text": "Young Champion",
+          "band_label": "800M",
+          "y_in_band": 0.02
+        },
+        {
+          "band_idx": 2,
+          "cx": 211,
+          "cy": 289,
+          "x_frac": 0.29305555555555557,
+          "conf": 0.894,
+          "match_score": 1.0,
+          "ocr_text": "Young Champion",
+          "band_label": "400M",
+          "y_in_band": 0.06
+        },
+        {
+          "band_idx": 3,
+          "cx": 302,
+          "cy": 432,
+          "x_frac": 0.41944444444444445,
+          "conf": 0.896,
+          "match_score": 1.0,
+          "ocr_text": "Young Champion",
+          "band_label": "200M",
+          "y_in_band": 0.012
+        },
+        {
+          "band_idx": 3,
+          "cx": 438,
+          "cy": 565,
+          "x_frac": 0.6083333333333333,
+          "conf": 0.904,
+          "match_score": 1.0,
+          "ocr_text": "Young Champion",
+          "band_label": "200M",
+          "y_in_band": 0.785
+        }
+      ],
+      "ocr_texts": [
+        "Young Champion",
+        "Young Champion",
+        "Young Champion",
+        "Young Champion"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.219,
+      "avg_x_frac": 0.451,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 39,
+    "matched_horses": 9,
+    "field_size": 11,
+    "coverage": 0.818,
+    "parsed_at": "2026-04-22T15:44:44"
+  }
+}

@@ -1,0 +1,483 @@
+{
+  "date": "2026-03-15",
+  "race_number": 10,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "524",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ALL OUT FOR SIX",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 124,
+          "cy": 97,
+          "x_frac": 0.17291666666666666,
+          "conf": 0.872,
+          "match_score": 0.929,
+          "ocr_text": "All OutForSix",
+          "band_label": "524",
+          "y_in_band": 0.719
+        },
+        {
+          "band_idx": 1,
+          "cx": 182,
+          "cy": 233,
+          "x_frac": 0.25277777777777777,
+          "conf": 0.885,
+          "match_score": 0.889,
+          "ocr_text": "AllOutForSix",
+          "band_label": "800M",
+          "y_in_band": 0.685
+        },
+        {
+          "band_idx": 2,
+          "cx": 257,
+          "cy": 394,
+          "x_frac": 0.3576388888888889,
+          "conf": 0.823,
+          "match_score": 0.929,
+          "ocr_text": "AllOut ForSix",
+          "band_label": "400M",
+          "y_in_band": 0.76
+        }
+      ],
+      "ocr_texts": [
+        "All OutForSix",
+        "AllOutForSix",
+        "AllOut ForSix"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.721,
+      "avg_x_frac": 0.261,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ANODE",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 297,
+          "cy": 408,
+          "x_frac": 0.4125,
+          "conf": 0.744,
+          "match_score": 1.0,
+          "ocr_text": "Anode",
+          "band_label": "400M",
+          "y_in_band": 0.853
+        }
+      ],
+      "ocr_texts": [
+        "Anode"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.853,
+      "avg_x_frac": 0.412,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CASA OF HONOR",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 432,
+          "cy": 265,
+          "x_frac": 0.6006944444444444,
+          "conf": 0.809,
+          "match_score": 1.0,
+          "ocr_text": "Casa Of Honor",
+          "band_label": "800M",
+          "y_in_band": 0.899
+        }
+      ],
+      "ocr_texts": [
+        "Casa Of Honor"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.899,
+      "avg_x_frac": 0.601,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CORNERSTONE",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 359,
+          "cy": 30,
+          "x_frac": 0.4986111111111111,
+          "conf": 0.851,
+          "match_score": 1.0,
+          "ocr_text": "Cornerstone",
+          "band_label": "524",
+          "y_in_band": 0.165
+        },
+        {
+          "band_idx": 1,
+          "cx": 370,
+          "cy": 174,
+          "x_frac": 0.5138888888888888,
+          "conf": 0.872,
+          "match_score": 0.857,
+          "ocr_text": "Comerstone",
+          "band_label": "800M",
+          "y_in_band": 0.289
+        },
+        {
+          "band_idx": 2,
+          "cx": 430,
+          "cy": 341,
+          "x_frac": 0.5972222222222222,
+          "conf": 0.889,
+          "match_score": 1.0,
+          "ocr_text": "Cornerstone",
+          "band_label": "400M",
+          "y_in_band": 0.407
+        },
+        {
+          "band_idx": 3,
+          "cx": 516,
+          "cy": 583,
+          "x_frac": 0.7173611111111111,
+          "conf": 0.91,
+          "match_score": 1.0,
+          "ocr_text": "Cornerstone",
+          "band_label": "200M",
+          "y_in_band": 0.89
+        }
+      ],
+      "ocr_texts": [
+        "Cornerstone",
+        "Comerstone",
+        "Cornerstone",
+        "Cornerstone"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.438,
+      "avg_x_frac": 0.582,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HELENE SUPAFEELING",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 399,
+          "cy": 88,
+          "x_frac": 0.5541666666666667,
+          "conf": 0.904,
+          "match_score": 0.971,
+          "ocr_text": "HeleneSupafeeling",
+          "band_label": "524",
+          "y_in_band": 0.645
+        },
+        {
+          "band_idx": 1,
+          "cx": 415,
+          "cy": 242,
+          "x_frac": 0.5770833333333333,
+          "conf": 0.847,
+          "match_score": 1.0,
+          "ocr_text": "Helene Supafeeling",
+          "band_label": "800M",
+          "y_in_band": 0.745
+        },
+        {
+          "band_idx": 2,
+          "cx": 404,
+          "cy": 404,
+          "x_frac": 0.5618055555555556,
+          "conf": 0.909,
+          "match_score": 1.0,
+          "ocr_text": "Helene Supafeeling",
+          "band_label": "400M",
+          "y_in_band": 0.827
+        },
+        {
+          "band_idx": 3,
+          "cx": 426,
+          "cy": 583,
+          "x_frac": 0.5916666666666667,
+          "conf": 0.928,
+          "match_score": 1.0,
+          "ocr_text": "Helene Supafeeling",
+          "band_label": "200M",
+          "y_in_band": 0.89
+        }
+      ],
+      "ocr_texts": [
+        "HeleneSupafeeling",
+        "Helene Supafeeling",
+        "Helene Supafeeling",
+        "Helene Supafeeling"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.777,
+      "avg_x_frac": 0.571,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LO PAN SPIRIT",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 449,
+          "cy": 114,
+          "x_frac": 0.6243055555555556,
+          "conf": 0.855,
+          "match_score": 0.917,
+          "ocr_text": "LoPanSpirit",
+          "band_label": "524",
+          "y_in_band": 0.86
+        },
+        {
+          "band_idx": 1,
+          "cx": 492,
+          "cy": 265,
+          "x_frac": 0.6833333333333333,
+          "conf": 0.87,
+          "match_score": 1.0,
+          "ocr_text": "Lo Pan Spirit",
+          "band_label": "800M",
+          "y_in_band": 0.899
+        }
+      ],
+      "ocr_texts": [
+        "LoPanSpirit",
+        "Lo Pan Spirit"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.879,
+      "avg_x_frac": 0.654,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "QUANTUM CLOUD",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 189,
+          "cy": 98,
+          "x_frac": 0.2625,
+          "conf": 0.889,
+          "match_score": 0.917,
+          "ocr_text": "uantumCloud",
+          "band_label": "524",
+          "y_in_band": 0.727
+        },
+        {
+          "band_idx": 1,
+          "cx": 301,
+          "cy": 233,
+          "x_frac": 0.41875,
+          "conf": 0.845,
+          "match_score": 0.96,
+          "ocr_text": "QuantumCloud",
+          "band_label": "800M",
+          "y_in_band": 0.685
+        },
+        {
+          "band_idx": 3,
+          "cx": 480,
+          "cy": 557,
+          "x_frac": 0.6666666666666666,
+          "conf": 0.864,
+          "match_score": 0.96,
+          "ocr_text": "QuantumCloud",
+          "band_label": "200M",
+          "y_in_band": 0.738
+        }
+      ],
+      "ocr_texts": [
+        "uantumCloud",
+        "QuantumCloud",
+        "QuantumCloud"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.717,
+      "avg_x_frac": 0.449,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RED SEA",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 179,
+          "cy": 329,
+          "x_frac": 0.24930555555555556,
+          "conf": 0.842,
+          "match_score": 0.923,
+          "ocr_text": "RedSea",
+          "band_label": "400M",
+          "y_in_band": 0.327
+        }
+      ],
+      "ocr_texts": [
+        "RedSea"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.327,
+      "avg_x_frac": 0.249,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "SMART GOLF",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 114,
+          "cy": 329,
+          "x_frac": 0.15833333333333333,
+          "conf": 0.738,
+          "match_score": 0.9,
+          "ocr_text": "Smart Goli",
+          "band_label": "400M",
+          "y_in_band": 0.327
+        }
+      ],
+      "ocr_texts": [
+        "Smart Goli"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.327,
+      "avg_x_frac": 0.158,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "WUKONG JEWELLERY",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 245,
+          "cy": 30,
+          "x_frac": 0.34097222222222223,
+          "conf": 0.883,
+          "match_score": 1.0,
+          "ocr_text": "Wukong Jewellery",
+          "band_label": "524",
+          "y_in_band": 0.165
+        },
+        {
+          "band_idx": 1,
+          "cx": 284,
+          "cy": 171,
+          "x_frac": 0.39479166666666665,
+          "conf": 0.873,
+          "match_score": 0.968,
+          "ocr_text": "Wukong Jewelery",
+          "band_label": "800M",
+          "y_in_band": 0.268
+        },
+        {
+          "band_idx": 2,
+          "cx": 232,
+          "cy": 327,
+          "x_frac": 0.32256944444444446,
+          "conf": 0.896,
+          "match_score": 1.0,
+          "ocr_text": "Wukong Jewellery",
+          "band_label": "400M",
+          "y_in_band": 0.313
+        },
+        {
+          "band_idx": 3,
+          "cx": 138,
+          "cy": 576,
+          "x_frac": 0.19236111111111112,
+          "conf": 0.886,
+          "match_score": 1.0,
+          "ocr_text": "Wukong Jewellery",
+          "band_label": "200M",
+          "y_in_band": 0.849
+        }
+      ],
+      "ocr_texts": [
+        "Wukong Jewellery",
+        "Wukong Jewelery",
+        "Wukong Jewellery",
+        "Wukong Jewellery"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.399,
+      "avg_x_frac": 0.313,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 56,
+    "matched_horses": 10,
+    "field_size": 12,
+    "coverage": 0.833,
+    "parsed_at": "2026-04-22T16:29:28"
+  }
+}
