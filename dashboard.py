@@ -4665,6 +4665,107 @@ def page_results():
             key="res_dl_xlsx",
         )
 
+    # ── Dividends / Payouts (from scrape_hkjc_dividends.py) ──────────────
+    _div_path = REPORTS / f"dividends_{selected_dc}.json"
+    if _div_path.exists():
+        try:
+            _div_data = json.loads(_div_path.read_text(encoding="utf-8"))
+            _div_race = next(
+                (r for r in _div_data.get("races", [])
+                 if r.get("race_number") == selected_rn),
+                None,
+            )
+        except Exception:
+            _div_race = None
+        if _div_race and _div_race.get("dividends"):
+            # Group by pool, preserving HKJC canonical order
+            _pool_order = ["WIN", "PLACE", "QIN", "QPL", "FCT", "TCE",
+                           "TRIO", "F4", "QTT", "DBL", "TBL", "DT", "TT", "6UP"]
+            _pool_labels = {
+                "WIN": "Win", "PLACE": "Place", "QIN": "Quinella",
+                "QPL": "Quinella Place", "FCT": "Forecast", "TCE": "Tierce",
+                "TRIO": "Trio", "F4": "First 4", "QTT": "Quartet",
+                "DBL": "Double", "TBL": "Treble", "DT": "Double Trio",
+                "TT": "Triple Trio", "6UP": "Six Up",
+            }
+            _by_pool: dict[str, list[dict]] = {}
+            for d in _div_race["dividends"]:
+                _by_pool.setdefault(d.get("pool", "?"), []).append(d)
+            with st.expander(
+                f"💰 Dividends — R{selected_rn} (HK$10 unit)", expanded=True):
+                _cards = []
+                for _pk in _pool_order:
+                    if _pk not in _by_pool:
+                        continue
+                    _items = _by_pool[_pk]
+                    _rows_html = "".join(
+                        f"<div style='display:flex;justify-content:space-between;"
+                        f"padding:2px 0;font-size:12px'>"
+                        f"<span style='font-family:monospace;opacity:0.85'>"
+                        f"{d.get('combination','?')}</span>"
+                        f"<span style='font-weight:600'>"
+                        f"${d.get('dividend_per_10','?'):,.1f}</span>"
+                        f"</div>"
+                        for d in _items
+                    )
+                    _cards.append(
+                        f"<div style='flex:0 0 auto;min-width:150px;"
+                        f"border:1px solid #30363d;border-radius:6px;"
+                        f"padding:8px 10px;background:#0d1117'>"
+                        f"<div style='font-weight:700;font-size:12px;"
+                        f"color:#58a6ff;margin-bottom:4px'>"
+                        f"{_pool_labels.get(_pk, _pk)} "
+                        f"<span style='opacity:0.5;font-weight:400'>"
+                        f"({_pk})</span></div>"
+                        f"{_rows_html}"
+                        f"</div>"
+                    )
+                # Remaining pools not in canonical order
+                for _pk, _items in _by_pool.items():
+                    if _pk in _pool_order:
+                        continue
+                    _rows_html = "".join(
+                        f"<div style='display:flex;justify-content:space-between;"
+                        f"padding:2px 0;font-size:12px'>"
+                        f"<span style='font-family:monospace;opacity:0.85'>"
+                        f"{d.get('combination','?')}</span>"
+                        f"<span style='font-weight:600'>"
+                        f"${d.get('dividend_per_10','?'):,.1f}</span>"
+                        f"</div>"
+                        for d in _items
+                    )
+                    _cards.append(
+                        f"<div style='flex:0 0 auto;min-width:150px;"
+                        f"border:1px solid #30363d;border-radius:6px;"
+                        f"padding:8px 10px;background:#0d1117'>"
+                        f"<div style='font-weight:700;font-size:12px;"
+                        f"color:#58a6ff;margin-bottom:4px'>{_pk}</div>"
+                        f"{_rows_html}"
+                        f"</div>"
+                    )
+                st.markdown(
+                    f"<div style='display:flex;gap:8px;flex-wrap:wrap'>"
+                    f"{''.join(_cards)}</div>",
+                    unsafe_allow_html=True,
+                )
+                st.caption(
+                    "Dividends shown per HK$10 unit (HKJC standard). "
+                    "Scraped via `scrape_hkjc_dividends.py` → "
+                    f"`reports/dividends_{selected_dc}.json`."
+                )
+        else:
+            st.caption(
+                f"💰 No dividends found for R{selected_rn} in "
+                f"`dividends_{selected_dc}.json`."
+            )
+    else:
+        st.caption(
+            "💰 No dividends file. Run "
+            f"`python scrape_hkjc_dividends.py --date "
+            f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}` "
+            "to generate `reports/dividends_*.json`."
+        )
+
     # ── Running Position Photo ───────────────────────────────────────────
     rp_photo_path = BASE / "running_position_photos" / selected_dc / f"R{selected_rn}.jpg"
     with st.expander("📸 Running Position Photo (HKJC)", expanded=False):
@@ -6217,11 +6318,11 @@ def _trial_compact_html(entries: list) -> str:
         comment_short = comment[:45] + (".." if len(comment) > 45 else "") if comment else ""
         comment_html = f' <span style="color:#9ca3af;font-size:0.83em">{comment_short}</span>' if comment_short else ""
 
-        # Trial replay button — only reliable for 2026+ (HKJC video coverage gate)
+        # Trial replay button — HKJC trial videos exist ~2020 onwards
         vid_html = ""
         dt_iso = e.get("date", "")
         batch_n = e.get("batch_number", 0)
-        if dt_iso and dt_iso >= "2026-01-01" and batch_n:
+        if dt_iso and dt_iso >= "2020-01-01" and batch_n:
             dc = dt_iso.replace("-", "")
             vurl = _hkjc_trial_video_url(dc, int(batch_n), e.get("course", ""))
             vid_html = (
@@ -6340,8 +6441,8 @@ def _render_trial_batch_table(batch: dict, search_upper: str = "",
         f"{batch['n_horses']} horses",
         expanded=True,
     ):
-        # Replay button (2026+ only)
-        if date_iso and date_iso >= "2026-01-01":
+        # Replay button (HKJC videos from ~2020 onwards)
+        if date_iso and date_iso >= "2020-01-01":
             vurl = _hkjc_trial_video_url(
                 date_iso.replace("-", ""),
                 int(batch["batch_number"]),
@@ -6450,10 +6551,10 @@ def _render_horse_trial_history(horse_name: str, trial_index: dict):
         medals = ["\U0001f947", "\U0001f948", "\U0001f949", "4."]
         t4_html = " ".join(f'{medals[r]}{nm}' for r, nm in enumerate(top4)) if top4 else ""
 
-        # Trial replay button (2026+)
+        # Trial replay button (HKJC videos from ~2020 onwards)
         dt_iso = e.get("date", "") or ""
         batch_n = e.get("batch_number", 0)
-        if dt_iso and dt_iso >= "2026-01-01" and batch_n:
+        if dt_iso and dt_iso >= "2020-01-01" and batch_n:
             dc = dt_iso.replace("-", "")
             vurl = _hkjc_trial_video_url(dc, int(batch_n), e.get("course", ""))
             vid_cell = (
