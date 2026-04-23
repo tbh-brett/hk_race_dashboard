@@ -80,6 +80,8 @@ def parse_args():
                    help="Skip scraping (use existing race card Excel)")
     p.add_argument("--skip-analysis", action="store_true",
                    help="Skip analysis (only scrape)")
+    p.add_argument("--skip-sarr", action="store_true",
+                   help="Skip the SARR model stage (e.g. when dashboard runs it separately)")
     p.add_argument("--post-race", action="store_true",
                    help="Scrape actual results and run backtest (post-race mode)")
     p.add_argument("--model", default="v4.4", choices=["v3.4.8", "v4.4"],
@@ -492,10 +494,13 @@ def main():
         print(f"WARNING: Form guide cache build failed: {e}")
 
     # Step 4c: Run SARR (independent, always runs after ET)
-    try:
-        run_sarr(args.date)
-    except Exception as e:
-        print(f"WARNING: SARR run failed: {e}")
+    if args.skip_sarr:
+        print("\n[4c] SARR SKIPPED (--skip-sarr)")
+    else:
+        try:
+            run_sarr(args.date)
+        except Exception as e:
+            print(f"WARNING: SARR run failed: {e}")
 
     v_tag = model_ver.replace('v', 'v') if model_ver else 'v3.4.8'
     if rc == 0:

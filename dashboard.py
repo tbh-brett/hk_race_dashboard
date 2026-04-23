@@ -1270,9 +1270,24 @@ def render_speed_map(race: dict):
 
     n_cols = smap["n_cols"]
     n_rows = smap["n_rows"]
-    grid = {}
+
+    # ── Render-time rail compression ──────────────────────────────────
+    # Horses in the same column should settle on the rail in transit when
+    # inner rows are vacant. The upstream row assignment occasionally leaves
+    # a gap at rail (row 1) while placing horses at W2/WIDE — when that
+    # happens, pack horses toward the rail without changing their relative
+    # lateral order. This is a visual-only pass; per-horse advantages,
+    # beneficiary reasons, etc. are untouched.
+    by_col: dict[int, list[dict]] = {}
     for h in smap["grid"]:
-        grid[(h["col"], h["row"])] = h
+        by_col.setdefault(h["col"], []).append(h)
+
+    grid = {}
+    for col, col_horses in by_col.items():
+        col_horses.sort(key=lambda x: x.get("row", 1))  # rail-first preserved
+        for idx, h in enumerate(col_horses):
+            display_row = min(idx + 1, n_rows)
+            grid[(col, display_row)] = h
 
     dist = race["distance"]
     pace = race.get("pace", "Normal")
@@ -1815,96 +1830,127 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
 
 def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                  model: str = "v4.4", skip_scrape: bool = False):
-    """Run the orchestrator from the dashboard."""
-    cmd = [PYTHON, str(BASE / "run_meeting.py"), "--date", date_str,
-           "--model", model]
-    if no_cache:
-        cmd.append("--no-cache")
-    if skip_scrape:
-        cmd.append("--skip-scrape")
-    cmd.extend(["--going-turf", going_turf, "--going-awt", going_awt])
+    """Run the race-day pipeline as three EXPLICIT, user-visible stages:
 
+        [1/3] Scrape the race card for the meeting
+        [2/3] Run SARR model on the freshly-scraped card
+        [3/3] Run ET (v4.4) model on the freshly-scraped card
+
+    SARR is run BEFORE ET so that a SARR JSON is available even if the ET
+    analysis script later errors out. ET is invoked via run_meeting.py with
+    `--skip-scrape --skip-sarr`, which handles vet scraping, form-guide cache,
+    and the v4.4 analysis script generation.
+    """
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
 
     dc = date_str.replace("-", "")
-    sarr_json = REPORTS / f"race_day_report_{dc}_SARR.json"
+    scraper_script = BASE / "scrape_hkjc_racecard.py"
     sarr_script = BASE / "sarr_raceday.py"
+    sarr_json = REPORTS / f"race_day_report_{dc}_SARR.json"
+    et_json = REPORTS / f"race_day_report_{dc}_{model}.json"
+    racecard_xlsx = BASE / "racecards" / f"racecard_{dc}.xlsx"
+
     sarr_mtime_before = sarr_json.stat().st_mtime if sarr_json.exists() else 0.0
+    et_mtime_before   = et_json.stat().st_mtime   if et_json.exists()   else 0.0
+    rc_mtime_before   = racecard_xlsx.stat().st_mtime if racecard_xlsx.exists() else 0.0
+
+    def _run(label: str, cmd: list, timeout: int):
+        status = st.empty()
+        status.info(f"{label} — running…")
+        try:
+            res = subprocess.run(
+                cmd, env=env, cwd=str(BASE),
+                capture_output=True, text=True, encoding="utf-8",
+                timeout=timeout,
+            )
+            return res
+        except subprocess.TimeoutExpired as e:
+            st.error(f"✗ {label} timed out after {timeout}s")
+            return e
+        except OSError as e:
+            st.error(f"✗ {label} failed to launch: {e}")
+            return e
 
     with st.spinner(f"Running pipeline for {date_str}..."):
-        status = st.empty()
+        # ── [1/3] Scrape race card ──────────────────────────────────
         if skip_scrape:
-            status.info(f"[1/2] Running ET analysis for {date_str} (using uploaded racecard)...")
+            st.info(f"[1/3] Scrape SKIPPED (using existing {racecard_xlsx.name})")
         else:
-            status.info(f"[1/2] Scraping race card + ET analysis for {date_str}...")
-
-        result = subprocess.run(
-            cmd, env=env, cwd=str(BASE),
-            capture_output=True, text=True, encoding="utf-8",
-            timeout=900,
-        )
-
-        if result.returncode == 0:
-            st.success(f"✓ [1/2] ET pipeline complete for {date_str}")
-            with st.expander("ET pipeline output"):
-                st.code(result.stdout[-4000:] if len(result.stdout) > 4000
-                        else result.stdout)
-        else:
-            st.error(f"✗ [1/2] ET pipeline failed (exit code {result.returncode})")
-            with st.expander("ET error output"):
-                st.code(result.stderr[-2000:] if result.stderr else result.stdout[-2000:])
-
-    # ── [2/2] SARR — ALWAYS run as an explicit, dedicated step so the user
-    # never has to wonder if it ran. We do not rely on run_meeting.py's
-    # step 4c at all — this is the canonical SARR invocation point.
-    sarr_status = st.empty()
-    sarr_status.info(f"[2/2] Running SARR analysis for {date_str}...")
-    if not sarr_script.exists():
-        st.error(f"✗ [2/2] SARR script not found at {sarr_script}")
-    else:
-        try:
-            sarr_res = subprocess.run(
-                [PYTHON, str(sarr_script), "--date", date_str],
-                env=env, cwd=str(BASE),
-                capture_output=True, text=True, encoding="utf-8",
-                timeout=600,
-            )
-            sarr_mtime_after = (sarr_json.stat().st_mtime
-                                if sarr_json.exists() else 0.0)
-            sarr_updated = sarr_mtime_after > sarr_mtime_before
-            if sarr_res.returncode == 0 and sarr_json.exists():
-                import datetime as _dt
-                _mt = _dt.datetime.fromtimestamp(sarr_mtime_after)
-                if sarr_updated:
-                    st.success(f"✓ [2/2] SARR generated: {sarr_json.name} "
-                               f"({_mt:%H:%M:%S})")
+            cmd = [PYTHON, str(scraper_script), "--date", date_str]
+            if no_cache:
+                cmd.append("--no-cache")
+            res = _run("[1/3] Scrape race card", cmd, timeout=300)
+            if isinstance(res, subprocess.CompletedProcess):
+                rc_mtime_after = racecard_xlsx.stat().st_mtime if racecard_xlsx.exists() else 0.0
+                if res.returncode == 0 and racecard_xlsx.exists() and rc_mtime_after > rc_mtime_before:
+                    st.success(f"✓ [1/3] Race card scraped: {racecard_xlsx.name}")
+                elif res.returncode == 0:
+                    st.warning(f"⚠ [1/3] Scraper exited cleanly but {racecard_xlsx.name} "
+                               f"was not updated. Proceeding with existing file.")
                 else:
-                    st.warning(
-                        f"⚠ [2/2] SARR exited cleanly but did NOT write a new "
-                        f"file (existing JSON unchanged at {_mt:%H:%M:%S}). "
-                        f"Check sarr_raceday.py logs."
-                    )
-                with st.expander("SARR output"):
-                    st.code((sarr_res.stdout or "")[-4000:])
-            else:
-                st.error(
-                    f"✗ [2/2] SARR failed (exit {sarr_res.returncode}). "
-                    f"JSON exists: {sarr_json.exists()}"
-                )
-                with st.expander("SARR error output"):
-                    st.code(
-                        (sarr_res.stderr or sarr_res.stdout or "")[-3000:]
-                    )
-        except (OSError, subprocess.TimeoutExpired) as e:
-            st.error(f"✗ [2/2] SARR run errored: {e}")
+                    st.error(f"✗ [1/3] Scrape failed (exit {res.returncode}). "
+                             f"Aborting pipeline.")
+                    with st.expander("Scrape error output"):
+                        st.code((res.stderr or res.stdout or "")[-3000:])
+                    return
+                with st.expander("Scrape output"):
+                    st.code((res.stdout or "")[-2500:])
 
-    # ── Clear data caches so SARR / ET JSONs are picked up immediately ──
+        # ── [2/3] SARR model on the fresh card ─────────────────────
+        if not sarr_script.exists():
+            st.error(f"✗ [2/3] SARR script not found at {sarr_script}")
+        else:
+            res = _run("[2/3] SARR model", [PYTHON, str(sarr_script), "--date", date_str], timeout=600)
+            if isinstance(res, subprocess.CompletedProcess):
+                sarr_mtime_after = sarr_json.stat().st_mtime if sarr_json.exists() else 0.0
+                sarr_updated = sarr_mtime_after > sarr_mtime_before
+                if res.returncode == 0 and sarr_json.exists():
+                    import datetime as _dt
+                    _mt = _dt.datetime.fromtimestamp(sarr_mtime_after)
+                    if sarr_updated:
+                        st.success(f"✓ [2/3] SARR generated: {sarr_json.name} ({_mt:%H:%M:%S})")
+                    else:
+                        st.warning(
+                            f"⚠ [2/3] SARR exited cleanly but did NOT write a new file "
+                            f"(existing JSON unchanged at {_mt:%H:%M:%S})."
+                        )
+                    with st.expander("SARR output"):
+                        st.code((res.stdout or "")[-4000:])
+                else:
+                    st.error(f"✗ [2/3] SARR failed (exit {res.returncode}). "
+                             f"JSON exists: {sarr_json.exists()}")
+                    with st.expander("SARR error output"):
+                        st.code((res.stderr or res.stdout or "")[-3000:])
+
+        # ── [3/3] ET (v4.4) model — vet scrape + form-guide + analysis ──
+        # Always pass --skip-scrape (we just scraped) and --skip-sarr (step 2/3
+        # already ran SARR). run_meeting.py handles vet + form-guide cache +
+        # analysis-script generation.
+        et_cmd = [PYTHON, str(BASE / "run_meeting.py"),
+                  "--date", date_str, "--model", model,
+                  "--skip-scrape", "--skip-sarr",
+                  "--going-turf", going_turf, "--going-awt", going_awt]
+        res = _run(f"[3/3] ET {model} model", et_cmd, timeout=900)
+        if isinstance(res, subprocess.CompletedProcess):
+            et_mtime_after = et_json.stat().st_mtime if et_json.exists() else 0.0
+            if res.returncode == 0 and et_json.exists() and et_mtime_after > et_mtime_before:
+                st.success(f"✓ [3/3] ET generated: {et_json.name}")
+            elif res.returncode == 0:
+                st.warning(f"⚠ [3/3] ET pipeline exited cleanly but {et_json.name} "
+                           f"was not updated.")
+            else:
+                st.error(f"✗ [3/3] ET pipeline failed (exit {res.returncode})")
+                with st.expander("ET error output"):
+                    st.code((res.stderr or res.stdout or "")[-3000:])
+            with st.expander("ET pipeline output"):
+                st.code((res.stdout or "")[-4000:])
+
+    # ── Clear data caches so fresh JSONs are picked up immediately ──
     try:
         st.cache_data.clear()
     except Exception:
         pass
-    # Force a full rerender so newly-written reports appear on every page
     try:
         st.rerun()
     except Exception:
@@ -2390,6 +2436,25 @@ def _compute_factor_edges(races: list[dict], window: str = "current_season_25_26
     return edges
 
 
+@st.cache_data(show_spinner=False, ttl=3600)
+def _factor_edges_for_meeting(date_compact: str, window: str,
+                              report_path_str: str,
+                              report_mtime: float, factor_mtime: float,
+                              top_n: int = 6) -> list[dict]:
+    """Cached wrapper over `_compute_factor_edges`. Reloads races from disk
+    and recomputes only when the ET report or factor tables change.
+    `report_mtime` and `factor_mtime` are part of the cache key so edits to
+    either source invalidate the cache automatically."""
+    _ = (date_compact, report_mtime, factor_mtime)  # cache-key signal only
+    try:
+        with open(report_path_str, "r", encoding="utf-8") as fp:
+            data = json.load(fp)
+    except (OSError, json.JSONDecodeError):
+        return []
+    return _compute_factor_edges(data.get("races", []),
+                                 window=window, top_n_per_race=top_n)
+
+
 def _overview_find_today_meeting() -> dict | None:
     """Find the most recent (or today's) meeting report."""
     meetings = load_available_meetings()
@@ -2506,87 +2571,109 @@ def page_overview():
         st.caption("No active blackbook entries match today's card.")
 
 
-    # ── Section 2: Mutual model top picks ─────────────
+    # ── Section 2: Mutual model top picks (per selected race) ─────────
     st.markdown("### 🤝 Mutual Model Top Picks (ET ∩ SARR)")
     if sarr_races:
-        mutual_rows = []
-        for et_race in races:
-            rn = et_race["race_number"]
-            sarr_race = next((r for r in sarr_races if r["race_number"] == rn), None)
-            if not sarr_race:
-                continue
-            et_top = {p["horse_name"].upper().strip(): p for p in et_race.get("picks", [])[:4]}
-            sarr_top = {p["horse_name"].upper().strip(): p for p in sarr_race.get("picks", [])[:4]}
-            mutual = set(et_top.keys()) & set(sarr_top.keys())
-            for hn in mutual:
-                et_pick = et_top[hn]
-                sarr_pick = sarr_top[hn]
-                et_rk = et_pick["rank"] if et_pick else 99
-                sarr_rk = sarr_pick["rank"] if sarr_pick else 99
-                horse_no = et_pick.get("horse_no", sarr_pick.get("horse_no", ""))
-                # Highlight tier: green = both top 2, amber = both top 3
-                if et_rk <= 2 and sarr_rk <= 2:
-                    tier = "green"
-                elif et_rk <= 3 and sarr_rk <= 3:
-                    tier = "amber"
-                else:
-                    tier = "none"
-                mutual_rows.append({
-                    "race": rn,
-                    "horse_no": horse_no,
-                    "horse": hn.title(),
-                    "et_rank": et_rk,
-                    "sarr_rank": sarr_rk,
-                    "et_proj": f"{et_pick['projected_time']:.2f}" if et_pick and 'projected_time' in et_pick else "—",
-                    "sarr_val": f"{sarr_pick['sarr']:+.3f}" if sarr_pick and 'sarr' in sarr_pick else "—",
-                    "tier": tier,
-                })
-        if mutual_rows:
-            mutual_rows.sort(key=lambda r: (r["race"], r["et_rank"]))
-            html_rows = []
-            for mr in mutual_rows:
-                if mr["tier"] == "green":
-                    bg = "rgba(34,197,94,0.18)"
-                    name_style = "font-weight:800;color:#22c55e"
-                    rk_style = "font-weight:700;color:#22c55e"
-                elif mr["tier"] == "amber":
-                    bg = "rgba(245,158,11,0.15)"
-                    name_style = "font-weight:800;color:#f59e0b"
-                    rk_style = "font-weight:700;color:#f59e0b"
-                else:
-                    bg = "transparent"
-                    name_style = "font-weight:600"
-                    rk_style = ""
-                html_rows.append(
-                    f'<tr style="background:{bg}">'
-                    f'<td>R{mr["race"]}</td>'
-                    f'<td>{mr["horse_no"]}</td>'
-                    f'<td style="{name_style}">{mr["horse"]}</td>'
-                    f'<td style="{rk_style}">{mr["et_rank"]}</td>'
-                    f'<td style="{rk_style}">{mr["sarr_rank"]}</td>'
-                    f'<td>{mr["et_proj"]}</td>'
-                    f'<td>{mr["sarr_val"]}</td>'
-                    f'</tr>'
-                )
-            st.markdown(
-                '<table style="width:100%;border-collapse:collapse;font-size:0.92em">'
-                '<thead><tr style="border-bottom:2px solid rgba(128,128,128,0.3)">'
-                '<th style="text-align:left;padding:6px">Race</th>'
-                '<th style="text-align:left;padding:6px">No</th>'
-                '<th style="text-align:left;padding:6px">Horse</th>'
-                '<th style="text-align:left;padding:6px">ET Rk</th>'
-                '<th style="text-align:left;padding:6px">SARR Rk</th>'
-                '<th style="text-align:left;padding:6px">ET Proj</th>'
-                '<th style="text-align:left;padding:6px">SARR</th>'
-                '</tr></thead><tbody>'
-                + "".join(html_rows)
-                + '</tbody></table>'
-                '<div style="margin-top:6px;font-size:0.78em;opacity:0.6">'
-                '🟢 Both top 2 &nbsp; 🟡 Both top 3</div>',
-                unsafe_allow_html=True,
-            )
+        # Race selector — only show races that exist in BOTH reports.
+        common_rns = sorted({r["race_number"] for r in races}
+                            & {r["race_number"] for r in sarr_races})
+        if not common_rns:
+            st.caption("No common races between ET and SARR reports.")
         else:
-            st.caption("No mutual top-4 picks between ET and SARR.")
+            # Optional 'All' at the end for a holistic view.
+            options = list(common_rns) + ["All races"]
+            sel = st.radio(
+                "Race",
+                options=options,
+                index=0, horizontal=True,
+                format_func=lambda x: f"R{x}" if isinstance(x, int) else x,
+                key="overview_mutual_race",
+                label_visibility="collapsed",
+            )
+            selected_rns = common_rns if sel == "All races" else [sel]
+
+            mutual_rows = []
+            for et_race in races:
+                rn = et_race["race_number"]
+                if rn not in selected_rns:
+                    continue
+                sarr_race = next((r for r in sarr_races if r["race_number"] == rn), None)
+                if not sarr_race:
+                    continue
+                et_top = {p["horse_name"].upper().strip(): p for p in et_race.get("picks", [])[:4]}
+                sarr_top = {p["horse_name"].upper().strip(): p for p in sarr_race.get("picks", [])[:4]}
+                mutual = set(et_top.keys()) & set(sarr_top.keys())
+                for hn in mutual:
+                    et_pick = et_top[hn]
+                    sarr_pick = sarr_top[hn]
+                    et_rk = et_pick["rank"] if et_pick else 99
+                    sarr_rk = sarr_pick["rank"] if sarr_pick else 99
+                    horse_no = et_pick.get("horse_no", sarr_pick.get("horse_no", ""))
+                    if et_rk <= 2 and sarr_rk <= 2:
+                        tier = "green"
+                    elif et_rk <= 3 and sarr_rk <= 3:
+                        tier = "amber"
+                    else:
+                        tier = "none"
+                    mutual_rows.append({
+                        "race": rn,
+                        "horse_no": horse_no,
+                        "horse": hn.title(),
+                        "et_rank": et_rk,
+                        "sarr_rank": sarr_rk,
+                        "et_proj": f"{et_pick['projected_time']:.2f}" if et_pick and 'projected_time' in et_pick else "—",
+                        "sarr_val": f"{sarr_pick['sarr']:+.3f}" if sarr_pick and 'sarr' in sarr_pick else "—",
+                        "tier": tier,
+                    })
+            if mutual_rows:
+                mutual_rows.sort(key=lambda r: (r["race"], r["et_rank"]))
+                html_rows = []
+                for mr in mutual_rows:
+                    if mr["tier"] == "green":
+                        bg = "rgba(34,197,94,0.18)"
+                        name_style = "font-weight:800;color:#22c55e"
+                        rk_style = "font-weight:700;color:#22c55e"
+                    elif mr["tier"] == "amber":
+                        bg = "rgba(245,158,11,0.15)"
+                        name_style = "font-weight:800;color:#f59e0b"
+                        rk_style = "font-weight:700;color:#f59e0b"
+                    else:
+                        bg = "transparent"
+                        name_style = "font-weight:600"
+                        rk_style = ""
+                    html_rows.append(
+                        f'<tr style="background:{bg}">'
+                        f'<td>R{mr["race"]}</td>'
+                        f'<td>{mr["horse_no"]}</td>'
+                        f'<td style="{name_style}">{mr["horse"]}</td>'
+                        f'<td style="{rk_style}">{mr["et_rank"]}</td>'
+                        f'<td style="{rk_style}">{mr["sarr_rank"]}</td>'
+                        f'<td>{mr["et_proj"]}</td>'
+                        f'<td>{mr["sarr_val"]}</td>'
+                        f'</tr>'
+                    )
+                st.markdown(
+                    '<table style="width:100%;border-collapse:collapse;font-size:0.92em">'
+                    '<thead><tr style="border-bottom:2px solid rgba(128,128,128,0.3)">'
+                    '<th style="text-align:left;padding:6px">Race</th>'
+                    '<th style="text-align:left;padding:6px">No</th>'
+                    '<th style="text-align:left;padding:6px">Horse</th>'
+                    '<th style="text-align:left;padding:6px">ET Rk</th>'
+                    '<th style="text-align:left;padding:6px">SARR Rk</th>'
+                    '<th style="text-align:left;padding:6px">ET Proj</th>'
+                    '<th style="text-align:left;padding:6px">SARR</th>'
+                    '</tr></thead><tbody>'
+                    + "".join(html_rows)
+                    + '</tbody></table>'
+                    '<div style="margin-top:6px;font-size:0.78em;opacity:0.6">'
+                    '🟢 Both top 2 &nbsp; 🟡 Both top 3</div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                if sel == "All races":
+                    st.caption("No mutual top-4 picks between ET and SARR.")
+                else:
+                    st.caption(f"No mutual top-4 picks between ET and SARR for R{sel}.")
     else:
         st.caption("SARR analysis not available for this meeting.")
 
@@ -2609,7 +2696,13 @@ def page_overview():
         index=0, horizontal=True, key="overview_fe_window",
     )
 
-    edges = _compute_factor_edges(races, window=fe_window, top_n_per_race=6)
+    edges = _factor_edges_for_meeting(
+        dstr, fe_window,
+        str(meeting_info["file"]),
+        meeting_info["file"].stat().st_mtime if meeting_info["file"].exists() else 0.0,
+        FACTOR_TABLES_PATH.stat().st_mtime if FACTOR_TABLES_PATH.exists() else 0.0,
+        6,
+    )
     if not edges:
         if not FACTOR_TABLES_PATH.exists():
             st.info(
