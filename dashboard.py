@@ -915,6 +915,98 @@ def _load_results_json(date_compact: str) -> dict | None:
         return json.load(f)
 
 
+@st.cache_data(show_spinner=False)
+def _horse_name_lookup(date_compact: str) -> dict:
+    """Build a {(race_number, horse_no): horse_name} map for one meeting.
+
+    Tries reports/results_{dc}.json first (post-race, complete), falls back
+    to reports/race_day_report_{dc}_v4.4.json (picks only — partial), then to
+    cache/racecard_{YYYY-MM-DD}.json (pre-race, complete).
+    """
+    out: dict = {}
+    # 1) Post-race results JSON
+    try:
+        rj = _load_results_json(date_compact)
+        if rj:
+            for race in rj.get("races", []):
+                rn = int(race.get("race_number", 0) or 0)
+                for ru in race.get("runners", []) or []:
+                    hn = ru.get("horse_no")
+                    nm = ru.get("horse_name")
+                    if hn is not None and nm:
+                        try:
+                            out[(rn, int(hn))] = str(nm).strip()
+                        except (TypeError, ValueError):
+                            pass
+    except (OSError, json.JSONDecodeError):
+        pass
+    # 2) Race-day report (picks only — fills gaps)
+    try:
+        rdp = REPORTS / f"race_day_report_{date_compact}_v4.4.json"
+        if rdp.exists():
+            d = json.loads(rdp.read_text(encoding="utf-8"))
+            for race in d.get("races", []):
+                rn = int(race.get("race_number", 0) or 0)
+                for p in race.get("picks", []) or []:
+                    hn = p.get("horse_no")
+                    nm = p.get("horse_name")
+                    if hn is not None and nm:
+                        out.setdefault((rn, int(hn)), str(nm).strip())
+    except (OSError, json.JSONDecodeError, ValueError):
+        pass
+    # 3) Pre-race racecard cache (full field)
+    try:
+        iso = f"{date_compact[:4]}-{date_compact[4:6]}-{date_compact[6:]}"
+        rc = CACHE_DIR / f"racecard_{iso}.json"
+        if rc.exists():
+            d = json.loads(rc.read_text(encoding="utf-8"))
+            for race in d.get("races", []):
+                rn = int((race.get("meta") or {}).get("race_no", 0) or 0)
+                if not rn:
+                    # try alternate keys
+                    rn = int(race.get("race_number", 0) or 0)
+                for h in race.get("horses", []) or []:
+                    hn = h.get("horse_no")
+                    nm = h.get("horse_name")
+                    if hn is not None and nm:
+                        out.setdefault((rn, int(hn)), str(nm).strip())
+    except (OSError, json.JSONDecodeError, ValueError):
+        pass
+    return out
+
+
+def _format_bet_selections(bet: dict) -> str:
+    """Render bet selections with horse names — e.g. ``3 PRINCE · 4 NEBRASKAN``.
+
+    Falls back to bare numbers when no name lookup is available.
+    """
+    md = (bet.get("meeting_date") or "").replace("-", "")
+    rn_raw = bet.get("race_number")
+    try:
+        rn = int(rn_raw) if rn_raw is not None else None
+    except (TypeError, ValueError):
+        rn = None
+    sels = bet.get("selections") or []
+    banker = bet.get("banker")
+
+    lookup = _horse_name_lookup(md) if md else {}
+
+    def _fmt(n):
+        try:
+            n_int = int(n)
+        except (TypeError, ValueError):
+            return str(n)
+        nm = lookup.get((rn, n_int)) if rn is not None else None
+        return f"#{n_int} {nm}" if nm else f"#{n_int}"
+
+    parts = []
+    if banker is not None:
+        parts.append(f"BANKER {_fmt(banker)}")
+    if sels:
+        parts.append("SEL " + " · ".join(_fmt(x) for x in sels))
+    return "  |  ".join(parts) if parts else "(no selections)"
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Form Guide — data helpers
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1754,14 +1846,42 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                 st.code(result.stderr[-2000:] if result.stderr else result.stdout[-2000:])
 
     # NOTE: run_meeting.py already runs SARR as step 4c — no separate call needed.
-    # Verify SARR output actually landed on disk and warn if it didn't.
-    sarr_json = REPORTS / f"race_day_report_{date_str.replace('-', '')}_SARR.json"
+    # Verify SARR output actually landed on disk; if not, auto-invoke SARR
+    # directly here as a belt-and-braces safety net so the user never has to
+    # remember to run it manually from the terminal.
+    dc = date_str.replace("-", "")
+    sarr_json = REPORTS / f"race_day_report_{dc}_SARR.json"
     if not sarr_json.exists():
-        st.warning(
-            f"SARR JSON not found at {sarr_json.name}. "
-            "Re-run analysis or run `python sarr_raceday.py --date "
-            f"{date_str}` manually."
-        )
+        st.info("⏳ SARR output missing — running SARR directly...")
+        sarr_script = BASE / "sarr_raceday.py"
+        if not sarr_script.exists():
+            st.error(f"SARR script not found at {sarr_script}")
+        else:
+            try:
+                sarr_res = subprocess.run(
+                    [PYTHON, str(sarr_script), "--date", date_str],
+                    env=env, cwd=str(BASE),
+                    capture_output=True, text=True, encoding="utf-8",
+                    timeout=600,
+                )
+                if sarr_res.returncode == 0 and sarr_json.exists():
+                    st.success(f"✓ SARR generated: {sarr_json.name}")
+                else:
+                    st.error(
+                        f"SARR failed (exit {sarr_res.returncode}). "
+                        f"JSON written: {sarr_json.exists()}"
+                    )
+                    with st.expander("SARR error output"):
+                        st.code(
+                            (sarr_res.stderr or sarr_res.stdout or "")[-3000:]
+                        )
+            except (OSError, subprocess.TimeoutExpired) as e:
+                st.error(f"SARR run errored: {e}")
+    else:
+        # Surface explicit confirmation so the user can see SARR ran.
+        import datetime as _dt
+        _mt = _dt.datetime.fromtimestamp(sarr_json.stat().st_mtime)
+        st.success(f"✓ SARR ready: {sarr_json.name} ({_mt:%H:%M:%S})")
 
     # ── Clear data caches so SARR / ET JSONs are picked up immediately ──
     try:
@@ -2772,16 +2892,26 @@ def page_race_day(selected):
     # ── Model toggle (ET / SARR) ─────────────────────────────────────────
     # Rendered here as well as right above the race-tab row (below) so it's
     # always visible without scrolling — both widgets share the session_state
-    # key via a callback.
+    # key via a callback. Label and radio are placed on the same horizontal
+    # row so the toggle looks like a compact "Model: [SARR] [ET]" control.
     if sarr_available:
         model_options = ["SARR (Sectional-Anchored)", "ET (Expected Time)"]
         # Initialise only once
         if "rd_model_toggle" not in st.session_state:
             st.session_state["rd_model_toggle"] = model_options[0]
-        sel_model = st.radio(
-            "Model", model_options, horizontal=True,
-            key="rd_model_toggle",
-        )
+        _lbl_col, _rad_col = st.columns([0.08, 0.92])
+        with _lbl_col:
+            st.markdown(
+                "<div style='padding-top:6px;font-weight:700;"
+                "color:#a3b3c7;letter-spacing:0.5px'>MODEL</div>",
+                unsafe_allow_html=True,
+            )
+        with _rad_col:
+            sel_model = st.radio(
+                "Model", model_options, horizontal=True,
+                key="rd_model_toggle",
+                label_visibility="collapsed",
+            )
         use_sarr = sel_model.startswith("SARR")
     else:
         use_sarr = False
@@ -2893,14 +3023,21 @@ def page_race_day(selected):
         st.session_state.pop("_rd_search_last_q", None)
 
     # ── Compact model toggle right above the race-tab row (mirror) ───────
-    # So users don't need to scroll up to switch ET / SARR.
+    # So users don't need to scroll up to switch ET / SARR. Label sits on
+    # the same horizontal line as the radio options.
     if sarr_available:
         def _sync_inline_toggle():
             choice = st.session_state.get("rd_model_toggle_inline")
             if choice:
                 st.session_state["rd_model_toggle"] = choice
-        inline_col, _spacer = st.columns([0.6, 2.4])
-        with inline_col:
+        _ilbl_col, _irad_col, _spacer = st.columns([0.08, 0.52, 2.4])
+        with _ilbl_col:
+            st.markdown(
+                "<div style='padding-top:6px;font-weight:700;"
+                "color:#a3b3c7;font-size:0.85em'>MODEL</div>",
+                unsafe_allow_html=True,
+            )
+        with _irad_col:
             st.radio(
                 "Model (inline)",
                 ["SARR (Sectional-Anchored)", "ET (Expected Time)"],
@@ -4404,6 +4541,174 @@ def page_blackbook():
 # Results browser page
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _signal_review(pred_data: dict, results_races: list) -> None:
+    """Render a per-meeting Signal Effectiveness Review.
+
+    Compares each pick's model signals against actual finishing position to
+    show which signals (model rank, smap_total_adj, vet_flag, trial_flag,
+    risk_tier, predicted pace) actually worked on this card.
+    """
+    import pandas as _pd
+
+    # Build {race_no: {horse_name_upper: place_int}} from results
+    place_map: dict = {}
+    field_size_by_race: dict = {}
+    for r in results_races:
+        rn = r.get("race_number")
+        if rn is None:
+            continue
+        runners = r.get("runners") or []
+        field_size_by_race[rn] = len(runners)
+        m = {}
+        for ru in runners:
+            try:
+                pl = int(str(ru.get("place", "")).strip())
+            except (TypeError, ValueError):
+                pl = None
+            if pl is not None and ru.get("horse_name"):
+                m[str(ru["horse_name"]).strip().upper()] = pl
+        place_map[rn] = m
+
+    # Iterate model picks → score signals
+    rank1_top1 = rank1_top3 = top3_winner = pace_match = 0
+    rank1_n = top3_n = pace_n = 0
+    smap_neg_top_half = smap_neg_n = 0
+    trial_plus_top_half = trial_plus_n = 0
+    vet_clean_top_half = vet_clean_n = 0
+    vet_flagged_top_half = vet_flagged_n = 0
+    detail_rows: list = []
+
+    try:
+        from pace_utils import pace_band_distance as _pbd
+    except Exception:
+        _pbd = None
+
+    for race in pred_data.get("races", []) or []:
+        rn = race.get("race_number")
+        picks = race.get("picks") or []
+        places = place_map.get(rn, {})
+        fs = field_size_by_race.get(rn, len(picks)) or len(picks) or 12
+        if not places:
+            continue
+
+        # Pace label match
+        _pred_lbl = race.get("pace")
+        _act_lbl = next(
+            (rr.get("actual_pace_label") for rr in results_races
+             if rr.get("race_number") == rn),
+            None,
+        )
+        if _pred_lbl and _act_lbl and _act_lbl != "N/A":
+            pace_n += 1
+            if _pbd is not None:
+                d = _pbd(_pred_lbl, _act_lbl)
+                if d is not None and d <= 1:
+                    pace_match += 1
+            elif _pred_lbl == _act_lbl:
+                pace_match += 1
+
+        # Per-pick signal evaluation
+        for p in picks:
+            nm = (p.get("horse_name") or "").strip().upper()
+            if not nm or nm not in places:
+                continue
+            place = places[nm]
+            top1 = (place == 1)
+            top3 = (place <= 3)
+            top_half = (place <= max(1, fs // 2))
+            rank = p.get("rank")
+            smap = p.get("smap_total_adj")
+            vet = (p.get("vet_flag") or "").upper()
+            trial = (p.get("trial_flag") or "").strip()
+
+            if rank == 1:
+                rank1_n += 1
+                if top1:
+                    rank1_top1 += 1
+                if top3:
+                    rank1_top3 += 1
+            if rank in (1, 2, 3):
+                top3_n += 1
+                if top1:
+                    top3_winner += 1
+
+            if isinstance(smap, (int, float)) and smap <= -0.10:
+                smap_neg_n += 1
+                if top_half:
+                    smap_neg_top_half += 1
+
+            if trial == "+":
+                trial_plus_n += 1
+                if top_half:
+                    trial_plus_top_half += 1
+
+            if vet in ("AMBER", "RED"):
+                vet_flagged_n += 1
+                if top_half:
+                    vet_flagged_top_half += 1
+            elif vet in ("GREEN", "", "—"):
+                vet_clean_n += 1
+                if top_half:
+                    vet_clean_top_half += 1
+
+            detail_rows.append({
+                "R":       rn,
+                "Rk":      rank,
+                "Horse":   p.get("horse_name", ""),
+                "Place":   place,
+                "Top1":    "✅" if top1 else "—",
+                "Top3":    "✅" if top3 else "—",
+                "smap":    f"{smap:+.2f}" if isinstance(smap, (int, float)) else "—",
+                "Vet":     vet or "—",
+                "Trial":   trial or "—",
+                "Risk":    p.get("risk_tier", "?"),
+                "Style":   p.get("style", "?"),
+                "ESZ":     f"{p.get('early_speed_z', 0):+.2f}",
+            })
+
+    def _pct(n, d):
+        return f"{(n/d)*100:.0f}% ({n}/{d})" if d else "—"
+
+    summary_rows = [
+        {"Signal": "Model rank-1 → won (Top1)",
+         "Hit Rate": _pct(rank1_top1, rank1_n),
+         "What it means": "Did the model's #1 pick win each race?"},
+        {"Signal": "Model rank-1 → placed (Top3)",
+         "Hit Rate": _pct(rank1_top3, rank1_n),
+         "What it means": "Did the model's #1 pick finish top-3?"},
+        {"Signal": "Any of model top-3 → won",
+         "Hit Rate": _pct(top3_winner, max(1, len(pred_data.get('races', [])))),
+         "What it means": "Did any of model picks 1-3 win?"},
+        {"Signal": "Pace label match (within 1 band)",
+         "Hit Rate": _pct(pace_match, pace_n),
+         "What it means": "Did predicted pace match actual within ±1 band?"},
+        {"Signal": "smap_total_adj ≤ −0.10 (favourable)",
+         "Hit Rate": _pct(smap_neg_top_half, smap_neg_n),
+         "What it means": "Did sec-map-favoured picks finish in the top half?"},
+        {"Signal": "Trial flag '+' (positive prior)",
+         "Hit Rate": _pct(trial_plus_top_half, trial_plus_n),
+         "What it means": "Did + trial-flagged picks finish in the top half?"},
+        {"Signal": "Vet flag GREEN (clean)",
+         "Hit Rate": _pct(vet_clean_top_half, vet_clean_n),
+         "What it means": "Did vet-clean picks finish in the top half?"},
+        {"Signal": "Vet flag AMBER/RED (warning)",
+         "Hit Rate": _pct(vet_flagged_top_half, vet_flagged_n),
+         "What it means": "Did vet-flagged picks STILL finish top half? (lower = signal worked)"},
+    ]
+
+    st.markdown("#### Signal hit-rate summary (this meeting)")
+    st.dataframe(_pd.DataFrame(summary_rows), hide_index=True,
+                 use_container_width=True)
+
+    st.markdown("#### Per-pick detail")
+    if detail_rows:
+        df_d = _pd.DataFrame(detail_rows).sort_values(["R", "Rk"])
+        st.dataframe(df_d, hide_index=True, use_container_width=True)
+    else:
+        st.info("No overlap between model picks and result runners — "
+                "results may still be incomplete.")
+
+
 def page_results():
     st.markdown('<div class="page-title">Race Results</div>', unsafe_allow_html=True)
     st.markdown('<div class="page-subtitle">Browse scraped results &middot; add horses to Blackbook</div>', unsafe_allow_html=True)
@@ -4505,6 +4810,20 @@ def page_results():
                 }
         except Exception:
             pass
+
+    # ── Signal Effectiveness Review (this meeting only) ─────────────────
+    # After results are obtained, compare each model signal against actual
+    # finish positions to answer: which signals worked today?
+    if pred_path.exists():
+        with st.expander(
+            "🎯 **Signal Effectiveness Review** — did today's data-analysis "
+            "signals actually work?",
+            expanded=False,
+        ):
+            try:
+                _signal_review(pred_data, races)
+            except Exception as _e:
+                st.error(f"Signal review failed: {_e}")
 
     # ── Race tab selector ────────────────────────────────────────────────
     race_nums = [r.get("race_number", i + 1) for i, r in enumerate(races)]
@@ -8283,16 +8602,18 @@ def page_my_bets():
             open_rows.sort(key=lambda r: (r.get("meeting_date",""), r.get("race_number",0)))
             st.markdown(f"**{len(open_rows)} open** bet(s)")
             for r in open_rows:
+                _sel_str = _format_bet_selections(r)
                 with st.expander(
                     (f"{r['meeting_date']} · {r['venue']} R{r['race_number']} · "
-                      f"{r['bet_type']} · ${r['stake_hkd']:.0f}"),
+                      f"{r['bet_type']} · ${r['stake_hkd']:.0f}  —  {_sel_str}"),
                     expanded=False,
                 ):
+                    st.markdown(f"**Selections:** {_sel_str}")
                     st.write({
-                        "Selections": r.get("selections"),
-                        "Banker":     r.get("banker"),
-                        "Created":    r.get("created_at"),
-                        "Notes":      r.get("notes"),
+                        "Selections (raw)": r.get("selections"),
+                        "Banker (raw)":     r.get("banker"),
+                        "Created":          r.get("created_at"),
+                        "Notes":            r.get("notes"),
                     })
                     cdel, cref = st.columns([1, 1])
                     with cdel:
@@ -8323,12 +8644,27 @@ def page_my_bets():
                                  reverse=True)
             table = []
             for r in settled_rows:
+                _md = (r.get("meeting_date") or "").replace("-", "")
+                try:
+                    _rn = int(r.get("race_number")) if r.get("race_number") is not None else None
+                except (TypeError, ValueError):
+                    _rn = None
+                _lookup = _horse_name_lookup(_md) if _md else {}
+                def _name_only(n):
+                    try:
+                        n_int = int(n)
+                    except (TypeError, ValueError):
+                        return str(n)
+                    nm = _lookup.get((_rn, n_int)) if _rn is not None else None
+                    return f"{n_int} {nm}" if nm else str(n_int)
+                _sels_named = " · ".join(_name_only(x) for x in r.get("selections", []))
+                _banker_named = _name_only(r["banker"]) if r.get("banker") is not None else ""
                 table.append({
                     "Date":    r["meeting_date"],
                     "R":       r["race_number"],
                     "Type":    r["bet_type"],
-                    "Sels":    ",".join(str(x) for x in r.get("selections", [])),
-                    "Banker":  r.get("banker") or "",
+                    "Selections": _sels_named,
+                    "Banker":  _banker_named,
                     "Stake":   float(r["stake_hkd"]),
                     "Return":  float(r.get("return_hkd", 0)),
                     "PnL":     float(r.get("pnl_hkd", 0)),
