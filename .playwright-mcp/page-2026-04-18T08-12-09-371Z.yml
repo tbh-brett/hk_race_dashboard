@@ -1,0 +1,143 @@
+- generic [ref=e2]:
+  - generic [ref=e7]:
+    - button "keyboard_double_arrow_left" [ref=e10] [cursor=pointer]:
+      - generic [ref=e12]: keyboard_double_arrow_left
+    - generic [ref=e15]:
+      - generic [ref=e20]:
+        - generic [ref=e21]: HK
+        - generic [ref=e22]:
+          - generic [ref=e23]: HKJC DASHBOARD
+          - generic [ref=e24]: Race Analysis Terminal
+      - button "🏁 Overview" [ref=e27] [cursor=pointer]:
+        - paragraph [ref=e31]: 🏁 Overview
+      - button "📊 Race Day" [ref=e34] [cursor=pointer]:
+        - paragraph [ref=e38]: 📊 Race Day
+      - button "📡 Live Feed" [ref=e41] [cursor=pointer]:
+        - paragraph [ref=e45]: 📡 Live Feed
+      - button "📖 Form Guide" [ref=e48] [cursor=pointer]:
+        - paragraph [ref=e52]: 📖 Form Guide
+      - button "🎽 Trials" [ref=e55] [cursor=pointer]:
+        - paragraph [ref=e59]: 🎽 Trials
+      - button "🧪 Backtest" [ref=e62] [cursor=pointer]:
+        - paragraph [ref=e66]: 🧪 Backtest
+      - button "🏆 Results" [active] [ref=e69] [cursor=pointer]:
+        - paragraph [ref=e73]: 🏆 Results
+      - button "📓 Blackbook" [ref=e76] [cursor=pointer]:
+        - paragraph [ref=e80]: 📓 Blackbook
+      - button "📄 PDF Builder" [ref=e83] [cursor=pointer]:
+        - paragraph [ref=e87]: 📄 PDF Builder
+      - separator [ref=e92]
+      - separator [ref=e1841]
+      - generic [ref=e1846]: Results Data
+      - generic [ref=e2163]:
+        - paragraph [ref=e2167]: Date
+        - textbox "Select a date." [ref=e2171]:
+          - /placeholder: YYYY/MM/DD
+          - text: 2026/04/18
+        - paragraph: Press the down arrow key to interact with the calendar and select a date. Press the escape button to close the calendar.
+        - paragraph: Selected date is 2026/04/18. Select the second date.
+      - button "[ Scrape Results ]" [ref=e2174] [cursor=pointer]:
+        - paragraph [ref=e2178]: "[ Scrape Results ]"
+  - generic [ref=e3]:
+    - banner [ref=e95]:
+      - generic [ref=e98]:
+        - button "Deploy" [ref=e100] [cursor=pointer]:
+          - generic [ref=e102]: Deploy
+        - button "Main menu" [ref=e104] [cursor=pointer]:
+          - img [ref=e105]
+    - generic [ref=e108]:
+      - generic [ref=e1919]: Race Results
+      - generic [ref=e1924]: Browse scraped results · add horses to Blackbook
+      - generic [ref=e2180]:
+        - paragraph [ref=e2184]: "Meeting date:"
+        - generic [ref=e2186]:
+          - generic [ref=e2187]:
+            - generic [ref=e2188]: 2026-04-15
+            - combobox "Selected 2026-04-15. Meeting date:" [ref=e2190]
+          - img "open" [ref=e2192]
+      - generic [ref=e2198]: "Venue: HV · 9 races · Scraped: 2026-04-16T11:24"
+      - generic [ref=e2199]:
+        - button "R1" [ref=e2204] [cursor=pointer]:
+          - paragraph [ref=e2208]: R1
+        - button "R2" [ref=e2213] [cursor=pointer]:
+          - paragraph [ref=e2217]: R2
+        - button "R3" [ref=e2222] [cursor=pointer]:
+          - paragraph [ref=e2226]: R3
+        - button "R4" [ref=e2231] [cursor=pointer]:
+          - paragraph [ref=e2235]: R4
+        - button "R5" [ref=e2240] [cursor=pointer]:
+          - paragraph [ref=e2244]: R5
+        - button "R6" [ref=e2249] [cursor=pointer]:
+          - paragraph [ref=e2253]: R6
+        - button "R7" [ref=e2258] [cursor=pointer]:
+          - paragraph [ref=e2262]: R7
+        - button "R8" [ref=e2267] [cursor=pointer]:
+          - paragraph [ref=e2271]: R8
+        - button "R9" [ref=e2276] [cursor=pointer]:
+          - paragraph [ref=e2280]: R9
+      - generic [ref=e2281]:
+        - generic [ref=e2282]: R1 — CELEBRATING 50 YEARS OF THE HK SEVENS 1000M HANDICAP
+        - generic [ref=e2283]:
+          - generic [ref=e2284]: 1000m
+          - generic [ref=e2285]: Turf
+          - generic [ref=e2286]: Course A
+          - generic [ref=e2287]: Class 5
+          - generic [ref=e2288]: "Going: G"
+      - generic [ref=e2293]:
+        - button "Show/hide columns" [ref=e2297] [cursor=pointer]:
+          - img [ref=e2298]
+        - button "Download as CSV" [ref=e2303] [cursor=pointer]:
+          - img [ref=e2304]
+        - button "Search" [ref=e2309] [cursor=pointer]:
+          - img [ref=e2310]
+        - button "Fullscreen" [ref=e2315] [cursor=pointer]:
+          - img [ref=e2316]
+      - button "[ Download Results (Excel) ]" [ref=e2329] [cursor=pointer]:
+        - paragraph [ref=e2333]: "[ Download Results (Excel) ]"
+      - separator [ref=e2338]
+      - paragraph [ref=e2343]:
+        - strong [ref=e2344]: ADD TO BLACKBOOK
+      - generic [ref=e2347]:
+        - generic [ref=e2349]:
+          - paragraph [ref=e2353]: "Select horse:"
+          - generic [ref=e2355]:
+            - generic [ref=e2356]:
+              - generic [ref=e2357]: ALWAYS MY FOLKS
+              - combobox "Selected ALWAYS MY FOLKS. Select horse:" [ref=e2359]
+            - img "open" [ref=e2361]
+        - generic [ref=e2364]:
+          - paragraph [ref=e2368]: "Tags:"
+          - generic [ref=e2371]:
+            - generic [ref=e2372]:
+              - combobox "Tags:" [ref=e2374]
+              - generic: Choose options
+            - img "open" [ref=e2376] [cursor=pointer]
+        - generic [ref=e2379]:
+          - paragraph [ref=e2383]: "Confidence:"
+          - generic [ref=e2385]:
+            - generic [ref=e2386]:
+              - generic [ref=e2387]: high
+              - combobox "Selected high. Confidence:" [ref=e2389]
+            - img "open" [ref=e2391]
+        - generic [ref=e2394]:
+          - paragraph [ref=e2398]: Reasoning *
+          - textbox "Reasoning *" [ref=e2401]:
+            - /placeholder: Why is this horse worth following?
+        - button "[ Add to Blackbook ]" [ref=e2405] [cursor=pointer]:
+          - paragraph [ref=e2409]: "[ Add to Blackbook ]"
+      - separator [ref=e2414]
+      - paragraph [ref=e2419]:
+        - strong [ref=e2420]: RECORD BLACKBOOK PERFORMANCE
+      - generic [ref=e2423]:
+        - paragraph [ref=e2428]:
+          - strong [ref=e2429]: SPICY SPANGLE
+          - text: — Finished
+          - strong [ref=e2430]: "3"
+          - text: "(Model rank: #8) — Verdict:"
+          - strong [ref=e2431]: VALIDATED
+        - generic [ref=e2433]:
+          - paragraph [ref=e2437]: Notes (optional)
+          - textbox "Notes (optional)" [ref=e2440]:
+            - /placeholder: ""
+        - button "[ Save Performance ]" [ref=e2444] [cursor=pointer]:
+          - paragraph [ref=e2448]: "[ Save Performance ]"

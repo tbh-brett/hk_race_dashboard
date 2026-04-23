@@ -1,0 +1,239 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - button "keyboard_double_arrow_left" [ref=e1235] [cursor=pointer]:
+      - generic [ref=e1237]: keyboard_double_arrow_left
+    - generic [ref=e8]:
+      - generic [ref=e14]: APPEARANCE
+      - generic [ref=e17] [cursor=pointer]:
+        - checkbox "🌙 Dark mode" [checked]
+        - generic [ref=e21]:
+          - paragraph [ref=e23]: 🌙 Dark mode
+          - button "Help for 🌙 Dark mode" [ref=e1280]:
+            - img [ref=e28]
+      - generic [ref=e35]:
+        - generic [ref=e36]: HK
+        - generic [ref=e37]:
+          - generic [ref=e38]: HKJC DASHBOARD
+          - generic [ref=e39]: Race Analysis Terminal
+      - button "🏁 Overview" [ref=e42] [cursor=pointer]:
+        - paragraph [ref=e46]: 🏁 Overview
+      - button "📊 Race Day" [ref=e49] [cursor=pointer]:
+        - paragraph [ref=e53]: 📊 Race Day
+      - button "📡 Live Feed" [ref=e56] [cursor=pointer]:
+        - paragraph [ref=e60]: 📡 Live Feed
+      - button "📖 Form Guide" [ref=e63] [cursor=pointer]:
+        - paragraph [ref=e67]: 📖 Form Guide
+      - button "🎽 Trials" [ref=e70] [cursor=pointer]:
+        - paragraph [ref=e74]: 🎽 Trials
+      - button "🧪 Backtest" [ref=e77] [cursor=pointer]:
+        - paragraph [ref=e81]: 🧪 Backtest
+      - button "🏆 Results" [active] [ref=e84] [cursor=pointer]:
+        - paragraph [ref=e88]: 🏆 Results
+      - button "📓 Blackbook" [ref=e91] [cursor=pointer]:
+        - paragraph [ref=e95]: 📓 Blackbook
+      - button "📄 PDF Builder" [ref=e98] [cursor=pointer]:
+        - paragraph [ref=e102]: 📄 PDF Builder
+      - separator [ref=e107]
+      - separator [ref=e1337]
+      - generic [ref=e1342]: Results Data
+      - generic [ref=e1344]:
+        - paragraph [ref=e1348]: Date
+        - textbox "Select a date." [ref=e1352]:
+          - /placeholder: YYYY/MM/DD
+          - text: 2026/04/20
+        - paragraph: Press the down arrow key to interact with the calendar and select a date. Press the escape button to close the calendar.
+        - paragraph: Selected date is 2026/04/20. Select the second date.
+      - button "[ Scrape Results ]" [ref=e1355] [cursor=pointer]:
+        - paragraph [ref=e1359]: "[ Scrape Results ]"
+  - generic [ref=e110]:
+    - banner [ref=e111]:
+      - generic [ref=e114]:
+        - button "Deploy" [ref=e116] [cursor=pointer]:
+          - generic [ref=e118]: Deploy
+        - button "Main menu" [ref=e120] [cursor=pointer]:
+          - img [ref=e121]
+    - generic [ref=e126]:
+      - generic [ref=e136]: Race Results
+      - generic [ref=e1281]: Browse scraped results · add horses to Blackbook
+      - generic [ref=e1361]:
+        - paragraph [ref=e1365]: "Meeting date:"
+        - generic [ref=e1367]:
+          - generic [ref=e1368]:
+            - generic [ref=e1369]: 2026-04-19
+            - combobox "Selected 2026-04-19. Meeting date:" [ref=e1371]
+          - img "open" [ref=e1373]
+      - generic [ref=e1379]: "Venue: ST · 11 races · Scraped: 2026-04-19T22:58"
+      - generic [ref=e1380]:
+        - generic [ref=e1381]: Meeting pace profile (actual, HKJC-anchored)
+        - generic [ref=e1382]:
+          - generic [ref=e1383]:
+            - generic [ref=e1384]: R1
+            - generic [ref=e1385]: Very Slow
+            - generic [ref=e1386]: +0.56s
+            - generic [ref=e1387]: On-Pace
+          - generic [ref=e1388]:
+            - generic [ref=e1389]: R2
+            - generic [ref=e1390]: Normal
+            - generic [ref=e1391]: +0.03s
+            - generic [ref=e1392]: Midfield
+          - generic [ref=e1393]:
+            - generic [ref=e1394]: R3
+            - generic [ref=e1395]: Slightly Fast
+            - generic [ref=e1396]: "-0.22s"
+            - generic [ref=e1397]: Closer
+          - generic [ref=e1398]:
+            - generic [ref=e1399]: R4
+            - generic [ref=e1400]: Fast
+            - generic [ref=e1401]: "-0.79s"
+            - generic [ref=e1402]: Leader
+          - generic [ref=e1403]:
+            - generic [ref=e1404]: R5
+            - generic [ref=e1405]: Slightly Slow
+            - generic [ref=e1406]: +0.26s
+            - generic [ref=e1407]: Midfield
+          - generic [ref=e1408]:
+            - generic [ref=e1409]: R6
+            - generic [ref=e1410]: Fast
+            - generic [ref=e1411]: "-0.86s"
+            - generic [ref=e1412]: Midfield
+          - generic [ref=e1413]:
+            - generic [ref=e1414]: R7
+            - generic [ref=e1415]: Normal
+            - generic [ref=e1416]: "-0.08s"
+            - generic [ref=e1417]: Leader
+          - generic [ref=e1418]:
+            - generic [ref=e1419]: R8
+            - generic [ref=e1420]: Normal
+            - generic [ref=e1421]: "-0.15s"
+            - generic [ref=e1422]: Midfield
+          - generic [ref=e1423]:
+            - generic [ref=e1424]: R9
+            - generic [ref=e1425]: Fast
+            - generic [ref=e1426]: "-0.56s"
+            - generic [ref=e1427]: Closer
+          - generic [ref=e1428]:
+            - generic [ref=e1429]: R10
+            - generic [ref=e1430]: Slightly Fast
+            - generic [ref=e1431]: "-0.33s"
+            - generic [ref=e1432]: Leader
+          - generic [ref=e1433]:
+            - generic [ref=e1434]: R11
+            - generic [ref=e1435]: Fast
+            - generic [ref=e1436]: "-0.76s"
+            - generic [ref=e1437]: Closer
+      - generic [ref=e1439]:
+        - button "R1" [ref=e1444] [cursor=pointer]:
+          - paragraph [ref=e1448]: R1
+        - button "R2" [ref=e1453] [cursor=pointer]:
+          - paragraph [ref=e1457]: R2
+        - button "R3" [ref=e1462] [cursor=pointer]:
+          - paragraph [ref=e1466]: R3
+        - button "R4" [ref=e1471] [cursor=pointer]:
+          - paragraph [ref=e1475]: R4
+        - button "R5" [ref=e1480] [cursor=pointer]:
+          - paragraph [ref=e1484]: R5
+        - button "R6" [ref=e1489] [cursor=pointer]:
+          - paragraph [ref=e1493]: R6
+        - button "R7" [ref=e1498] [cursor=pointer]:
+          - paragraph [ref=e1502]: R7
+        - button "R8" [ref=e1507] [cursor=pointer]:
+          - paragraph [ref=e1511]: R8
+        - button "R9" [ref=e1516] [cursor=pointer]:
+          - paragraph [ref=e1520]: R9
+        - button "R10" [ref=e1525] [cursor=pointer]:
+          - paragraph [ref=e1529]: R10
+        - button "R11" [ref=e1534] [cursor=pointer]:
+          - paragraph [ref=e1538]: R11
+      - generic [ref=e1543]:
+        - generic [ref=e1544]: R1 — RACING FOR CHARITY 1800M HANDICAP
+        - generic [ref=e1545]:
+          - generic [ref=e1546]: 1800m
+          - generic [ref=e1547]: AWT
+          - generic [ref=e1548]: Course AWT
+          - generic [ref=e1549]: Class 5
+          - generic [ref=e1550]: "Going: G"
+      - generic [ref=e1555]:
+        - generic [ref=e1556]: "Actual pace: Very Slow (+0.56s vs HKJC std)"
+        - generic [ref=e1557]: "Model predicted: Normal (-0.03s) off by 3 bands"
+        - generic [ref=e1558]: "Winner style: On-Pace"
+      - link "▶ Watch Race Replay (HKJC)" [ref=e1564] [cursor=pointer]:
+        - /url: https://racing.hkjc.com/contentAsset/videoplayer_v4/video-player-iframe_v4.html?type=replay-full&date=20260419&no=01&lang=eng&noPTbar=false&noLeading=false&videoParam=PAD
+      - generic [ref=e1569]:
+        - button "Show/hide columns" [ref=e1573] [cursor=pointer]:
+          - img [ref=e1574]
+        - button "Download as CSV" [ref=e1579] [cursor=pointer]:
+          - img [ref=e1580]
+        - button "Search" [ref=e1585] [cursor=pointer]:
+          - img [ref=e1586]
+        - button "Fullscreen" [ref=e1591] [cursor=pointer]:
+          - img [ref=e1592]
+      - generic [ref=e1607]:
+        - text: "Lane (from HKJC running-position photo, x_frac):"
+        - text: Rail
+        - text: 2-wide
+        - text: 3-wide
+        - text: 4+ wide · Ground = approx. extra metres travelled vs rail over the race.
+      - group [ref=e1614]:
+        - generic "keyboard_arrow_right 🛤️ Running lane per call (14 horses)" [ref=e1615] [cursor=pointer]:
+          - generic [ref=e1616]:
+            - generic [ref=e1618]: keyboard_arrow_right
+            - paragraph [ref=e1621]: 🛤️ Running lane per call (14 horses)
+      - button "[ Download Results (Excel) ]" [ref=e1624] [cursor=pointer]:
+        - paragraph [ref=e1628]: "[ Download Results (Excel) ]"
+      - group [ref=e1631]:
+        - generic "keyboard_arrow_right 📸 Running Position Photo (HKJC)" [ref=e1632] [cursor=pointer]:
+          - generic [ref=e1633]:
+            - generic [ref=e1635]: keyboard_arrow_right
+            - paragraph [ref=e1638]: 📸 Running Position Photo (HKJC)
+      - group [ref=e1641]:
+        - generic "keyboard_arrow_right 📝 Race Commentary & Blackbook Suggestions" [ref=e1642] [cursor=pointer]:
+          - generic [ref=e1643]:
+            - generic [ref=e1645]: keyboard_arrow_right
+            - paragraph [ref=e1648]: 📝 Race Commentary & Blackbook Suggestions
+      - separator [ref=e1653]
+      - paragraph [ref=e1658]:
+        - strong [ref=e1659]: ADD TO BLACKBOOK
+      - generic [ref=e1662]:
+        - generic [ref=e1664]:
+          - paragraph [ref=e1668]: "Select horse:"
+          - generic [ref=e1670]:
+            - generic [ref=e1671]:
+              - generic [ref=e1672]: FOREMOST TEDDY
+              - combobox "Selected FOREMOST TEDDY. Select horse:" [ref=e1674]
+            - img "open" [ref=e1676]
+        - generic [ref=e1679]:
+          - paragraph [ref=e1683]: "Tags:"
+          - generic [ref=e1686]:
+            - generic [ref=e1687]:
+              - combobox "Tags:" [ref=e1689]
+              - generic: Choose options
+            - img "open" [ref=e1691] [cursor=pointer]
+        - generic [ref=e1694]:
+          - paragraph [ref=e1698]: "Confidence:"
+          - generic [ref=e1700]:
+            - generic [ref=e1701]:
+              - generic [ref=e1702]: high
+              - combobox "Selected high. Confidence:" [ref=e1704]
+            - img "open" [ref=e1706]
+        - generic [ref=e1709]:
+          - paragraph [ref=e1713]: Reasoning *
+          - textbox "Reasoning *" [ref=e1716]:
+            - /placeholder: Why is this horse worth following?
+        - button "[ Add to Blackbook ]" [ref=e1720] [cursor=pointer]:
+          - paragraph [ref=e1724]: "[ Add to Blackbook ]"
+      - separator [ref=e1729]
+      - paragraph [ref=e1734]:
+        - strong [ref=e1735]: RECORD BLACKBOOK PERFORMANCE
+      - generic [ref=e1738]:
+        - paragraph [ref=e1743]:
+          - strong [ref=e1744]: VIVA TASTE
+          - text: — Finished
+          - strong [ref=e1745]: "6"
+          - text: "(Model rank: #13) — Verdict:"
+          - strong [ref=e1746]: MISSED
+        - generic [ref=e1748]:
+          - paragraph [ref=e1752]: Notes (optional)
+          - textbox "Notes (optional)" [ref=e1755]:
+            - /placeholder: ""
+        - button "[ Save Performance ]" [ref=e1759] [cursor=pointer]:
+          - paragraph [ref=e1763]: "[ Save Performance ]"

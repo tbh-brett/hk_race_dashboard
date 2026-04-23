@@ -518,11 +518,11 @@ def main():
             "scored": scored,
         })
 
-        # Console summary
+        # Console summary (guard against tiny fields)
         top = scored[:3]
+        names = [t["horse_name"] for t in top] + ["—", "—", "—"]
         print(f"  R{rnum:>2} {dist}m {surface[:3]} C{rclass}: "
-              f"1.{top[0]['horse_name']} 2.{top[1]['horse_name']} "
-              f"3.{top[2]['horse_name']}")
+              f"1.{names[0]} 2.{names[1]} 3.{names[2]}")
 
     # ── Generate JSON (for dashboard integration) ─────────────────────
     json_path = os.path.join("reports", f"race_day_report_{race_date.replace('-','')}_SARR.json")
@@ -758,11 +758,14 @@ def generate_pdf(path, race_date, venue, all_races):
             ("BOTTOMPADDING", (0, 0), (-1, -1), 1.5),
             ("LEFTPADDING", (0, 0), (-1, -1), 2),
             ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-            # Top 3 highlights
-            ("BACKGROUND", (0, 1), (-1, 1), TOP1_BG),
-            ("BACKGROUND", (0, 2), (-1, 2), TOP2_BG),
-            ("BACKGROUND", (0, 3), (-1, 3), TOP3_BG),
         ]
+        # Top-N highlights (guard against empty/tiny fields)
+        n_rows = len(data_rows) - 1  # excluding header
+        top_bgs = [TOP1_BG, TOP2_BG, TOP3_BG]
+        for rank_idx in range(min(3, n_rows)):
+            ts_cmds.append(
+                ("BACKGROUND", (0, rank_idx + 1), (-1, rank_idx + 1), top_bgs[rank_idx])
+            )
         # Alternating rows from row 5 onwards
         for i in range(5, len(data_rows), 2):
             ts_cmds.append(("BACKGROUND", (0, i), (-1, i), ROW_ALT))
@@ -773,13 +776,16 @@ def generate_pdf(path, race_date, venue, all_races):
         # Commentary
         top3 = scored[:3]
         commentary_lines = []
-        tp = top3[0]
-        runs_note = "DEBUT (no form)" if tp.get("is_debut") else f"{tp['n_runs']} runs"
-        commentary_lines.append(
-            f"<b>SARR Top Pick: {tp['horse_name']}</b> — "
-            f"FMRP {tp['f_fmrp']:+.2f}, LSA {tp['f_lsa']:+.2f}, "
-            f"Style: {tp['style']}, {runs_note}"
-        )
+        if not top3:
+            commentary_lines.append("<b>SARR:</b> no scored runners for this race.")
+        else:
+            tp = top3[0]
+            runs_note = "DEBUT (no form)" if tp.get("is_debut") else f"{tp['n_runs']} runs"
+            commentary_lines.append(
+                f"<b>SARR Top Pick: {tp['horse_name']}</b> — "
+                f"FMRP {tp['f_fmrp']:+.2f}, LSA {tp['f_lsa']:+.2f}, "
+                f"Style: {tp['style']}, {runs_note}"
+            )
 
         # Flag any strong divergences
         for h in scored[:4]:

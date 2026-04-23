@@ -1,0 +1,247 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - button "keyboard_double_arrow_left" [ref=e7] [cursor=pointer]:
+      - generic [ref=e9]: keyboard_double_arrow_left
+    - generic [ref=e12]:
+      - generic [ref=e18]: APPEARANCE
+      - generic [ref=e21] [cursor=pointer]:
+        - checkbox "🌙 Dark mode" [checked] [active]
+        - generic [ref=e25]:
+          - paragraph [ref=e27]: 🌙 Dark mode
+          - button "Help for 🌙 Dark mode" [ref=e1684]:
+            - img [ref=e32]
+      - generic [ref=e39]:
+        - generic [ref=e40]: HK
+        - generic [ref=e41]:
+          - generic [ref=e42]: HKJC DASHBOARD
+          - generic [ref=e43]: Race Analysis Terminal
+      - button "🏁 Overview" [ref=e46] [cursor=pointer]:
+        - paragraph [ref=e50]: 🏁 Overview
+      - button "📊 Race Day" [ref=e53] [cursor=pointer]:
+        - paragraph [ref=e57]: 📊 Race Day
+      - button "📡 Live Feed" [ref=e60] [cursor=pointer]:
+        - paragraph [ref=e64]: 📡 Live Feed
+      - button "📖 Form Guide" [ref=e67] [cursor=pointer]:
+        - paragraph [ref=e71]: 📖 Form Guide
+      - button "🎽 Trials" [ref=e74] [cursor=pointer]:
+        - paragraph [ref=e78]: 🎽 Trials
+      - button "🧪 Backtest" [ref=e81] [cursor=pointer]:
+        - paragraph [ref=e85]: 🧪 Backtest
+      - button "🏆 Results" [ref=e88] [cursor=pointer]:
+        - paragraph [ref=e92]: 🏆 Results
+      - button "📓 Blackbook" [ref=e95] [cursor=pointer]:
+        - paragraph [ref=e99]: 📓 Blackbook
+      - button "📄 PDF Builder" [ref=e102] [cursor=pointer]:
+        - paragraph [ref=e106]: 📄 PDF Builder
+      - separator [ref=e111]
+      - generic [ref=e1242]: Run Analysis
+      - generic [ref=e1244]:
+        - generic [ref=e1248]:
+          - paragraph [ref=e1252]: Race Date
+          - textbox "Select a date." [ref=e1256]:
+            - /placeholder: YYYY/MM/DD
+            - text: 2026/04/20
+          - paragraph: Press the down arrow key to interact with the calendar and select a date. Press the escape button to close the calendar.
+          - paragraph: Selected date is 2026/04/20. Select the second date.
+        - generic [ref=e1261] [cursor=pointer]:
+          - checkbox "Re-scrape"
+          - paragraph [ref=e1266]: Re-scrape
+      - generic [ref=e1268]:
+        - paragraph [ref=e1272]: Turf Going
+        - textbox "Turf Going" [ref=e1275]:
+          - /placeholder: ""
+          - text: Good
+      - generic [ref=e1277]:
+        - paragraph [ref=e1281]: AWT Going
+        - textbox "AWT Going" [ref=e1284]:
+          - /placeholder: ""
+          - text: Good
+      - generic [ref=e1286]:
+        - generic [ref=e1287]:
+          - paragraph [ref=e1290]: Or upload racecard JSON (from local scrape)
+          - button "Help for Or upload racecard JSON (from local scrape)" [ref=e1294] [cursor=pointer]:
+            - img [ref=e1295]
+        - region "Or upload racecard JSON (from local scrape)" [ref=e1298] [cursor=pointer]:
+          - button "Choose File" [ref=e1299]
+          - generic [ref=e1301]:
+            - generic [ref=e1302]: Drag and drop file here
+            - generic [ref=e1303]: Limit 200MB per file • JSON
+          - button "Browse files" [ref=e1305]
+      - button "[ RUN ANALYSIS ]" [ref=e1308] [cursor=pointer]:
+        - paragraph [ref=e1312]: "[ RUN ANALYSIS ]"
+      - separator [ref=e1317]
+      - generic [ref=e1322]: Meetings
+      - generic [ref=e1324]:
+        - paragraph [ref=e1328]: "Select meeting:"
+        - generic [ref=e1330]:
+          - generic [ref=e1331]:
+            - generic [ref=e1332]: HAPPY VALLEY — WEDNESDAY, 22 APRIL 2026
+            - combobox "Selected HAPPY VALLEY — WEDNESDAY, 22 APRIL 2026. Select meeting:" [ref=e1334]
+          - img "open" [ref=e1336]
+      - paragraph [ref=e1342]: 2026-04-22 | HV | 9 races
+      - paragraph [ref=e1347]: "Generated: 20 Apr 2026 22:15"
+      - separator [ref=e1352]
+      - generic [ref=e1357]: Downloads
+      - button "[ ET PDF Report ]" [ref=e1360] [cursor=pointer]:
+        - paragraph [ref=e1364]: "[ ET PDF Report ]"
+      - button "[ Text Report ]" [ref=e1367] [cursor=pointer]:
+        - paragraph [ref=e1371]: "[ Text Report ]"
+      - button "[ SARR PDF Report ]" [ref=e1374] [cursor=pointer]:
+        - paragraph [ref=e1378]: "[ SARR PDF Report ]"
+  - generic [ref=e114]:
+    - banner [ref=e115]:
+      - generic [ref=e118]:
+        - button "Deploy" [ref=e120] [cursor=pointer]:
+          - generic [ref=e122]: Deploy
+        - button "Main menu" [ref=e124] [cursor=pointer]:
+          - img [ref=e125]
+    - generic [ref=e130]:
+      - generic [ref=e1688]:
+        - generic [ref=e1689]: HAPPY VALLEY — WEDNESDAY, 22 APRIL 2026
+        - generic [ref=e1690]: Model v4.4 · Generated 2026-04-20T22:15
+      - generic [ref=e1381]:
+        - paragraph [ref=e1385]: Model
+        - radiogroup "Model" [ref=e1386] [cursor=pointer]:
+          - generic [ref=e1387]:
+            - radio "ET (Expected Time)" [checked]
+            - paragraph [ref=e1392]: ET (Expected Time)
+          - generic [ref=e1393]:
+            - radio "SARR (Sectional-Anchored)"
+            - paragraph [ref=e1398]: SARR (Sectional-Anchored)
+      - generic [ref=e1692]:
+        - generic [ref=e1697]:
+          - paragraph [ref=e1700]: Races
+          - paragraph [ref=e1703]: "9"
+        - generic [ref=e1708]:
+          - paragraph [ref=e1711]: Total Runners
+          - paragraph [ref=e1714]: "108"
+        - generic [ref=e1719]:
+          - paragraph [ref=e1722]: Projected
+          - paragraph [ref=e1725]: "106"
+        - generic [ref=e1730]:
+          - paragraph [ref=e1733]: Venue
+          - paragraph [ref=e1736]: HV
+      - separator [ref=e1741]
+      - group [ref=e1744]:
+        - generic "keyboard_arrow_right TOP PICKS SUMMARY" [ref=e1745] [cursor=pointer]:
+          - generic [ref=e1746]:
+            - generic [ref=e1748]: keyboard_arrow_right
+            - paragraph [ref=e1751]:
+              - strong [ref=e1752]: TOP PICKS SUMMARY
+      - separator [ref=e1757]
+      - textbox "🔍 Find horse" [ref=e1462]:
+        - /placeholder: Type a horse name to jump to their race…
+      - generic [ref=e1759]:
+        - button "R1" [ref=e1764] [cursor=pointer]:
+          - paragraph [ref=e1768]: R1
+        - button "R2" [ref=e1773] [cursor=pointer]:
+          - paragraph [ref=e1777]: R2
+        - button "R3" [ref=e1782] [cursor=pointer]:
+          - paragraph [ref=e1786]: R3
+        - button "R4" [ref=e1791] [cursor=pointer]:
+          - paragraph [ref=e1795]: R4
+        - button "R5" [ref=e1800] [cursor=pointer]:
+          - paragraph [ref=e1804]: R5
+        - button "R6" [ref=e1809] [cursor=pointer]:
+          - paragraph [ref=e1813]: R6
+        - button "R7" [ref=e1818] [cursor=pointer]:
+          - paragraph [ref=e1822]: R7
+        - button "R8" [ref=e1827] [cursor=pointer]:
+          - paragraph [ref=e1831]: R8
+        - button "R9" [ref=e1836] [cursor=pointer]:
+          - paragraph [ref=e1840]: R9
+      - generic [ref=e1558]:
+        - generic [ref=e1559]: R1 — FLAMINGO FLOWER HANDICAP
+        - generic [ref=e1586]:
+          - generic [ref=e1841]: 1200m Turf (B)
+          - generic [ref=e1842]: Class 5
+          - generic [ref=e1843]:
+            - text: "Pace:"
+            - generic [ref=e1844]:
+              - generic [ref=e1847]: FAST
+              - generic [ref=e1848]: (-0.42s)
+          - generic [ref=e1849]: 12/12 projected
+      - generic [ref=e1588]:
+        - generic [ref=e1589]: "Speed Map — 1200m | Pace: Fast"
+        - table [ref=e1592]:
+          - rowgroup [ref=e1601]:
+            - row "← BACK FRONT →" [ref=e1850]:
+              - cell "← BACK" [ref=e1851]
+              - cell [ref=e1852]
+              - cell [ref=e1853]
+              - cell "FRONT →" [ref=e1854]
+              - cell [ref=e1608]
+            - row "10.TAIHANG SCENERY 2.GIDDY UP 1.HAPPY ALLIANCE 5.THOUSAND CUPS WIDE" [ref=e1855]:
+              - cell "10.TAIHANG SCENERY" [ref=e1856]
+              - cell "2.GIDDY UP" [ref=e1857]
+              - cell "1.HAPPY ALLIANCE" [ref=e1858]
+              - cell "5.THOUSAND CUPS" [ref=e1859]
+              - cell "WIDE" [ref=e1860]
+            - row "6.HAPPY BOYS 3.CONCORDE STAR 12.BINGO BABE 8.TEAM HAPPY W2" [ref=e1861]:
+              - cell "6.HAPPY BOYS" [ref=e1862]
+              - cell "3.CONCORDE STAR" [ref=e1863]
+              - cell "12.BINGO BABE" [ref=e1864]
+              - cell "8.TEAM HAPPY" [ref=e1865]
+              - cell "W2" [ref=e1866]
+            - row "11.RICH HORSE 7.TURF PHOENIX 9.BRILLIANT FIRE 4.NEBRASKAN RAIL" [ref=e1867]:
+              - cell "11.RICH HORSE" [ref=e1868]
+              - cell "7.TURF PHOENIX" [ref=e1869]
+              - cell "9.BRILLIANT FIRE" [ref=e1870]
+              - cell "4.NEBRASKAN" [ref=e1871]
+              - cell "RAIL" [ref=e1872]
+        - generic [ref=e1590]: "★ Beneficiaries: NEBRASKAN (Leader) [pace×style -0.12s] — top-1 ranked + favourable position; saves most ground at bends from forward rail position; draw 1 with natural speed — economical ground-saving trip | TEAM HAPPY (Leader) [pace×style -0.12s] — top-3 ranked + favourable position; saves most ground at bends from forward rail position | THOUSAND CUPS (Leader) [pace×style -0.12s] — #5 ranked with positional edge | CONCORDE STAR (Midfield) [pace×style -0.01s] — #4 ranked with positional edge"
+        - generic [ref=e1873]: ● Pace beneficiary ● Disadvantaged by pace ○ Neutral
+      - generic [ref=e1878]:
+        - generic [ref=e1879]: 📈 Empirical pace × style benefit — HV SPRINT (≤1200m) · n=8,700 runner-rows
+        - generic [ref=e1880]:
+          - text: Seconds adjusted per runner vs baseline (Avg pace). negative = faster, positive = slower. · ET model folds this bonus directly into each horse's projected_time (via
+          - code [ref=e1881]: smap_advantage × 0.10 s
+          - text: ). · SARR model uses a separate style × venue fit score (independent of predicted pace) — so SARR ranking will not always reflect this table.
+        - table [ref=e1882]:
+          - rowgroup [ref=e1883]:
+            - row "Pace Leader On-Pace Midfield Closer" [ref=e1884]:
+              - columnheader "Pace" [ref=e1885]
+              - columnheader "Leader" [ref=e1886]
+              - columnheader "On-Pace" [ref=e1887]
+              - columnheader "Midfield" [ref=e1888]
+              - columnheader "Closer" [ref=e1889]
+              - columnheader [ref=e1890]
+          - rowgroup [ref=e1891]:
+            - row "Slow +0.03s +0.09s +0.01s -0.05s" [ref=e1892]:
+              - rowheader "Slow" [ref=e1893]
+              - cell "+0.03s" [ref=e1894]
+              - cell "+0.09s" [ref=e1895]
+              - cell "+0.01s" [ref=e1896]
+              - cell "-0.05s" [ref=e1897]
+              - cell [ref=e1898]
+            - row "Avg 0.00 0.00 0.00 0.00" [ref=e1899]:
+              - rowheader "Avg" [ref=e1900]
+              - cell "0.00" [ref=e1901]
+              - cell "0.00" [ref=e1902]
+              - cell "0.00" [ref=e1903]
+              - cell "0.00" [ref=e1904]
+              - cell [ref=e1905]
+            - row "Fast -0.12s +0.03s -0.01s +0.05s ← predicted pace" [ref=e1906]:
+              - rowheader "Fast" [ref=e1907]
+              - cell "-0.12s" [ref=e1908]
+              - cell "+0.03s" [ref=e1909]
+              - cell "-0.01s" [ref=e1910]
+              - cell "+0.05s" [ref=e1911]
+              - cell "← predicted pace" [ref=e1912]
+      - button "[ Top 4 Only ]" [ref=e1919] [cursor=pointer]:
+        - paragraph [ref=e1923]: "[ Top 4 Only ]"
+      - generic [ref=e1929]:
+        - button "Show/hide columns" [ref=e1933] [cursor=pointer]:
+          - img [ref=e1934]
+        - button "Download as CSV" [ref=e1939] [cursor=pointer]:
+          - img [ref=e1940]
+        - button "Search" [ref=e1945] [cursor=pointer]:
+          - img [ref=e1946]
+        - button "Fullscreen" [ref=e1951] [cursor=pointer]:
+          - img [ref=e1952]
+      - separator [ref=e1967]
+      - group [ref=e1970]:
+        - generic "keyboard_arrow_right 📖 Column Legend & Interpretation Guide" [ref=e1971] [cursor=pointer]:
+          - generic [ref=e1972]:
+            - generic [ref=e1974]: keyboard_arrow_right
+            - paragraph [ref=e1977]: 📖 Column Legend & Interpretation Guide

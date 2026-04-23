@@ -1,0 +1,760 @@
+{
+  "date": "2026-04-22",
+  "race_number": 4,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "628",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 488,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 459
+    },
+    {
+      "y_top": 488,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 545
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "CAPTAIN LINK",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 143,
+          "cy": 111,
+          "x_frac": 0.19930555555555557,
+          "conf": 0.86,
+          "match_score": 1.0,
+          "ocr_text": "Captain Link",
+          "band_label": "628",
+          "y_in_band": 0.835
+        },
+        {
+          "band_idx": 1,
+          "cx": 114,
+          "cy": 182,
+          "x_frac": 0.15833333333333333,
+          "conf": 0.844,
+          "match_score": 0.957,
+          "ocr_text": "CaptainLink",
+          "band_label": "800M",
+          "y_in_band": 0.342
+        },
+        {
+          "band_idx": 2,
+          "cx": 119,
+          "cy": 380,
+          "x_frac": 0.16597222222222222,
+          "conf": 0.895,
+          "match_score": 1.0,
+          "ocr_text": "Captain Link",
+          "band_label": "400M",
+          "y_in_band": 0.667
+        },
+        {
+          "band_idx": 3,
+          "cx": 130,
+          "cy": 477,
+          "x_frac": 0.18055555555555555,
+          "conf": 0.821,
+          "match_score": 1.0,
+          "ocr_text": "Captain'Link",
+          "band_label": "200M",
+          "y_in_band": 0.81
+        }
+      ],
+      "ocr_texts": [
+        "Captain Link",
+        "CaptainLink",
+        "Captain Link",
+        "Captain'Link"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.663,
+      "avg_x_frac": 0.176,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FLYING SNIPER",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 501,
+          "cy": 46,
+          "x_frac": 0.6958333333333333,
+          "conf": 0.885,
+          "match_score": 1.0,
+          "ocr_text": "Flying Sniper",
+          "band_label": "628",
+          "y_in_band": 0.298
+        },
+        {
+          "band_idx": 1,
+          "cx": 423,
+          "cy": 183,
+          "x_frac": 0.5881944444444445,
+          "conf": 0.878,
+          "match_score": 1.0,
+          "ocr_text": "Flying Sniper",
+          "band_label": "800M",
+          "y_in_band": 0.349
+        },
+        {
+          "band_idx": 3,
+          "cx": 222,
+          "cy": 478,
+          "x_frac": 0.30833333333333335,
+          "conf": 0.848,
+          "match_score": 1.0,
+          "ocr_text": "Flying Sniper",
+          "band_label": "200M",
+          "y_in_band": 0.828
+        }
+      ],
+      "ocr_texts": [
+        "Flying Sniper",
+        "Flying Sniper",
+        "Flying Sniper"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.492,
+      "avg_x_frac": 0.531,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "JOLLY COMPANION",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 363,
+          "cy": 111,
+          "x_frac": 0.5052083333333334,
+          "conf": 0.877,
+          "match_score": 0.966,
+          "ocr_text": "JollyCompanion",
+          "band_label": "628",
+          "y_in_band": 0.835
+        },
+        {
+          "band_idx": 1,
+          "cx": 291,
+          "cy": 264,
+          "x_frac": 0.4048611111111111,
+          "conf": 0.833,
+          "match_score": 1.0,
+          "ocr_text": "Jolly Companion",
+          "band_label": "800M",
+          "y_in_band": 0.893
+        },
+        {
+          "band_idx": 2,
+          "cx": 272,
+          "cy": 423,
+          "x_frac": 0.37777777777777777,
+          "conf": 0.898,
+          "match_score": 1.0,
+          "ocr_text": "Jolly Companion",
+          "band_label": "400M",
+          "y_in_band": 0.953
+        },
+        {
+          "band_idx": 4,
+          "cx": 242,
+          "cy": 569,
+          "x_frac": 0.3368055555555556,
+          "conf": 0.896,
+          "match_score": 1.0,
+          "ocr_text": "Jolly Companion",
+          "band_label": null,
+          "y_in_band": 0.711
+        }
+      ],
+      "ocr_texts": [
+        "JollyCompanion",
+        "Jolly Companion",
+        "Jolly Companion",
+        "Jolly Companion"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.848,
+      "avg_x_frac": 0.406,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KWAI CHUNG TALENTS",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 294,
+          "cy": 133,
+          "x_frac": 0.40902777777777777,
+          "conf": 0.92,
+          "match_score": 1.0,
+          "ocr_text": "Kwai Chung Talents",
+          "band_label": "800M",
+          "y_in_band": 0.013
+        },
+        {
+          "band_idx": 2,
+          "cx": 294,
+          "cy": 290,
+          "x_frac": 0.40902777777777777,
+          "conf": 0.918,
+          "match_score": 0.941,
+          "ocr_text": "KwaiChungTalents",
+          "band_label": "400M",
+          "y_in_band": 0.067
+        },
+        {
+          "band_idx": 2,
+          "cx": 339,
+          "cy": 428,
+          "x_frac": 0.4708333333333333,
+          "conf": 0.851,
+          "match_score": 1.0,
+          "ocr_text": "Kwai Chung Talents",
+          "band_label": "400M",
+          "y_in_band": 0.987
+        },
+        {
+          "band_idx": 4,
+          "cx": 312,
+          "cy": 582,
+          "x_frac": 0.4340277777777778,
+          "conf": 0.886,
+          "match_score": 1.0,
+          "ocr_text": "Kwai Chung Talents",
+          "band_label": null,
+          "y_in_band": 0.825
+        }
+      ],
+      "ocr_texts": [
+        "Kwai Chung Talents",
+        "KwaiChungTalents",
+        "Kwai Chung Talents",
+        "Kwai Chung Talents"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.473,
+      "avg_x_frac": 0.431,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LEADING AGILITY",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 272,
+          "cy": 110,
+          "x_frac": 0.37777777777777777,
+          "conf": 0.88,
+          "match_score": 1.0,
+          "ocr_text": "Leading Agility",
+          "band_label": "628",
+          "y_in_band": 0.826
+        },
+        {
+          "band_idx": 1,
+          "cx": 218,
+          "cy": 264,
+          "x_frac": 0.3034722222222222,
+          "conf": 0.886,
+          "match_score": 1.0,
+          "ocr_text": "Leading Agility",
+          "band_label": "800M",
+          "y_in_band": 0.893
+        },
+        {
+          "band_idx": 2,
+          "cx": 218,
+          "cy": 398,
+          "x_frac": 0.3034722222222222,
+          "conf": 0.854,
+          "match_score": 1.0,
+          "ocr_text": "Leading Agility",
+          "band_label": "400M",
+          "y_in_band": 0.787
+        },
+        {
+          "band_idx": 4,
+          "cx": 155,
+          "cy": 569,
+          "x_frac": 0.2152777777777778,
+          "conf": 0.867,
+          "match_score": 1.0,
+          "ocr_text": "Leading Agility",
+          "band_label": null,
+          "y_in_band": 0.711
+        }
+      ],
+      "ocr_texts": [
+        "Leading Agility",
+        "Leading Agility",
+        "Leading Agility",
+        "Leading Agility"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.804,
+      "avg_x_frac": 0.3,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LUCKY MCQUEEN",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 414,
+          "cy": 132,
+          "x_frac": 0.5756944444444444,
+          "conf": 0.9,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Mcqueen",
+          "band_label": "800M",
+          "y_in_band": 0.007
+        },
+        {
+          "band_idx": 1,
+          "cx": 393,
+          "cy": 279,
+          "x_frac": 0.5465277777777777,
+          "conf": 0.803,
+          "match_score": 0.96,
+          "ocr_text": "LuckyMcqueen",
+          "band_label": "800M",
+          "y_in_band": 0.993
+        },
+        {
+          "band_idx": 3,
+          "cx": 405,
+          "cy": 434,
+          "x_frac": 0.5625,
+          "conf": 0.848,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Mcqueen",
+          "band_label": "200M",
+          "y_in_band": 0.069
+        },
+        {
+          "band_idx": 4,
+          "cx": 218,
+          "cy": 592,
+          "x_frac": 0.30277777777777776,
+          "conf": 0.863,
+          "match_score": 0.96,
+          "ocr_text": "LuckyMcqueen",
+          "band_label": null,
+          "y_in_band": 0.912
+        }
+      ],
+      "ocr_texts": [
+        "Lucky Mcqueen",
+        "LuckyMcqueen",
+        "Lucky Mcqueen",
+        "LuckyMcqueen"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.495,
+      "avg_x_frac": 0.497,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LUCKY XANDER",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 357,
+          "cy": 139,
+          "x_frac": 0.4965277777777778,
+          "conf": 0.912,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Xander",
+          "band_label": "800M",
+          "y_in_band": 0.054
+        },
+        {
+          "band_idx": 1,
+          "cx": 484,
+          "cy": 270,
+          "x_frac": 0.6729166666666667,
+          "conf": 0.893,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Xander",
+          "band_label": "800M",
+          "y_in_band": 0.933
+        },
+        {
+          "band_idx": 2,
+          "cx": 515,
+          "cy": 399,
+          "x_frac": 0.7159722222222222,
+          "conf": 0.893,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Xander",
+          "band_label": "400M",
+          "y_in_band": 0.793
+        },
+        {
+          "band_idx": 4,
+          "cx": 611,
+          "cy": 564,
+          "x_frac": 0.8493055555555555,
+          "conf": 0.86,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Xander",
+          "band_label": null,
+          "y_in_band": 0.667
+        }
+      ],
+      "ocr_texts": [
+        "Lucky Xander",
+        "Lucky Xander",
+        "Lucky Xander",
+        "Lucky Xander"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.612,
+      "avg_x_frac": 0.684,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SOLAR RIVER",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 401,
+          "cy": 257,
+          "x_frac": 0.5569444444444445,
+          "conf": 0.793,
+          "match_score": 1.0,
+          "ocr_text": "Solar River",
+          "band_label": "800M",
+          "y_in_band": 0.846
+        }
+      ],
+      "ocr_texts": [
+        "Solar River"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.846,
+      "avg_x_frac": 0.557,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VIGOR EYE",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 199,
+          "cy": 45,
+          "x_frac": 0.2767361111111111,
+          "conf": 0.825,
+          "match_score": 1.0,
+          "ocr_text": "Vigor Eye",
+          "band_label": "628",
+          "y_in_band": 0.289
+        },
+        {
+          "band_idx": 1,
+          "cx": 192,
+          "cy": 182,
+          "x_frac": 0.2670138888888889,
+          "conf": 0.708,
+          "match_score": 1.0,
+          "ocr_text": "Vigor Eye",
+          "band_label": "800M",
+          "y_in_band": 0.342
+        },
+        {
+          "band_idx": 2,
+          "cx": 164,
+          "cy": 386,
+          "x_frac": 0.228125,
+          "conf": 0.831,
+          "match_score": 1.0,
+          "ocr_text": "Vigor Eye",
+          "band_label": "400M",
+          "y_in_band": 0.707
+        },
+        {
+          "band_idx": 4,
+          "cx": 98,
+          "cy": 539,
+          "x_frac": 0.13680555555555557,
+          "conf": 0.865,
+          "match_score": 1.0,
+          "ocr_text": "Vigor Eye",
+          "band_label": null,
+          "y_in_band": 0.447
+        }
+      ],
+      "ocr_texts": [
+        "Vigor Eye",
+        "Vigor Eye",
+        "Vigor Eye",
+        "Vigor Eye"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.446,
+      "avg_x_frac": 0.227,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "YEUX DE LIFELINE",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 402,
+          "cy": 45,
+          "x_frac": 0.5583333333333333,
+          "conf": 0.843,
+          "match_score": 1.0,
+          "ocr_text": "Yeux De Lifeline",
+          "band_label": "628",
+          "y_in_band": 0.289
+        },
+        {
+          "band_idx": 1,
+          "cx": 344,
+          "cy": 186,
+          "x_frac": 0.478125,
+          "conf": 0.777,
+          "match_score": 0.867,
+          "ocr_text": "Yeux De Lefine",
+          "band_label": "800M",
+          "y_in_band": 0.369
+        },
+        {
+          "band_idx": 2,
+          "cx": 295,
+          "cy": 320,
+          "x_frac": 0.41041666666666665,
+          "conf": 0.866,
+          "match_score": 0.968,
+          "ocr_text": "YeuxDe Lifeline_",
+          "band_label": "400M",
+          "y_in_band": 0.267
+        },
+        {
+          "band_idx": 3,
+          "cx": 276,
+          "cy": 481,
+          "x_frac": 0.3840277777777778,
+          "conf": 0.888,
+          "match_score": 0.933,
+          "ocr_text": "YeuxDeLifeline",
+          "band_label": "200M",
+          "y_in_band": 0.879
+        }
+      ],
+      "ocr_texts": [
+        "Yeux De Lifeline",
+        "Yeux De Lefine",
+        "YeuxDe Lifeline_",
+        "YeuxDeLifeline"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.451,
+      "avg_x_frac": 0.458,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "YOUNG ARROW",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 316,
+          "cy": 46,
+          "x_frac": 0.4395833333333333,
+          "conf": 0.875,
+          "match_score": 0.952,
+          "ocr_text": "YoungArrow",
+          "band_label": "628",
+          "y_in_band": 0.298
+        },
+        {
+          "band_idx": 1,
+          "cx": 273,
+          "cy": 187,
+          "x_frac": 0.37916666666666665,
+          "conf": 0.883,
+          "match_score": 0.952,
+          "ocr_text": "YoungArrow",
+          "band_label": "800M",
+          "y_in_band": 0.376
+        },
+        {
+          "band_idx": 2,
+          "cx": 209,
+          "cy": 319,
+          "x_frac": 0.29097222222222224,
+          "conf": 0.859,
+          "match_score": 0.952,
+          "ocr_text": "YoungArrow",
+          "band_label": "400M",
+          "y_in_band": 0.26
+        },
+        {
+          "band_idx": 4,
+          "cx": 142,
+          "cy": 546,
+          "x_frac": 0.19722222222222222,
+          "conf": 0.872,
+          "match_score": 1.0,
+          "ocr_text": "Young Arrow",
+          "band_label": null,
+          "y_in_band": 0.509
+        }
+      ],
+      "ocr_texts": [
+        "YoungArrow",
+        "YoungArrow",
+        "YoungArrow",
+        "Young Arrow"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.361,
+      "avg_x_frac": 0.327,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ZHOU GONGJIN",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 205,
+          "cy": 121,
+          "x_frac": 0.2847222222222222,
+          "conf": 0.852,
+          "match_score": 1.0,
+          "ocr_text": "Zhou Gongjin",
+          "band_label": "628",
+          "y_in_band": 0.917
+        },
+        {
+          "band_idx": 1,
+          "cx": 165,
+          "cy": 254,
+          "x_frac": 0.2298611111111111,
+          "conf": 0.862,
+          "match_score": 1.0,
+          "ocr_text": "Zhou Gongjin",
+          "band_label": "800M",
+          "y_in_band": 0.826
+        },
+        {
+          "band_idx": 2,
+          "cx": 311,
+          "cy": 400,
+          "x_frac": 0.4322916666666667,
+          "conf": 0.778,
+          "match_score": 0.957,
+          "ocr_text": "Zhou Gongin",
+          "band_label": "400M",
+          "y_in_band": 0.8
+        },
+        {
+          "band_idx": 4,
+          "cx": 535,
+          "cy": 562,
+          "x_frac": 0.7440972222222222,
+          "conf": 0.826,
+          "match_score": 0.957,
+          "ocr_text": "Zhou'Gongin",
+          "band_label": null,
+          "y_in_band": 0.649
+        }
+      ],
+      "ocr_texts": [
+        "Zhou Gongjin",
+        "Zhou Gongjin",
+        "Zhou Gongin",
+        "Zhou'Gongin"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.798,
+      "avg_x_frac": 0.423,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 76,
+    "matched_horses": 12,
+    "field_size": 14,
+    "coverage": 0.857,
+    "parsed_at": "2026-04-23T00:46:51"
+  }
+}

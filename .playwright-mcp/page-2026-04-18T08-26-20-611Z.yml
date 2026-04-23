@@ -1,0 +1,147 @@
+- generic [ref=e2]:
+  - generic [ref=e7]:
+    - button "keyboard_double_arrow_left" [ref=e908] [cursor=pointer]:
+      - generic [ref=e910]: keyboard_double_arrow_left
+    - generic [ref=e11]:
+      - generic [ref=e16]:
+        - generic [ref=e17]: HK
+        - generic [ref=e18]:
+          - generic [ref=e19]: HKJC DASHBOARD
+          - generic [ref=e20]: Race Analysis Terminal
+      - button "🏁 Overview" [ref=e23] [cursor=pointer]:
+        - paragraph [ref=e27]: 🏁 Overview
+      - button "📊 Race Day" [ref=e30] [cursor=pointer]:
+        - paragraph [ref=e34]: 📊 Race Day
+      - button "📡 Live Feed" [ref=e37] [cursor=pointer]:
+        - paragraph [ref=e41]: 📡 Live Feed
+      - button "📖 Form Guide" [ref=e44] [cursor=pointer]:
+        - paragraph [ref=e48]: 📖 Form Guide
+      - button "🎽 Trials" [ref=e51] [cursor=pointer]:
+        - paragraph [ref=e55]: 🎽 Trials
+      - button "🧪 Backtest" [ref=e58] [cursor=pointer]:
+        - paragraph [ref=e62]: 🧪 Backtest
+      - button "🏆 Results" [ref=e65] [cursor=pointer]:
+        - paragraph [ref=e69]: 🏆 Results
+      - button "📓 Blackbook" [active] [ref=e72] [cursor=pointer]:
+        - paragraph [ref=e76]: 📓 Blackbook
+      - button "📄 PDF Builder" [ref=e79] [cursor=pointer]:
+        - paragraph [ref=e83]: 📄 PDF Builder
+      - separator [ref=e88]
+  - generic [ref=e3]:
+    - banner [ref=e91]:
+      - generic [ref=e94]:
+        - button "Deploy" [ref=e96] [cursor=pointer]:
+          - generic [ref=e98]: Deploy
+        - button "Main menu" [ref=e100] [cursor=pointer]:
+          - img [ref=e101]
+    - generic [ref=e104]:
+      - generic [ref=e109]: Blackbook
+      - generic [ref=e2414]: Qualitative picks · track your eye vs the model
+      - generic [ref=e2959]:
+        - generic [ref=e2964]:
+          - paragraph [ref=e2967]: Active
+          - paragraph [ref=e2970]: "43"
+        - generic [ref=e2975]:
+          - paragraph [ref=e2978]: Expired
+          - paragraph [ref=e2981]: "0"
+        - generic [ref=e2986]:
+          - paragraph [ref=e2989]: Archived
+          - paragraph [ref=e2992]: "0"
+        - generic [ref=e2997]:
+          - paragraph [ref=e3000]: Total Runs
+          - paragraph [ref=e3003]: "4"
+      - generic [ref=e3005]:
+        - tablist [ref=e3007]:
+          - tab "Browse" [selected] [ref=e3008] [cursor=pointer]:
+            - paragraph [ref=e3010]: Browse
+          - tab "Add / Import" [ref=e3011] [cursor=pointer]:
+            - paragraph [ref=e3013]: Add / Import
+          - tab "Analytics" [ref=e3014] [cursor=pointer]:
+            - paragraph [ref=e3016]: Analytics
+          - tab "★ Exceptional Performers" [ref=e3017] [cursor=pointer]:
+            - paragraph [ref=e3019]: ★ Exceptional Performers
+        - tabpanel "Browse" [ref=e3021]:
+          - generic [ref=e3022]:
+            - generic [ref=e3024]:
+              - generic [ref=e3028]:
+                - paragraph [ref=e3032]: Status
+                - generic [ref=e3034]:
+                  - generic [ref=e3035]:
+                    - generic [ref=e3036]: Active
+                    - combobox "Selected Active. Status" [ref=e3038]
+                  - img "open" [ref=e3040]
+              - generic [ref=e3045]:
+                - paragraph [ref=e3049]: Category
+                - generic [ref=e3051]:
+                  - generic [ref=e3052]:
+                    - generic [ref=e3053]: All
+                    - combobox "Selected All. Category" [ref=e3055]
+                  - img "open" [ref=e3057]
+              - generic [ref=e3062]:
+                - paragraph [ref=e3066]: Confidence
+                - generic [ref=e3068]:
+                  - generic [ref=e3069]:
+                    - generic [ref=e3070]: All
+                    - combobox "Selected All. Confidence" [ref=e3072]
+                  - img "open" [ref=e3074]
+              - generic [ref=e3079]:
+                - paragraph [ref=e3083]: Search
+                - textbox "Search" [ref=e3086]:
+                  - /placeholder: Horse name…
+            - generic [ref=e3091]:
+              - button "Show/hide columns" [ref=e3095] [cursor=pointer]:
+                - img [ref=e3096]
+              - button "Download as CSV" [ref=e3101] [cursor=pointer]:
+                - img [ref=e3102]
+              - button "Search" [ref=e3107] [cursor=pointer]:
+                - img [ref=e3108]
+              - button "Fullscreen" [ref=e3113] [cursor=pointer]:
+                - img [ref=e3114]
+            - separator [ref=e3125]
+            - generic [ref=e3127]:
+              - paragraph [ref=e3131]: "Select horse for details / actions:"
+              - generic [ref=e3133]:
+                - generic [ref=e3134]:
+                  - generic [ref=e3135]: RUN RUN TIMING
+                  - combobox "Selected RUN RUN TIMING. Select horse for details / actions:" [ref=e3137]
+                - img "open" [ref=e3139]
+            - generic [ref=e3145]: RUN RUN TIMING ● Medium Active 🏁 Post-Race
+            - generic [ref=e3147]:
+              - paragraph [ref=e3154]:
+                - strong [ref=e3155]: "Source:"
+                - text: R3 1650m
+              - paragraph [ref=e3162]:
+                - strong [ref=e3163]: "Added:"
+                - text: 2026-04-17
+              - paragraph [ref=e3170]:
+                - strong [ref=e3171]: "Expires:"
+                - text: 2026-07-16
+              - paragraph [ref=e3178]:
+                - strong [ref=e3179]: "Tags:"
+                - text: exceptional_performer
+            - paragraph [ref=e3184]:
+              - strong [ref=e3185]: "Conditions:"
+              - text: "Dist: [1650]"
+            - paragraph [ref=e3195]:
+              - strong [ref=e3196]: "Reasoning:"
+              - text: "Exceptional performer: exceptional late speed (24.20s last section vs 25.06s avg early); ran 1.27s faster than projected; led/sat 2nd from start — all-the-way effort"
+            - heading "Actions" [level=5] [ref=e3202]:
+              - text: Actions
+              - generic [ref=e3203]:
+                - link "Link to heading":
+                  - /url: "#actions"
+                  - img
+            - generic [ref=e3205]:
+              - button "Archive" [ref=e3210] [cursor=pointer]:
+                - paragraph [ref=e3214]: Archive
+              - button "+45 days" [ref=e3219] [cursor=pointer]:
+                - paragraph [ref=e3223]: +45 days
+              - button "Expire" [ref=e3228] [cursor=pointer]:
+                - paragraph [ref=e3232]: Expire
+              - button "Delete" [ref=e3237] [cursor=pointer]:
+                - paragraph [ref=e3241]: Delete
+            - group [ref=e3244]:
+              - generic "keyboard_arrow_right Edit Entry" [ref=e3245] [cursor=pointer]:
+                - generic [ref=e3246]:
+                  - generic [ref=e3248]: keyboard_arrow_right
+                  - paragraph [ref=e3251]: Edit Entry

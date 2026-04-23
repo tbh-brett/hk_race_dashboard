@@ -1,0 +1,707 @@
+- generic [ref=e2]:
+  - generic [ref=e38]:
+    - button "keyboard_double_arrow_left" [ref=e926] [cursor=pointer]:
+      - generic [ref=e928]: keyboard_double_arrow_left
+    - generic [ref=e42]:
+      - generic [ref=e47]:
+        - generic [ref=e48]: HK
+        - generic [ref=e49]:
+          - generic [ref=e50]: HKJC DASHBOARD
+          - generic [ref=e51]: Race Analysis Terminal
+      - button "🏁 Overview" [ref=e54] [cursor=pointer]:
+        - paragraph [ref=e58]: 🏁 Overview
+      - button "📊 Race Day" [active] [ref=e61] [cursor=pointer]:
+        - paragraph [ref=e65]: 📊 Race Day
+      - button "📡 Live Feed" [ref=e68] [cursor=pointer]:
+        - paragraph [ref=e72]: 📡 Live Feed
+      - button "📖 Form Guide" [ref=e75] [cursor=pointer]:
+        - paragraph [ref=e79]: 📖 Form Guide
+      - button "🎽 Trials" [ref=e82] [cursor=pointer]:
+        - paragraph [ref=e86]: 🎽 Trials
+      - button "🧪 Backtest" [ref=e89] [cursor=pointer]:
+        - paragraph [ref=e93]: 🧪 Backtest
+      - button "🏆 Results" [ref=e96] [cursor=pointer]:
+        - paragraph [ref=e100]: 🏆 Results
+      - button "📓 Blackbook" [ref=e103] [cursor=pointer]:
+        - paragraph [ref=e107]: 📓 Blackbook
+      - button "📄 PDF Builder" [ref=e110] [cursor=pointer]:
+        - paragraph [ref=e114]: 📄 PDF Builder
+      - separator [ref=e119]
+      - generic [ref=e933]: Run Analysis
+      - generic [ref=e935]:
+        - generic [ref=e939]:
+          - paragraph [ref=e943]: Race Date
+          - textbox "Select a date." [ref=e947]:
+            - /placeholder: YYYY/MM/DD
+            - text: 2026/04/18
+          - paragraph: Press the down arrow key to interact with the calendar and select a date. Press the escape button to close the calendar.
+          - paragraph: Selected date is 2026/04/18. Select the second date.
+        - generic [ref=e952] [cursor=pointer]:
+          - checkbox "Re-scrape"
+          - paragraph [ref=e957]: Re-scrape
+      - generic [ref=e959]:
+        - paragraph [ref=e963]: Turf Going
+        - textbox "Turf Going" [ref=e966]:
+          - /placeholder: ""
+          - text: Good
+      - generic [ref=e968]:
+        - paragraph [ref=e972]: AWT Going
+        - textbox "AWT Going" [ref=e975]:
+          - /placeholder: ""
+          - text: Good
+      - generic [ref=e977]:
+        - generic [ref=e978]:
+          - paragraph [ref=e981]: Or upload racecard JSON (from local scrape)
+          - button "Help for Or upload racecard JSON (from local scrape)" [ref=e985] [cursor=pointer]:
+            - img [ref=e986]
+        - region "Or upload racecard JSON (from local scrape)" [ref=e989] [cursor=pointer]:
+          - button "Choose File" [ref=e990]
+          - generic [ref=e992]:
+            - generic [ref=e993]: Drag and drop file here
+            - generic [ref=e994]: Limit 200MB per file • JSON
+          - button "Browse files" [ref=e996]
+      - button "[ RUN ANALYSIS ]" [ref=e999] [cursor=pointer]:
+        - paragraph [ref=e1003]: "[ RUN ANALYSIS ]"
+      - separator [ref=e1008]
+      - generic [ref=e1013]: Meetings
+      - generic [ref=e1015]:
+        - paragraph [ref=e1019]: "Select meeting:"
+        - generic [ref=e1021]:
+          - generic [ref=e1022]:
+            - generic [ref=e1023]: SHA TIN (AWT) — SUNDAY, 19 APRIL 2026
+            - combobox "Selected SHA TIN (AWT) — SUNDAY, 19 APRIL 2026. Select meeting:" [ref=e1025]
+          - img "open" [ref=e1027]
+      - paragraph [ref=e1033]: 2026-04-19 | ST | 11 races
+      - paragraph [ref=e1038]: "Generated: 17 Apr 2026 19:12"
+      - separator [ref=e1043]
+      - generic [ref=e1048]: Downloads
+      - button "[ ET PDF Report ]" [ref=e1051] [cursor=pointer]:
+        - paragraph [ref=e1055]: "[ ET PDF Report ]"
+      - button "[ Text Report ]" [ref=e1058] [cursor=pointer]:
+        - paragraph [ref=e1062]: "[ Text Report ]"
+  - generic [ref=e3]:
+    - banner [ref=e6]:
+      - generic [ref=e9]:
+        - generic [ref=e1064]:
+          - img "Running..." [ref=e1065]:
+            - img [ref=e1066]
+          - button "Stop" [ref=e1071] [cursor=pointer]
+        - button "Deploy" [ref=e19] [cursor=pointer]:
+          - generic [ref=e21]: Deploy
+        - button "Main menu" [ref=e23] [cursor=pointer]:
+          - img [ref=e24]
+    - generic [ref=e122]:
+      - generic [ref=e126]:
+        - generic [ref=e127]: SHA TIN (AWT) — SUNDAY, 19 APRIL 2026
+        - generic [ref=e1072]: Model v4.4 · Generated 2026-04-17T19:12
+      - generic [ref=e1074]:
+        - paragraph [ref=e1078]: Model
+        - radiogroup "Model" [ref=e1079] [cursor=pointer]:
+          - generic [ref=e1080]:
+            - radio "ET (Expected Time)" [checked]
+            - paragraph [ref=e1085]: ET (Expected Time)
+          - generic [ref=e1086]:
+            - radio "SARR (Sectional-Anchored)"
+            - paragraph [ref=e1091]: SARR (Sectional-Anchored)
+      - generic [ref=e1093]:
+        - generic [ref=e1098]:
+          - paragraph [ref=e1101]: Races
+          - paragraph [ref=e1104]: "11"
+        - generic [ref=e1109]:
+          - paragraph [ref=e1112]: Total Runners
+          - paragraph [ref=e1115]: "143"
+        - generic [ref=e1120]:
+          - paragraph [ref=e1123]: Projected
+          - paragraph [ref=e1126]: "138"
+        - generic [ref=e1131]:
+          - paragraph [ref=e1134]: Venue
+          - paragraph [ref=e1137]: ST
+      - separator [ref=e1138]
+      - group [ref=e1141]:
+        - generic "keyboard_arrow_right TOP PICKS SUMMARY" [ref=e1142] [cursor=pointer]:
+          - generic [ref=e1143]:
+            - generic [ref=e1145]: keyboard_arrow_right
+            - paragraph [ref=e1148]:
+              - strong [ref=e1149]: TOP PICKS SUMMARY
+      - separator [ref=e1150]
+      - generic [ref=e1152]:
+        - button "R1" [ref=e1157] [cursor=pointer]:
+          - paragraph [ref=e1161]: R1
+        - button "R2" [ref=e1166] [cursor=pointer]:
+          - paragraph [ref=e1170]: R2
+        - button "R3" [ref=e1175] [cursor=pointer]:
+          - paragraph [ref=e1179]: R3
+        - button "R4" [ref=e1184] [cursor=pointer]:
+          - paragraph [ref=e1188]: R4
+        - button "R5" [ref=e1193] [cursor=pointer]:
+          - paragraph [ref=e1197]: R5
+        - button "R6" [ref=e1202] [cursor=pointer]:
+          - paragraph [ref=e1206]: R6
+        - button "R7" [ref=e1211] [cursor=pointer]:
+          - paragraph [ref=e1215]: R7
+        - button "R8" [ref=e1220] [cursor=pointer]:
+          - paragraph [ref=e1224]: R8
+        - button "R9" [ref=e1229] [cursor=pointer]:
+          - paragraph [ref=e1233]: R9
+        - button "R10" [ref=e1238] [cursor=pointer]:
+          - paragraph [ref=e1242]: R10
+        - button "R11" [ref=e1247] [cursor=pointer]:
+          - paragraph [ref=e1251]: R11
+      - generic [ref=e1252]:
+        - generic [ref=e1253]: R1 — RACING FOR CHARITY 1800M HANDICAP
+        - generic [ref=e1254]:
+          - generic [ref=e1255]: 1800m AWT (AWT)
+          - generic [ref=e1256]: Class 5
+          - generic [ref=e1257]:
+            - text: "Pace:"
+            - generic [ref=e1258]:
+              - generic [ref=e1260]: NEUTRAL
+              - generic [ref=e1261]: (-0.03s)
+          - generic [ref=e1262]: 14/14 projected
+      - generic [ref=e1263]:
+        - generic [ref=e1264]: "Speed Map — 1800m | Pace: Normal"
+        - table [ref=e1265]:
+          - rowgroup [ref=e1266]:
+            - row "← BACK FRONT →" [ref=e1267]:
+              - cell "← BACK" [ref=e1268]
+              - cell [ref=e1269]
+              - cell [ref=e1270]
+              - cell [ref=e1271]
+              - cell "FRONT →" [ref=e1272]
+              - cell [ref=e1273]
+            - row "10.MEEPMEEP 12.CONSPIRACY WITNESS 13.ROSEWOOD FLEETFOOT 7.SPANGLE FORTUNE WIDE" [ref=e1274]:
+              - cell [ref=e1275]
+              - cell "10.MEEPMEEP" [ref=e1276]
+              - cell "12.CONSPIRACY WITNESS" [ref=e1277]
+              - cell "13.ROSEWOOD FLEETFOOT" [ref=e1278]
+              - cell "7.SPANGLE FORTUNE" [ref=e1279]
+              - cell "WIDE" [ref=e1280]
+            - row "14.ALL EYES ON ME 3.MANAGEMENT FOLKS 2.HAILTOTHEVICTORS 9.HAPPYDEARHAPPYDEER 4.FIREFOOT W2" [ref=e1281]:
+              - cell "14.ALL EYES ON ME" [ref=e1282]
+              - cell "3.MANAGEMENT FOLKS" [ref=e1283]
+              - cell "2.HAILTOTHEVICTORS" [ref=e1284]
+              - cell "9.HAPPYDEARHAPPYDEER" [ref=e1285]
+              - cell "4.FIREFOOT" [ref=e1286]
+              - cell "W2" [ref=e1287]
+            - row "11.ALL ARE MINE 8.SUPER HONG KONG 6.MEGA FORCE 5.VIVA TASTE 1.FOREMOST TEDDY RAIL" [ref=e1288]:
+              - cell "11.ALL ARE MINE" [ref=e1289]
+              - cell "8.SUPER HONG KONG" [ref=e1290]
+              - cell "6.MEGA FORCE" [ref=e1291]
+              - cell "5.VIVA TASTE" [ref=e1292]
+              - cell "1.FOREMOST TEDDY" [ref=e1293]
+              - cell "RAIL" [ref=e1294]
+        - generic [ref=e1295]: "★ Beneficiaries: FOREMOST TEDDY — | FIREFOOT — | ALL EYES ON ME — | CONSPIRACY WITNESS —"
+        - generic [ref=e1296]: ● Pace beneficiary ● Disadvantaged by pace ○ Neutral
+      - button "[ Top 4 Only ]" [ref=e1303] [cursor=pointer]:
+        - paragraph [ref=e1307]: "[ Top 4 Only ]"
+      - generic [ref=e1313]:
+        - button "Show/hide columns" [ref=e1317] [cursor=pointer]:
+          - img [ref=e1318]
+        - button "Download as CSV" [ref=e1323] [cursor=pointer]:
+          - img [ref=e1324]
+        - button "Search" [ref=e1329] [cursor=pointer]:
+          - img [ref=e1330]
+        - button "Fullscreen" [ref=e1335] [cursor=pointer]:
+          - img [ref=e1336]
+      - separator [ref=e1347]
+      - group [ref=e1350]:
+        - generic "keyboard_arrow_right 📖 Column Legend & Interpretation Guide" [ref=e1351] [cursor=pointer]:
+          - generic [ref=e1352]:
+            - generic [ref=e1354]: keyboard_arrow_right
+            - paragraph [ref=e1357]: 📖 Column Legend & Interpretation Guide
+      - paragraph [ref=e204]: ↳ Jumps swiftly, took box-seat but shuffled further back, hampered immediately on the straight and was checked, shifted ou
+      - paragraph [ref=e209]:
+        - strong [ref=e210]: R4
+        - text: 1400m —
+        - strong [ref=e211]: SUPER MASTERMIND
+        - text: Rk#7 Win% 4.4 ● Low bad_draw, final_sectional, improvement
+      - paragraph [ref=e216]: ↳ Dropped last from Gate 14, made plenty of ground rapidly under slight persuasion, impressive
+      - paragraph [ref=e221]:
+        - strong [ref=e222]: R6
+        - text: 1650m —
+        - strong [ref=e223]: FASHION LEGEND
+        - text: Rk#10 Win% 3.8 ● High final_sectional, bad_draw
+      - paragraph [ref=e228]: ↳ Dropped last from Gate 14, incredible turn of foot on the straight, good flexibility in running style
+      - paragraph [ref=e233]:
+        - strong [ref=e234]: R9
+        - text: 1400m —
+        - strong [ref=e235]: WONDERSTAR
+        - text: Rk#9 Win% 4.3 ● High slow_start, traffic, bad_run
+      - paragraph [ref=e240]: ↳ Missed the start, jockey switched lanes couple of times, finished strongly despite start
+      - heading "🤝 Mutual Model Top Picks (ET ∩ SARR)" [level=3] [ref=e246]:
+        - text: 🤝 Mutual Model Top Picks (ET ∩ SARR)
+        - generic [ref=e247]:
+          - link "Link to heading":
+            - /url: "#mutual-model-top-picks-et-sarr"
+            - img
+      - generic [ref=e251]:
+        - table [ref=e252]:
+          - rowgroup [ref=e253]:
+            - row "Race No Horse ET Rk SARR Rk ET Proj SARR" [ref=e254]:
+              - columnheader "Race" [ref=e255]
+              - columnheader "No" [ref=e256]
+              - columnheader "Horse" [ref=e257]
+              - columnheader "ET Rk" [ref=e258]
+              - columnheader "SARR Rk" [ref=e259]
+              - columnheader "ET Proj" [ref=e260]
+              - columnheader "SARR" [ref=e261]
+          - rowgroup [ref=e262]:
+            - row "R1 1 Foremost Teddy 1 1 108.31 -0.260" [ref=e263]:
+              - cell "R1" [ref=e264]
+              - cell "1" [ref=e265]
+              - cell "Foremost Teddy" [ref=e266]
+              - cell "1" [ref=e267]
+              - cell "1" [ref=e268]
+              - cell "108.31" [ref=e269]
+              - cell "-0.260" [ref=e270]
+            - row "R2 11 Modest Gentleman 3 3 69.29 -0.150" [ref=e271]:
+              - cell "R2" [ref=e272]
+              - cell "11" [ref=e273]
+              - cell "Modest Gentleman" [ref=e274]
+              - cell "3" [ref=e275]
+              - cell "3" [ref=e276]
+              - cell "69.29" [ref=e277]
+              - cell "-0.150" [ref=e278]
+            - row "R2 9 Viva Chaleur 4 1 69.30 -0.301" [ref=e279]:
+              - cell "R2" [ref=e280]
+              - cell "9" [ref=e281]
+              - cell "Viva Chaleur" [ref=e282]
+              - cell "4" [ref=e283]
+              - cell "1" [ref=e284]
+              - cell "69.30" [ref=e285]
+              - cell "-0.301" [ref=e286]
+            - row "R3 1 Run Run Sunrise 1 2 56.62 -0.129" [ref=e287]:
+              - cell "R3" [ref=e288]
+              - cell "1" [ref=e289]
+              - cell "Run Run Sunrise" [ref=e290]
+              - cell "1" [ref=e291]
+              - cell "2" [ref=e292]
+              - cell "56.62" [ref=e293]
+              - cell "-0.129" [ref=e294]
+            - row "R3 13 Heroic Master 3 1 57.09 -0.179" [ref=e295]:
+              - cell "R3" [ref=e296]
+              - cell "13" [ref=e297]
+              - cell "Heroic Master" [ref=e298]
+              - cell "3" [ref=e299]
+              - cell "1" [ref=e300]
+              - cell "57.09" [ref=e301]
+              - cell "-0.179" [ref=e302]
+            - row "R3 11 Zouper Fellow 4 3 57.14 -0.116" [ref=e303]:
+              - cell "R3" [ref=e304]
+              - cell "11" [ref=e305]
+              - cell "Zouper Fellow" [ref=e306]
+              - cell "4" [ref=e307]
+              - cell "3" [ref=e308]
+              - cell "57.14" [ref=e309]
+              - cell "-0.116" [ref=e310]
+            - row "R4 1 Charming Babe 1 2 82.11 -0.101" [ref=e311]:
+              - cell "R4" [ref=e312]
+              - cell "1" [ref=e313]
+              - cell "Charming Babe" [ref=e314]
+              - cell "1" [ref=e315]
+              - cell "2" [ref=e316]
+              - cell "82.11" [ref=e317]
+              - cell "-0.101" [ref=e318]
+            - row "R4 13 The All Rounder 2 3 82.29 -0.050" [ref=e319]:
+              - cell "R4" [ref=e320]
+              - cell "13" [ref=e321]
+              - cell "The All Rounder" [ref=e322]
+              - cell "2" [ref=e323]
+              - cell "3" [ref=e324]
+              - cell "82.29" [ref=e325]
+              - cell "-0.050" [ref=e326]
+            - row "R4 11 Proud Box 3 4 82.62 +0.030" [ref=e327]:
+              - cell "R4" [ref=e328]
+              - cell "11" [ref=e329]
+              - cell "Proud Box" [ref=e330]
+              - cell "3" [ref=e331]
+              - cell "4" [ref=e332]
+              - cell "82.62" [ref=e333]
+              - cell "+0.030" [ref=e334]
+            - row "R5 6 Prestige Ricky 1 3 92.30 -0.048" [ref=e335]:
+              - cell "R5" [ref=e336]
+              - cell "6" [ref=e337]
+              - cell "Prestige Ricky" [ref=e338]
+              - cell "1" [ref=e339]
+              - cell "3" [ref=e340]
+              - cell "92.30" [ref=e341]
+              - cell "-0.048" [ref=e342]
+            - row "R5 11 Absolute Honour 3 2 93.69 -0.119" [ref=e343]:
+              - cell "R5" [ref=e344]
+              - cell "11" [ref=e345]
+              - cell "Absolute Honour" [ref=e346]
+              - cell "3" [ref=e347]
+              - cell "2" [ref=e348]
+              - cell "93.69" [ref=e349]
+              - cell "-0.119" [ref=e350]
+            - row "R6 11 Bull Attitude 1 2 97.73 -0.114" [ref=e351]:
+              - cell "R6" [ref=e352]
+              - cell "11" [ref=e353]
+              - cell "Bull Attitude" [ref=e354]
+              - cell "1" [ref=e355]
+              - cell "2" [ref=e356]
+              - cell "97.73" [ref=e357]
+              - cell "-0.114" [ref=e358]
+            - row "R6 5 Shanghai Style 2 3 97.95 -0.099" [ref=e359]:
+              - cell "R6" [ref=e360]
+              - cell "5" [ref=e361]
+              - cell "Shanghai Style" [ref=e362]
+              - cell "2" [ref=e363]
+              - cell "3" [ref=e364]
+              - cell "97.95" [ref=e365]
+              - cell "-0.099" [ref=e366]
+            - row "R6 1 Supreme Agility 3 4 98.17 -0.069" [ref=e367]:
+              - cell "R6" [ref=e368]
+              - cell "1" [ref=e369]
+              - cell "Supreme Agility" [ref=e370]
+              - cell "3" [ref=e371]
+              - cell "4" [ref=e372]
+              - cell "98.17" [ref=e373]
+              - cell "-0.069" [ref=e374]
+            - row "R7 4 Never Too Soon 2 3 69.34 -0.081" [ref=e375]:
+              - cell "R7" [ref=e376]
+              - cell "4" [ref=e377]
+              - cell "Never Too Soon" [ref=e378]
+              - cell "2" [ref=e379]
+              - cell "3" [ref=e380]
+              - cell "69.34" [ref=e381]
+              - cell "-0.081" [ref=e382]
+            - row "R7 7 Flowing Riches 4 2 69.38 -0.102" [ref=e383]:
+              - cell "R7" [ref=e384]
+              - cell "7" [ref=e385]
+              - cell "Flowing Riches" [ref=e386]
+              - cell "4" [ref=e387]
+              - cell "2" [ref=e388]
+              - cell "69.38" [ref=e389]
+              - cell "-0.102" [ref=e390]
+            - row "R8 6 Pi Legend 1 3 69.02 -0.140" [ref=e391]:
+              - cell "R8" [ref=e392]
+              - cell "6" [ref=e393]
+              - cell "Pi Legend" [ref=e394]
+              - cell "1" [ref=e395]
+              - cell "3" [ref=e396]
+              - cell "69.02" [ref=e397]
+              - cell "-0.140" [ref=e398]
+            - row "R8 3 Aurora Patch 4 1 69.19 -0.385" [ref=e399]:
+              - cell "R8" [ref=e400]
+              - cell "3" [ref=e401]
+              - cell "Aurora Patch" [ref=e402]
+              - cell "4" [ref=e403]
+              - cell "1" [ref=e404]
+              - cell "69.19" [ref=e405]
+              - cell "-0.385" [ref=e406]
+            - row "R9 1 Sky Jewellery 1 1 81.23 -0.482" [ref=e407]:
+              - cell "R9" [ref=e408]
+              - cell "1" [ref=e409]
+              - cell "Sky Jewellery" [ref=e410]
+              - cell "1" [ref=e411]
+              - cell "1" [ref=e412]
+              - cell "81.23" [ref=e413]
+              - cell "-0.482" [ref=e414]
+            - row "R9 9 Perfectday 2 2 81.63 -0.263" [ref=e415]:
+              - cell "R9" [ref=e416]
+              - cell "9" [ref=e417]
+              - cell "Perfectday" [ref=e418]
+              - cell "2" [ref=e419]
+              - cell "2" [ref=e420]
+              - cell "81.63" [ref=e421]
+              - cell "-0.263" [ref=e422]
+            - row "R9 4 Aerovolanic 3 3 81.69 -0.213" [ref=e423]:
+              - cell "R9" [ref=e424]
+              - cell "4" [ref=e425]
+              - cell "Aerovolanic" [ref=e426]
+              - cell "3" [ref=e427]
+              - cell "3" [ref=e428]
+              - cell "81.69" [ref=e429]
+              - cell "-0.213" [ref=e430]
+            - row "R9 3 Everyone'S Star 4 4 82.10 -0.152" [ref=e431]:
+              - cell "R9" [ref=e432]
+              - cell "3" [ref=e433]
+              - cell "Everyone'S Star" [ref=e434]
+              - cell "4" [ref=e435]
+              - cell "4" [ref=e436]
+              - cell "82.10" [ref=e437]
+              - cell "-0.152" [ref=e438]
+            - row "R10 5 Gold Patch 1 1 69.01 -0.445" [ref=e439]:
+              - cell "R10" [ref=e440]
+              - cell "5" [ref=e441]
+              - cell "Gold Patch" [ref=e442]
+              - cell "1" [ref=e443]
+              - cell "1" [ref=e444]
+              - cell "69.01" [ref=e445]
+              - cell "-0.445" [ref=e446]
+            - row "R10 10 Robot Lucky Star 3 2 69.20 -0.372" [ref=e447]:
+              - cell "R10" [ref=e448]
+              - cell "10" [ref=e449]
+              - cell "Robot Lucky Star" [ref=e450]
+              - cell "3" [ref=e451]
+              - cell "2" [ref=e452]
+              - cell "69.20" [ref=e453]
+              - cell "-0.372" [ref=e454]
+            - row "R11 6 Gentlemen Legacy 4 2 108.23 -0.204" [ref=e455]:
+              - cell "R11" [ref=e456]
+              - cell "6" [ref=e457]
+              - cell "Gentlemen Legacy" [ref=e458]
+              - cell "4" [ref=e459]
+              - cell "2" [ref=e460]
+              - cell "108.23" [ref=e461]
+              - cell "-0.204" [ref=e462]
+        - generic [ref=e463]: 🟢 Both top 2 🟡 Both top 3
+      - separator [ref=e468]
+      - heading "🏇 Trial Standouts Running Today" [level=3] [ref=e474]:
+        - text: 🏇 Trial Standouts Running Today
+        - generic [ref=e475]:
+          - link "Link to heading":
+            - /url: "#trial-standouts-running-today"
+            - img
+      - paragraph [ref=e480]:
+        - strong [ref=e481]: R11
+        - text: 1800m — [++]
+        - strong [ref=e482]: MOMENTS IN TIME
+        - text: Rk#9 Win% 3.0 Concealed + top half (2026-03-12)
+      - paragraph [ref=e487]:
+        - strong [ref=e488]: R2
+        - text: 1200m — [+]
+        - strong [ref=e489]: MODEST GENTLEMAN
+        - text: Rk#3 Win% 13.5 Trial winner, positive (2026-04-09)
+      - paragraph [ref=e494]:
+        - strong [ref=e495]: R2
+        - text: 1200m — [+]
+        - strong [ref=e496]: SONIC BOOM
+        - text: Rk#1 Win% 23.7 Positive trial, top half (2026-03-27)
+      - paragraph [ref=e501]:
+        - strong [ref=e502]: R2
+        - text: 1200m — [+]
+        - strong [ref=e503]: VIVA CHALEUR
+        - text: Rk#4 Win% 13.2 Trial winner, positive (2026-03-20)
+      - paragraph [ref=e508]:
+        - strong [ref=e509]: R3
+        - text: 1000m — [+]
+        - strong [ref=e510]: HAPPY ACTION
+        - text: Rk#5 Win% 9.4 Concealed form (2026-04-10)
+      - paragraph [ref=e515]:
+        - strong [ref=e516]: R3
+        - text: 1000m — [+]
+        - strong [ref=e517]: MAPOGO
+        - text: Rk#6 Win% 4.8 Trial winner, positive (2026-04-02)
+      - paragraph [ref=e522]:
+        - strong [ref=e523]: R3
+        - text: 1000m — [+]
+        - strong [ref=e524]: PARENTS' LOVE
+        - text: Rk#8 Win% 6.7 Trial winner, positive (2026-04-02)
+      - paragraph [ref=e529]:
+        - strong [ref=e530]: R3
+        - text: 1000m — [+]
+        - strong [ref=e531]: SYNERGY EXPRESS
+        - text: Rk#9 Win% 3.6 Gained 3 positions (2026-03-16)
+      - paragraph [ref=e536]:
+        - strong [ref=e537]: R4
+        - text: 1400m — [+]
+        - strong [ref=e538]: DASHING PEACH
+        - text: Rk#10 Win% 1.7 Gained 3 positions (2026-04-09)
+      - paragraph [ref=e543]:
+        - strong [ref=e544]: R4
+        - text: 1400m — [+]
+        - strong [ref=e545]: DECISION LINK
+        - text: Rk#6 Win% 4.5 Positive trial, top half (2026-03-20)
+      - paragraph [ref=e550]:
+        - strong [ref=e551]: R4
+        - text: 1400m — [+]
+        - strong [ref=e552]: YOUNG LEGACY
+        - text: Rk#9 Win% 3.4 Gained 5 positions (2026-03-16)
+      - paragraph [ref=e557]:
+        - strong [ref=e558]: R4
+        - text: 1400m — [+]
+        - strong [ref=e559]: FRANCIS MEYNELL
+        - text: Rk#5 Win% 9.6 Gained 3 positions (2026-03-16)
+      - paragraph [ref=e564]:
+        - strong [ref=e565]: R4
+        - text: 1400m — [+]
+        - strong [ref=e566]: LET'S HAVE FUN
+        - text: Rk#11 Win% 2.0 Gained 3 positions (2026-03-05)
+      - paragraph [ref=e571]:
+        - strong [ref=e572]: R5
+        - text: 1600m — [+]
+        - strong [ref=e573]: PRESTIGE RICKY
+        - text: Rk#1 Win% 28.5 Positive trial, top half (2026-04-02)
+      - paragraph [ref=e578]:
+        - strong [ref=e579]: R5
+        - text: 1600m — [+]
+        - strong [ref=e580]: INCANTO STAR
+        - text: Rk#2 Win% 24.8 Positive trial, top half (2026-03-27)
+      - paragraph [ref=e585]:
+        - strong [ref=e586]: R5
+        - text: 1600m — [+]
+        - strong [ref=e587]: ABSOLUTE HONOUR
+        - text: Rk#3 Win% 9.3 Trial winner, positive (2026-03-10)
+      - paragraph [ref=e592]:
+        - strong [ref=e593]: R6
+        - text: 1650m — [+]
+        - strong [ref=e594]: SUPREME AGILITY
+        - text: Rk#3 Win% 12.8 Gained 3 positions (2026-03-24)
+      - paragraph [ref=e599]:
+        - strong [ref=e600]: R6
+        - text: 1650m — [+]
+        - strong [ref=e601]: SHANGHAI STYLE
+        - text: Rk#2 Win% 15.7 Gained 5 positions (2026-03-20)
+      - paragraph [ref=e606]:
+        - strong [ref=e607]: R6
+        - text: 1650m — [+]
+        - strong [ref=e608]: SHOTGUN
+        - text: Rk#7 Win% 5.1 Trial winner, positive (2026-03-19)
+      - paragraph [ref=e613]:
+        - strong [ref=e614]: R6
+        - text: 1650m — [+]
+        - strong [ref=e615]: CALIFORNIA STAR
+        - text: Rk#8 Win% 4.3 Gained 5 positions (2026-03-03)
+      - paragraph [ref=e620]:
+        - strong [ref=e621]: R6
+        - text: 1650m — [+]
+        - strong [ref=e622]: BLOSSOMY
+        - text: Rk#11 Win% 1.9 Concealed form (2026-02-24)
+      - paragraph [ref=e627]:
+        - strong [ref=e628]: R7
+        - text: 1200m — [+]
+        - strong [ref=e629]: JUICY DRAGON
+        - text: Rk#1 Win% 17.2 Positive trial, top half (2026-02-24)
+      - paragraph [ref=e634]:
+        - strong [ref=e635]: R7
+        - text: 1200m — [+]
+        - strong [ref=e636]: CONRAD THE GREAT
+        - text: Rk#8 Win% 5.6 Positive trial, top half (2026-02-24)
+      - paragraph [ref=e641]:
+        - strong [ref=e642]: R8
+        - text: 1200m — [+]
+        - strong [ref=e643]: TIN FOOK
+        - text: Rk#9 Win% 3.5 Positive trial, top half (2026-04-09)
+      - paragraph [ref=e648]:
+        - strong [ref=e649]: R8
+        - text: 1200m — [+]
+        - strong [ref=e650]: PI LEGEND
+        - text: Rk#1 Win% 27.0 Trial winner, positive (2026-03-24)
+      - paragraph [ref=e655]:
+        - strong [ref=e656]: R8
+        - text: 1200m — [+]
+        - strong [ref=e657]: BLAZING WIND
+        - text: Rk#6 Win% 5.9 Gained 4 positions (2026-03-19)
+      - paragraph [ref=e662]:
+        - strong [ref=e663]: R8
+        - text: 1200m — [+]
+        - strong [ref=e664]: ROMANTIC SON
+        - text: Rk#10 Win% 2.6 Trial winner, positive (2026-03-06)
+      - paragraph [ref=e669]:
+        - strong [ref=e670]: R9
+        - text: 1400m — [+]
+        - strong [ref=e671]: EVERYONE'S STAR
+        - text: Rk#4 Win% 10.4 Gained 4 positions (2026-04-09)
+      - paragraph [ref=e676]:
+        - strong [ref=e677]: R9
+        - text: 1400m — [+]
+        - strong [ref=e678]: GOLDEN CHAMP
+        - text: Rk#10 Win% 2.7 Positive trial, top half (2026-03-14)
+      - paragraph [ref=e683]:
+        - strong [ref=e684]: R9
+        - text: 1400m — [+]
+        - strong [ref=e685]: EXCEED THE LIMIT
+        - text: Rk#8 Win% 3.1 Gained 3 positions (2026-03-14)
+      - paragraph [ref=e690]:
+        - strong [ref=e691]: R10
+        - text: 1200m — [+]
+        - strong [ref=e692]: SUPER EXPRESS
+        - text: Rk#4 Win% 14.4 Trial winner, positive (2026-04-09)
+      - paragraph [ref=e697]:
+        - strong [ref=e698]: R10
+        - text: 1200m — [+]
+        - strong [ref=e699]: KA YING ATTACK
+        - text: Rk#5 Win% 9.6 Trial winner, positive (2026-04-09)
+      - paragraph [ref=e704]:
+        - strong [ref=e705]: R10
+        - text: 1200m — [+]
+        - strong [ref=e706]: ROBOT LUCKY STAR
+        - text: Rk#3 Win% 13.6 Trial winner, positive (2026-03-31)
+      - paragraph [ref=e711]:
+        - strong [ref=e712]: R11
+        - text: 1800m — [+]
+        - strong [ref=e713]: GENTLEMEN LEGACY
+        - text: Rk#4 Win% 7.1 Positive trial, top half (2026-04-02)
+      - paragraph [ref=e718]:
+        - strong [ref=e719]: R11
+        - text: 1800m — [+]
+        - strong [ref=e720]: STUNNING PEACH
+        - text: Rk#3 Win% 10.9 Gained 6 positions (2026-03-24)
+      - paragraph [ref=e725]:
+        - strong [ref=e726]: R1
+        - text: 1800m — [—]
+        - strong [ref=e727]: ROSEWOOD FLEETFOOT
+        - text: Rk#10 Win% 6.0 Negative trial signal (2026-04-09)
+      - paragraph [ref=e732]:
+        - strong [ref=e733]: R5
+        - text: 1600m — [—]
+        - strong [ref=e734]: FLUORESCENCE
+        - text: Rk#6 Win% 3.6 Negative trial signal (2026-02-24)
+      - paragraph [ref=e739]:
+        - strong [ref=e740]: R8
+        - text: 1200m — [—]
+        - strong [ref=e741]: MUST GO
+        - text: Rk#8 Win% 3.5 Negative trial signal (2026-04-09)
+      - separator [ref=e746]
+      - heading "📊 Meeting Quick Stats" [level=3] [ref=e752]:
+        - text: 📊 Meeting Quick Stats
+        - generic [ref=e753]:
+          - link "Link to heading":
+            - /url: "#meeting-quick-stats"
+            - img
+      - generic [ref=e755]:
+        - generic [ref=e760]:
+          - paragraph [ref=e763]: Races
+          - paragraph [ref=e766]: "11"
+        - generic [ref=e771]:
+          - paragraph [ref=e774]: Avg Field Size
+          - paragraph [ref=e777]: "13.0"
+        - generic [ref=e782]:
+          - paragraph [ref=e785]: Fast Pace
+          - paragraph [ref=e788]: 2 / 11
+        - generic [ref=e793]:
+          - paragraph [ref=e796]: Slow Pace
+          - paragraph [ref=e799]: 0 / 11
+      - heading "⚠️ Risk Flags Summary" [level=3] [ref=e805]:
+        - text: ⚠️ Risk Flags Summary
+        - generic [ref=e806]:
+          - link "Link to heading":
+            - /url: "#risk-flags-summary"
+            - img
+      - generic [ref=e808]:
+        - generic [ref=e813]:
+          - paragraph [ref=e816]: U
+          - paragraph [ref=e819]: "21"
+        - generic [ref=e824]:
+          - paragraph [ref=e827]: ↑IMP
+          - paragraph [ref=e830]: "13"
+        - generic [ref=e835]:
+          - paragraph [ref=e838]: ↓DEC
+          - paragraph [ref=e841]: "9"
+        - generic [ref=e846]:
+          - paragraph [ref=e849]: "Vet: INFO"
+          - paragraph [ref=e852]: "20"
+        - generic [ref=e857]:
+          - paragraph [ref=e860]: "Vet: AMBER"
+          - paragraph [ref=e863]: "17"
+        - generic [ref=e868]:
+          - paragraph [ref=e871]: "Vet: RED"
+          - paragraph [ref=e874]: "10"
+      - separator [ref=e879]
+      - heading "📈 Recent Model Performance" [level=3] [ref=e885]:
+        - text: 📈 Recent Model Performance
+        - generic [ref=e886]:
+          - link "Link to heading":
+            - /url: "#recent-model-performance"
+            - img
+      - generic [ref=e891]:
+        - button "Show/hide columns" [ref=e895] [cursor=pointer]:
+          - img [ref=e896]
+        - button "Download as CSV" [ref=e901] [cursor=pointer]:
+          - img [ref=e902]
+        - button "Search" [ref=e907] [cursor=pointer]:
+          - img [ref=e908]
+        - button "Fullscreen" [ref=e913] [cursor=pointer]:
+          - img [ref=e914]

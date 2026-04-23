@@ -1,0 +1,175 @@
+- generic [ref=e2]:
+  - generic [ref=e7]:
+    - button "keyboard_double_arrow_left" [ref=e10] [cursor=pointer]:
+      - generic [ref=e12]: keyboard_double_arrow_left
+    - generic [ref=e15]:
+      - generic [ref=e20]:
+        - generic [ref=e21]: HK
+        - generic [ref=e22]:
+          - generic [ref=e23]: HKJC DASHBOARD
+          - generic [ref=e24]: Race Analysis Terminal
+      - button "🏁 Overview" [ref=e27] [cursor=pointer]:
+        - paragraph [ref=e31]: 🏁 Overview
+      - button "📊 Race Day" [ref=e34] [cursor=pointer]:
+        - paragraph [ref=e38]: 📊 Race Day
+      - button "📡 Live Feed" [ref=e41] [cursor=pointer]:
+        - paragraph [ref=e45]: 📡 Live Feed
+      - button "📖 Form Guide" [ref=e48] [cursor=pointer]:
+        - paragraph [ref=e52]: 📖 Form Guide
+      - button "🎽 Trials" [ref=e55] [cursor=pointer]:
+        - paragraph [ref=e59]: 🎽 Trials
+      - button "🧪 Backtest" [active] [ref=e62] [cursor=pointer]:
+        - paragraph [ref=e66]: 🧪 Backtest
+      - button "🏆 Results" [ref=e69] [cursor=pointer]:
+        - paragraph [ref=e73]: 🏆 Results
+      - button "📓 Blackbook" [ref=e76] [cursor=pointer]:
+        - paragraph [ref=e80]: 📓 Blackbook
+      - button "📄 PDF Builder" [ref=e83] [cursor=pointer]:
+        - paragraph [ref=e87]: 📄 PDF Builder
+      - separator [ref=e92]
+      - separator [ref=e1841]
+      - generic [ref=e1846]: Post-Race Data
+      - generic [ref=e1848]:
+        - paragraph [ref=e1852]: Results date
+        - textbox "Select a date." [ref=e1856]:
+          - /placeholder: YYYY/MM/DD
+          - text: 2026/04/18
+        - paragraph: Press the down arrow key to interact with the calendar and select a date. Press the escape button to close the calendar.
+        - paragraph: Selected date is 2026/04/18. Select the second date.
+      - generic [ref=e1858]:
+        - button "[ Scrape ]" [ref=e1863] [cursor=pointer]:
+          - paragraph [ref=e1867]: "[ Scrape ]"
+        - button "[ Backtest ]" [ref=e1872] [cursor=pointer]:
+          - paragraph [ref=e1876]: "[ Backtest ]"
+      - separator [ref=e1881]
+      - generic [ref=e1886]: Aggregate Reports
+      - generic [ref=e1888]:
+        - paragraph [ref=e1892]: Month (YYYY-MM)
+        - textbox "Month (YYYY-MM)" [ref=e1895]:
+          - /placeholder: ""
+          - text: 2026-04
+      - button "[ Monthly Backtest ]" [ref=e1898] [cursor=pointer]:
+        - paragraph [ref=e1902]: "[ Monthly Backtest ]"
+      - generic [ref=e1904]:
+        - paragraph [ref=e1908]: Season (YYYY-YYYY)
+        - textbox "Season (YYYY-YYYY)" [ref=e1911]:
+          - /placeholder: ""
+          - text: 2025-2026
+      - button "[ Seasonal Backtest ]" [ref=e1914] [cursor=pointer]:
+        - paragraph [ref=e1918]: "[ Seasonal Backtest ]"
+  - generic [ref=e3]:
+    - banner [ref=e95]:
+      - generic [ref=e98]:
+        - button "Deploy" [ref=e100] [cursor=pointer]:
+          - generic [ref=e102]: Deploy
+        - button "Main menu" [ref=e104] [cursor=pointer]:
+          - img [ref=e105]
+    - generic [ref=e108]:
+      - generic [ref=e1919]: Model Backtest
+      - generic [ref=e1924]: Compare pre-race predictions against actual results
+      - paragraph [ref=e1925]:
+        - strong [ref=e1926]: DATA INVENTORY
+      - generic [ref=e1928]:
+        - generic [ref=e1933]:
+          - paragraph [ref=e1936]: Predictions
+          - paragraph [ref=e1939]: "6"
+        - generic [ref=e1944]:
+          - paragraph [ref=e1947]: Results Scraped
+          - paragraph [ref=e1950]: "5"
+        - generic [ref=e1955]:
+          - paragraph [ref=e1958]: Matched (backtestable)
+          - paragraph [ref=e1961]: "5"
+      - group [ref=e1963]:
+        - generic "keyboard_arrow_right 1 meetings awaiting results" [ref=e1964] [cursor=pointer]:
+          - generic [ref=e1965]:
+            - generic [ref=e1967]: keyboard_arrow_right
+            - paragraph [ref=e1970]: 1 meetings awaiting results
+      - separator [ref=e1012]
+      - generic [ref=e1972]:
+        - tablist [ref=e1974]:
+          - tab "Weekly (Per-Meeting)" [selected] [ref=e1975] [cursor=pointer]:
+            - paragraph [ref=e1977]: Weekly (Per-Meeting)
+          - tab "Monthly" [ref=e1978] [cursor=pointer]:
+            - paragraph [ref=e1980]: Monthly
+          - tab "Seasonal" [ref=e1981] [cursor=pointer]:
+            - paragraph [ref=e1983]: Seasonal
+        - tabpanel "Weekly (Per-Meeting)" [ref=e1986]:
+          - generic [ref=e1987]:
+            - generic [ref=e1989]:
+              - paragraph [ref=e1993]: "Select meeting:"
+              - generic [ref=e1995]:
+                - generic [ref=e1996]:
+                  - generic [ref=e1997]: 2026-04-15 (HAPPY VALLEY — WEDNESDAY, 15 APRIL 2026)
+                  - combobox "Selected 2026-04-15 (HAPPY VALLEY — WEDNESDAY, 15 APRIL 2026). Select meeting:" [ref=e1999]
+                - img "open" [ref=e2001]
+            - heading "Model Accuracy" [level=3] [ref=e2008]:
+              - text: Model Accuracy
+              - generic [ref=e2009]:
+                - link "Link to heading":
+                  - /url: "#model-accuracy"
+                  - img
+            - generic [ref=e2011]:
+              - generic [ref=e2016]:
+                - generic [ref=e2017]:
+                  - paragraph [ref=e2019]: MAE
+                  - button "Help for MAE" [ref=e2023] [cursor=pointer]:
+                    - img [ref=e2024]
+                - paragraph [ref=e2029]: 0.911s
+              - generic [ref=e2034]:
+                - paragraph [ref=e2037]: Median AE
+                - paragraph [ref=e2040]: 0.66s
+              - generic [ref=e2045]:
+                - generic [ref=e2046]:
+                  - paragraph [ref=e2048]: Bias
+                  - button "Help for Bias" [ref=e2052] [cursor=pointer]:
+                    - img [ref=e2053]
+                - paragraph [ref=e2058]: —
+              - generic [ref=e2063]:
+                - generic [ref=e2064]:
+                  - paragraph [ref=e2066]: Rank ρ
+                  - button "Help for Rank ρ" [ref=e2070] [cursor=pointer]:
+                    - img [ref=e2071]
+                - paragraph [ref=e2076]: "0.345"
+            - generic [ref=e2078]:
+              - generic [ref=e2083]:
+                - paragraph [ref=e2086]: Top-1 Win%
+                - paragraph [ref=e2089]: 11%
+              - generic [ref=e2094]:
+                - paragraph [ref=e2097]: Top-3 Hit%
+                - paragraph [ref=e2100]: 41%
+              - generic [ref=e2105]:
+                - paragraph [ref=e2108]: Top-5 Hit%
+                - paragraph [ref=e2111]: 0%
+              - generic [ref=e2116]:
+                - paragraph [ref=e2119]: Top-3 Overlap
+                - paragraph [ref=e2122]: 0.0/3
+            - paragraph [ref=e2127]: "● MAE: OK"
+            - paragraph [ref=e2132]: "● Rank ρ: OK"
+            - separator [ref=e2137]
+            - heading "Per-Race Breakdown" [level=3] [ref=e2143]:
+              - text: Per-Race Breakdown
+              - generic [ref=e2144]:
+                - link "Link to heading":
+                  - /url: "#per-race-breakdown"
+                  - img
+            - separator [ref=e2149]
+            - separator [ref=e2154]
+            - heading "Detailed Horse Comparisons" [level=3] [ref=e2160]:
+              - text: Detailed Horse Comparisons
+              - generic [ref=e2161]:
+                - link "Link to heading":
+                  - /url: "#detailed-horse-comparisons"
+                  - img
+      - paragraph [ref=e154]:
+        - strong [ref=e1015]: "1."
+        - text: "#1 FOREMOST TEDDY (1360% ESZ-0.8 SSI+0.6) |"
+        - strong [ref=e1016]: "2."
+        - text: "#12 CONSPIRACY WITNESS (1180% ESZ+0.5 SSI-0.0) |"
+        - strong [ref=e1017]: "3."
+        - text: "#10 MEEPMEEP (940% ESZ+1.1 SSI-0.4) |"
+        - strong [ref=e1018]: "4."
+        - text: "#11 ALL ARE MINE (900% ESZ+1.4 SSI-0.9) |"
+        - strong [ref=e1019]: "5."
+        - text: "#4 FIREFOOT (820% ESZ-0.7 SSI-0.1) |"
+        - strong [ref=e1020]: "6."
+        - text: "#2 HAILTOTHEVICTORS (800% ESZ+0.6 SSI-0.5)"

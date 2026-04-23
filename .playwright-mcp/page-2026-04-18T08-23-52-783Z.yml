@@ -1,0 +1,162 @@
+- generic [ref=e2]:
+  - generic [ref=e7]:
+    - button "keyboard_double_arrow_left" [ref=e908] [cursor=pointer]:
+      - generic [ref=e910]: keyboard_double_arrow_left
+    - generic [ref=e11]:
+      - generic [ref=e16]:
+        - generic [ref=e17]: HK
+        - generic [ref=e18]:
+          - generic [ref=e19]: HKJC DASHBOARD
+          - generic [ref=e20]: Race Analysis Terminal
+      - button "🏁 Overview" [ref=e23] [cursor=pointer]:
+        - paragraph [ref=e27]: 🏁 Overview
+      - button "📊 Race Day" [ref=e30] [cursor=pointer]:
+        - paragraph [ref=e34]: 📊 Race Day
+      - button "📡 Live Feed" [ref=e37] [cursor=pointer]:
+        - paragraph [ref=e41]: 📡 Live Feed
+      - button "📖 Form Guide" [ref=e44] [cursor=pointer]:
+        - paragraph [ref=e48]: 📖 Form Guide
+      - button "🎽 Trials" [ref=e51] [cursor=pointer]:
+        - paragraph [ref=e55]: 🎽 Trials
+      - button "🧪 Backtest" [active] [ref=e58] [cursor=pointer]:
+        - paragraph [ref=e62]: 🧪 Backtest
+      - button "🏆 Results" [ref=e65] [cursor=pointer]:
+        - paragraph [ref=e69]: 🏆 Results
+      - button "📓 Blackbook" [ref=e72] [cursor=pointer]:
+        - paragraph [ref=e76]: 📓 Blackbook
+      - button "📄 PDF Builder" [ref=e79] [cursor=pointer]:
+        - paragraph [ref=e83]: 📄 PDF Builder
+      - separator [ref=e88]
+      - separator [ref=e2336]
+      - generic [ref=e2341]: Post-Race Data
+      - generic [ref=e2343]:
+        - paragraph [ref=e2347]: Results date
+        - textbox "Select a date." [ref=e2351]:
+          - /placeholder: YYYY/MM/DD
+          - text: 2026/04/18
+        - paragraph: Press the down arrow key to interact with the calendar and select a date. Press the escape button to close the calendar.
+        - paragraph: Selected date is 2026/04/18. Select the second date.
+      - generic [ref=e2353]:
+        - button "[ Scrape ]" [ref=e2358] [cursor=pointer]:
+          - paragraph [ref=e2362]: "[ Scrape ]"
+        - button "[ Backtest ]" [ref=e2367] [cursor=pointer]:
+          - paragraph [ref=e2371]: "[ Backtest ]"
+      - separator [ref=e2372]
+      - generic [ref=e2377]: Aggregate Reports
+      - generic [ref=e2379]:
+        - paragraph [ref=e2383]: Month (YYYY-MM)
+        - textbox "Month (YYYY-MM)" [ref=e2386]:
+          - /placeholder: ""
+          - text: 2026-04
+      - button "[ Monthly Backtest ]" [ref=e2389] [cursor=pointer]:
+        - paragraph [ref=e2393]: "[ Monthly Backtest ]"
+      - generic [ref=e2395]:
+        - paragraph [ref=e2399]: Season (YYYY-YYYY)
+        - textbox "Season (YYYY-YYYY)" [ref=e2402]:
+          - /placeholder: ""
+          - text: 2025-2026
+      - button "[ Seasonal Backtest ]" [ref=e2405] [cursor=pointer]:
+        - paragraph [ref=e2409]: "[ Seasonal Backtest ]"
+  - generic [ref=e3]:
+    - banner [ref=e91]:
+      - generic [ref=e94]:
+        - button "Deploy" [ref=e96] [cursor=pointer]:
+          - generic [ref=e98]: Deploy
+        - button "Main menu" [ref=e100] [cursor=pointer]:
+          - img [ref=e101]
+    - generic [ref=e104]:
+      - generic [ref=e109]: Model Backtest
+      - generic [ref=e2414]: Compare pre-race predictions against actual results
+      - paragraph [ref=e2419]:
+        - strong [ref=e2420]: DATA INVENTORY
+      - generic [ref=e2422]:
+        - generic [ref=e2427]:
+          - paragraph [ref=e2430]: Predictions
+          - paragraph [ref=e2433]: "6"
+        - generic [ref=e2438]:
+          - paragraph [ref=e2441]: Results Scraped
+          - paragraph [ref=e2444]: "5"
+        - generic [ref=e2449]:
+          - paragraph [ref=e2452]: Matched (backtestable)
+          - paragraph [ref=e2455]: "5"
+      - group [ref=e2458]:
+        - generic "keyboard_arrow_right 1 meetings awaiting results" [ref=e2459] [cursor=pointer]:
+          - generic [ref=e2460]:
+            - generic [ref=e2462]: keyboard_arrow_right
+            - paragraph [ref=e2465]: 1 meetings awaiting results
+      - separator [ref=e2470]
+      - generic [ref=e2472]:
+        - tablist [ref=e2474]:
+          - tab "Weekly (Per-Meeting)" [selected] [ref=e2475] [cursor=pointer]:
+            - paragraph [ref=e2477]: Weekly (Per-Meeting)
+          - tab "Monthly" [ref=e2478] [cursor=pointer]:
+            - paragraph [ref=e2480]: Monthly
+          - tab "Seasonal" [ref=e2481] [cursor=pointer]:
+            - paragraph [ref=e2483]: Seasonal
+        - tabpanel "Weekly (Per-Meeting)" [ref=e2485]:
+          - generic [ref=e2486]:
+            - generic [ref=e2488]:
+              - paragraph [ref=e2492]: "Select meeting:"
+              - generic [ref=e2494]:
+                - generic [ref=e2495]:
+                  - generic [ref=e2496]: 2026-04-15 (HAPPY VALLEY — WEDNESDAY, 15 APRIL 2026)
+                  - combobox "Selected 2026-04-15 (HAPPY VALLEY — WEDNESDAY, 15 APRIL 2026). Select meeting:" [ref=e2498]
+                - img "open" [ref=e2500]
+            - heading "Model Accuracy" [level=3] [ref=e2507]:
+              - text: Model Accuracy
+              - generic [ref=e2508]:
+                - link "Link to heading":
+                  - /url: "#model-accuracy"
+                  - img
+            - generic [ref=e2510]:
+              - generic [ref=e2515]:
+                - generic [ref=e2516]:
+                  - paragraph [ref=e2518]: MAE
+                  - button "Help for MAE" [ref=e2522] [cursor=pointer]:
+                    - img [ref=e2523]
+                - paragraph [ref=e2528]: 0.911s
+              - generic [ref=e2533]:
+                - paragraph [ref=e2536]: Median AE
+                - paragraph [ref=e2539]: 0.66s
+              - generic [ref=e2544]:
+                - generic [ref=e2545]:
+                  - paragraph [ref=e2547]: Bias
+                  - button "Help for Bias" [ref=e2551] [cursor=pointer]:
+                    - img [ref=e2552]
+                - paragraph [ref=e2557]: —
+              - generic [ref=e2562]:
+                - generic [ref=e2563]:
+                  - paragraph [ref=e2565]: Rank ρ
+                  - button "Help for Rank ρ" [ref=e2569] [cursor=pointer]:
+                    - img [ref=e2570]
+                - paragraph [ref=e2575]: "0.345"
+            - generic [ref=e2577]:
+              - generic [ref=e2582]:
+                - paragraph [ref=e2585]: Top-1 Win%
+                - paragraph [ref=e2588]: 11%
+              - generic [ref=e2593]:
+                - paragraph [ref=e2596]: Top-3 Hit%
+                - paragraph [ref=e2599]: 41%
+              - generic [ref=e2604]:
+                - paragraph [ref=e2607]: Top-5 Hit%
+                - paragraph [ref=e2610]: 0%
+              - generic [ref=e2615]:
+                - paragraph [ref=e2618]: Top-3 Overlap
+                - paragraph [ref=e2621]: 0.0/3
+            - paragraph [ref=e2626]: "● MAE: OK"
+            - paragraph [ref=e2631]: "● Rank ρ: OK"
+            - separator [ref=e2636]
+            - heading "Per-Race Breakdown" [level=3] [ref=e2642]:
+              - text: Per-Race Breakdown
+              - generic [ref=e2643]:
+                - link "Link to heading":
+                  - /url: "#per-race-breakdown"
+                  - img
+            - separator [ref=e2648]
+            - separator [ref=e2653]
+            - heading "Detailed Horse Comparisons" [level=3] [ref=e2659]:
+              - text: Detailed Horse Comparisons
+              - generic [ref=e2660]:
+                - link "Link to heading":
+                  - /url: "#detailed-horse-comparisons"
+                  - img

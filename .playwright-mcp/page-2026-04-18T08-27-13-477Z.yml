@@ -1,0 +1,128 @@
+- generic [ref=e2]:
+  - generic [ref=e7]:
+    - button "keyboard_double_arrow_left" [ref=e908] [cursor=pointer]:
+      - generic [ref=e910]: keyboard_double_arrow_left
+    - generic [ref=e11]:
+      - generic [ref=e16]:
+        - generic [ref=e17]: HK
+        - generic [ref=e18]:
+          - generic [ref=e19]: HKJC DASHBOARD
+          - generic [ref=e20]: Race Analysis Terminal
+      - button "🏁 Overview" [ref=e23] [cursor=pointer]:
+        - paragraph [ref=e27]: 🏁 Overview
+      - button "📊 Race Day" [ref=e30] [cursor=pointer]:
+        - paragraph [ref=e34]: 📊 Race Day
+      - button "📡 Live Feed" [ref=e37] [cursor=pointer]:
+        - paragraph [ref=e41]: 📡 Live Feed
+      - button "📖 Form Guide" [ref=e44] [cursor=pointer]:
+        - paragraph [ref=e48]: 📖 Form Guide
+      - button "🎽 Trials" [ref=e51] [cursor=pointer]:
+        - paragraph [ref=e55]: 🎽 Trials
+      - button "🧪 Backtest" [ref=e58] [cursor=pointer]:
+        - paragraph [ref=e62]: 🧪 Backtest
+      - button "🏆 Results" [ref=e65] [cursor=pointer]:
+        - paragraph [ref=e69]: 🏆 Results
+      - button "📓 Blackbook" [ref=e72] [cursor=pointer]:
+        - paragraph [ref=e76]: 📓 Blackbook
+      - button "📄 PDF Builder" [active] [ref=e79] [cursor=pointer]:
+        - paragraph [ref=e83]: 📄 PDF Builder
+      - separator [ref=e88]
+  - generic [ref=e3]:
+    - banner [ref=e91]:
+      - generic [ref=e94]:
+        - generic [ref=e3253]:
+          - img "Running..." [ref=e3254]:
+            - img [ref=e3255]
+          - button "Stop" [ref=e3260] [cursor=pointer]
+        - button "Deploy" [ref=e96] [cursor=pointer]:
+          - generic [ref=e98]: Deploy
+        - button "Main menu" [ref=e100] [cursor=pointer]:
+          - img [ref=e101]
+    - generic [ref=e104]:
+      - heading "📄 PDF Builder" [level=2] [ref=e3262]:
+        - text: 📄 PDF Builder
+        - generic [ref=e3263]:
+          - link "Link to heading":
+            - /url: "#pdf-builder"
+            - img
+      - generic [ref=e3265]:
+        - paragraph [ref=e3269]: "Select meeting:"
+        - generic [ref=e3271]:
+          - generic [ref=e3272]:
+            - generic [ref=e3273]: SHA TIN (AWT) — SUNDAY, 19 APRIL 2026
+            - combobox "Selected SHA TIN (AWT) — SUNDAY, 19 APRIL 2026. Select meeting:" [ref=e3275]
+          - img "open" [ref=e3277]
+      - heading "Race Selection" [level=3] [ref=e3284]:
+        - text: Race Selection
+        - generic [ref=e3285]:
+          - link "Link to heading":
+            - /url: "#race-selection"
+            - img
+      - generic [ref=e3287]:
+        - paragraph [ref=e3291]: "Include races:"
+        - generic [ref=e3294]:
+          - generic [ref=e3295]:
+            - button "R1 — 1800m AWT C5 RACING FOR CHARITY 1800M HANDI, close by backspace":
+              - generic "R1 — 1800m AWT C5 RACING FOR CHARITY 1800M HANDI"
+              - img [ref=e3297] [cursor=pointer]
+            - button "R2 — 1200m AWT C5 SUPPORTING SPORTS ALL AROUND 1, close by backspace":
+              - generic "R2 — 1200m AWT C5 SUPPORTING SPORTS ALL AROUND 1"
+              - img [ref=e3300] [cursor=pointer]
+            - button "R3 — 1000m Turf C4 PROMOTING HEALTH FOR ALL 1000M, close by backspace":
+              - generic "R3 — 1000m Turf C4 PROMOTING HEALTH FOR ALL 1000M"
+              - img [ref=e3303] [cursor=pointer]
+            - button "R4 — 1400m Turf C4 EMBRACING SUCCESS IN ITS MANY , close by backspace":
+              - generic "R4 — 1400m Turf C4 EMBRACING SUCCESS IN ITS MANY"
+              - img [ref=e3306] [cursor=pointer]
+            - button "R5 — 1600m Turf C4 THE HONG KONG JOCKEY CLUB COMM, close by backspace":
+              - generic "R5 — 1600m Turf C4 THE HONG KONG JOCKEY CLUB COMM"
+              - img [ref=e3309] [cursor=pointer]
+            - button "R6 — 1650m AWT C4 ENRICHING LIVES THROUGH ARTS A, close by backspace":
+              - generic "R6 — 1650m AWT C4 ENRICHING LIVES THROUGH ARTS A"
+              - img [ref=e3312] [cursor=pointer]
+            - button "R7 — 1200m AWT C4 ENABLING A SUSTAINABLE FUTURE , close by backspace":
+              - generic "R7 — 1200m AWT C4 ENABLING A SUSTAINABLE FUTURE"
+              - img [ref=e3315] [cursor=pointer]
+            - button "R8 — 1200m AWT C3 LIFTING EVERY YOUNG LIFE 1200M, close by backspace":
+              - generic "R8 — 1200m AWT C3 LIFTING EVERY YOUNG LIFE 1200M"
+              - img [ref=e3318] [cursor=pointer]
+            - button "R9 — 1400m Turf C3 HELPING OLDER ADULTS AGE WELL , close by backspace":
+              - generic "R9 — 1400m Turf C3 HELPING OLDER ADULTS AGE WELL"
+              - img [ref=e3321] [cursor=pointer]
+            - button "R10 — 1200m Turf C3 ENABLING PROFESSIONALS TO FLOU, close by backspace":
+              - generic "R10 — 1200m Turf C3 ENABLING PROFESSIONALS TO FLOU"
+              - img [ref=e3324] [cursor=pointer]
+            - button "R11 — 1800m Turf C2 FOSTERING AN ENABLING AND INCL, close by backspace":
+              - generic "R11 — 1800m Turf C2 FOSTERING AN ENABLING AND INCL"
+              - img [ref=e3327] [cursor=pointer]
+            - combobox "Selected R1 — 1800m AWT C5 RACING FOR CHARITY 1800M HANDI, R2 — 1200m AWT C5 SUPPORTING SPORTS ALL AROUND 1, R3 — 1000m Turf C4 PROMOTING HEALTH FOR ALL 1000M, R4 — 1400m Turf C4 EMBRACING SUCCESS IN ITS MANY , R5 — 1600m Turf C4 THE HONG KONG JOCKEY CLUB COMM, R6 — 1650m AWT C4 ENRICHING LIVES THROUGH ARTS A, R7 — 1200m AWT C4 ENABLING A SUSTAINABLE FUTURE , R8 — 1200m AWT C3 LIFTING EVERY YOUNG LIFE 1200M, R9 — 1400m Turf C3 HELPING OLDER ADULTS AGE WELL , R10 — 1200m Turf C3 ENABLING PROFESSIONALS TO FLOU, R11 — 1800m Turf C2 FOSTERING AN ENABLING AND INCL. Include races:" [ref=e3330]
+          - generic [ref=e3331]:
+            - button "Clear all" [ref=e3332] [cursor=pointer]
+            - img "open" [ref=e3334] [cursor=pointer]
+      - generic [ref=e3337]:
+        - generic [ref=e3342] [cursor=pointer]:
+          - checkbox "Include blackbook callouts" [checked]
+          - paragraph [ref=e3347]: Include blackbook callouts
+        - generic [ref=e3352] [cursor=pointer]:
+          - checkbox "Include trial standouts" [checked]
+          - paragraph [ref=e3357]: Include trial standouts
+        - generic [ref=e3362] [cursor=pointer]:
+          - checkbox "Include speed map notes" [checked]
+          - paragraph [ref=e3367]: Include speed map notes
+      - separator [ref=e3372]
+      - generic [ref=e3377]:
+        - strong [ref=e3378]: R1
+        - text: "— 1800m AWT C5 | Pace: Normal (-0.03s)"
+      - paragraph [ref=e3383]:
+        - strong [ref=e3384]: "1."
+        - text: "#1 FOREMOST TEDDY (1360% ESZ-0.8 SSI+0.6) |"
+        - strong [ref=e3385]: "2."
+        - text: "#12 CONSPIRACY WITNESS (1180% ESZ+0.5 SSI-0.0) |"
+        - strong [ref=e3386]: "3."
+        - text: "#10 MEEPMEEP (940% ESZ+1.1 SSI-0.4) |"
+        - strong [ref=e3387]: "4."
+        - text: "#11 ALL ARE MINE (900% ESZ+1.4 SSI-0.9) |"
+        - strong [ref=e3388]: "5."
+        - text: "#4 FIREFOOT (820% ESZ-0.7 SSI-0.1) |"
+        - strong [ref=e3389]: "6."
+        - text: "#2 HAILTOTHEVICTORS (800% ESZ+0.6 SSI-0.5)"

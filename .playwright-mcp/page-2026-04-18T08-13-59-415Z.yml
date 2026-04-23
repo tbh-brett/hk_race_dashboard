@@ -1,0 +1,667 @@
+- generic [ref=e2]:
+  - generic [ref=e7]:
+    - button "keyboard_double_arrow_left" [ref=e10] [cursor=pointer]:
+      - generic [ref=e12]: keyboard_double_arrow_left
+    - generic [ref=e15]:
+      - generic [ref=e20]:
+        - generic [ref=e21]: HK
+        - generic [ref=e22]:
+          - generic [ref=e23]: HKJC DASHBOARD
+          - generic [ref=e24]: Race Analysis Terminal
+      - button "🏁 Overview" [ref=e27] [cursor=pointer]:
+        - paragraph [ref=e31]: 🏁 Overview
+      - button "📊 Race Day" [ref=e34] [cursor=pointer]:
+        - paragraph [ref=e38]: 📊 Race Day
+      - button "📡 Live Feed" [ref=e41] [cursor=pointer]:
+        - paragraph [ref=e45]: 📡 Live Feed
+      - button "📖 Form Guide" [ref=e48] [cursor=pointer]:
+        - paragraph [ref=e52]: 📖 Form Guide
+      - button "🎽 Trials" [ref=e55] [cursor=pointer]:
+        - paragraph [ref=e59]: 🎽 Trials
+      - button "🧪 Backtest" [ref=e62] [cursor=pointer]:
+        - paragraph [ref=e66]: 🧪 Backtest
+      - button "🏆 Results" [ref=e69] [cursor=pointer]:
+        - paragraph [ref=e73]: 🏆 Results
+      - button "📓 Blackbook" [ref=e76] [cursor=pointer]:
+        - paragraph [ref=e80]: 📓 Blackbook
+      - button "📄 PDF Builder" [active] [ref=e83] [cursor=pointer]:
+        - paragraph [ref=e87]: 📄 PDF Builder
+      - separator [ref=e92]
+  - generic [ref=e3]:
+    - banner [ref=e95]:
+      - generic [ref=e98]:
+        - button "Deploy" [ref=e100] [cursor=pointer]:
+          - generic [ref=e102]: Deploy
+        - button "Main menu" [ref=e104] [cursor=pointer]:
+          - img [ref=e105]
+    - generic [ref=e108]:
+      - heading "📄 PDF Builder" [level=2] [ref=e2744]:
+        - text: 📄 PDF Builder
+        - generic [ref=e2745]:
+          - link "Link to heading":
+            - /url: "#pdf-builder"
+            - img
+      - generic [ref=e2747]:
+        - paragraph [ref=e2751]: "Select meeting:"
+        - generic [ref=e2753]:
+          - generic [ref=e2754]:
+            - generic [ref=e2755]: SHA TIN (AWT) — SUNDAY, 19 APRIL 2026
+            - combobox "Selected SHA TIN (AWT) — SUNDAY, 19 APRIL 2026. Select meeting:" [ref=e2757]
+          - img "open" [ref=e2759]
+      - heading "Race Selection" [level=3] [ref=e2766]:
+        - text: Race Selection
+        - generic [ref=e2767]:
+          - link "Link to heading":
+            - /url: "#race-selection"
+            - img
+      - generic [ref=e2769]:
+        - paragraph [ref=e2773]: "Include races:"
+        - generic [ref=e2776]:
+          - generic [ref=e2777]:
+            - button "R1 — 1800m AWT C5 RACING FOR CHARITY 1800M HANDI, close by backspace":
+              - generic "R1 — 1800m AWT C5 RACING FOR CHARITY 1800M HANDI"
+              - img [ref=e2779] [cursor=pointer]
+            - button "R2 — 1200m AWT C5 SUPPORTING SPORTS ALL AROUND 1, close by backspace":
+              - generic "R2 — 1200m AWT C5 SUPPORTING SPORTS ALL AROUND 1"
+              - img [ref=e2782] [cursor=pointer]
+            - button "R3 — 1000m Turf C4 PROMOTING HEALTH FOR ALL 1000M, close by backspace":
+              - generic "R3 — 1000m Turf C4 PROMOTING HEALTH FOR ALL 1000M"
+              - img [ref=e2785] [cursor=pointer]
+            - button "R4 — 1400m Turf C4 EMBRACING SUCCESS IN ITS MANY , close by backspace":
+              - generic "R4 — 1400m Turf C4 EMBRACING SUCCESS IN ITS MANY"
+              - img [ref=e2788] [cursor=pointer]
+            - button "R5 — 1600m Turf C4 THE HONG KONG JOCKEY CLUB COMM, close by backspace":
+              - generic "R5 — 1600m Turf C4 THE HONG KONG JOCKEY CLUB COMM"
+              - img [ref=e2791] [cursor=pointer]
+            - button "R6 — 1650m AWT C4 ENRICHING LIVES THROUGH ARTS A, close by backspace":
+              - generic "R6 — 1650m AWT C4 ENRICHING LIVES THROUGH ARTS A"
+              - img [ref=e2794] [cursor=pointer]
+            - button "R7 — 1200m AWT C4 ENABLING A SUSTAINABLE FUTURE , close by backspace":
+              - generic "R7 — 1200m AWT C4 ENABLING A SUSTAINABLE FUTURE"
+              - img [ref=e2797] [cursor=pointer]
+            - button "R8 — 1200m AWT C3 LIFTING EVERY YOUNG LIFE 1200M, close by backspace":
+              - generic "R8 — 1200m AWT C3 LIFTING EVERY YOUNG LIFE 1200M"
+              - img [ref=e2800] [cursor=pointer]
+            - button "R9 — 1400m Turf C3 HELPING OLDER ADULTS AGE WELL , close by backspace":
+              - generic "R9 — 1400m Turf C3 HELPING OLDER ADULTS AGE WELL"
+              - img [ref=e2803] [cursor=pointer]
+            - button "R10 — 1200m Turf C3 ENABLING PROFESSIONALS TO FLOU, close by backspace":
+              - generic "R10 — 1200m Turf C3 ENABLING PROFESSIONALS TO FLOU"
+              - img [ref=e2806] [cursor=pointer]
+            - button "R11 — 1800m Turf C2 FOSTERING AN ENABLING AND INCL, close by backspace":
+              - generic "R11 — 1800m Turf C2 FOSTERING AN ENABLING AND INCL"
+              - img [ref=e2809] [cursor=pointer]
+            - combobox "Selected R1 — 1800m AWT C5 RACING FOR CHARITY 1800M HANDI, R2 — 1200m AWT C5 SUPPORTING SPORTS ALL AROUND 1, R3 — 1000m Turf C4 PROMOTING HEALTH FOR ALL 1000M, R4 — 1400m Turf C4 EMBRACING SUCCESS IN ITS MANY , R5 — 1600m Turf C4 THE HONG KONG JOCKEY CLUB COMM, R6 — 1650m AWT C4 ENRICHING LIVES THROUGH ARTS A, R7 — 1200m AWT C4 ENABLING A SUSTAINABLE FUTURE , R8 — 1200m AWT C3 LIFTING EVERY YOUNG LIFE 1200M, R9 — 1400m Turf C3 HELPING OLDER ADULTS AGE WELL , R10 — 1200m Turf C3 ENABLING PROFESSIONALS TO FLOU, R11 — 1800m Turf C2 FOSTERING AN ENABLING AND INCL. Include races:" [ref=e2812]
+          - generic [ref=e2813]:
+            - button "Clear all" [ref=e2814] [cursor=pointer]
+            - img "open" [ref=e2816] [cursor=pointer]
+      - generic [ref=e2819]:
+        - generic [ref=e2824] [cursor=pointer]:
+          - checkbox "Include blackbook callouts" [checked]
+          - paragraph [ref=e2829]: Include blackbook callouts
+        - generic [ref=e2834] [cursor=pointer]:
+          - checkbox "Include trial standouts" [checked]
+          - paragraph [ref=e2839]: Include trial standouts
+        - generic [ref=e2844] [cursor=pointer]:
+          - checkbox "Include speed map notes" [checked]
+          - paragraph [ref=e2849]: Include speed map notes
+      - separator [ref=e2854]
+      - generic [ref=e2859]:
+        - strong [ref=e2860]: R1
+        - text: "— 1800m AWT C5 | Pace: Normal (-0.03s)"
+      - paragraph [ref=e2865]:
+        - strong [ref=e2866]: "1."
+        - text: "#1 FOREMOST TEDDY (1360% ESZ-0.8 SSI+0.6) |"
+        - strong [ref=e2867]: "2."
+        - text: "#12 CONSPIRACY WITNESS (1180% ESZ+0.5 SSI-0.0) |"
+        - strong [ref=e2868]: "3."
+        - text: "#10 MEEPMEEP (940% ESZ+1.1 SSI-0.4) |"
+        - strong [ref=e2869]: "4."
+        - text: "#11 ALL ARE MINE (900% ESZ+1.4 SSI-0.9) |"
+        - strong [ref=e2870]: "5."
+        - text: "#4 FIREFOOT (820% ESZ-0.7 SSI-0.1) |"
+        - strong [ref=e2871]: "6."
+        - text: "#2 HAILTOTHEVICTORS (800% ESZ+0.6 SSI-0.5)"
+      - generic [ref=e2873]:
+        - generic [ref=e2877]:
+          - paragraph [ref=e2881]: "R1 Banker (top selection):"
+          - generic [ref=e2883]:
+            - generic [ref=e2884]:
+              - generic [ref=e2885]: FOREMOST TEDDY
+              - combobox "Selected FOREMOST TEDDY. R1 Banker (top selection):" [ref=e2887]
+            - img "open" [ref=e2889]
+        - generic [ref=e2894]:
+          - paragraph [ref=e2898]: "R1 Other selections:"
+          - generic [ref=e2901]:
+            - generic [ref=e2902]:
+              - button "CONSPIRACY WITNESS, close by backspace":
+                - generic "CONSPIRACY WITNESS"
+                - img [ref=e2904] [cursor=pointer]
+              - button "MEEPMEEP, close by backspace":
+                - generic "MEEPMEEP"
+                - img [ref=e2907] [cursor=pointer]
+              - button "ALL ARE MINE, close by backspace":
+                - generic "ALL ARE MINE"
+                - img [ref=e2910] [cursor=pointer]
+              - combobox "Selected CONSPIRACY WITNESS, MEEPMEEP, ALL ARE MINE. R1 Other selections:" [ref=e2913]
+            - generic [ref=e2914]:
+              - button "Clear all" [ref=e2915] [cursor=pointer]
+              - img "open" [ref=e2917] [cursor=pointer]
+      - group [ref=e2921]:
+        - generic "keyboard_arrow_right R1 Auto-generated notes" [ref=e2922] [cursor=pointer]:
+          - generic [ref=e2923]:
+            - generic [ref=e2925]: keyboard_arrow_right
+            - paragraph [ref=e2928]: R1 Auto-generated notes
+      - generic [ref=e2930]:
+        - paragraph [ref=e2934]: "R1 Manual notes:"
+        - textbox "R1 Manual notes:" [ref=e2937]:
+          - /placeholder: Add personal observations, betting angles...
+      - generic [ref=e2942]:
+        - strong [ref=e2943]: R2
+        - text: "— 1200m AWT C5 | Pace: Normal (-0.01s)"
+      - paragraph [ref=e2948]:
+        - strong [ref=e2949]: "1."
+        - text: "#12 SONIC BOOM (2370% ESZ-0.5 SSI+0.2) |"
+        - strong [ref=e2950]: "2."
+        - text: "#8 TRIUMPHANT WARRIOR (1550% ESZ-0.3 SSI+0.4) |"
+        - strong [ref=e2951]: "3."
+        - text: "#11 MODEST GENTLEMAN (1350% ESZ+0.9 SSI-0.8) |"
+        - strong [ref=e2952]: "4."
+        - text: "#9 VIVA CHALEUR (1320% ESZ+0.3 SSI+0.8) |"
+        - strong [ref=e2953]: "5."
+        - text: "#4 COLOURFUL WINNER (670% ESZ-1.0 SSI+0.8) |"
+        - strong [ref=e2954]: "6."
+        - text: "#1 GLORY CLOUD (590% ESZ+0.1 SSI-0.2)"
+      - generic [ref=e2956]:
+        - generic [ref=e2960]:
+          - paragraph [ref=e2964]: "R2 Banker (top selection):"
+          - generic [ref=e2966]:
+            - generic [ref=e2967]:
+              - generic [ref=e2968]: SONIC BOOM
+              - combobox "Selected SONIC BOOM. R2 Banker (top selection):" [ref=e2970]
+            - img "open" [ref=e2972]
+        - generic [ref=e2977]:
+          - paragraph [ref=e2981]: "R2 Other selections:"
+          - generic [ref=e2984]:
+            - generic [ref=e2985]:
+              - button "TRIUMPHANT WARRIOR, close by backspace":
+                - generic "TRIUMPHANT WARRIOR"
+                - img [ref=e2987] [cursor=pointer]
+              - button "MODEST GENTLEMAN, close by backspace":
+                - generic "MODEST GENTLEMAN"
+                - img [ref=e2990] [cursor=pointer]
+              - button "VIVA CHALEUR, close by backspace":
+                - generic "VIVA CHALEUR"
+                - img [ref=e2993] [cursor=pointer]
+              - combobox "Selected TRIUMPHANT WARRIOR, MODEST GENTLEMAN, VIVA CHALEUR. R2 Other selections:" [ref=e2996]
+            - generic [ref=e2997]:
+              - button "Clear all" [ref=e2998] [cursor=pointer]
+              - img "open" [ref=e3000] [cursor=pointer]
+      - group [ref=e3004]:
+        - generic "keyboard_arrow_right R2 Auto-generated notes" [ref=e3005] [cursor=pointer]:
+          - generic [ref=e3006]:
+            - generic [ref=e3008]: keyboard_arrow_right
+            - paragraph [ref=e3011]: R2 Auto-generated notes
+      - generic [ref=e3013]:
+        - paragraph [ref=e3017]: "R2 Manual notes:"
+        - textbox "R2 Manual notes:" [ref=e3020]:
+          - /placeholder: Add personal observations, betting angles...
+      - generic [ref=e3025]:
+        - strong [ref=e3026]: R3
+        - text: "— 1000m Turf C4 | Pace: Slightly Fast (-0.23s)"
+      - paragraph [ref=e3031]:
+        - strong [ref=e3032]: "1."
+        - text: "#1 RUN RUN SUNRISE (1780% ESZ+0.1 SSI-0.3) |"
+        - strong [ref=e3033]: "2."
+        - text: "#2 TOURBILLON GOLFER (2070% ESZ-1.8 SSI+0.7) |"
+        - strong [ref=e3034]: "3."
+        - text: "#13 HEROIC MASTER (1170% ESZ+1.2 SSI-0.9) |"
+        - strong [ref=e3035]: "4."
+        - text: "#11 ZOUPER FELLOW (1080% ESZ-1.8 SSI+0.6) |"
+        - strong [ref=e3036]: "5."
+        - text: "#14 HAPPY ACTION (940% ESZ+0.3 SSI+0.1) |"
+        - strong [ref=e3037]: "6."
+        - text: "#6 MAPOGO (480% ESZ-2.1 SSI+1.1)"
+      - generic [ref=e3039]:
+        - generic [ref=e3043]:
+          - paragraph [ref=e3047]: "R3 Banker (top selection):"
+          - generic [ref=e3049]:
+            - generic [ref=e3050]:
+              - generic [ref=e3051]: RUN RUN SUNRISE
+              - combobox "Selected RUN RUN SUNRISE. R3 Banker (top selection):" [ref=e3053]
+            - img "open" [ref=e3055]
+        - generic [ref=e3060]:
+          - paragraph [ref=e3064]: "R3 Other selections:"
+          - generic [ref=e3067]:
+            - generic [ref=e3068]:
+              - button "TOURBILLON GOLFER, close by backspace":
+                - generic "TOURBILLON GOLFER"
+                - img [ref=e3070] [cursor=pointer]
+              - button "HEROIC MASTER, close by backspace":
+                - generic "HEROIC MASTER"
+                - img [ref=e3073] [cursor=pointer]
+              - button "ZOUPER FELLOW, close by backspace":
+                - generic "ZOUPER FELLOW"
+                - img [ref=e3076] [cursor=pointer]
+              - combobox "Selected TOURBILLON GOLFER, HEROIC MASTER, ZOUPER FELLOW. R3 Other selections:" [ref=e3079]
+            - generic [ref=e3080]:
+              - button "Clear all" [ref=e3081] [cursor=pointer]
+              - img "open" [ref=e3083] [cursor=pointer]
+      - group [ref=e3087]:
+        - generic "keyboard_arrow_right R3 Auto-generated notes" [ref=e3088] [cursor=pointer]:
+          - generic [ref=e3089]:
+            - generic [ref=e3091]: keyboard_arrow_right
+            - paragraph [ref=e3094]: R3 Auto-generated notes
+      - generic [ref=e3096]:
+        - paragraph [ref=e3100]: "R3 Manual notes:"
+        - textbox "R3 Manual notes:" [ref=e3103]:
+          - /placeholder: Add personal observations, betting angles...
+      - generic [ref=e3108]:
+        - strong [ref=e3109]: R4
+        - text: "— 1400m Turf C4 | Pace: Normal (-0.01s)"
+      - paragraph [ref=e3114]:
+        - strong [ref=e3115]: "1."
+        - text: "#1 CHARMING BABE (2900% ESZ-0.1 SSI-0.3) |"
+        - strong [ref=e3116]: "2."
+        - text: "#13 THE ALL ROUNDER (1980% ESZ+0.6 SSI-0.8) |"
+        - strong [ref=e3117]: "3."
+        - text: "#11 PROUD BOX (980% ESZ-0.5 SSI+0.5) |"
+        - strong [ref=e3118]: "4."
+        - text: "#2 CHILL PARTNERS (960% ESZ-1.0 SSI+0.5) |"
+        - strong [ref=e3119]: "5."
+        - text: "#7 FRANCIS MEYNELL (960% ESZ-0.6 SSI+0.0) |"
+        - strong [ref=e3120]: "6."
+        - text: "#10 DECISION LINK (450% ESZ+0.2 SSI-0.0)"
+      - generic [ref=e3122]:
+        - generic [ref=e3126]:
+          - paragraph [ref=e3130]: "R4 Banker (top selection):"
+          - generic [ref=e3132]:
+            - generic [ref=e3133]:
+              - generic [ref=e3134]: CHARMING BABE
+              - combobox "Selected CHARMING BABE. R4 Banker (top selection):" [ref=e3136]
+            - img "open" [ref=e3138]
+        - generic [ref=e3143]:
+          - paragraph [ref=e3147]: "R4 Other selections:"
+          - generic [ref=e3150]:
+            - generic [ref=e3151]:
+              - button "THE ALL ROUNDER, close by backspace":
+                - generic "THE ALL ROUNDER"
+                - img [ref=e3153] [cursor=pointer]
+              - button "PROUD BOX, close by backspace":
+                - generic "PROUD BOX"
+                - img [ref=e3156] [cursor=pointer]
+              - button "CHILL PARTNERS, close by backspace":
+                - generic "CHILL PARTNERS"
+                - img [ref=e3159] [cursor=pointer]
+              - combobox "Selected THE ALL ROUNDER, PROUD BOX, CHILL PARTNERS. R4 Other selections:" [ref=e3162]
+            - generic [ref=e3163]:
+              - button "Clear all" [ref=e3164] [cursor=pointer]
+              - img "open" [ref=e3166] [cursor=pointer]
+      - group [ref=e3170]:
+        - generic "keyboard_arrow_right R4 Auto-generated notes" [ref=e3171] [cursor=pointer]:
+          - generic [ref=e3172]:
+            - generic [ref=e3174]: keyboard_arrow_right
+            - paragraph [ref=e3177]: R4 Auto-generated notes
+      - generic [ref=e3179]:
+        - paragraph [ref=e3183]: "R4 Manual notes:"
+        - textbox "R4 Manual notes:" [ref=e3186]:
+          - /placeholder: Add personal observations, betting angles...
+      - generic [ref=e3191]:
+        - strong [ref=e3192]: R5
+        - text: "— 1600m Turf C4 | Pace: Normal (-0.01s)"
+      - paragraph [ref=e3197]:
+        - strong [ref=e3198]: "1."
+        - text: "#6 PRESTIGE RICKY (2850% ESZ+1.2 SSI-0.3) |"
+        - strong [ref=e3199]: "2."
+        - text: "#12 INCANTO STAR (2480% ESZ+1.2 SSI-0.3) |"
+        - strong [ref=e3200]: "3."
+        - text: "#11 ABSOLUTE HONOUR (930% ESZ-0.3 SSI+0.4) |"
+        - strong [ref=e3201]: "4."
+        - text: "#2 FAMILY KNIGHT (830% ESZ+1.2 SSI-0.0) |"
+        - strong [ref=e3202]: "5."
+        - text: "#8 LEAPING STAR (740% ESZ+1.7 SSI-0.1) |"
+        - strong [ref=e3203]: "6."
+        - text: "#1 FLUORESCENCE (360% ESZ+1.6 SSI+0.3)"
+      - generic [ref=e3205]:
+        - generic [ref=e3209]:
+          - paragraph [ref=e3213]: "R5 Banker (top selection):"
+          - generic [ref=e3215]:
+            - generic [ref=e3216]:
+              - generic [ref=e3217]: PRESTIGE RICKY
+              - combobox "Selected PRESTIGE RICKY. R5 Banker (top selection):" [ref=e3219]
+            - img "open" [ref=e3221]
+        - generic [ref=e3226]:
+          - paragraph [ref=e3230]: "R5 Other selections:"
+          - generic [ref=e3233]:
+            - generic [ref=e3234]:
+              - button "INCANTO STAR, close by backspace":
+                - generic "INCANTO STAR"
+                - img [ref=e3236] [cursor=pointer]
+              - button "ABSOLUTE HONOUR, close by backspace":
+                - generic "ABSOLUTE HONOUR"
+                - img [ref=e3239] [cursor=pointer]
+              - button "FAMILY KNIGHT, close by backspace":
+                - generic "FAMILY KNIGHT"
+                - img [ref=e3242] [cursor=pointer]
+              - combobox "Selected INCANTO STAR, ABSOLUTE HONOUR, FAMILY KNIGHT. R5 Other selections:" [ref=e3245]
+            - generic [ref=e3246]:
+              - button "Clear all" [ref=e3247] [cursor=pointer]
+              - img "open" [ref=e3249] [cursor=pointer]
+      - group [ref=e3253]:
+        - generic "keyboard_arrow_right R5 Auto-generated notes" [ref=e3254] [cursor=pointer]:
+          - generic [ref=e3255]:
+            - generic [ref=e3257]: keyboard_arrow_right
+            - paragraph [ref=e3260]: R5 Auto-generated notes
+      - generic [ref=e3262]:
+        - paragraph [ref=e3266]: "R5 Manual notes:"
+        - textbox "R5 Manual notes:" [ref=e3269]:
+          - /placeholder: Add personal observations, betting angles...
+      - generic [ref=e3274]:
+        - strong [ref=e3275]: R6
+        - text: "— 1650m AWT C4 | Pace: Normal (+0.02s)"
+      - paragraph [ref=e3280]:
+        - strong [ref=e3281]: "1."
+        - text: "#11 BULL ATTITUDE (1930% ESZ+0.2 SSI-0.7) |"
+        - strong [ref=e3282]: "2."
+        - text: "#5 SHANGHAI STYLE (1570% ESZ-0.4 SSI+0.2) |"
+        - strong [ref=e3283]: "3."
+        - text: "#1 SUPREME AGILITY (1280% ESZ+1.2 SSI-0.9) |"
+        - strong [ref=e3284]: "4."
+        - text: "#7 LESLIE (1060% ESZ+1.1 SSI-0.2) |"
+        - strong [ref=e3285]: "5."
+        - text: "#2 CHILL KAKA (1040% ESZ+0.0 SSI+0.5) |"
+        - strong [ref=e3286]: "6."
+        - text: "#3 PERFECT TEAM (870% ESZ+1.7 SSI-1.0)"
+      - generic [ref=e3288]:
+        - generic [ref=e3292]:
+          - paragraph [ref=e3296]: "R6 Banker (top selection):"
+          - generic [ref=e3298]:
+            - generic [ref=e3299]:
+              - generic [ref=e3300]: BULL ATTITUDE
+              - combobox "Selected BULL ATTITUDE. R6 Banker (top selection):" [ref=e3302]
+            - img "open" [ref=e3304]
+        - generic [ref=e3309]:
+          - paragraph [ref=e3313]: "R6 Other selections:"
+          - generic [ref=e3316]:
+            - generic [ref=e3317]:
+              - button "SHANGHAI STYLE, close by backspace":
+                - generic "SHANGHAI STYLE"
+                - img [ref=e3319] [cursor=pointer]
+              - button "SUPREME AGILITY, close by backspace":
+                - generic "SUPREME AGILITY"
+                - img [ref=e3322] [cursor=pointer]
+              - button "LESLIE, close by backspace":
+                - generic "LESLIE"
+                - img [ref=e3325] [cursor=pointer]
+              - combobox "Selected SHANGHAI STYLE, SUPREME AGILITY, LESLIE. R6 Other selections:" [ref=e3328]
+            - generic [ref=e3329]:
+              - button "Clear all" [ref=e3330] [cursor=pointer]
+              - img "open" [ref=e3332] [cursor=pointer]
+      - group [ref=e3336]:
+        - generic "keyboard_arrow_right R6 Auto-generated notes" [ref=e3337] [cursor=pointer]:
+          - generic [ref=e3338]:
+            - generic [ref=e3340]: keyboard_arrow_right
+            - paragraph [ref=e3343]: R6 Auto-generated notes
+      - generic [ref=e3345]:
+        - paragraph [ref=e3349]: "R6 Manual notes:"
+        - textbox "R6 Manual notes:" [ref=e3352]:
+          - /placeholder: Add personal observations, betting angles...
+      - generic [ref=e3357]:
+        - strong [ref=e3358]: R7
+        - text: "— 1200m AWT C4 | Pace: Normal (+0.00s)"
+      - paragraph [ref=e3363]:
+        - strong [ref=e3364]: "1."
+        - text: "#10 JUICY DRAGON (1720% ESZ-0.5 SSI-0.1) |"
+        - strong [ref=e3365]: "2."
+        - text: "#4 NEVER TOO SOON (1380% ESZ+1.1 SSI-0.7) |"
+        - strong [ref=e3366]: "3."
+        - text: "#3 GIANT LEAP (1360% ESZ-1.1 SSI+1.0) |"
+        - strong [ref=e3367]: "4."
+        - text: "#7 FLOWING RICHES (1290% ESZ-1.2 SSI+0.5) |"
+        - strong [ref=e3368]: "5."
+        - text: "#1 ARMOUR WAR EAGLE (1190% ESZ+0.9 SSI-0.6) |"
+        - strong [ref=e3369]: "6."
+        - text: "#9 ONE MAN SHOW (970% ESZ-1.0 SSI+0.4)"
+      - generic [ref=e3371]:
+        - generic [ref=e3375]:
+          - paragraph [ref=e3379]: "R7 Banker (top selection):"
+          - generic [ref=e3381]:
+            - generic [ref=e3382]:
+              - generic [ref=e3383]: JUICY DRAGON
+              - combobox "Selected JUICY DRAGON. R7 Banker (top selection):" [ref=e3385]
+            - img "open" [ref=e3387]
+        - generic [ref=e3392]:
+          - paragraph [ref=e3396]: "R7 Other selections:"
+          - generic [ref=e3399]:
+            - generic [ref=e3400]:
+              - button "NEVER TOO SOON, close by backspace":
+                - generic "NEVER TOO SOON"
+                - img [ref=e3402] [cursor=pointer]
+              - button "GIANT LEAP, close by backspace":
+                - generic "GIANT LEAP"
+                - img [ref=e3405] [cursor=pointer]
+              - button "FLOWING RICHES, close by backspace":
+                - generic "FLOWING RICHES"
+                - img [ref=e3408] [cursor=pointer]
+              - combobox "Selected NEVER TOO SOON, GIANT LEAP, FLOWING RICHES. R7 Other selections:" [ref=e3411]
+            - generic [ref=e3412]:
+              - button "Clear all" [ref=e3413] [cursor=pointer]
+              - img "open" [ref=e3415] [cursor=pointer]
+      - group [ref=e3419]:
+        - generic "keyboard_arrow_right R7 Auto-generated notes" [ref=e3420] [cursor=pointer]:
+          - generic [ref=e3421]:
+            - generic [ref=e3423]: keyboard_arrow_right
+            - paragraph [ref=e3426]: R7 Auto-generated notes
+      - generic [ref=e3428]:
+        - paragraph [ref=e3432]: "R7 Manual notes:"
+        - textbox "R7 Manual notes:" [ref=e3435]:
+          - /placeholder: Add personal observations, betting angles...
+      - generic [ref=e3440]:
+        - strong [ref=e3441]: R8
+        - text: "— 1200m AWT C3 | Pace: Normal (-0.11s)"
+      - paragraph [ref=e3446]:
+        - strong [ref=e3447]: "1."
+        - text: "#6 PI LEGEND (2700% ESZ-1.3 SSI+0.5) |"
+        - strong [ref=e3448]: "2."
+        - text: "#8 POWER KOEPP (1740% ESZ+0.1 SSI+0.0) |"
+        - strong [ref=e3449]: "3."
+        - text: "#10 BEAUTY GLORY (1480% ESZ-1.3 SSI+0.4) |"
+        - strong [ref=e3450]: "4."
+        - text: "#3 AURORA PATCH (1370% ESZ-0.7 SSI+0.1) |"
+        - strong [ref=e3451]: "5."
+        - text: "#7 IGOR STRAVINSKY (690% ESZ-0.7 SSI+0.4) |"
+        - strong [ref=e3452]: "6."
+        - text: "#5 BLAZING WIND (590% ESZ-0.0 SSI-0.1)"
+      - generic [ref=e3454]:
+        - generic [ref=e3458]:
+          - paragraph [ref=e3462]: "R8 Banker (top selection):"
+          - generic [ref=e3464]:
+            - generic [ref=e3465]:
+              - generic [ref=e3466]: PI LEGEND
+              - combobox "Selected PI LEGEND. R8 Banker (top selection):" [ref=e3468]
+            - img "open" [ref=e3470]
+        - generic [ref=e3475]:
+          - paragraph [ref=e3479]: "R8 Other selections:"
+          - generic [ref=e3482]:
+            - generic [ref=e3483]:
+              - button "POWER KOEPP, close by backspace":
+                - generic "POWER KOEPP"
+                - img [ref=e3485] [cursor=pointer]
+              - button "BEAUTY GLORY, close by backspace":
+                - generic "BEAUTY GLORY"
+                - img [ref=e3488] [cursor=pointer]
+              - button "AURORA PATCH, close by backspace":
+                - generic "AURORA PATCH"
+                - img [ref=e3491] [cursor=pointer]
+              - combobox "Selected POWER KOEPP, BEAUTY GLORY, AURORA PATCH. R8 Other selections:" [ref=e3494]
+            - generic [ref=e3495]:
+              - button "Clear all" [ref=e3496] [cursor=pointer]
+              - img "open" [ref=e3498] [cursor=pointer]
+      - group [ref=e3502]:
+        - generic "keyboard_arrow_right R8 Auto-generated notes" [ref=e3503] [cursor=pointer]:
+          - generic [ref=e3504]:
+            - generic [ref=e3506]: keyboard_arrow_right
+            - paragraph [ref=e3509]: R8 Auto-generated notes
+      - generic [ref=e3511]:
+        - paragraph [ref=e3515]: "R8 Manual notes:"
+        - textbox "R8 Manual notes:" [ref=e3518]:
+          - /placeholder: Add personal observations, betting angles...
+      - generic [ref=e3523]:
+        - strong [ref=e3524]: R9
+        - text: "— 1400m Turf C3 | Pace: Normal (-0.05s)"
+      - paragraph [ref=e3529]:
+        - strong [ref=e3530]: "1."
+        - text: "#1 SKY JEWELLERY (2660% ESZ+1.2 SSI-1.1) |"
+        - strong [ref=e3531]: "2."
+        - text: "#9 PERFECTDAY (1730% ESZ+1.2 SSI-0.6) |"
+        - strong [ref=e3532]: "3."
+        - text: "#4 AEROVOLANIC (1620% ESZ-0.0 SSI+0.0) |"
+        - strong [ref=e3533]: "4."
+        - text: "#3 EVERYONE'S STAR (1040% ESZ+0.4 SSI-0.2) |"
+        - strong [ref=e3534]: "5."
+        - text: "#2 MAKE YOU SMILE (560% ESZ+1.2 SSI-0.6) |"
+        - strong [ref=e3535]: "6."
+        - text: "#8 CHILL EASY (530% ESZ-0.5 SSI+0.3)"
+      - generic [ref=e3537]:
+        - generic [ref=e3541]:
+          - paragraph [ref=e3545]: "R9 Banker (top selection):"
+          - generic [ref=e3547]:
+            - generic [ref=e3548]:
+              - generic [ref=e3549]: SKY JEWELLERY
+              - combobox "Selected SKY JEWELLERY. R9 Banker (top selection):" [ref=e3551]
+            - img "open" [ref=e3553]
+        - generic [ref=e3558]:
+          - paragraph [ref=e3562]: "R9 Other selections:"
+          - generic [ref=e3565]:
+            - generic [ref=e3566]:
+              - button "PERFECTDAY, close by backspace":
+                - generic "PERFECTDAY"
+                - img [ref=e3568] [cursor=pointer]
+              - button "AEROVOLANIC, close by backspace":
+                - generic "AEROVOLANIC"
+                - img [ref=e3571] [cursor=pointer]
+              - button "EVERYONE'S STAR, close by backspace":
+                - generic "EVERYONE'S STAR"
+                - img [ref=e3574] [cursor=pointer]
+              - combobox "Selected PERFECTDAY, AEROVOLANIC, EVERYONE'S STAR. R9 Other selections:" [ref=e3577]
+            - generic [ref=e3578]:
+              - button "Clear all" [ref=e3579] [cursor=pointer]
+              - img "open" [ref=e3581] [cursor=pointer]
+      - group [ref=e3585]:
+        - generic "keyboard_arrow_right R9 Auto-generated notes" [ref=e3586] [cursor=pointer]:
+          - generic [ref=e3587]:
+            - generic [ref=e3589]: keyboard_arrow_right
+            - paragraph [ref=e3592]: R9 Auto-generated notes
+      - generic [ref=e3594]:
+        - paragraph [ref=e3598]: "R9 Manual notes:"
+        - textbox "R9 Manual notes:" [ref=e3601]:
+          - /placeholder: Add personal observations, betting angles...
+      - generic [ref=e3606]:
+        - strong [ref=e3607]: R10
+        - text: "— 1200m Turf C3 | Pace: Normal (-0.08s)"
+      - paragraph [ref=e3612]:
+        - strong [ref=e3613]: "1."
+        - text: "#5 GOLD PATCH (1990% ESZ-1.5 SSI+0.1) |"
+        - strong [ref=e3614]: "2."
+        - text: "#1 SOUTH STAR (2640% ESZ-0.4 SSI+0.1) |"
+        - strong [ref=e3615]: "3."
+        - text: "#10 ROBOT LUCKY STAR (1360% ESZ-0.2 SSI-0.2) |"
+        - strong [ref=e3616]: "4."
+        - text: "#2 SUPER EXPRESS (1440% ESZ-1.2 SSI+0.4) |"
+        - strong [ref=e3617]: "5."
+        - text: "#3 KA YING ATTACK (960% ESZ-1.4 SSI+0.7) |"
+        - strong [ref=e3618]: "6."
+        - text: "#7 THOUSAND SPIRIT (590% ESZ-0.7 SSI+0.6)"
+      - generic [ref=e3620]:
+        - generic [ref=e3624]:
+          - paragraph [ref=e3628]: "R10 Banker (top selection):"
+          - generic [ref=e3630]:
+            - generic [ref=e3631]:
+              - generic [ref=e3632]: GOLD PATCH
+              - combobox "Selected GOLD PATCH. R10 Banker (top selection):" [ref=e3634]
+            - img "open" [ref=e3636]
+        - generic [ref=e3641]:
+          - paragraph [ref=e3645]: "R10 Other selections:"
+          - generic [ref=e3648]:
+            - generic [ref=e3649]:
+              - button "SOUTH STAR, close by backspace":
+                - generic "SOUTH STAR"
+                - img [ref=e3651] [cursor=pointer]
+              - button "ROBOT LUCKY STAR, close by backspace":
+                - generic "ROBOT LUCKY STAR"
+                - img [ref=e3654] [cursor=pointer]
+              - button "SUPER EXPRESS, close by backspace":
+                - generic "SUPER EXPRESS"
+                - img [ref=e3657] [cursor=pointer]
+              - combobox "Selected SOUTH STAR, ROBOT LUCKY STAR, SUPER EXPRESS. R10 Other selections:" [ref=e3660]
+            - generic [ref=e3661]:
+              - button "Clear all" [ref=e3662] [cursor=pointer]
+              - img "open" [ref=e3664] [cursor=pointer]
+      - group [ref=e3668]:
+        - generic "keyboard_arrow_right R10 Auto-generated notes" [ref=e3669] [cursor=pointer]:
+          - generic [ref=e3670]:
+            - generic [ref=e3672]: keyboard_arrow_right
+            - paragraph [ref=e3675]: R10 Auto-generated notes
+      - generic [ref=e3677]:
+        - paragraph [ref=e3681]: "R10 Manual notes:"
+        - textbox "R10 Manual notes:" [ref=e3684]:
+          - /placeholder: Add personal observations, betting angles...
+      - generic [ref=e3689]:
+        - strong [ref=e3690]: R11
+        - text: "— 1800m Turf C2 | Pace: Slightly Fast (-0.37s)"
+      - paragraph [ref=e3695]:
+        - strong [ref=e3696]: "1."
+        - text: "#5 AWESOME FLUKE (4100% ESZ-0.7 SSI+0.6) |"
+        - strong [ref=e3697]: "2."
+        - text: "#10 SKY HEART (1320% ESZ-1.5 SSI+0.4) |"
+        - strong [ref=e3698]: "3."
+        - text: "#2 STUNNING PEACH (1090% ESZ+1.1 SSI-0.8) |"
+        - strong [ref=e3699]: "4."
+        - text: "#6 GENTLEMEN LEGACY (710% ESZ+0.3 SSI-0.4) |"
+        - strong [ref=e3700]: "5."
+        - text: "#7 NEW FOREST (610% ESZ-1.7 SSI+0.9) |"
+        - strong [ref=e3701]: "6."
+        - text: "#3 WINNING WING (530% ESZ+0.8 SSI-1.3)"
+      - generic [ref=e3703]:
+        - generic [ref=e3707]:
+          - paragraph [ref=e3711]: "R11 Banker (top selection):"
+          - generic [ref=e3713]:
+            - generic [ref=e3714]:
+              - generic [ref=e3715]: AWESOME FLUKE
+              - combobox "Selected AWESOME FLUKE. R11 Banker (top selection):" [ref=e3717]
+            - img "open" [ref=e3719]
+        - generic [ref=e3724]:
+          - paragraph [ref=e3728]: "R11 Other selections:"
+          - generic [ref=e3731]:
+            - generic [ref=e3732]:
+              - button "SKY HEART, close by backspace":
+                - generic "SKY HEART"
+                - img [ref=e3734] [cursor=pointer]
+              - button "STUNNING PEACH, close by backspace":
+                - generic "STUNNING PEACH"
+                - img [ref=e3737] [cursor=pointer]
+              - button "GENTLEMEN LEGACY, close by backspace":
+                - generic "GENTLEMEN LEGACY"
+                - img [ref=e3740] [cursor=pointer]
+              - combobox "Selected SKY HEART, STUNNING PEACH, GENTLEMEN LEGACY. R11 Other selections:" [ref=e3743]
+            - generic [ref=e3744]:
+              - button "Clear all" [ref=e3745] [cursor=pointer]
+              - img "open" [ref=e3747] [cursor=pointer]
+      - group [ref=e3751]:
+        - generic "keyboard_arrow_right R11 Auto-generated notes" [ref=e3752] [cursor=pointer]:
+          - generic [ref=e3753]:
+            - generic [ref=e3755]: keyboard_arrow_right
+            - paragraph [ref=e3758]: R11 Auto-generated notes
+      - generic [ref=e3760]:
+        - paragraph [ref=e3764]: "R11 Manual notes:"
+        - textbox "R11 Manual notes:" [ref=e3767]:
+          - /placeholder: Add personal observations, betting angles...
+      - separator [ref=e3772]
+      - heading "Export PDF" [level=3] [ref=e3778]:
+        - text: Export PDF
+        - generic [ref=e3779]:
+          - link "Link to heading":
+            - /url: "#export-pdf"
+            - img
+      - button "Generate PDF" [ref=e3782] [cursor=pointer]:
+        - paragraph [ref=e3786]: Generate PDF

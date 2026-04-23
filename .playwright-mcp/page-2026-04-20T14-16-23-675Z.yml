@@ -1,0 +1,65 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - button "keyboard_double_arrow_left" [ref=e1235] [cursor=pointer]:
+      - generic [ref=e1237]: keyboard_double_arrow_left
+    - generic [ref=e8]:
+      - generic [ref=e14]: APPEARANCE
+      - generic [ref=e17] [cursor=pointer]:
+        - checkbox "🌙 Dark mode" [checked] [active]
+        - generic [ref=e21]:
+          - paragraph [ref=e23]: 🌙 Dark mode
+          - button "Help for 🌙 Dark mode" [ref=e1280]:
+            - img [ref=e28]
+      - generic [ref=e35]:
+        - generic [ref=e36]: HK
+        - generic [ref=e37]:
+          - generic [ref=e38]: HKJC DASHBOARD
+          - generic [ref=e39]: Race Analysis Terminal
+      - button "🏁 Overview" [ref=e42] [cursor=pointer]:
+        - paragraph [ref=e46]: 🏁 Overview
+      - button "📊 Race Day" [ref=e49] [cursor=pointer]:
+        - paragraph [ref=e53]: 📊 Race Day
+      - button "📡 Live Feed" [ref=e56] [cursor=pointer]:
+        - paragraph [ref=e60]: 📡 Live Feed
+      - button "📖 Form Guide" [ref=e63] [cursor=pointer]:
+        - paragraph [ref=e67]: 📖 Form Guide
+      - button "🎽 Trials" [ref=e70] [cursor=pointer]:
+        - paragraph [ref=e74]: 🎽 Trials
+      - button "🧪 Backtest" [ref=e77] [cursor=pointer]:
+        - paragraph [ref=e81]: 🧪 Backtest
+      - button "🏆 Results" [ref=e84] [cursor=pointer]:
+        - paragraph [ref=e88]: 🏆 Results
+      - button "📓 Blackbook" [ref=e91] [cursor=pointer]:
+        - paragraph [ref=e95]: 📓 Blackbook
+      - button "📄 PDF Builder" [ref=e98] [cursor=pointer]:
+        - paragraph [ref=e102]: 📄 PDF Builder
+      - separator [ref=e107]
+  - generic [ref=e110]:
+    - banner [ref=e111]:
+      - generic [ref=e114]:
+        - button "Deploy" [ref=e116] [cursor=pointer]:
+          - generic [ref=e118]: Deploy
+        - button "Main menu" [ref=e120] [cursor=pointer]:
+          - img [ref=e121]
+    - generic [ref=e126]:
+      - generic [ref=e136]: Live Feed
+      - generic [ref=e1281]: Real-time race analysis · convergence detection · pattern recognition
+      - paragraph [ref=e1286]:
+        - strong [ref=e1287]: "Meeting:"
+        - text: HAPPY VALLEY — WEDNESDAY, 22 APRIL 2026
+      - generic [ref=e1289]:
+        - button "🔄 Scrape Results" [ref=e1294] [cursor=pointer]:
+          - paragraph [ref=e1298]: 🔄 Scrape Results
+        - button "📊 Run Analysis" [ref=e1303] [cursor=pointer]:
+          - paragraph [ref=e1307]: 📊 Run Analysis
+        - generic [ref=e1312]:
+          - paragraph [ref=e1315]: Results Available
+          - paragraph [ref=e1318]: 0/9 races
+      - separator [ref=e1322]
+      - alert [ref=e1325]:
+        - paragraph [ref=e1330]:
+          - text: No results scraped yet for this meeting. Click
+          - strong [ref=e1331]: Scrape Results
+          - text: once races have been run, then
+          - strong [ref=e1332]: Run Analysis
+          - text: .

@@ -2770,10 +2770,16 @@ def page_race_day(selected):
     )
 
     # ── Model toggle (ET / SARR) ─────────────────────────────────────────
+    # Rendered here as well as right above the race-tab row (below) so it's
+    # always visible without scrolling — both widgets share the session_state
+    # key via a callback.
     if sarr_available:
-        model_options = ["ET (Expected Time)", "SARR (Sectional-Anchored)"]
+        model_options = ["SARR (Sectional-Anchored)", "ET (Expected Time)"]
+        # Initialise only once
+        if "rd_model_toggle" not in st.session_state:
+            st.session_state["rd_model_toggle"] = model_options[0]
         sel_model = st.radio(
-            "Model", model_options, index=0, horizontal=True,
+            "Model", model_options, horizontal=True,
             key="rd_model_toggle",
         )
         use_sarr = sel_model.startswith("SARR")
@@ -2885,6 +2891,25 @@ def page_race_day(selected):
             )
     else:
         st.session_state.pop("_rd_search_last_q", None)
+
+    # ── Compact model toggle right above the race-tab row (mirror) ───────
+    # So users don't need to scroll up to switch ET / SARR.
+    if sarr_available:
+        def _sync_inline_toggle():
+            choice = st.session_state.get("rd_model_toggle_inline")
+            if choice:
+                st.session_state["rd_model_toggle"] = choice
+        inline_col, _spacer = st.columns([0.6, 2.4])
+        with inline_col:
+            st.radio(
+                "Model (inline)",
+                ["SARR (Sectional-Anchored)", "ET (Expected Time)"],
+                horizontal=True,
+                key="rd_model_toggle_inline",
+                label_visibility="collapsed",
+                on_change=_sync_inline_toggle,
+                index=(0 if use_sarr else 1),
+            )
 
     # Render tab row
     tab_cols = st.columns(len(race_numbers))
@@ -8314,17 +8339,27 @@ def page_my_bets():
             # Load model reports cache
             import json as _json
             reports_by_date: dict[str, dict] = {}
+            sarr_by_date: dict[str, dict] = {}
             for r in settled:
                 d = r.get("meeting_date")
-                if not d or d in reports_by_date:
+                if not d:
                     continue
-                p = BASE / "reports" / f"race_day_report_{d}_v4.4.json"
-                if p.exists():
-                    try:
-                        reports_by_date[d] = _json.loads(
-                            p.read_text(encoding="utf-8"))
-                    except Exception:
-                        pass
+                if d not in reports_by_date:
+                    p = BASE / "reports" / f"race_day_report_{d}_v4.4.json"
+                    if p.exists():
+                        try:
+                            reports_by_date[d] = _json.loads(
+                                p.read_text(encoding="utf-8"))
+                        except Exception:
+                            pass
+                if d not in sarr_by_date:
+                    ps = BASE / "reports" / f"race_day_report_{d}_SARR.json"
+                    if ps.exists():
+                        try:
+                            sarr_by_date[d] = _json.loads(
+                                ps.read_text(encoding="utf-8"))
+                        except Exception:
+                            pass
 
             def _top_picks(rep: dict, race_no: int) -> list[dict]:
                 """Return picks list sorted by rank for that race."""
@@ -8336,68 +8371,115 @@ def page_my_bets():
                         return picks_sorted
                 return []
 
-            # Build comparison rows
+            # Build comparison rows (ET + SARR side-by-side)
             rows_cmp = []
             for b in settled:
                 rep = reports_by_date.get(b.get("meeting_date"))
-                if not rep:
+                sarr_rep = sarr_by_date.get(b.get("meeting_date"))
+                if not rep and not sarr_rep:
                     continue
-                picks = _top_picks(rep, int(b.get("race_number") or 0))
-                top_nos = [int(p.get("horse_no") or 0) for p in picks[:3]
-                           if p.get("horse_no")]
-                top3_set = set(top_nos)
+                rn = int(b.get("race_number") or 0)
+                et_picks = _top_picks(rep, rn) if rep else []
+                sa_picks = _top_picks(sarr_rep, rn) if sarr_rep else []
+                et_top = [int(p.get("horse_no") or 0) for p in et_picks[:3]
+                          if p.get("horse_no")]
+                sa_top = [int(p.get("horse_no") or 0) for p in sa_picks[:3]
+                          if p.get("horse_no")]
                 sels_set = set(int(x) for x in (b.get("selections") or []))
                 if b.get("banker"):
                     sels_set.add(int(b["banker"]))
-                overlap = len(sels_set & top3_set)
-                deviation = len(sels_set - top3_set)
+                et_overlap = len(sels_set & set(et_top))
+                sa_overlap = len(sels_set & set(sa_top))
+                et_dev = len(sels_set - set(et_top)) if et_top else None
+                sa_dev = len(sels_set - set(sa_top)) if sa_top else None
+                # Aligned with BOTH models = strongest signal
+                both_top = set(et_top) & set(sa_top)
+                ensemble_dev = (len(sels_set - both_top)
+                                if both_top else None)
                 user_pnl = float(b.get("pnl_hkd") or 0)
                 user_stake = float(b.get("stake_hkd") or 0)
                 rows_cmp.append({
                     "Date":        b["meeting_date"],
                     "Venue":       b["venue"],
-                    "R":           b["race_number"],
+                    "R":           rn,
                     "Bet":         b["bet_type"],
                     "Your sel":    ",".join(str(x) for x in sorted(sels_set)),
-                    "Model top3":  ",".join(str(x) for x in top_nos),
-                    "Overlap":     overlap,
-                    "Deviation":   deviation,
+                    "ET top3":     ",".join(str(x) for x in et_top),
+                    "SARR top3":   ",".join(str(x) for x in sa_top),
+                    "ET ∩ SARR":   ",".join(str(x) for x in sorted(both_top)),
+                    "ET ov":       et_overlap,
+                    "SARR ov":     sa_overlap,
+                    "ET dev":      et_dev,
+                    "SARR dev":    sa_dev,
+                    "Ens dev":     ensemble_dev,
                     "Stake $":     user_stake,
                     "Your PnL $":  round(user_pnl, 2),
                     "ROI %":       ((user_pnl / user_stake * 100)
                                     if user_stake else 0),
                 })
             if not rows_cmp:
-                st.warning("No model reports (v4.4) found for your settled "
-                           "meetings — nothing to compare.")
+                st.warning("No model reports (ET or SARR) found for your "
+                           "settled meetings — nothing to compare.")
             else:
                 df_cmp = pd.DataFrame(rows_cmp)
-                # Aggregate: sum over all rows, and by deviation bucket
-                def _bucket(dev: int) -> str:
+                # Aggregate by alignment vs each model
+                def _bucket(dev) -> str:
+                    if dev is None:
+                        return "— no report"
                     if dev == 0:
                         return "🟢 fully aligned"
                     if dev == 1:
-                        return "🟡 1 off model"
+                        return "🟡 1 off"
                     return "🔴 deviated ≥2"
-                df_cmp["Alignment"] = df_cmp["Deviation"].map(_bucket)
 
-                agg = (df_cmp.groupby("Alignment")
-                       .agg(Bets=("Your PnL $", "size"),
-                            Stake=("Stake $", "sum"),
-                            PnL=("Your PnL $", "sum"))
-                       .reset_index())
-                agg["ROI %"] = (agg["PnL"] / agg["Stake"] * 100).round(1)
+                colL, colR = st.columns(2)
+                for label, dev_col, container in (
+                        ("vs ET",   "ET dev",   colL),
+                        ("vs SARR", "SARR dev", colR)):
+                    sub = df_cmp.copy()
+                    sub["Alignment"] = sub[dev_col].map(_bucket)
+                    agg = (sub.groupby("Alignment")
+                           .agg(Bets=("Your PnL $", "size"),
+                                Stake=("Stake $", "sum"),
+                                PnL=("Your PnL $", "sum"))
+                           .reset_index())
+                    agg["ROI %"] = (agg["PnL"] / agg["Stake"].replace(
+                        0, pd.NA) * 100).round(1)
+                    with container:
+                        st.markdown(f"#### Alignment — {label}")
+                        st.dataframe(
+                            agg, hide_index=True, use_container_width=True,
+                            column_config={
+                                "Bets":  st.column_config.NumberColumn(format="%d"),
+                                "Stake": st.column_config.NumberColumn(format="$%.0f"),
+                                "PnL":   st.column_config.NumberColumn(format="%+.2f"),
+                                "ROI %": st.column_config.NumberColumn(format="%+.1f%%"),
+                            },
+                        )
 
-                st.markdown("#### Alignment buckets (your PnL by deviation)")
-                st.dataframe(
-                    agg, hide_index=True, use_container_width=True,
-                    column_config={
-                        "Bets":  st.column_config.NumberColumn(format="%d"),
-                        "Stake": st.column_config.NumberColumn(format="$%.0f"),
-                        "PnL":   st.column_config.NumberColumn(format="%+.2f"),
-                        "ROI %": st.column_config.NumberColumn(format="%+.1f%%"),
-                    },
-                )
+                # Ensemble bucket — bets where ET ∩ SARR agree
+                st.markdown("#### 🤝 Ensemble bucket (when BOTH models agree)")
+                sub_e = df_cmp[df_cmp["Ens dev"].notna()].copy()
+                if sub_e.empty:
+                    st.caption("No overlapping-top3 races across models yet.")
+                else:
+                    sub_e["Alignment"] = sub_e["Ens dev"].map(_bucket)
+                    agg_e = (sub_e.groupby("Alignment")
+                             .agg(Bets=("Your PnL $", "size"),
+                                  Stake=("Stake $", "sum"),
+                                  PnL=("Your PnL $", "sum"))
+                             .reset_index())
+                    agg_e["ROI %"] = (agg_e["PnL"] / agg_e["Stake"].replace(
+                        0, pd.NA) * 100).round(1)
+                    st.dataframe(
+                        agg_e, hide_index=True, use_container_width=True,
+                        column_config={
+                            "Bets":  st.column_config.NumberColumn(format="%d"),
+                            "Stake": st.column_config.NumberColumn(format="$%.0f"),
+                            "PnL":   st.column_config.NumberColumn(format="%+.2f"),
+                            "ROI %": st.column_config.NumberColumn(format="%+.1f%%"),
+                        },
+                    )
 
                 st.markdown("#### Per-bet comparison")
                 st.dataframe(
@@ -8410,8 +8492,9 @@ def page_my_bets():
                     },
                 )
 
-                # Best deviations (hits) / worst deviations (misses)
-                deviated = df_cmp[df_cmp["Deviation"] > 0]
+                # Best deviations (hits) / worst deviations (misses) — vs ET
+                deviated = df_cmp[(df_cmp["ET dev"].fillna(0) > 0) |
+                                  (df_cmp["SARR dev"].fillna(0) > 0)]
                 if not deviated.empty:
                     wins = deviated[deviated["Your PnL $"] > 0].nlargest(
                         5, "Your PnL $")
@@ -8425,7 +8508,7 @@ def page_my_bets():
                         else:
                             st.dataframe(
                                 wins[["Date", "R", "Bet", "Your sel",
-                                      "Model top3", "Your PnL $"]],
+                                      "ET top3", "SARR top3", "Your PnL $"]],
                                 hide_index=True, use_container_width=True,
                             )
                     with c2:
@@ -8435,16 +8518,16 @@ def page_my_bets():
                         else:
                             st.dataframe(
                                 losses[["Date", "R", "Bet", "Your sel",
-                                        "Model top3", "Your PnL $"]],
+                                        "ET top3", "SARR top3", "Your PnL $"]],
                                 hide_index=True, use_container_width=True,
                             )
 
                 st.markdown(
-                    "**How to read this:** the alignment bucket ROI tells you "
-                    "whether your deviations from the model are earning or "
-                    "costing you. If 🟢 *fully aligned* > 🔴 *deviated ≥2*, "
-                    "stick to the model. If the reverse, your discretionary "
-                    "reads are adding edge."
+                    "**How to read this:** compare your ROI across 🟢 / 🟡 / 🔴 "
+                    "buckets for *each* model. If SARR-aligned bets out-earn "
+                    "ET-aligned bets (or vice versa), defer to that model. "
+                    "The **🤝 Ensemble bucket** is the strongest signal — "
+                    "your ROI when your picks match the ET ∩ SARR overlap."
                 )
 
 

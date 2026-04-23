@@ -1,0 +1,77 @@
+- generic [ref=e2]:
+  - generic [ref=e38]:
+    - button "keyboard_double_arrow_left" [ref=e926] [cursor=pointer]:
+      - generic [ref=e928]: keyboard_double_arrow_left
+    - generic [ref=e42]:
+      - generic [ref=e47]:
+        - generic [ref=e48]: HK
+        - generic [ref=e49]:
+          - generic [ref=e50]: HKJC DASHBOARD
+          - generic [ref=e51]: Race Analysis Terminal
+      - button "🏁 Overview" [ref=e54] [cursor=pointer]:
+        - paragraph [ref=e58]: 🏁 Overview
+      - button "📊 Race Day" [ref=e61] [cursor=pointer]:
+        - paragraph [ref=e65]: 📊 Race Day
+      - button "📡 Live Feed" [ref=e68] [cursor=pointer]:
+        - paragraph [ref=e72]: 📡 Live Feed
+      - button "📖 Form Guide" [active] [ref=e75] [cursor=pointer]:
+        - paragraph [ref=e79]: 📖 Form Guide
+      - button "🎽 Trials" [ref=e82] [cursor=pointer]:
+        - paragraph [ref=e86]: 🎽 Trials
+      - button "🧪 Backtest" [ref=e89] [cursor=pointer]:
+        - paragraph [ref=e93]: 🧪 Backtest
+      - button "🏆 Results" [ref=e96] [cursor=pointer]:
+        - paragraph [ref=e100]: 🏆 Results
+      - button "📓 Blackbook" [ref=e103] [cursor=pointer]:
+        - paragraph [ref=e107]: 📓 Blackbook
+      - button "📄 PDF Builder" [ref=e110] [cursor=pointer]:
+        - paragraph [ref=e114]: 📄 PDF Builder
+      - separator [ref=e119]
+      - separator [ref=e1586]
+      - generic [ref=e1591]: Form Guide
+      - generic [ref=e1593]:
+        - paragraph [ref=e1597]: Meeting
+        - generic [ref=e1599]:
+          - generic [ref=e1600]:
+            - generic [ref=e1601]: SHA TIN (AWT) — SUNDAY, 19 APRIL 2026
+            - combobox "Selected SHA TIN (AWT) — SUNDAY, 19 APRIL 2026. Meeting" [ref=e1603]
+          - img "open" [ref=e1605]
+      - button "Build Form Guide cache" [ref=e1612] [cursor=pointer]:
+        - paragraph [ref=e1616]: Build Form Guide cache
+  - generic [ref=e3]:
+    - banner [ref=e6]:
+      - generic [ref=e9]:
+        - generic [ref=e1618]:
+          - img "Running..." [ref=e1619]:
+            - img [ref=e1620]
+          - button "Stop" [ref=e1625] [cursor=pointer]
+        - button "Deploy" [ref=e19] [cursor=pointer]:
+          - generic [ref=e21]: Deploy
+        - button "Main menu" [ref=e23] [cursor=pointer]:
+          - img [ref=e24]
+    - generic [ref=e122]:
+      - generic [ref=e127]: Form Guide
+      - paragraph [ref=e1632]:
+        - text: Running
+        - code [ref=e1633]: _load_form_db()
+        - text: .
+      - generic [ref=e1530]: Real-time race analysis · convergence detection · pattern recognition
+      - paragraph [ref=e1535]:
+        - strong [ref=e1536]: "Meeting:"
+        - text: SHA TIN (AWT) — SUNDAY, 19 APRIL 2026
+      - generic [ref=e1538]:
+        - button "🔄 Scrape Results" [ref=e1543] [cursor=pointer]:
+          - paragraph [ref=e1547]: 🔄 Scrape Results
+        - button "📊 Run Analysis" [ref=e1552] [cursor=pointer]:
+          - paragraph [ref=e1556]: 📊 Run Analysis
+        - generic [ref=e1561]:
+          - paragraph [ref=e1564]: Results Available
+          - paragraph [ref=e1567]: 0/11 races
+      - separator [ref=e1572]
+      - alert [ref=e1574]:
+        - paragraph [ref=e1579]:
+          - text: No results scraped yet for this meeting. Click
+          - strong [ref=e1580]: Scrape Results
+          - text: once races have been run, then
+          - strong [ref=e1581]: Run Analysis
+          - text: .
