@@ -1822,12 +1822,17 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
 
+    dc = date_str.replace("-", "")
+    sarr_json = REPORTS / f"race_day_report_{dc}_SARR.json"
+    sarr_script = BASE / "sarr_raceday.py"
+    sarr_mtime_before = sarr_json.stat().st_mtime if sarr_json.exists() else 0.0
+
     with st.spinner(f"Running pipeline for {date_str}..."):
         status = st.empty()
         if skip_scrape:
-            status.info(f"Running analysis for {date_str} (using uploaded racecard)...")
+            status.info(f"[1/2] Running ET analysis for {date_str} (using uploaded racecard)...")
         else:
-            status.info(f"Scraping race card for {date_str}...")
+            status.info(f"[1/2] Scraping race card + ET analysis for {date_str}...")
 
         result = subprocess.run(
             cmd, env=env, cwd=str(BASE),
@@ -1836,52 +1841,58 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
         )
 
         if result.returncode == 0:
-            st.success(f"Pipeline complete for {date_str} (ET + SARR)")
-            with st.expander("Pipeline output"):
+            st.success(f"✓ [1/2] ET pipeline complete for {date_str}")
+            with st.expander("ET pipeline output"):
                 st.code(result.stdout[-4000:] if len(result.stdout) > 4000
                         else result.stdout)
         else:
-            st.error(f"Pipeline failed (exit code {result.returncode})")
-            with st.expander("Error output"):
+            st.error(f"✗ [1/2] ET pipeline failed (exit code {result.returncode})")
+            with st.expander("ET error output"):
                 st.code(result.stderr[-2000:] if result.stderr else result.stdout[-2000:])
 
-    # NOTE: run_meeting.py already runs SARR as step 4c — no separate call needed.
-    # Verify SARR output actually landed on disk; if not, auto-invoke SARR
-    # directly here as a belt-and-braces safety net so the user never has to
-    # remember to run it manually from the terminal.
-    dc = date_str.replace("-", "")
-    sarr_json = REPORTS / f"race_day_report_{dc}_SARR.json"
-    if not sarr_json.exists():
-        st.info("⏳ SARR output missing — running SARR directly...")
-        sarr_script = BASE / "sarr_raceday.py"
-        if not sarr_script.exists():
-            st.error(f"SARR script not found at {sarr_script}")
-        else:
-            try:
-                sarr_res = subprocess.run(
-                    [PYTHON, str(sarr_script), "--date", date_str],
-                    env=env, cwd=str(BASE),
-                    capture_output=True, text=True, encoding="utf-8",
-                    timeout=600,
-                )
-                if sarr_res.returncode == 0 and sarr_json.exists():
-                    st.success(f"✓ SARR generated: {sarr_json.name}")
-                else:
-                    st.error(
-                        f"SARR failed (exit {sarr_res.returncode}). "
-                        f"JSON written: {sarr_json.exists()}"
-                    )
-                    with st.expander("SARR error output"):
-                        st.code(
-                            (sarr_res.stderr or sarr_res.stdout or "")[-3000:]
-                        )
-            except (OSError, subprocess.TimeoutExpired) as e:
-                st.error(f"SARR run errored: {e}")
+    # ── [2/2] SARR — ALWAYS run as an explicit, dedicated step so the user
+    # never has to wonder if it ran. We do not rely on run_meeting.py's
+    # step 4c at all — this is the canonical SARR invocation point.
+    sarr_status = st.empty()
+    sarr_status.info(f"[2/2] Running SARR analysis for {date_str}...")
+    if not sarr_script.exists():
+        st.error(f"✗ [2/2] SARR script not found at {sarr_script}")
     else:
-        # Surface explicit confirmation so the user can see SARR ran.
-        import datetime as _dt
-        _mt = _dt.datetime.fromtimestamp(sarr_json.stat().st_mtime)
-        st.success(f"✓ SARR ready: {sarr_json.name} ({_mt:%H:%M:%S})")
+        try:
+            sarr_res = subprocess.run(
+                [PYTHON, str(sarr_script), "--date", date_str],
+                env=env, cwd=str(BASE),
+                capture_output=True, text=True, encoding="utf-8",
+                timeout=600,
+            )
+            sarr_mtime_after = (sarr_json.stat().st_mtime
+                                if sarr_json.exists() else 0.0)
+            sarr_updated = sarr_mtime_after > sarr_mtime_before
+            if sarr_res.returncode == 0 and sarr_json.exists():
+                import datetime as _dt
+                _mt = _dt.datetime.fromtimestamp(sarr_mtime_after)
+                if sarr_updated:
+                    st.success(f"✓ [2/2] SARR generated: {sarr_json.name} "
+                               f"({_mt:%H:%M:%S})")
+                else:
+                    st.warning(
+                        f"⚠ [2/2] SARR exited cleanly but did NOT write a new "
+                        f"file (existing JSON unchanged at {_mt:%H:%M:%S}). "
+                        f"Check sarr_raceday.py logs."
+                    )
+                with st.expander("SARR output"):
+                    st.code((sarr_res.stdout or "")[-4000:])
+            else:
+                st.error(
+                    f"✗ [2/2] SARR failed (exit {sarr_res.returncode}). "
+                    f"JSON exists: {sarr_json.exists()}"
+                )
+                with st.expander("SARR error output"):
+                    st.code(
+                        (sarr_res.stderr or sarr_res.stdout or "")[-3000:]
+                    )
+        except (OSError, subprocess.TimeoutExpired) as e:
+            st.error(f"✗ [2/2] SARR run errored: {e}")
 
     # ── Clear data caches so SARR / ET JSONs are picked up immediately ──
     try:
@@ -4811,20 +4822,6 @@ def page_results():
         except Exception:
             pass
 
-    # ── Signal Effectiveness Review (this meeting only) ─────────────────
-    # After results are obtained, compare each model signal against actual
-    # finish positions to answer: which signals worked today?
-    if pred_path.exists():
-        with st.expander(
-            "🎯 **Signal Effectiveness Review** — did today's data-analysis "
-            "signals actually work?",
-            expanded=False,
-        ):
-            try:
-                _signal_review(pred_data, races)
-            except Exception as _e:
-                st.error(f"Signal review failed: {_e}")
-
     # ── Race tab selector ────────────────────────────────────────────────
     race_nums = [r.get("race_number", i + 1) for i, r in enumerate(races)]
     if "res_active_rn" not in st.session_state or st.session_state.get("res_active_dc") != selected_dc:
@@ -7681,6 +7678,345 @@ def _build_pdfbuilder_pdf(meeting_data: dict, selected_races: list[int],
     return buf.getvalue()
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Signal Audit — daily review of factor edges (Data Analysis page)
+# ══════════════════════════════════════════════════════════════════════════════
+
+SIGNAL_AUDIT_DIR = REPORTS  # signal_audit_{date_compact}.json lives in reports/
+
+
+def _audit_meetings_with_results() -> list[str]:
+    """Return list of date_compact strings for meetings that have BOTH a
+    race_day_report (predictions) AND results JSON (actuals). Newest first."""
+    out = []
+    for f in REPORTS.glob("results_*.json"):
+        m = re.search(r"results_(\d{8})\.json$", f.name)
+        if not m:
+            continue
+        dc = m.group(1)
+        # Need at least one prediction file alongside it
+        if (REPORTS / f"race_day_report_{dc}_v4.4.json").exists() or \
+           (REPORTS / f"race_day_report_{dc}_v3.4.8.json").exists():
+            out.append(dc)
+    return sorted(set(out), reverse=True)
+
+
+@st.cache_data(show_spinner=False, ttl=120)
+def _build_signal_audit(date_compact: str, _factor_mtime: float) -> dict:
+    """For one meeting, compute a per-pick factor-edge audit cross-referenced
+    with the actual finishing position from results_*.json. Returns:
+
+        {
+            "date":   "YYYY-MM-DD",
+            "n_picks": int,
+            "rows": [
+                {race, rank, horse_no, horse, jockey, trainer, sire,
+                 dam_sire, class_step, score, tier, place, top1, top3,
+                 top_half, signals: [{label, score, polarity}]},
+                ...
+            ],
+            "summary": [
+                {signal_type, n_fired, n_top1, n_top3, n_top_half, hit_rate_top3},
+                ...
+            ],
+        }
+
+    Output is also persisted to reports/signal_audit_{dc}.json so the user can
+    diff across days even if the factor table re-bakes.
+    """
+    pred_path = REPORTS / f"race_day_report_{date_compact}_v4.4.json"
+    if not pred_path.exists():
+        pred_path = REPORTS / f"race_day_report_{date_compact}_v3.4.8.json"
+    res_path  = REPORTS / f"results_{date_compact}.json"
+    if not pred_path.exists() or not res_path.exists():
+        return {"date": date_compact, "n_picks": 0, "rows": [], "summary": []}
+
+    try:
+        pred = json.loads(pred_path.read_text(encoding="utf-8"))
+        res  = json.loads(res_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"date": date_compact, "n_picks": 0, "rows": [], "summary": []}
+
+    # Build {race_no: {horse_name_upper: (place, field_size)}}
+    place_idx: dict = {}
+    for race in res.get("races", []):
+        rn = race.get("race_number")
+        runners = race.get("runners") or []
+        fs = len(runners)
+        m = {}
+        for ru in runners:
+            try:
+                pl = int(str(ru.get("place", "")).strip())
+            except (TypeError, ValueError):
+                pl = None
+            if pl is not None and ru.get("horse_name"):
+                m[str(ru["horse_name"]).strip().upper()] = (pl, fs)
+        place_idx[rn] = m
+
+    # Compute factor edges for the predictions
+    edges = _compute_factor_edges(pred.get("races", []),
+                                  window="current_season_25_26",
+                                  top_n_per_race=8)
+
+    rows: list[dict] = []
+    sig_stats: dict = {}   # signal_type -> {n, top1, top3, top_half}
+
+    def _signal_type(label: str) -> str:
+        # Coerce labels like "Jky IV 2.47 A/E 0.91" → "Jockey IV"
+        s = label.strip()
+        if s.startswith("Jky"):    return "Jockey IV"
+        if s.startswith("Trn↑"):   return "Trainer × Class Up"
+        if s.startswith("Trn↓"):   return "Trainer × Class Down"
+        if s.startswith("Trn"):    return "Trainer IV"
+        if s.startswith("J×T"):    return "Jockey × Trainer"
+        if s.startswith("Sire@"):  return "Sire × Distance"
+        if s.startswith("Sire"):   return "Sire IV"
+        if s.startswith("DamSire"):return "Dam Sire IV"
+        if s.startswith("Fresh"):  return "Days-off (fresh)"
+        if s.startswith("Quick"):  return "Days-off (quick b/u)"
+        if s.startswith("Rtg Δ +"):return "Rating Δ (up)"
+        if s.startswith("Rtg Δ"):  return "Rating Δ (down)"
+        return "Other"
+
+    for e in edges:
+        rn = e["race"]
+        hn_u = (e["horse"] or "").strip().upper()
+        place_tup = place_idx.get(rn, {}).get(hn_u)
+        if place_tup is None:
+            place, fs = None, None
+        else:
+            place, fs = place_tup
+        top1 = (place == 1) if place is not None else None
+        top3 = (place is not None and place <= 3)
+        top_half = (place is not None and fs and place <= max(1, fs // 2))
+
+        signal_objs = []
+        for label, _colour, score in e["signals"]:
+            polarity = "pos" if score > 0 else "neg"
+            stype = _signal_type(label)
+            signal_objs.append({"label": label, "score": round(score, 3),
+                                "polarity": polarity, "type": stype})
+            # Tally only if outcome known
+            if place is not None:
+                d = sig_stats.setdefault(
+                    stype, {"n": 0, "top1": 0, "top3": 0, "top_half": 0,
+                            "polarity": polarity})
+                d["n"] += 1
+                if top1: d["top1"] += 1
+                if top3: d["top3"] += 1
+                if top_half: d["top_half"] += 1
+
+        rows.append({
+            "race":     rn,
+            "rank":     e["rank"],
+            "horse_no": e["horse_no"],
+            "horse":    e["horse"],
+            "jockey":   e["jockey"],
+            "trainer":  e["trainer"],
+            "sire":     e["sire"],
+            "score":    e["score"],
+            "tier":     e["tier"],
+            "place":    place,
+            "field_size": fs,
+            "top1":     top1,
+            "top3":     top3 if place is not None else None,
+            "top_half": top_half if place is not None else None,
+            "signals":  signal_objs,
+        })
+
+    summary = []
+    for stype, d in sorted(sig_stats.items(),
+                           key=lambda kv: -kv[1]["top3"] / max(1, kv[1]["n"])):
+        n = d["n"] or 1
+        summary.append({
+            "Signal":   stype,
+            "Polarity": d["polarity"],
+            "Fired":    d["n"],
+            "Top-1":    d["top1"],
+            "Top-3":    d["top3"],
+            "Top-Half": d["top_half"],
+            "Top-1 %":  round(d["top1"] / n * 100, 1),
+            "Top-3 %":  round(d["top3"] / n * 100, 1),
+            "Top-Half %": round(d["top_half"] / n * 100, 1),
+        })
+
+    iso_date = f"{date_compact[:4]}-{date_compact[4:6]}-{date_compact[6:]}"
+    out = {"date": iso_date, "date_compact": date_compact,
+           "n_picks": len(rows), "rows": rows, "summary": summary}
+
+    # Persist (best-effort) so daily history is queryable
+    try:
+        (REPORTS / f"signal_audit_{date_compact}.json").write_text(
+            json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+    except OSError:
+        pass
+
+    return out
+
+
+def _signal_audit_tab(window: str, factor_mtime: float) -> None:
+    """Render the Signal Audit tab on the Data Analysis page.
+
+    Lets the user pick one or more race days, see for each pick which factor
+    edges fired, and audit those edges against actual finishing positions.
+    """
+    st.markdown("### 🎯 Signal Audit — factor edges vs actuals")
+    st.caption(
+        "For each day's top picks, list every factor-edge signal that fired "
+        "(jockey/trainer/sire/days-off/etc.) and check whether the horse "
+        "actually delivered. **Use this to track which data-analysis signals "
+        "are paying off day by day.**"
+    )
+
+    dcs = _audit_meetings_with_results()
+    if not dcs:
+        st.info(
+            "No meetings yet have BOTH a model report and a results file. "
+            "Once a card is analysed AND results are scraped, the audit will "
+            "appear here."
+        )
+        return
+
+    # Date selector
+    label_map = {dc: f"{dc[:4]}-{dc[4:6]}-{dc[6:]}" for dc in dcs}
+    cA, cB = st.columns([1.4, 2])
+    with cA:
+        sel_dcs = st.multiselect(
+            "Meeting(s) to audit",
+            options=dcs,
+            default=[dcs[0]],
+            format_func=lambda dc: label_map[dc],
+            key="sa_dates",
+        )
+    with cB:
+        view_mode = st.radio(
+            "View",
+            ["Per-pick detail", "Per-signal summary", "Cross-meeting trend"],
+            horizontal=True, key="sa_view",
+        )
+
+    if not sel_dcs:
+        st.info("Select at least one meeting.")
+        return
+
+    # Compute audits for all selected days (cached)
+    audits = [_build_signal_audit(dc, factor_mtime) for dc in sel_dcs]
+
+    # ── Per-pick detail ─────────────────────────────────────────────────
+    if view_mode == "Per-pick detail":
+        for a in audits:
+            st.markdown(f"#### {a['date']} — {a['n_picks']} picks audited")
+            if not a["rows"]:
+                st.caption("No picks with both predictions and results.")
+                continue
+            flat_rows = []
+            for r in a["rows"]:
+                # Render signals as one cell of compact chips
+                if r["signals"]:
+                    sig_str = " · ".join(
+                        f"[{s['type']}] {s['label']}" for s in r["signals"]
+                    )
+                else:
+                    sig_str = "—"
+                flat_rows.append({
+                    "R":      r["race"],
+                    "Rk":     r["rank"],
+                    "#":      r["horse_no"],
+                    "Horse":  r["horse"],
+                    "Jockey": r["jockey"],
+                    "Tier":   r["tier"],
+                    "Score":  r["score"],
+                    "Place":  r["place"] if r["place"] is not None else "—",
+                    "Top-1":  "✅" if r["top1"] else ("—" if r["top1"] is None else "❌"),
+                    "Top-3":  "✅" if r["top3"] else ("—" if r["top3"] is None else "❌"),
+                    "Top-½":  "✅" if r["top_half"] else ("—" if r["top_half"] is None else "❌"),
+                    "Signals": sig_str,
+                })
+            df = pd.DataFrame(flat_rows)
+            st.dataframe(
+                df, hide_index=True, use_container_width=True,
+                column_config={
+                    "R":     st.column_config.NumberColumn(format="%d"),
+                    "Rk":    st.column_config.NumberColumn(format="%d"),
+                    "Score": st.column_config.NumberColumn(format="%.2f"),
+                },
+            )
+
+    # ── Per-signal summary ──────────────────────────────────────────────
+    elif view_mode == "Per-signal summary":
+        # Aggregate across selected meetings
+        agg: dict = {}
+        for a in audits:
+            for s in a["summary"]:
+                d = agg.setdefault(
+                    s["Signal"],
+                    {"Polarity": s["Polarity"], "Fired": 0,
+                     "Top-1": 0, "Top-3": 0, "Top-Half": 0},
+                )
+                d["Fired"]    += s["Fired"]
+                d["Top-1"]    += s["Top-1"]
+                d["Top-3"]    += s["Top-3"]
+                d["Top-Half"] += s["Top-Half"]
+        rows = []
+        for sig, d in agg.items():
+            n = d["Fired"] or 1
+            rows.append({
+                "Signal":     sig,
+                "Polarity":   d["Polarity"],
+                "Fired":      d["Fired"],
+                "Top-1":      d["Top-1"],
+                "Top-3":      d["Top-3"],
+                "Top-Half":   d["Top-Half"],
+                "Top-1 %":    round(d["Top-1"]    / n * 100, 1),
+                "Top-3 %":    round(d["Top-3"]    / n * 100, 1),
+                "Top-Half %": round(d["Top-Half"] / n * 100, 1),
+            })
+        if not rows:
+            st.info("No signals fired across selected meetings.")
+            return
+        df_sum = pd.DataFrame(rows)
+        # User can sort interactively via dataframe column headers.
+        st.dataframe(
+            df_sum.sort_values("Top-3 %", ascending=False),
+            hide_index=True, use_container_width=True,
+            column_config={
+                "Fired":      st.column_config.NumberColumn(format="%d"),
+                "Top-1":      st.column_config.NumberColumn(format="%d"),
+                "Top-3":      st.column_config.NumberColumn(format="%d"),
+                "Top-Half":   st.column_config.NumberColumn(format="%d"),
+                "Top-1 %":    st.column_config.NumberColumn(format="%.1f%%"),
+                "Top-3 %":    st.column_config.NumberColumn(format="%.1f%%"),
+                "Top-Half %": st.column_config.NumberColumn(format="%.1f%%"),
+            },
+        )
+        st.caption(
+            "**Interpretation**: a positive signal is *working* if its Top-3% "
+            "exceeds the baseline (~25–30% for a random pick from the field). "
+            "A negative signal is *working* if Top-3% stays LOW."
+        )
+
+    # ── Cross-meeting trend ─────────────────────────────────────────────
+    else:  # Cross-meeting trend
+        rows = []
+        for a in audits:
+            by_sig = {s["Signal"]: s for s in a["summary"]}
+            for sig, s in by_sig.items():
+                rows.append({
+                    "Date":     a["date"],
+                    "Signal":   sig,
+                    "Fired":    s["Fired"],
+                    "Top-3":    s["Top-3"],
+                    "Top-3 %":  s["Top-3 %"],
+                    "Top-Half %": s["Top-Half %"],
+                })
+        if not rows:
+            st.info("No signals fired across selected meetings.")
+            return
+        df_t = pd.DataFrame(rows).sort_values(["Signal", "Date"])
+        st.dataframe(df_t, hide_index=True, use_container_width=True)
+
+
 def page_data_analysis():
     """Factor-analysis browser backed by reports/factor_analysis_tables.json.
 
@@ -7774,7 +8110,8 @@ def page_data_analysis():
     # ── Tabs ───────────────────────────────────────────
     tab_names = ["Summary", "Jockeys", "Trainers", "Jockey × Trainer",
                  "Pedigree", "Class Moves", "Form & Context",
-                 "Draw / Dist / Going", "Benchmark ML", "Methodology"]
+                 "Draw / Dist / Going", "Benchmark ML",
+                 "🎯 Signal Audit", "Methodology"]
     tabs = st.tabs(tab_names)
 
     def _style_df(df: pd.DataFrame):
@@ -8045,6 +8382,9 @@ def page_data_analysis():
                 st.bar_chart(fdf.set_index("Feature"))
 
     with tabs[9]:
+        _signal_audit_tab(window, mtime)
+
+    with tabs[10]:
         st.markdown("""
 #### Methodology
 
