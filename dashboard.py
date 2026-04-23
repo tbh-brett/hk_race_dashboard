@@ -2467,10 +2467,178 @@ def _overview_find_today_meeting() -> dict | None:
     return meetings[0]  # fallback to most recent
 
 
+def _render_race_cockpit(race: dict, sarr_race: dict | None,
+                         edges_for_race: list[dict],
+                         bb_active: dict, trial_index: dict | None,
+                         meeting_info: dict):
+    """Render the Race-Time Cockpit block for a single race.
+
+    Hero layout:
+      ┌─ race-meta ─┐─ mutual top-3 (ET ∩ SARR) ─┐─ factor edges top-3 ─┐
+                    │                             │
+                    └─ mini speedmap (optional) ──┘
+    Flags on each mutual pick: ★ blackbook, 🏇 recent trial, ● pace beneficiary.
+    """
+    # ── Header strip ─────────────────────────────────────────────────
+    rn   = race.get("race_number", "?")
+    name = race.get("race_name", "")
+    dist = race.get("distance", "?")
+    klass = race.get("race_class", "?")
+    going = race.get("going", "")
+    surf  = "AWT" if race.get("is_awt") else "Turf"
+    course = race.get("race_course", "")
+    pace = race.get("pace", "Normal")
+    pace_score = race.get("pace_score", 0.0)
+    field_size = len(race.get("picks", []) or race.get("speed_map", {}).get("grid", []))
+
+    pace_colour = {"Very Fast": "#ef4444", "Fast": "#f97316",
+                   "Slightly Fast": "#f59e0b", "Normal": "#9ca3af",
+                   "Slightly Slow": "#60a5fa", "Slow": "#3b82f6",
+                   "Very Slow": "#1d4ed8"}.get(pace, "#9ca3af")
+
+    st.markdown(
+        f'<div style="background:linear-gradient(90deg,rgba(96,165,250,0.12),rgba(96,165,250,0));'
+        f'padding:10px 14px;border-radius:8px;border-left:4px solid #60a5fa;margin-bottom:12px">'
+        f'<div style="font-size:1.15em;font-weight:800">R{rn} — {name}</div>'
+        f'<div style="opacity:0.85;font-size:0.92em;margin-top:2px">'
+        f'{dist}m {surf}{f" ({course})" if course else ""} &nbsp;·&nbsp; Class {klass}'
+        f'{f" &nbsp;·&nbsp; Going: {going}" if going else ""}'
+        f' &nbsp;·&nbsp; Field {field_size}'
+        f' &nbsp;·&nbsp; Pace: <span style="color:{pace_colour};font-weight:700">{pace}</span>'
+        f' <span style="opacity:0.6">({pace_score:+.2f}s)</span>'
+        f'</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    # ── 3 columns: quick meta / mutual top-3 / factor edges ─────────
+    c1, c2, c3 = st.columns([1.1, 1.4, 1.5])
+
+    # Helpers
+    bb_names = set(bb_active.keys())
+    trial_names: set[str] = set()
+    if trial_index:
+        from datetime import datetime as _dto, timedelta as _td
+        cutoff = _dto.now() - _td(days=60)
+        for h, entries in trial_index.items():
+            for e in entries:
+                try:
+                    tdt = _dto.strptime(e["date"], "%Y-%m-%d")
+                except (ValueError, TypeError):
+                    continue
+                if tdt >= cutoff:
+                    trial_names.add(h.upper().strip())
+                    break
+
+    beneficiary_names = {
+        str(b.get("horse_name", "")).upper().strip()
+        for b in race.get("speed_map", {}).get("beneficiaries", [])
+    }
+
+    def _flags(hn_upper: str) -> str:
+        chips = []
+        if hn_upper in bb_names:
+            chips.append('<span title="Blackbook" style="color:#fbbf24">★</span>')
+        if hn_upper in trial_names:
+            chips.append('<span title="Recent trial" style="color:#a78bfa">🏇</span>')
+        if hn_upper in beneficiary_names:
+            chips.append('<span title="Pace beneficiary" style="color:#22c55e">●</span>')
+        return " ".join(chips)
+
+    # ── Col 1: meta / top ET picks (solo) ────────────────────────────
+    with c1:
+        st.markdown("**ET top 3**", help="Top 3 from the v4.4 ET model for this race")
+        for pick in (race.get("picks") or [])[:3]:
+            hn_u = str(pick.get("horse_name", "")).upper().strip()
+            flags = _flags(hn_u)
+            st.markdown(
+                f'<div style="padding:3px 0">'
+                f'<span style="opacity:0.55">#{pick.get("rank","?")}</span> '
+                f'<span style="font-weight:700">{pick.get("horse_name","")}</span>'
+                f' <span style="opacity:0.6;font-size:0.85em">({pick.get("horse_no","?")})</span>'
+                f' &nbsp; {flags}'
+                f'<div style="font-size:0.82em;opacity:0.7">'
+                f'Win {pick.get("win_prob",0):.1f}% · {pick.get("jockey","")}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+    # ── Col 2: Mutual ET ∩ SARR top-4 ──────────────────────────────
+    with c2:
+        st.markdown("**Mutual picks (ET ∩ SARR)**")
+        if not sarr_race:
+            st.caption("SARR not available — run [2/3] to populate.")
+        else:
+            et_top = {str(p["horse_name"]).upper().strip(): p
+                      for p in race.get("picks", [])[:4]}
+            sa_top = {str(p["horse_name"]).upper().strip(): p
+                      for p in sarr_race.get("picks", [])[:4]}
+            mutual = set(et_top) & set(sa_top)
+            if not mutual:
+                st.caption("No mutual top-4 picks.")
+            else:
+                rows = []
+                for hn in mutual:
+                    ep = et_top[hn]; sp = sa_top[hn]
+                    e_rk = ep.get("rank", 99); s_rk = sp.get("rank", 99)
+                    if e_rk <= 2 and s_rk <= 2:
+                        col = "#22c55e"
+                    elif e_rk <= 3 and s_rk <= 3:
+                        col = "#f59e0b"
+                    else:
+                        col = "inherit"
+                    rows.append((min(e_rk, s_rk), hn, ep, sp, e_rk, s_rk, col))
+                rows.sort(key=lambda r: r[0])
+                for _, hn, ep, sp, e_rk, s_rk, col in rows[:3]:
+                    flags = _flags(hn)
+                    st.markdown(
+                        f'<div style="padding:4px 0;border-left:3px solid {col};'
+                        f'padding-left:8px;margin-bottom:3px">'
+                        f'<span style="color:{col};font-weight:800">{ep.get("horse_name","").title()}</span>'
+                        f' <span style="opacity:0.6;font-size:0.85em">(#{ep.get("horse_no","?")})</span>'
+                        f' &nbsp; {flags}'
+                        f'<div style="font-size:0.82em;opacity:0.75">'
+                        f'ET #{e_rk} · SARR #{s_rk} · {ep.get("jockey","")}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+
+    # ── Col 3: Factor edges top 3 for this race ────────────────────
+    with c3:
+        st.markdown("**Factor edges**", help="Historical IV / A-E signals for this race only")
+        if not edges_for_race:
+            st.caption("No qualifying signals for this race.")
+        else:
+            top_edges = sorted(edges_for_race, key=lambda e: -e["score"])[:3]
+            for e in top_edges:
+                col = ("#22c55e" if e["tier"] == "green"
+                       else "#f59e0b" if e["tier"] == "amber" else "inherit")
+                sig_short = " · ".join(lbl for lbl, _, _ in e["signals"][:3])
+                flags = _flags(str(e.get("horse","")).upper().strip())
+                st.markdown(
+                    f'<div style="padding:4px 0;border-left:3px solid {col};'
+                    f'padding-left:8px;margin-bottom:3px">'
+                    f'<span style="color:{col};font-weight:800">{e.get("horse","")}</span>'
+                    f' <span style="opacity:0.6;font-size:0.85em">(#{e.get("horse_no","?")})</span>'
+                    f' &nbsp; <span style="color:{col};font-weight:700">{e["score"]:+.2f}</span>'
+                    f' &nbsp; {flags}'
+                    f'<div style="font-size:0.80em;opacity:0.7">{sig_short}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+    # ── Mini speed-map (optional, collapsed by default) ────────────
+    with st.expander("Speedmap + pace research", expanded=False):
+        render_speed_map(race)
+
+    # Footer: cross-navigation
+    st.caption("★ Blackbook &nbsp; 🏇 Recent trial &nbsp; ● Pace beneficiary "
+               "&nbsp; · &nbsp; Jump to full analysis on **Model Analysis** page.")
+
+
 def page_overview():
 
-    st.markdown('<div class="page-title">Overview</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Blackbook &middot; Mutual model picks &middot; Trial standouts</div>',
+    st.markdown('<div class="page-title">Race Day Insight</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-subtitle">Race-time cockpit &middot; one race at a time</div>',
                 unsafe_allow_html=True)
 
     meeting_info = _overview_find_today_meeting()
@@ -2493,6 +2661,52 @@ def page_overview():
     st.markdown(f"### {data.get('meeting_title', nice_date)}")
     if version:
         st.caption(f"Model {version}  ·  {len(races)} races")
+
+    # ══════════════════════════════════════════════════════════════════
+    # RACE-TIME COCKPIT — top-of-page, single-race focus
+    # ══════════════════════════════════════════════════════════════════
+    if races:
+        rns = [r["race_number"] for r in races]
+        sel_rn = st.radio(
+            "Race",
+            options=rns,
+            index=0, horizontal=True,
+            format_func=lambda x: f"R{x}",
+            key="cockpit_race",
+            label_visibility="collapsed",
+        )
+        sel_race = next((r for r in races if r["race_number"] == sel_rn), None)
+        sel_sarr = next((r for r in sarr_races if r["race_number"] == sel_rn), None) \
+                   if sarr_races else None
+
+        # Cached factor edges for the meeting; filter to this race.
+        fe_window = st.session_state.get("overview_fe_window", "current_season_25_26")
+        all_edges = _factor_edges_for_meeting(
+            dstr, fe_window,
+            str(meeting_info["file"]),
+            meeting_info["file"].stat().st_mtime if meeting_info["file"].exists() else 0.0,
+            FACTOR_TABLES_PATH.stat().st_mtime if FACTOR_TABLES_PATH.exists() else 0.0,
+            6,
+        )
+        edges_for_race = [e for e in all_edges if e.get("race") == sel_rn]
+
+        bb = _load_blackbook()
+        active = _bb_active_lookup(bb)
+        trial_index = _load_all_trial_horse_index()
+
+        if sel_race:
+            _render_race_cockpit(sel_race, sel_sarr, edges_for_race,
+                                 active, trial_index, meeting_info)
+
+    st.markdown("---")
+
+    # ── Cross-race rollup (collapsible for decluttered race-day view) ──
+    show_rollup = st.toggle(
+        "Show cross-race rollup (blackbook · mutual picks · factor edges · trials)",
+        value=False, key="overview_show_rollup",
+    )
+    if not show_rollup:
+        return
 
     # ── Section 1: Blackbooked horses running today ─────────
     bb = _load_blackbook()
@@ -10046,7 +10260,7 @@ def main():
 
     # ── Navigation ────────────────────────────────────────────────────────
     NAV_ITEMS = [
-        ("Overview",       "🏁 Overview"),
+        ("Race Day Insight", "🏁 Race Day Insight"),
         ("Form Guide",     "📖 Form Guide"),
         ("Model Analysis", "📊 Model Analysis"),
         ("Data Analysis",  "🔬 Data Analysis"),
@@ -10061,10 +10275,12 @@ def main():
         ("PDF Builder",    "📄 PDF Builder"),
     ]
     if "nav_page" not in st.session_state:
-        st.session_state["nav_page"] = "Overview"
-    # Migrate old nav-key if persisted
+        st.session_state["nav_page"] = "Race Day Insight"
+    # Migrate old nav-keys if persisted
     if st.session_state["nav_page"] == "Race Day":
         st.session_state["nav_page"] = "Model Analysis"
+    if st.session_state["nav_page"] == "Overview":
+        st.session_state["nav_page"] = "Race Day Insight"
 
     for page_name, label in NAV_ITEMS:
         is_active = st.session_state["nav_page"] == page_name
@@ -10079,7 +10295,7 @@ def main():
 
     page = st.session_state["nav_page"]
 
-    if page == "Overview":
+    if page == "Race Day Insight":
         page_overview()
     elif page == "Model Analysis":
         selected = sidebar_race_day()
