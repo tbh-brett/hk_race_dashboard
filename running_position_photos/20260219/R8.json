@@ -47,12 +47,751 @@
       "y_center": 546
     }
   ],
-  "horses": [],
+  "horses": [
+    {
+      "horse_name": "AKERMANIS GOLD",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 457,
+          "cy": 106,
+          "x_frac": 0.6347222222222222,
+          "conf": 0.882,
+          "match_score": 0.963,
+          "ocr_text": "AkermanisGold",
+          "band_label": "451",
+          "y_in_band": 0.793
+        },
+        {
+          "band_idx": 1,
+          "cx": 398,
+          "cy": 256,
+          "x_frac": 0.5534722222222223,
+          "conf": 0.856,
+          "match_score": 1.0,
+          "ocr_text": "Akermanis Gold",
+          "band_label": "800M",
+          "y_in_band": 0.839
+        },
+        {
+          "band_idx": 2,
+          "cx": 353,
+          "cy": 411,
+          "x_frac": 0.4909722222222222,
+          "conf": 0.924,
+          "match_score": 0.963,
+          "ocr_text": "AkermanisGold",
+          "band_label": "400M",
+          "y_in_band": 0.873
+        },
+        {
+          "band_idx": 5,
+          "cx": 300,
+          "cy": 572,
+          "x_frac": 0.4173611111111111,
+          "conf": 0.864,
+          "match_score": 0.963,
+          "ocr_text": "AkermanisGold",
+          "band_label": null,
+          "y_in_band": 0.73
+        }
+      ],
+      "ocr_texts": [
+        "AkermanisGold",
+        "Akermanis Gold",
+        "AkermanisGold",
+        "AkermanisGold"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.809,
+      "avg_x_frac": 0.524,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ANOTHER ZONDA",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 547,
+          "cy": 104,
+          "x_frac": 0.7597222222222222,
+          "conf": 0.812,
+          "match_score": 1.0,
+          "ocr_text": "Another Zonda",
+          "band_label": "451",
+          "y_in_band": 0.777
+        },
+        {
+          "band_idx": 5,
+          "cx": 466,
+          "cy": 572,
+          "x_frac": 0.6472222222222223,
+          "conf": 0.869,
+          "match_score": 1.0,
+          "ocr_text": "Another Zonda",
+          "band_label": null,
+          "y_in_band": 0.73
+        }
+      ],
+      "ocr_texts": [
+        "Another Zonda",
+        "Another Zonda"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.754,
+      "avg_x_frac": 0.703,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FIT FOR BEAUTY",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 558,
+          "cy": 127,
+          "x_frac": 0.775,
+          "conf": 0.873,
+          "match_score": 1.0,
+          "ocr_text": "Fit For Beauty",
+          "band_label": "451",
+          "y_in_band": 0.967
+        },
+        {
+          "band_idx": 2,
+          "cx": 481,
+          "cy": 280,
+          "x_frac": 0.6680555555555555,
+          "conf": 0.786,
+          "match_score": 1.0,
+          "ocr_text": "Fit For Beauty",
+          "band_label": "400M",
+          "y_in_band": 0.0
+        },
+        {
+          "band_idx": 3,
+          "cx": 448,
+          "cy": 438,
+          "x_frac": 0.6229166666666667,
+          "conf": 0.812,
+          "match_score": 1.0,
+          "ocr_text": "Fit For Beauty",
+          "band_label": "200M",
+          "y_in_band": 0.364
+        },
+        {
+          "band_idx": 5,
+          "cx": 423,
+          "cy": 592,
+          "x_frac": 0.5875,
+          "conf": 0.876,
+          "match_score": 0.963,
+          "ocr_text": "Fit ForBeauty",
+          "band_label": null,
+          "y_in_band": 0.91
+        }
+      ],
+      "ocr_texts": [
+        "Fit For Beauty",
+        "Fit For Beauty",
+        "Fit For Beauty",
+        "Fit ForBeauty"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.56,
+      "avg_x_frac": 0.663,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HAPPY INDEX",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 181,
+          "cy": 42,
+          "x_frac": 0.2517361111111111,
+          "conf": 0.836,
+          "match_score": 0.952,
+          "ocr_text": "Happyindex",
+          "band_label": "451",
+          "y_in_band": 0.264
+        },
+        {
+          "band_idx": 1,
+          "cx": 165,
+          "cy": 238,
+          "x_frac": 0.22916666666666666,
+          "conf": 0.868,
+          "match_score": 1.0,
+          "ocr_text": "Happy Index",
+          "band_label": "800M",
+          "y_in_band": 0.718
+        },
+        {
+          "band_idx": 2,
+          "cx": 100,
+          "cy": 392,
+          "x_frac": 0.1388888888888889,
+          "conf": 0.887,
+          "match_score": 0.952,
+          "ocr_text": "HappyIndex",
+          "band_label": "400M",
+          "y_in_band": 0.747
+        },
+        {
+          "band_idx": 5,
+          "cx": 202,
+          "cy": 550,
+          "x_frac": 0.28055555555555556,
+          "conf": 0.879,
+          "match_score": 1.0,
+          "ocr_text": "Happy Index",
+          "band_label": null,
+          "y_in_band": 0.532
+        }
+      ],
+      "ocr_texts": [
+        "Happyindex",
+        "Happy Index",
+        "HappyIndex",
+        "Happy Index"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.565,
+      "avg_x_frac": 0.225,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "INVINCIBLE STARR",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 529,
+          "cy": 329,
+          "x_frac": 0.7354166666666667,
+          "conf": 0.87,
+          "match_score": 0.968,
+          "ocr_text": "nvincible Starr",
+          "band_label": "400M",
+          "y_in_band": 0.327
+        }
+      ],
+      "ocr_texts": [
+        "nvincible Starr"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.327,
+      "avg_x_frac": 0.735,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "JUBILANT WINNER",
+      "horse_no": 14,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 263,
+          "cy": 43,
+          "x_frac": 0.3659722222222222,
+          "conf": 0.886,
+          "match_score": 1.0,
+          "ocr_text": "Jubilant Winner",
+          "band_label": "451",
+          "y_in_band": 0.273
+        },
+        {
+          "band_idx": 1,
+          "cx": 223,
+          "cy": 237,
+          "x_frac": 0.31006944444444445,
+          "conf": 0.851,
+          "match_score": 0.966,
+          "ocr_text": "JubilantWinner",
+          "band_label": "800M",
+          "y_in_band": 0.711
+        },
+        {
+          "band_idx": 2,
+          "cx": 153,
+          "cy": 400,
+          "x_frac": 0.21319444444444444,
+          "conf": 0.873,
+          "match_score": 0.966,
+          "ocr_text": "Jubilan Winner",
+          "band_label": "400M",
+          "y_in_band": 0.8
+        },
+        {
+          "band_idx": 5,
+          "cx": 140,
+          "cy": 555,
+          "x_frac": 0.19444444444444445,
+          "conf": 0.847,
+          "match_score": 0.966,
+          "ocr_text": "JubilantWinner",
+          "band_label": null,
+          "y_in_band": 0.577
+        }
+      ],
+      "ocr_texts": [
+        "Jubilant Winner",
+        "JubilantWinner",
+        "Jubilan Winner",
+        "JubilantWinner"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.59,
+      "avg_x_frac": 0.271,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "JUMBO TREASURE",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 101,
+          "cy": 39,
+          "x_frac": 0.14027777777777778,
+          "conf": 0.879,
+          "match_score": 1.0,
+          "ocr_text": "Jumbo Treasure",
+          "band_label": "451",
+          "y_in_band": 0.24
+        },
+        {
+          "band_idx": 1,
+          "cx": 94,
+          "cy": 182,
+          "x_frac": 0.13055555555555556,
+          "conf": 0.855,
+          "match_score": 1.0,
+          "ocr_text": "Jumbo Treasure",
+          "band_label": "800M",
+          "y_in_band": 0.342
+        },
+        {
+          "band_idx": 4,
+          "cx": 272,
+          "cy": 487,
+          "x_frac": 0.37777777777777777,
+          "conf": 0.886,
+          "match_score": 0.963,
+          "ocr_text": "JumboTreasure",
+          "band_label": null,
+          "y_in_band": 0.897
+        }
+      ],
+      "ocr_texts": [
+        "Jumbo Treasure",
+        "Jumbo Treasure",
+        "JumboTreasure"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.493,
+      "avg_x_frac": 0.216,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LO PAN SPIRIT",
+      "horse_no": 13,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 499,
+          "cy": 129,
+          "x_frac": 0.6930555555555555,
+          "conf": 0.864,
+          "match_score": 0.833,
+          "ocr_text": "LoPanSpinit",
+          "band_label": "451",
+          "y_in_band": 0.983
+        },
+        {
+          "band_idx": 1,
+          "cx": 430,
+          "cy": 279,
+          "x_frac": 0.5972222222222222,
+          "conf": 0.873,
+          "match_score": 0.833,
+          "ocr_text": "LoPanSpinit",
+          "band_label": "800M",
+          "y_in_band": 0.993
+        },
+        {
+          "band_idx": 2,
+          "cx": 418,
+          "cy": 415,
+          "x_frac": 0.5805555555555556,
+          "conf": 0.833,
+          "match_score": 1.0,
+          "ocr_text": "Lo Pan Spirit",
+          "band_label": "400M",
+          "y_in_band": 0.9
+        }
+      ],
+      "ocr_texts": [
+        "LoPanSpinit",
+        "LoPanSpinit",
+        "Lo Pan Spirit"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.959,
+      "avg_x_frac": 0.624,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MASTER OF ALL",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 279,
+          "cy": 264,
+          "x_frac": 0.3875,
+          "conf": 0.816,
+          "match_score": 0.917,
+          "ocr_text": "MasterOfAll",
+          "band_label": "800M",
+          "y_in_band": 0.893
+        },
+        {
+          "band_idx": 2,
+          "cx": 289,
+          "cy": 405,
+          "x_frac": 0.40208333333333335,
+          "conf": 0.803,
+          "match_score": 0.917,
+          "ocr_text": "MasterOfAll",
+          "band_label": "400M",
+          "y_in_band": 0.833
+        },
+        {
+          "band_idx": 5,
+          "cx": 462,
+          "cy": 552,
+          "x_frac": 0.6423611111111112,
+          "conf": 0.869,
+          "match_score": 0.917,
+          "ocr_text": "MasterOfAll",
+          "band_label": null,
+          "y_in_band": 0.55
+        }
+      ],
+      "ocr_texts": [
+        "MasterOfAll",
+        "MasterOfAll",
+        "MasterOfAll"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.759,
+      "avg_x_frac": 0.477,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NEW FUTURE FOLKS",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 306,
+          "cy": 112,
+          "x_frac": 0.425,
+          "conf": 0.902,
+          "match_score": 0.933,
+          "ocr_text": "NewFutureFolks",
+          "band_label": "451",
+          "y_in_band": 0.843
+        },
+        {
+          "band_idx": 1,
+          "cx": 285,
+          "cy": 243,
+          "x_frac": 0.39652777777777776,
+          "conf": 0.847,
+          "match_score": 0.968,
+          "ocr_text": "NewFuture Folks",
+          "band_label": "800M",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 2,
+          "cx": 287,
+          "cy": 334,
+          "x_frac": 0.39861111111111114,
+          "conf": 0.876,
+          "match_score": 0.968,
+          "ocr_text": "New FutureFolks",
+          "band_label": "400M",
+          "y_in_band": 0.36
+        },
+        {
+          "band_idx": 4,
+          "cx": 381,
+          "cy": 487,
+          "x_frac": 0.5298611111111111,
+          "conf": 0.841,
+          "match_score": 0.933,
+          "ocr_text": "NewFutureFolks",
+          "band_label": null,
+          "y_in_band": 0.897
+        }
+      ],
+      "ocr_texts": [
+        "NewFutureFolks",
+        "NewFuture Folks",
+        "New FutureFolks",
+        "NewFutureFolks"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.713,
+      "avg_x_frac": 0.438,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE UNIQUE STAR",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 242,
+          "cy": 109,
+          "x_frac": 0.3368055555555556,
+          "conf": 0.882,
+          "match_score": 1.0,
+          "ocr_text": "The Unique Star",
+          "band_label": "451",
+          "y_in_band": 0.818
+        },
+        {
+          "band_idx": 1,
+          "cx": 224,
+          "cy": 260,
+          "x_frac": 0.31180555555555556,
+          "conf": 0.85,
+          "match_score": 1.0,
+          "ocr_text": "The Unique Star",
+          "band_label": "800M",
+          "y_in_band": 0.866
+        },
+        {
+          "band_idx": 2,
+          "cx": 214,
+          "cy": 405,
+          "x_frac": 0.29791666666666666,
+          "conf": 0.841,
+          "match_score": 1.0,
+          "ocr_text": "The Unique Star",
+          "band_label": "400M",
+          "y_in_band": 0.833
+        },
+        {
+          "band_idx": 5,
+          "cx": 300,
+          "cy": 549,
+          "x_frac": 0.4166666666666667,
+          "conf": 0.893,
+          "match_score": 1.0,
+          "ocr_text": "The Unique Star",
+          "band_label": null,
+          "y_in_band": 0.523
+        }
+      ],
+      "ocr_texts": [
+        "The Unique Star",
+        "The Unique Star",
+        "The Unique Star",
+        "The Unique Star"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.76,
+      "avg_x_frac": 0.341,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THUNDER KIT",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 180,
+          "cy": 325,
+          "x_frac": 0.25069444444444444,
+          "conf": 0.778,
+          "match_score": 0.8,
+          "ocr_text": "ThunderRt",
+          "band_label": "400M",
+          "y_in_band": 0.3
+        }
+      ],
+      "ocr_texts": [
+        "ThunderRt"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.3,
+      "avg_x_frac": 0.251,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "TOGETHER WE VALUE",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 419,
+          "cy": 133,
+          "x_frac": 0.5819444444444445,
+          "conf": 0.874,
+          "match_score": 1.0,
+          "ocr_text": "Together We Value",
+          "band_label": "800M",
+          "y_in_band": 0.013
+        },
+        {
+          "band_idx": 2,
+          "cx": 357,
+          "cy": 284,
+          "x_frac": 0.4965277777777778,
+          "conf": 0.873,
+          "match_score": 0.97,
+          "ocr_text": "TogetherWe Value",
+          "band_label": "400M",
+          "y_in_band": 0.027
+        },
+        {
+          "band_idx": 3,
+          "cx": 321,
+          "cy": 433,
+          "x_frac": 0.44583333333333336,
+          "conf": 0.877,
+          "match_score": 1.0,
+          "ocr_text": "Together We Value",
+          "band_label": "200M",
+          "y_in_band": 0.136
+        },
+        {
+          "band_idx": 5,
+          "cx": 362,
+          "cy": 593,
+          "x_frac": 0.5027777777777778,
+          "conf": 0.905,
+          "match_score": 1.0,
+          "ocr_text": "Together We Value",
+          "band_label": null,
+          "y_in_band": 0.919
+        }
+      ],
+      "ocr_texts": [
+        "Together We Value",
+        "TogetherWe Value",
+        "Together We Value",
+        "Together We Value"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.274,
+      "avg_x_frac": 0.507,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VULCANUS",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 366,
+          "cy": 111,
+          "x_frac": 0.5090277777777777,
+          "conf": 0.805,
+          "match_score": 0.875,
+          "ocr_text": "Wulcanus",
+          "band_label": "451",
+          "y_in_band": 0.835
+        },
+        {
+          "band_idx": 2,
+          "cx": 299,
+          "cy": 284,
+          "x_frac": 0.415625,
+          "conf": 0.778,
+          "match_score": 0.875,
+          "ocr_text": "Vuicanus",
+          "band_label": "400M",
+          "y_in_band": 0.027
+        },
+        {
+          "band_idx": 5,
+          "cx": 300,
+          "cy": 593,
+          "x_frac": 0.4173611111111111,
+          "conf": 0.829,
+          "match_score": 1.0,
+          "ocr_text": "Vulcanus",
+          "band_label": null,
+          "y_in_band": 0.919
+        }
+      ],
+      "ocr_texts": [
+        "Wulcanus",
+        "Vuicanus",
+        "Vulcanus"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.594,
+      "avg_x_frac": 0.447,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
   "meta": {
     "ocr_boxes": 84,
-    "matched_horses": 0,
-    "field_size": 0,
-    "coverage": null,
-    "parsed_at": "2026-04-22T16:00:02"
+    "matched_horses": 14,
+    "field_size": 14,
+    "coverage": 1.0,
+    "parsed_at": "2026-04-23T10:53:13"
   }
 }

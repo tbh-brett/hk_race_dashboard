@@ -382,10 +382,22 @@ def main() -> int:
         print(f"\n[{d.isoformat()}] {len(photos)} photo(s)")
         for img_path, rn in photos:
             out_path = img_path.with_suffix(".json")
+            # Auto-detect stub JSONs (created when roster was empty): re-OCR them
+            is_stub = False
             if out_path.exists() and not args.force:
+                try:
+                    _existing = json.loads(out_path.read_text(encoding="utf-8"))
+                    _meta = _existing.get("meta", {}) or {}
+                    if (_meta.get("field_size") or 0) == 0 or not _existing.get("horses"):
+                        is_stub = True
+                except Exception:
+                    is_stub = True
+            if out_path.exists() and not args.force and not is_stub:
                 print(f"  R{rn}: skipped (exists)")
                 total_skipped += 1
                 continue
+            if is_stub:
+                print(f"  R{rn}: re-OCR (prior stub, empty roster)")
             try:
                 data = parse_photo(img_path, dc, rn, ocr)
             except Exception as e:

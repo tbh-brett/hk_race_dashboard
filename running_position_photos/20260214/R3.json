@@ -33,12 +33,415 @@
       "y_center": 516
     }
   ],
-  "horses": [],
+  "horses": [
+    {
+      "horse_name": "ANODE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 188,
+          "cy": 256,
+          "x_frac": 0.26180555555555557,
+          "conf": 0.827,
+          "match_score": 1.0,
+          "ocr_text": "Anode",
+          "band_label": "800M",
+          "y_in_band": 0.839
+        }
+      ],
+      "ocr_texts": [
+        "Anode"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.839,
+      "avg_x_frac": 0.262,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HAROLD WIN",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 266,
+          "cy": 124,
+          "x_frac": 0.36944444444444446,
+          "conf": 0.836,
+          "match_score": 1.0,
+          "ocr_text": "Harold Win",
+          "band_label": "436",
+          "y_in_band": 0.942
+        },
+        {
+          "band_idx": 1,
+          "cx": 181,
+          "cy": 235,
+          "x_frac": 0.2513888888888889,
+          "conf": 0.829,
+          "match_score": 1.0,
+          "ocr_text": "Harold Win",
+          "band_label": "800M",
+          "y_in_band": 0.698
+        },
+        {
+          "band_idx": 2,
+          "cx": 226,
+          "cy": 401,
+          "x_frac": 0.3145833333333333,
+          "conf": 0.836,
+          "match_score": 1.0,
+          "ocr_text": "Harold Win",
+          "band_label": "400M",
+          "y_in_band": 0.807
+        }
+      ],
+      "ocr_texts": [
+        "Harold Win",
+        "Harold Win",
+        "Harold Win"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.816,
+      "avg_x_frac": 0.312,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "JOLTIN",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 431,
+          "cy": 323,
+          "x_frac": 0.5993055555555555,
+          "conf": 0.785,
+          "match_score": 0.833,
+          "ocr_text": "Joitin",
+          "band_label": "400M",
+          "y_in_band": 0.287
+        }
+      ],
+      "ocr_texts": [
+        "Joitin"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.287,
+      "avg_x_frac": 0.599,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "LUCKY TOGETHER",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 382,
+          "cy": 257,
+          "x_frac": 0.5305555555555556,
+          "conf": 0.865,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Together",
+          "band_label": "800M",
+          "y_in_band": 0.846
+        },
+        {
+          "band_idx": 2,
+          "cx": 417,
+          "cy": 411,
+          "x_frac": 0.5791666666666667,
+          "conf": 0.862,
+          "match_score": 0.963,
+          "ocr_text": "LuckyTogether",
+          "band_label": "400M",
+          "y_in_band": 0.873
+        },
+        {
+          "band_idx": 3,
+          "cx": 457,
+          "cy": 578,
+          "x_frac": 0.6347222222222222,
+          "conf": 0.84,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Together",
+          "band_label": "200M",
+          "y_in_band": 0.86
+        }
+      ],
+      "ocr_texts": [
+        "Lucky Together",
+        "LuckyTogether",
+        "Lucky Together"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.86,
+      "avg_x_frac": 0.581,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MICKLEY",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 509,
+          "cy": 106,
+          "x_frac": 0.7079861111111111,
+          "conf": 0.779,
+          "match_score": 1.0,
+          "ocr_text": "Mickley",
+          "band_label": "436",
+          "y_in_band": 0.793
+        },
+        {
+          "band_idx": 2,
+          "cx": 284,
+          "cy": 425,
+          "x_frac": 0.39479166666666665,
+          "conf": 0.709,
+          "match_score": 0.857,
+          "ocr_text": "Micxley",
+          "band_label": "400M",
+          "y_in_band": 0.967
+        }
+      ],
+      "ocr_texts": [
+        "Mickley",
+        "Micxley"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.88,
+      "avg_x_frac": 0.551,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "QUANTUM CLOUD",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 282,
+          "cy": 253,
+          "x_frac": 0.39166666666666666,
+          "conf": 0.839,
+          "match_score": 0.96,
+          "ocr_text": "QuantumCloud",
+          "band_label": "800M",
+          "y_in_band": 0.819
+        },
+        {
+          "band_idx": 2,
+          "cx": 329,
+          "cy": 415,
+          "x_frac": 0.4576388888888889,
+          "conf": 0.89,
+          "match_score": 0.96,
+          "ocr_text": "QuantumCloud",
+          "band_label": "400M",
+          "y_in_band": 0.9
+        },
+        {
+          "band_idx": 3,
+          "cx": 263,
+          "cy": 588,
+          "x_frac": 0.36527777777777776,
+          "conf": 0.865,
+          "match_score": 0.96,
+          "ocr_text": "QuantumCloud",
+          "band_label": "200M",
+          "y_in_band": 0.919
+        }
+      ],
+      "ocr_texts": [
+        "QuantumCloud",
+        "QuantumCloud",
+        "QuantumCloud"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.879,
+      "avg_x_frac": 0.405,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RED SEA",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 3,
+          "cx": 215,
+          "cy": 558,
+          "x_frac": 0.2986111111111111,
+          "conf": 0.839,
+          "match_score": 0.923,
+          "ocr_text": "RedSea",
+          "band_label": "200M",
+          "y_in_band": 0.744
+        }
+      ],
+      "ocr_texts": [
+        "RedSea"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.744,
+      "avg_x_frac": 0.299,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RISING FROM ASHES",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 309,
+          "cy": 37,
+          "x_frac": 0.42986111111111114,
+          "conf": 0.905,
+          "match_score": 1.0,
+          "ocr_text": "Rising From Ashes",
+          "band_label": "436",
+          "y_in_band": 0.223
+        },
+        {
+          "band_idx": 1,
+          "cx": 349,
+          "cy": 234,
+          "x_frac": 0.4847222222222222,
+          "conf": 0.876,
+          "match_score": 1.0,
+          "ocr_text": "Rising From Ashes",
+          "band_label": "800M",
+          "y_in_band": 0.691
+        },
+        {
+          "band_idx": 2,
+          "cx": 502,
+          "cy": 400,
+          "x_frac": 0.6982638888888889,
+          "conf": 0.876,
+          "match_score": 0.97,
+          "ocr_text": "RisingFrom Ashes",
+          "band_label": "400M",
+          "y_in_band": 0.8
+        }
+      ],
+      "ocr_texts": [
+        "Rising From Ashes",
+        "Rising From Ashes",
+        "RisingFrom Ashes"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.571,
+      "avg_x_frac": 0.538,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TACTICAL VICTORY",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 270,
+          "cy": 103,
+          "x_frac": 0.37569444444444444,
+          "conf": 0.882,
+          "match_score": 1.0,
+          "ocr_text": "Tactical Victory",
+          "band_label": "436",
+          "y_in_band": 0.769
+        },
+        {
+          "band_idx": 2,
+          "cx": 372,
+          "cy": 331,
+          "x_frac": 0.5166666666666667,
+          "conf": 0.886,
+          "match_score": 1.0,
+          "ocr_text": "Tactical Victory",
+          "band_label": "400M",
+          "y_in_band": 0.34
+        }
+      ],
+      "ocr_texts": [
+        "Tactical Victory",
+        "Tactical Victory"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.554,
+      "avg_x_frac": 0.446,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WONDERSTAR",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 163,
+          "cy": 34,
+          "x_frac": 0.2263888888888889,
+          "conf": 0.907,
+          "match_score": 1.0,
+          "ocr_text": "Wonderstar",
+          "band_label": "436",
+          "y_in_band": 0.198
+        },
+        {
+          "band_idx": 1,
+          "cx": 179,
+          "cy": 169,
+          "x_frac": 0.24861111111111112,
+          "conf": 0.905,
+          "match_score": 1.0,
+          "ocr_text": "Wonderstar",
+          "band_label": "800M",
+          "y_in_band": 0.255
+        }
+      ],
+      "ocr_texts": [
+        "Wonderstar",
+        "Wonderstar"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.227,
+      "avg_x_frac": 0.237,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    }
+  ],
   "meta": {
     "ocr_boxes": 49,
-    "matched_horses": 0,
-    "field_size": 0,
-    "coverage": null,
-    "parsed_at": "2026-04-22T15:58:13"
+    "matched_horses": 10,
+    "field_size": 11,
+    "coverage": 0.909,
+    "parsed_at": "2026-04-23T10:52:12"
   }
 }

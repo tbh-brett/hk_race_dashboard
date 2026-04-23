@@ -47,12 +47,871 @@
       "y_center": 538
     }
   ],
-  "horses": [],
+  "horses": [
+    {
+      "horse_name": "CALIFORNIA BAY",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 108,
+          "cy": 100,
+          "x_frac": 0.15069444444444444,
+          "conf": 0.864,
+          "match_score": 1.0,
+          "ocr_text": "California Bay",
+          "band_label": "476",
+          "y_in_band": 0.744
+        },
+        {
+          "band_idx": 1,
+          "cx": 110,
+          "cy": 233,
+          "x_frac": 0.15347222222222223,
+          "conf": 0.872,
+          "match_score": 1.0,
+          "ocr_text": "California Bay",
+          "band_label": "800M",
+          "y_in_band": 0.685
+        },
+        {
+          "band_idx": 2,
+          "cx": 140,
+          "cy": 321,
+          "x_frac": 0.1954861111111111,
+          "conf": 0.78,
+          "match_score": 0.963,
+          "ocr_text": "CaliforniaBay",
+          "band_label": "400M",
+          "y_in_band": 0.273
+        },
+        {
+          "band_idx": 4,
+          "cx": 136,
+          "cy": 472,
+          "x_frac": 0.18958333333333333,
+          "conf": 0.782,
+          "match_score": 0.8,
+          "ocr_text": "liformiaBay",
+          "band_label": "2026",
+          "y_in_band": 0.75
+        }
+      ],
+      "ocr_texts": [
+        "California Bay",
+        "California Bay",
+        "CaliforniaBay",
+        "liformiaBay"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.613,
+      "avg_x_frac": 0.172,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CHILL PARTNERS",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 205,
+          "cy": 28,
+          "x_frac": 0.28541666666666665,
+          "conf": 0.869,
+          "match_score": 1.0,
+          "ocr_text": "Chill Partners",
+          "band_label": "476",
+          "y_in_band": 0.149
+        },
+        {
+          "band_idx": 1,
+          "cx": 180,
+          "cy": 167,
+          "x_frac": 0.25104166666666666,
+          "conf": 0.849,
+          "match_score": 0.963,
+          "ocr_text": "ChillPartners",
+          "band_label": "800M",
+          "y_in_band": 0.242
+        },
+        {
+          "band_idx": 2,
+          "cx": 205,
+          "cy": 323,
+          "x_frac": 0.2847222222222222,
+          "conf": 0.828,
+          "match_score": 1.0,
+          "ocr_text": "Chill Partners",
+          "band_label": "400M",
+          "y_in_band": 0.287
+        },
+        {
+          "band_idx": 5,
+          "cx": 99,
+          "cy": 537,
+          "x_frac": 0.13819444444444445,
+          "conf": 0.767,
+          "match_score": 0.963,
+          "ocr_text": "Chil Partners",
+          "band_label": null,
+          "y_in_band": 0.492
+        }
+      ],
+      "ocr_texts": [
+        "Chill Partners",
+        "ChillPartners",
+        "Chill Partners",
+        "Chil Partners"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.292,
+      "avg_x_frac": 0.24,
+      "wide_frames": 0,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DECISION LINK",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 292,
+          "cy": 28,
+          "x_frac": 0.40625,
+          "conf": 0.903,
+          "match_score": 1.0,
+          "ocr_text": "Decision Link",
+          "band_label": "476",
+          "y_in_band": 0.149
+        },
+        {
+          "band_idx": 2,
+          "cx": 333,
+          "cy": 410,
+          "x_frac": 0.46319444444444446,
+          "conf": 0.887,
+          "match_score": 1.0,
+          "ocr_text": "Decision Link",
+          "band_label": "400M",
+          "y_in_band": 0.867
+        },
+        {
+          "band_idx": 5,
+          "cx": 259,
+          "cy": 546,
+          "x_frac": 0.3597222222222222,
+          "conf": 0.76,
+          "match_score": 0.96,
+          "ocr_text": "DecisionLink",
+          "band_label": null,
+          "y_in_band": 0.562
+        }
+      ],
+      "ocr_texts": [
+        "Decision Link",
+        "Decision Link",
+        "DecisionLink"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.526,
+      "avg_x_frac": 0.41,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FIGHT TIME",
+      "horse_no": 13,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 354,
+          "cy": 100,
+          "x_frac": 0.49166666666666664,
+          "conf": 0.867,
+          "match_score": 1.0,
+          "ocr_text": "Fight Time",
+          "band_label": "476",
+          "y_in_band": 0.744
+        },
+        {
+          "band_idx": 1,
+          "cx": 299,
+          "cy": 267,
+          "x_frac": 0.4152777777777778,
+          "conf": 0.879,
+          "match_score": 1.0,
+          "ocr_text": "Fight Time",
+          "band_label": "800M",
+          "y_in_band": 0.913
+        },
+        {
+          "band_idx": 3,
+          "cx": 329,
+          "cy": 435,
+          "x_frac": 0.45694444444444443,
+          "conf": 0.833,
+          "match_score": 1.0,
+          "ocr_text": "Fight Time",
+          "band_label": "200M",
+          "y_in_band": 0.139
+        },
+        {
+          "band_idx": 5,
+          "cx": 145,
+          "cy": 549,
+          "x_frac": 0.20208333333333334,
+          "conf": 0.847,
+          "match_score": 1.0,
+          "ocr_text": "Fight Time",
+          "band_label": null,
+          "y_in_band": 0.586
+        }
+      ],
+      "ocr_texts": [
+        "Fight Time",
+        "Fight Time",
+        "Fight Time",
+        "Fight Time"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.596,
+      "avg_x_frac": 0.391,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FIGHTING MACHINE",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 610,
+          "cy": 100,
+          "x_frac": 0.8472222222222222,
+          "conf": 0.883,
+          "match_score": 1.0,
+          "ocr_text": "Fighting MacHine",
+          "band_label": "476",
+          "y_in_band": 0.744
+        },
+        {
+          "band_idx": 1,
+          "cx": 542,
+          "cy": 263,
+          "x_frac": 0.7534722222222222,
+          "conf": 0.912,
+          "match_score": 1.0,
+          "ocr_text": "Fighting MacHine",
+          "band_label": "800M",
+          "y_in_band": 0.886
+        },
+        {
+          "band_idx": 2,
+          "cx": 462,
+          "cy": 388,
+          "x_frac": 0.6416666666666667,
+          "conf": 0.911,
+          "match_score": 1.0,
+          "ocr_text": "Fighting MacHine",
+          "band_label": "400M",
+          "y_in_band": 0.72
+        },
+        {
+          "band_idx": 5,
+          "cx": 313,
+          "cy": 537,
+          "x_frac": 0.4354166666666667,
+          "conf": 0.862,
+          "match_score": 1.0,
+          "ocr_text": "Fighting MacHine",
+          "band_label": null,
+          "y_in_band": 0.492
+        }
+      ],
+      "ocr_texts": [
+        "Fighting MacHine",
+        "Fighting MacHine",
+        "Fighting MacHine",
+        "Fighting MacHine"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.71,
+      "avg_x_frac": 0.669,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GASTRONOMIQUE",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 471,
+          "cy": 101,
+          "x_frac": 0.6548611111111111,
+          "conf": 0.886,
+          "match_score": 1.0,
+          "ocr_text": "Gastronomique",
+          "band_label": "476",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 2,
+          "cx": 361,
+          "cy": 288,
+          "x_frac": 0.5013888888888889,
+          "conf": 0.907,
+          "match_score": 1.0,
+          "ocr_text": "Gastronomique",
+          "band_label": "400M",
+          "y_in_band": 0.053
+        },
+        {
+          "band_idx": 3,
+          "cx": 276,
+          "cy": 440,
+          "x_frac": 0.384375,
+          "conf": 0.874,
+          "match_score": 1.0,
+          "ocr_text": "Gastronomique",
+          "band_label": "200M",
+          "y_in_band": 0.278
+        },
+        {
+          "band_idx": 5,
+          "cx": 122,
+          "cy": 571,
+          "x_frac": 0.1701388888888889,
+          "conf": 0.876,
+          "match_score": 1.0,
+          "ocr_text": "Gastronomique",
+          "band_label": null,
+          "y_in_band": 0.758
+        }
+      ],
+      "ocr_texts": [
+        "Gastronomique",
+        "Gastronomique",
+        "Gastronomique",
+        "Gastronomique"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.46,
+      "avg_x_frac": 0.428,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MAGIC SUPER",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 376,
+          "cy": 28,
+          "x_frac": 0.5229166666666667,
+          "conf": 0.908,
+          "match_score": 1.0,
+          "ocr_text": "Magic Super",
+          "band_label": "476",
+          "y_in_band": 0.149
+        },
+        {
+          "band_idx": 1,
+          "cx": 431,
+          "cy": 233,
+          "x_frac": 0.5986111111111111,
+          "conf": 0.884,
+          "match_score": 1.0,
+          "ocr_text": "Magic Super",
+          "band_label": "800M",
+          "y_in_band": 0.685
+        },
+        {
+          "band_idx": 2,
+          "cx": 540,
+          "cy": 323,
+          "x_frac": 0.7506944444444444,
+          "conf": 0.811,
+          "match_score": 1.0,
+          "ocr_text": "Magic Super",
+          "band_label": "400M",
+          "y_in_band": 0.287
+        },
+        {
+          "band_idx": 5,
+          "cx": 642,
+          "cy": 539,
+          "x_frac": 0.8923611111111112,
+          "conf": 0.842,
+          "match_score": 1.0,
+          "ocr_text": "Magic Super",
+          "band_label": null,
+          "y_in_band": 0.508
+        }
+      ],
+      "ocr_texts": [
+        "Magic Super",
+        "Magic Super",
+        "Magic Super",
+        "Magic Super"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.407,
+      "avg_x_frac": 0.691,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MR COOL",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 459,
+          "cy": 289,
+          "x_frac": 0.6375,
+          "conf": 0.82,
+          "match_score": 0.923,
+          "ocr_text": "MrCool",
+          "band_label": "400M",
+          "y_in_band": 0.06
+        },
+        {
+          "band_idx": 2,
+          "cx": 405,
+          "cy": 426,
+          "x_frac": 0.5625,
+          "conf": 0.805,
+          "match_score": 0.833,
+          "ocr_text": "MrCoo",
+          "band_label": "400M",
+          "y_in_band": 0.973
+        },
+        {
+          "band_idx": 5,
+          "cx": 114,
+          "cy": 593,
+          "x_frac": 0.15902777777777777,
+          "conf": 0.811,
+          "match_score": 0.923,
+          "ocr_text": "MrCool",
+          "band_label": null,
+          "y_in_band": 0.93
+        }
+      ],
+      "ocr_texts": [
+        "MrCool",
+        "MrCoo",
+        "MrCool"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.654,
+      "avg_x_frac": 0.453,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "REGROWTH WINNER",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 531,
+          "cy": 29,
+          "x_frac": 0.7381944444444445,
+          "conf": 0.876,
+          "match_score": 1.0,
+          "ocr_text": "Regrowth Winner",
+          "band_label": "476",
+          "y_in_band": 0.157
+        },
+        {
+          "band_idx": 1,
+          "cx": 532,
+          "cy": 239,
+          "x_frac": 0.7388888888888889,
+          "conf": 0.857,
+          "match_score": 0.966,
+          "ocr_text": "RegrowthWinner",
+          "band_label": "800M",
+          "y_in_band": 0.725
+        },
+        {
+          "band_idx": 2,
+          "cx": 610,
+          "cy": 396,
+          "x_frac": 0.8479166666666667,
+          "conf": 0.893,
+          "match_score": 1.0,
+          "ocr_text": "Regrowth Winner",
+          "band_label": "400M",
+          "y_in_band": 0.773
+        },
+        {
+          "band_idx": 5,
+          "cx": 580,
+          "cy": 547,
+          "x_frac": 0.8055555555555556,
+          "conf": 0.907,
+          "match_score": 0.897,
+          "ocr_text": "RegrowihWinner",
+          "band_label": null,
+          "y_in_band": 0.57
+        }
+      ],
+      "ocr_texts": [
+        "Regrowth Winner",
+        "RegrowthWinner",
+        "Regrowth Winner",
+        "RegrowihWinner"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.556,
+      "avg_x_frac": 0.783,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SHOOTING TO TOP",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 545,
+          "cy": 101,
+          "x_frac": 0.7569444444444444,
+          "conf": 0.885,
+          "match_score": 1.0,
+          "ocr_text": "Shooting To Top",
+          "band_label": "476",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 1,
+          "cx": 478,
+          "cy": 266,
+          "x_frac": 0.6645833333333333,
+          "conf": 0.808,
+          "match_score": 1.0,
+          "ocr_text": "Shooting To Top",
+          "band_label": "800M",
+          "y_in_band": 0.906
+        },
+        {
+          "band_idx": 2,
+          "cx": 476,
+          "cy": 414,
+          "x_frac": 0.6618055555555555,
+          "conf": 0.868,
+          "match_score": 1.0,
+          "ocr_text": "Shooting To Top",
+          "band_label": "400M",
+          "y_in_band": 0.893
+        },
+        {
+          "band_idx": 5,
+          "cx": 251,
+          "cy": 570,
+          "x_frac": 0.34930555555555554,
+          "conf": 0.855,
+          "match_score": 0.966,
+          "ocr_text": "ShootingTo Top",
+          "band_label": null,
+          "y_in_band": 0.75
+        }
+      ],
+      "ocr_texts": [
+        "Shooting To Top",
+        "Shooting To Top",
+        "Shooting To Top",
+        "ShootingTo Top"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.825,
+      "avg_x_frac": 0.608,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE ABSOLUTE",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 619,
+          "cy": 28,
+          "x_frac": 0.8597222222222223,
+          "conf": 0.804,
+          "match_score": 0.957,
+          "ocr_text": "TheAbsolute-",
+          "band_label": "476",
+          "y_in_band": 0.149
+        },
+        {
+          "band_idx": 1,
+          "cx": 529,
+          "cy": 173,
+          "x_frac": 0.7347222222222223,
+          "conf": 0.861,
+          "match_score": 1.0,
+          "ocr_text": "The Absolute",
+          "band_label": "800M",
+          "y_in_band": 0.282
+        },
+        {
+          "band_idx": 2,
+          "cx": 465,
+          "cy": 320,
+          "x_frac": 0.6465277777777778,
+          "conf": 0.881,
+          "match_score": 0.957,
+          "ocr_text": "TheAbsolute",
+          "band_label": "400M",
+          "y_in_band": 0.267
+        },
+        {
+          "band_idx": 4,
+          "cx": 273,
+          "cy": 471,
+          "x_frac": 0.3798611111111111,
+          "conf": 0.867,
+          "match_score": 1.0,
+          "ocr_text": "The Absolute",
+          "band_label": "2026",
+          "y_in_band": 0.625
+        }
+      ],
+      "ocr_texts": [
+        "TheAbsolute-",
+        "The Absolute",
+        "TheAbsolute",
+        "The Absolute"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.331,
+      "avg_x_frac": 0.655,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WHOWROTETHATSONG",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 681,
+          "cy": 30,
+          "x_frac": 0.9458333333333333,
+          "conf": 0.927,
+          "match_score": 1.0,
+          "ocr_text": "Whowrotethatsong",
+          "band_label": "476",
+          "y_in_band": 0.165
+        },
+        {
+          "band_idx": 1,
+          "cx": 610,
+          "cy": 240,
+          "x_frac": 0.8482638888888889,
+          "conf": 0.908,
+          "match_score": 1.0,
+          "ocr_text": "Whowrotethatsong",
+          "band_label": "800M",
+          "y_in_band": 0.732
+        },
+        {
+          "band_idx": 2,
+          "cx": 613,
+          "cy": 421,
+          "x_frac": 0.8520833333333333,
+          "conf": 0.895,
+          "match_score": 1.0,
+          "ocr_text": "Whowrotethatsong",
+          "band_label": "400M",
+          "y_in_band": 0.94
+        },
+        {
+          "band_idx": 5,
+          "cx": 472,
+          "cy": 570,
+          "x_frac": 0.65625,
+          "conf": 0.888,
+          "match_score": 1.0,
+          "ocr_text": "Whowrotethatsong",
+          "band_label": null,
+          "y_in_band": 0.75
+        }
+      ],
+      "ocr_texts": [
+        "Whowrotethatsong",
+        "Whowrotethatsong",
+        "Whowrotethatsong",
+        "Whowrotethatsong"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.647,
+      "avg_x_frac": 0.826,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WIN SPEED",
+      "horse_no": 14,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 166,
+          "cy": 101,
+          "x_frac": 0.23125,
+          "conf": 0.841,
+          "match_score": 1.0,
+          "ocr_text": "Win Speed",
+          "band_label": "476",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 1,
+          "cx": 177,
+          "cy": 233,
+          "x_frac": 0.24583333333333332,
+          "conf": 0.814,
+          "match_score": 0.941,
+          "ocr_text": "WinSpeed",
+          "band_label": "800M",
+          "y_in_band": 0.685
+        },
+        {
+          "band_idx": 2,
+          "cx": 278,
+          "cy": 404,
+          "x_frac": 0.38680555555555557,
+          "conf": 0.876,
+          "match_score": 1.0,
+          "ocr_text": "Win Speed",
+          "band_label": "400M",
+          "y_in_band": 0.827
+        },
+        {
+          "band_idx": 4,
+          "cx": 328,
+          "cy": 471,
+          "x_frac": 0.45555555555555555,
+          "conf": 0.867,
+          "match_score": 1.0,
+          "ocr_text": "Win Speed",
+          "band_label": "2026",
+          "y_in_band": 0.625
+        }
+      ],
+      "ocr_texts": [
+        "Win Speed",
+        "WinSpeed",
+        "Win Speed",
+        "Win Speed"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.722,
+      "avg_x_frac": 0.33,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WINNING CHAMPION",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 257,
+          "cy": 101,
+          "x_frac": 0.35694444444444445,
+          "conf": 0.902,
+          "match_score": 1.0,
+          "ocr_text": "Winning Champion",
+          "band_label": "476",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 1,
+          "cx": 205,
+          "cy": 257,
+          "x_frac": 0.28541666666666665,
+          "conf": 0.888,
+          "match_score": 1.0,
+          "ocr_text": "Winning Champion",
+          "band_label": "800M",
+          "y_in_band": 0.846
+        },
+        {
+          "band_idx": 2,
+          "cx": 220,
+          "cy": 407,
+          "x_frac": 0.3055555555555556,
+          "conf": 0.902,
+          "match_score": 1.0,
+          "ocr_text": "Winning Champion",
+          "band_label": "400M",
+          "y_in_band": 0.847
+        },
+        {
+          "band_idx": 5,
+          "cx": 180,
+          "cy": 541,
+          "x_frac": 0.25104166666666666,
+          "conf": 0.813,
+          "match_score": 0.968,
+          "ocr_text": "凯牌幸通WinningChampion",
+          "band_label": null,
+          "y_in_band": 0.523
+        }
+      ],
+      "ocr_texts": [
+        "Winning Champion",
+        "Winning Champion",
+        "Winning Champion",
+        "凯牌幸通WinningChampion"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.742,
+      "avg_x_frac": 0.3,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
   "meta": {
     "ocr_boxes": 91,
-    "matched_horses": 0,
-    "field_size": 0,
-    "coverage": null,
-    "parsed_at": "2026-04-22T16:02:48"
+    "matched_horses": 14,
+    "field_size": 14,
+    "coverage": 1.0,
+    "parsed_at": "2026-04-23T10:54:41"
   }
 }

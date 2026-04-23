@@ -3618,7 +3618,9 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
         2. ``scrape_hkjc.py``         → merged into ``hkjc_results_updated.xlsx``
         3. ``scrape_hkjc_incident_reports.py`` → ``reports/incidents_YYYYMMDD.json``
         4. ``scrape_hkjc_rp_photos.py`` → ``running_position_photos/YYYYMMDD/R*.jpg``
-        5. ``race_commentary.py``     → ``reports/commentary_YYYYMMDD.json``
+        5. ``parse_rp_photos.py``     → ``running_position_photos/YYYYMMDD/R*.json`` (OCR)
+        6. ``build_form_guide.py``    → refresh ``cache/form_guide_YYYY-MM-DD.json`` with lane data
+        7. ``race_commentary.py``     → ``reports/commentary_YYYYMMDD.json``
     """
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
@@ -3632,19 +3634,23 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
         full_scrape_tmp = Path(tempfile.gettempdir()) / "hkjc_results.xlsx"
 
         steps = [
-            ("1/5 Results JSON",
+            ("1/7 Results JSON",
              [PYTHON, str(BASE / "scrape_hkjc_results.py"), "--date", date_str]),
-            ("2/5 Full DB scrape (sectionals, horse profiles)",
+            ("2/7 Full DB scrape (sectionals, horse profiles)",
              [PYTHON, str(BASE / "scrape_hkjc.py"),
               "--dates", dd_mm_yyyy,
               "--horse-cache", str(horse_cache),
               "--no-cache",
               "--output", str(full_scrape_tmp)]),
-            ("3/5 Incident reports",
+            ("3/7 Incident reports",
              [PYTHON, str(BASE / "scrape_hkjc_incident_reports.py"), "--date", date_str]),
-            ("4/5 Running-position photos",
+            ("4/7 Running-position photos",
              [PYTHON, str(BASE / "scrape_hkjc_rp_photos.py"), "--date", date_str]),
-            ("5/5 Race commentary",
+            ("5/7 OCR running-position photos → lane JSON",
+             [PYTHON, str(BASE / "parse_rp_photos.py"), "--date", date_str, "--force"]),
+            ("6/7 Rebuild form guide (with lane data)",
+             [PYTHON, str(BASE / "build_form_guide.py"), date_str]),
+            ("7/7 Race commentary",
              [PYTHON, str(BASE / "race_commentary.py"), "--date", date_str]),
         ]
 
@@ -3701,6 +3707,41 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
             results_json = REPORTS / f"results_{date_compact}.json"
             if results_json.exists():
                 _append_results_to_db(results_json)
+            # If running-position photos already exist but lack OCR (or were
+            # stubbed before results existed), re-run OCR now so lane data
+            # becomes available immediately.
+            rp_dir = BASE / "running_position_photos" / date_compact
+            if rp_dir.exists() and any(rp_dir.glob("R*.jpg")):
+                need_ocr = False
+                for jpg in rp_dir.glob("R*.jpg"):
+                    js = jpg.with_suffix(".json")
+                    if not js.exists():
+                        need_ocr = True; break
+                    try:
+                        _j = json.loads(js.read_text(encoding="utf-8"))
+                        if (_j.get("meta", {}) or {}).get("field_size", 0) == 0:
+                            need_ocr = True; break
+                    except Exception:
+                        need_ocr = True; break
+                if need_ocr:
+                    with st.spinner("Re-OCR running-position photos against refreshed roster…"):
+                        _r = subprocess.run(
+                            [PYTHON, str(BASE / "parse_rp_photos.py"),
+                             "--date", date_str, "--force"],
+                            env=env, cwd=str(BASE),
+                            capture_output=True, text=True, encoding="utf-8", timeout=600,
+                        )
+                    if _r.returncode == 0:
+                        st.info("Running-lane OCR refreshed.")
+                        # rebuild form guide so Race Card shows updated lanes
+                        try:
+                            subprocess.run(
+                                [PYTHON, str(BASE / "build_form_guide.py"), date_str],
+                                env=env, cwd=str(BASE),
+                                capture_output=True, text=True, encoding="utf-8", timeout=600,
+                            )
+                        except Exception:
+                            pass
         else:
             st.error(f"Scraper failed (exit code {result.returncode})")
             with st.expander("Error"):
@@ -4676,10 +4717,66 @@ def page_results():
     else:
         st.dataframe(_res_df, use_container_width=True, hide_index=True,
                         column_config=_res_col_cfg)
-        st.caption(
-            "🛤️ Running-lane breakdown unavailable — no OCR JSON for this race "
-            "(running_position_photos/" + selected_dc + "/R" + str(selected_rn) + ".json missing)."
-        )
+        _ocr_path = BASE / "running_position_photos" / selected_dc / f"R{selected_rn}.json"
+        _jpg_path = BASE / "running_position_photos" / selected_dc / f"R{selected_rn}.jpg"
+        if _jpg_path.exists() and _ocr_path.exists():
+            # OCR exists but is a stub — offer an inline re-OCR button
+            _stub = False
+            try:
+                _j = json.loads(_ocr_path.read_text(encoding="utf-8"))
+                if not _j.get("horses") or (_j.get("meta", {}) or {}).get("field_size") == 0:
+                    _stub = True
+            except Exception:
+                _stub = True
+            if _stub:
+                cols = st.columns([3, 1])
+                cols[0].warning(
+                    f"🛤️ Running-lane OCR exists but is empty (stub — created before "
+                    f"results were scraped). Click to regenerate."
+                )
+                if cols[1].button("🔄 Re-run OCR", key=f"reocr_{selected_dc}_{selected_rn}"):
+                    env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
+                    with st.spinner(f"Re-OCR {selected_dc} R{selected_rn}…"):
+                        r = subprocess.run(
+                            [PYTHON, str(BASE / "parse_rp_photos.py"),
+                             "--date", f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}",
+                             "--race", str(selected_rn), "--force"],
+                            env=env, cwd=str(BASE),
+                            capture_output=True, text=True, encoding="utf-8", timeout=120,
+                        )
+                    if r.returncode == 0:
+                        st.success("OCR regenerated — reload page to see lanes.")
+                    else:
+                        st.error(f"OCR failed: {r.stderr[-500:] or r.stdout[-500:]}")
+            else:
+                st.caption(
+                    "🛤️ Running-lane breakdown unavailable — OCR JSON parsed but "
+                    "no horses matched results roster."
+                )
+        elif _jpg_path.exists():
+            cols = st.columns([3, 1])
+            cols[0].info(
+                f"🛤️ Photo exists but OCR not yet generated for R{selected_rn}."
+            )
+            if cols[1].button("📷 Run OCR now", key=f"ocrnow_{selected_dc}_{selected_rn}"):
+                env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
+                with st.spinner(f"OCR {selected_dc} R{selected_rn}…"):
+                    r = subprocess.run(
+                        [PYTHON, str(BASE / "parse_rp_photos.py"),
+                         "--date", f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}",
+                         "--race", str(selected_rn)],
+                        env=env, cwd=str(BASE),
+                        capture_output=True, text=True, encoding="utf-8", timeout=120,
+                    )
+                if r.returncode == 0:
+                    st.success("OCR complete — reload page to see lanes.")
+                else:
+                    st.error(f"OCR failed: {r.stderr[-500:] or r.stdout[-500:]}")
+        else:
+            st.caption(
+                "🛤️ Running-lane breakdown unavailable — no running-position photo "
+                f"cached for this race (running_position_photos/{selected_dc}/R{selected_rn}.jpg missing)."
+            )
 
     _xl_bytes = _results_json_to_excel_bytes(REPORTS / f"results_{selected_dc}.json")
     if _xl_bytes:

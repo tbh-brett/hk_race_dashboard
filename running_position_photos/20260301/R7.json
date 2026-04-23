@@ -33,12 +33,307 @@
       "y_center": 516
     }
   ],
-  "horses": [],
+  "horses": [
+    {
+      "horse_name": "BEAUTY JOY",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 117,
+          "cy": 99,
+          "x_frac": 0.16319444444444445,
+          "conf": 0.858,
+          "match_score": 1.0,
+          "ocr_text": "Beauty Joy",
+          "band_label": "481",
+          "y_in_band": 0.736
+        },
+        {
+          "band_idx": 1,
+          "cx": 101,
+          "cy": 174,
+          "x_frac": 0.140625,
+          "conf": 0.866,
+          "match_score": 0.947,
+          "ocr_text": "BeautyJoy",
+          "band_label": "800M",
+          "y_in_band": 0.289
+        },
+        {
+          "band_idx": 2,
+          "cx": 304,
+          "cy": 324,
+          "x_frac": 0.42291666666666666,
+          "conf": 0.882,
+          "match_score": 0.947,
+          "ocr_text": "BeautyJoy",
+          "band_label": "400M",
+          "y_in_band": 0.293
+        }
+      ],
+      "ocr_texts": [
+        "Beauty Joy",
+        "BeautyJoy",
+        "BeautyJoy"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.439,
+      "avg_x_frac": 0.242,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ENSUED",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 121,
+          "cy": 238,
+          "x_frac": 0.16805555555555557,
+          "conf": 0.835,
+          "match_score": 1.0,
+          "ocr_text": "Ensued",
+          "band_label": "800M",
+          "y_in_band": 0.718
+        },
+        {
+          "band_idx": 3,
+          "cx": 288,
+          "cy": 537,
+          "x_frac": 0.40069444444444446,
+          "conf": 0.824,
+          "match_score": 1.0,
+          "ocr_text": "Ensued",
+          "band_label": "200M",
+          "y_in_band": 0.622
+        }
+      ],
+      "ocr_texts": [
+        "Ensued",
+        "Ensued"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.67,
+      "avg_x_frac": 0.284,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MY WISH",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 3,
+          "cx": 350,
+          "cy": 544,
+          "x_frac": 0.4861111111111111,
+          "conf": 0.743,
+          "match_score": 0.923,
+          "ocr_text": "MyWish",
+          "band_label": "200M",
+          "y_in_band": 0.663
+        }
+      ],
+      "ocr_texts": [
+        "MyWish"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.663,
+      "avg_x_frac": 0.486,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ROMANTIC WARRIOR",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 330,
+          "cy": 100,
+          "x_frac": 0.4583333333333333,
+          "conf": 0.837,
+          "match_score": 1.0,
+          "ocr_text": "Romantic Warrior",
+          "band_label": "481",
+          "y_in_band": 0.744
+        },
+        {
+          "band_idx": 1,
+          "cx": 168,
+          "cy": 250,
+          "x_frac": 0.23402777777777778,
+          "conf": 0.908,
+          "match_score": 1.0,
+          "ocr_text": "Romantic Warrior",
+          "band_label": "800M",
+          "y_in_band": 0.799
+        },
+        {
+          "band_idx": 2,
+          "cx": 137,
+          "cy": 398,
+          "x_frac": 0.19027777777777777,
+          "conf": 0.904,
+          "match_score": 1.0,
+          "ocr_text": "Romantic Warrior",
+          "band_label": "400M",
+          "y_in_band": 0.787
+        }
+      ],
+      "ocr_texts": [
+        "Romantic Warrior",
+        "Romantic Warrior",
+        "Romantic Warrior"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.777,
+      "avg_x_frac": 0.294,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VOYAGE BUBBLE",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 419,
+          "cy": 104,
+          "x_frac": 0.5819444444444445,
+          "conf": 0.841,
+          "match_score": 1.0,
+          "ocr_text": "Voyage Bubble",
+          "band_label": "481",
+          "y_in_band": 0.777
+        },
+        {
+          "band_idx": 1,
+          "cx": 233,
+          "cy": 256,
+          "x_frac": 0.32430555555555557,
+          "conf": 0.881,
+          "match_score": 1.0,
+          "ocr_text": "Voyage Bubble",
+          "band_label": "800M",
+          "y_in_band": 0.839
+        },
+        {
+          "band_idx": 2,
+          "cx": 301,
+          "cy": 420,
+          "x_frac": 0.4184027777777778,
+          "conf": 0.87,
+          "match_score": 0.923,
+          "ocr_text": "Voyage Bubbie",
+          "band_label": "400M",
+          "y_in_band": 0.933
+        },
+        {
+          "band_idx": 3,
+          "cx": 429,
+          "cy": 544,
+          "x_frac": 0.5965277777777778,
+          "conf": 0.867,
+          "match_score": 1.0,
+          "ocr_text": "Voyage Bubble",
+          "band_label": "200M",
+          "y_in_band": 0.663
+        }
+      ],
+      "ocr_texts": [
+        "Voyage Bubble",
+        "Voyage Bubble",
+        "Voyage Bubbie",
+        "Voyage Bubble"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.803,
+      "avg_x_frac": 0.48,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WINNING WING",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 506,
+          "cy": 105,
+          "x_frac": 0.7034722222222223,
+          "conf": 0.87,
+          "match_score": 1.0,
+          "ocr_text": "Winning Wing",
+          "band_label": "481",
+          "y_in_band": 0.785
+        },
+        {
+          "band_idx": 1,
+          "cx": 300,
+          "cy": 275,
+          "x_frac": 0.4166666666666667,
+          "conf": 0.83,
+          "match_score": 1.0,
+          "ocr_text": "Winning Wing",
+          "band_label": "800M",
+          "y_in_band": 0.966
+        },
+        {
+          "band_idx": 2,
+          "cx": 357,
+          "cy": 427,
+          "x_frac": 0.49583333333333335,
+          "conf": 0.86,
+          "match_score": 1.0,
+          "ocr_text": "Winning Wing",
+          "band_label": "400M",
+          "y_in_band": 0.98
+        },
+        {
+          "band_idx": 3,
+          "cx": 352,
+          "cy": 567,
+          "x_frac": 0.4895833333333333,
+          "conf": 0.878,
+          "match_score": 1.0,
+          "ocr_text": "Winning Wing",
+          "band_label": "200M",
+          "y_in_band": 0.797
+        }
+      ],
+      "ocr_texts": [
+        "Winning Wing",
+        "Winning Wing",
+        "Winning Wing",
+        "Winning Wing"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.882,
+      "avg_x_frac": 0.526,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
   "meta": {
     "ocr_boxes": 36,
-    "matched_horses": 0,
-    "field_size": 0,
-    "coverage": null,
-    "parsed_at": "2026-04-22T16:03:16"
+    "matched_horses": 6,
+    "field_size": 6,
+    "coverage": 1.0,
+    "parsed_at": "2026-04-23T10:54:58"
   }
 }

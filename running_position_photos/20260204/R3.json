@@ -33,12 +33,445 @@
       "y_center": 516
     }
   ],
-  "horses": [],
+  "horses": [
+    {
+      "horse_name": "AWESOME FLUKE",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 183,
+          "cy": 116,
+          "x_frac": 0.25416666666666665,
+          "conf": 0.901,
+          "match_score": 0.96,
+          "ocr_text": "AwesomeFluke",
+          "band_label": "407",
+          "y_in_band": 0.876
+        },
+        {
+          "band_idx": 1,
+          "cx": 147,
+          "cy": 248,
+          "x_frac": 0.20416666666666666,
+          "conf": 0.807,
+          "match_score": 1.0,
+          "ocr_text": "Awesome Fluke",
+          "band_label": "800M",
+          "y_in_band": 0.785
+        },
+        {
+          "band_idx": 2,
+          "cx": 122,
+          "cy": 412,
+          "x_frac": 0.16944444444444445,
+          "conf": 0.909,
+          "match_score": 0.96,
+          "ocr_text": "AwesomeFluke",
+          "band_label": "400M",
+          "y_in_band": 0.88
+        },
+        {
+          "band_idx": 3,
+          "cx": 134,
+          "cy": 546,
+          "x_frac": 0.18680555555555556,
+          "conf": 0.908,
+          "match_score": 0.96,
+          "ocr_text": "AwesomeFluke",
+          "band_label": "200M",
+          "y_in_band": 0.674
+        }
+      ],
+      "ocr_texts": [
+        "AwesomeFluke",
+        "Awesome Fluke",
+        "AwesomeFluke",
+        "AwesomeFluke"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.804,
+      "avg_x_frac": 0.204,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HELENE FEELING",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 293,
+          "cy": 21,
+          "x_frac": 0.40694444444444444,
+          "conf": 0.893,
+          "match_score": 1.0,
+          "ocr_text": "Helene Feeling",
+          "band_label": "407",
+          "y_in_band": 0.091
+        },
+        {
+          "band_idx": 1,
+          "cx": 262,
+          "cy": 176,
+          "x_frac": 0.3645833333333333,
+          "conf": 0.851,
+          "match_score": 1.0,
+          "ocr_text": "Helene Feeling",
+          "band_label": "800M",
+          "y_in_band": 0.302
+        },
+        {
+          "band_idx": 2,
+          "cx": 253,
+          "cy": 319,
+          "x_frac": 0.35208333333333336,
+          "conf": 0.818,
+          "match_score": 1.0,
+          "ocr_text": "Helene Feeling",
+          "band_label": "400M",
+          "y_in_band": 0.26
+        },
+        {
+          "band_idx": 3,
+          "cx": 278,
+          "cy": 472,
+          "x_frac": 0.38645833333333335,
+          "conf": 0.828,
+          "match_score": 1.0,
+          "ocr_text": "Helene Feeling",
+          "band_label": "200M",
+          "y_in_band": 0.244
+        }
+      ],
+      "ocr_texts": [
+        "Helene Feeling",
+        "Helene Feeling",
+        "Helene Feeling",
+        "Helene Feeling"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.224,
+      "avg_x_frac": 0.378,
+      "wide_frames": 0,
+      "rail_frames": 4,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "HUGE WAVE",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 463,
+          "cy": 94,
+          "x_frac": 0.64375,
+          "conf": 0.846,
+          "match_score": 1.0,
+          "ocr_text": "Huge Wave",
+          "band_label": "407",
+          "y_in_band": 0.694
+        },
+        {
+          "band_idx": 3,
+          "cx": 298,
+          "cy": 439,
+          "x_frac": 0.41458333333333336,
+          "conf": 0.854,
+          "match_score": 0.941,
+          "ocr_text": "HugeWave",
+          "band_label": "200M",
+          "y_in_band": 0.052
+        }
+      ],
+      "ocr_texts": [
+        "Huge Wave",
+        "HugeWave"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.373,
+      "avg_x_frac": 0.529,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KAHOLO ANGEL",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 452,
+          "cy": 20,
+          "x_frac": 0.6284722222222222,
+          "conf": 0.831,
+          "match_score": 0.96,
+          "ocr_text": "Kaholo Angell",
+          "band_label": "407",
+          "y_in_band": 0.083
+        },
+        {
+          "band_idx": 1,
+          "cx": 337,
+          "cy": 176,
+          "x_frac": 0.4684027777777778,
+          "conf": 0.83,
+          "match_score": 1.0,
+          "ocr_text": "Kaholo Angel",
+          "band_label": "800M",
+          "y_in_band": 0.302
+        },
+        {
+          "band_idx": 2,
+          "cx": 351,
+          "cy": 410,
+          "x_frac": 0.4875,
+          "conf": 0.833,
+          "match_score": 1.0,
+          "ocr_text": "Kaholo Angel",
+          "band_label": "400M",
+          "y_in_band": 0.867
+        },
+        {
+          "band_idx": 3,
+          "cx": 351,
+          "cy": 473,
+          "x_frac": 0.48819444444444443,
+          "conf": 0.826,
+          "match_score": 1.0,
+          "ocr_text": "Kaholo Angel",
+          "band_label": "200M",
+          "y_in_band": 0.25
+        }
+      ],
+      "ocr_texts": [
+        "Kaholo Angell",
+        "Kaholo Angel",
+        "Kaholo Angel",
+        "Kaholo Angel"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.376,
+      "avg_x_frac": 0.518,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MOMENTS IN TIME",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 340,
+          "cy": 248,
+          "x_frac": 0.47291666666666665,
+          "conf": 0.829,
+          "match_score": 1.0,
+          "ocr_text": "Moments In Time",
+          "band_label": "800M",
+          "y_in_band": 0.785
+        },
+        {
+          "band_idx": 3,
+          "cx": 354,
+          "cy": 432,
+          "x_frac": 0.49236111111111114,
+          "conf": 0.862,
+          "match_score": 1.0,
+          "ocr_text": "Moments In Time",
+          "band_label": "200M",
+          "y_in_band": 0.012
+        },
+        {
+          "band_idx": 3,
+          "cx": 364,
+          "cy": 554,
+          "x_frac": 0.5055555555555555,
+          "conf": 0.826,
+          "match_score": 1.0,
+          "ocr_text": "Moments In Time",
+          "band_label": "200M",
+          "y_in_band": 0.721
+        }
+      ],
+      "ocr_texts": [
+        "Moments In Time",
+        "Moments In Time",
+        "Moments In Time"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.506,
+      "avg_x_frac": 0.49,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NEW FOREST",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 185,
+          "cy": 177,
+          "x_frac": 0.25763888888888886,
+          "conf": 0.892,
+          "match_score": 0.947,
+          "ocr_text": "NewForest",
+          "band_label": "800M",
+          "y_in_band": 0.309
+        }
+      ],
+      "ocr_texts": [
+        "NewForest"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.309,
+      "avg_x_frac": 0.258,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "SILVERY BREEZE",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 536,
+          "cy": 93,
+          "x_frac": 0.7451388888888889,
+          "conf": 0.893,
+          "match_score": 1.0,
+          "ocr_text": "Silvery Breeze",
+          "band_label": "407",
+          "y_in_band": 0.686
+        },
+        {
+          "band_idx": 1,
+          "cx": 511,
+          "cy": 251,
+          "x_frac": 0.7097222222222223,
+          "conf": 0.881,
+          "match_score": 1.0,
+          "ocr_text": "Silvery Breeze",
+          "band_label": "800M",
+          "y_in_band": 0.805
+        },
+        {
+          "band_idx": 3,
+          "cx": 449,
+          "cy": 442,
+          "x_frac": 0.6236111111111111,
+          "conf": 0.875,
+          "match_score": 1.0,
+          "ocr_text": "Silvery Breeze",
+          "band_label": "200M",
+          "y_in_band": 0.07
+        },
+        {
+          "band_idx": 3,
+          "cx": 287,
+          "cy": 578,
+          "x_frac": 0.39861111111111114,
+          "conf": 0.858,
+          "match_score": 1.0,
+          "ocr_text": "Silvery Breeze",
+          "band_label": "200M",
+          "y_in_band": 0.86
+        }
+      ],
+      "ocr_texts": [
+        "Silvery Breeze",
+        "Silvery Breeze",
+        "Silvery Breeze",
+        "Silvery Breeze"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.605,
+      "avg_x_frac": 0.619,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SOLEIL FIGHTER",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 270,
+          "cy": 94,
+          "x_frac": 0.375,
+          "conf": 0.861,
+          "match_score": 1.0,
+          "ocr_text": "Soleil Fighter",
+          "band_label": "407",
+          "y_in_band": 0.694
+        },
+        {
+          "band_idx": 1,
+          "cx": 222,
+          "cy": 248,
+          "x_frac": 0.3090277777777778,
+          "conf": 0.904,
+          "match_score": 1.0,
+          "ocr_text": "Soleil Fighter",
+          "band_label": "800M",
+          "y_in_band": 0.785
+        },
+        {
+          "band_idx": 2,
+          "cx": 188,
+          "cy": 427,
+          "x_frac": 0.26180555555555557,
+          "conf": 0.823,
+          "match_score": 1.0,
+          "ocr_text": "Soleil'Fighter",
+          "band_label": "400M",
+          "y_in_band": 0.98
+        },
+        {
+          "band_idx": 3,
+          "cx": 161,
+          "cy": 570,
+          "x_frac": 0.22430555555555556,
+          "conf": 0.707,
+          "match_score": 1.0,
+          "ocr_text": "Soleil Fighter",
+          "band_label": "200M",
+          "y_in_band": 0.814
+        }
+      ],
+      "ocr_texts": [
+        "Soleil Fighter",
+        "Soleil Fighter",
+        "Soleil'Fighter",
+        "Soleil Fighter"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.818,
+      "avg_x_frac": 0.293,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
   "meta": {
     "ocr_boxes": 45,
-    "matched_horses": 0,
-    "field_size": 0,
-    "coverage": null,
-    "parsed_at": "2026-04-22T15:54:54"
+    "matched_horses": 8,
+    "field_size": 8,
+    "coverage": 1.0,
+    "parsed_at": "2026-04-23T10:50:23"
   }
 }
