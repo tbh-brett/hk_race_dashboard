@@ -630,7 +630,12 @@ def load_meeting_data(path: Path) -> dict:
 
 
 def load_sarr_data(date_str: str) -> dict | None:
-    """Load SARR JSON report for a given date (YYYYMMDD). Returns None if missing."""
+    """Load SARR JSON report for a given date (YYYYMMDD). Returns None if missing.
+
+    NOT cached on purpose — SARR JSON may be rewritten on every analysis run
+    and we don't want stale results lingering after Run Analysis completes.
+    Cheap read (single JSON parse), so the lack of caching is fine.
+    """
     sarr_path = REPORTS / f"race_day_report_{date_str}_SARR.json"
     if not sarr_path.exists():
         return None
@@ -2899,6 +2904,53 @@ def page_race_day(selected):
         f'&nbsp;·&nbsp; Generated {data.get("generated_at", "")[:16]}</div>',
         unsafe_allow_html=True,
     )
+
+    # ── SARR missing banner: one-click regeneration ──────────────────────
+    # When ET succeeded but SARR JSON is missing, offer a focused button that
+    # invokes ONLY the SARR script for the current date (no re-scrape, no
+    # re-ET) — fastest path to unblock the SARR toggle.
+    if not sarr_available and date_str:
+        _sarr_col1, _sarr_col2 = st.columns([3, 1])
+        with _sarr_col1:
+            st.warning(
+                f"⚠️ SARR analysis not available for {date_str}. "
+                "ET is shown below. Click the button to generate SARR now."
+            )
+        with _sarr_col2:
+            if st.button("▶ Run SARR now",
+                          key=f"run_sarr_now_{date_str}",
+                          use_container_width=True,
+                          type="primary"):
+                iso = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+                script = BASE / "sarr_raceday.py"
+                if not script.exists():
+                    st.error(f"sarr_raceday.py not found at {script}")
+                else:
+                    env = os.environ.copy()
+                    env["PYTHONIOENCODING"] = "utf-8"
+                    with st.spinner(f"Running SARR for {iso}..."):
+                        try:
+                            r = subprocess.run(
+                                [PYTHON, str(script), "--date", iso],
+                                env=env, cwd=str(BASE),
+                                capture_output=True, text=True,
+                                encoding="utf-8", timeout=600,
+                            )
+                            out_path = REPORTS / f"race_day_report_{date_str}_SARR.json"
+                            if r.returncode == 0 and out_path.exists():
+                                st.success(f"✓ SARR generated for {iso}.")
+                                try:
+                                    st.cache_data.clear()
+                                except Exception:
+                                    pass
+                                st.rerun()
+                            else:
+                                st.error(
+                                    f"SARR failed (exit {r.returncode}). "
+                                    f"Output:\n{(r.stderr or r.stdout)[-2000:]}"
+                                )
+                        except (OSError, subprocess.TimeoutExpired) as e:
+                            st.error(f"SARR run errored: {e}")
 
     # ── Model toggle (ET / SARR) ─────────────────────────────────────────
     # Rendered here as well as right above the race-tab row (below) so it's
@@ -9970,7 +10022,13 @@ def sidebar_race_day():
     with col1:
         run_date = st.date_input("Race Date", value=date.today(), key="run_date")
     with col2:
-        no_cache = st.checkbox("Re-scrape", value=False, key="no_cache")
+        no_cache = st.checkbox(
+            "Re-scrape",
+            value=True,   # DEFAULT ON — we want fresh data (scratches, substitutes)
+            key="no_cache",
+            help="Force a fresh HKJC scrape — needed to pick up scratched horses "
+                 "and late substitutes. Uncheck only to reuse an existing racecard.",
+        )
 
     going_turf = st.sidebar.text_input("Turf Going", value="Good", key="going_turf")
     going_awt = st.sidebar.text_input("AWT Going", value="Good", key="going_awt")
@@ -9994,13 +10052,22 @@ def sidebar_race_day():
     date_iso = run_date.isoformat()
     date_compact = date_iso.replace("-", "")
     _has_racecard = (BASE / "racecards" / f"racecard_{date_compact}.xlsx").exists()
+    _uploaded_for_this_date = (
+        st.session_state.get("_uploaded_rc_date") == date_iso
+    )
 
     if st.sidebar.button("[ RUN ANALYSIS ]", type="primary", use_container_width=True):
-        # Skip scrape if we already have a racecard file (uploaded or cached)
-        skip = _has_racecard and not no_cache
+        # Only skip scraping when we have an EXPLICIT user-uploaded racecard
+        # for this date (cloud-without-HKJC workflow). Otherwise, always
+        # re-scrape so late scratches and substitutes are captured.
+        skip = _uploaded_for_this_date and not no_cache
+        # Clear Streamlit caches BEFORE run_pipeline (which may internally
+        # rerun) so we don't race the cache clear against the rerun call.
+        try:
+            st.cache_data.clear()
+        except Exception:
+            pass
         run_pipeline(date_iso, no_cache, going_turf, going_awt, skip_scrape=skip)
-        st.cache_data.clear()
-        st.rerun()
 
     st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
     st.sidebar.markdown('<div class="sb-nav-section">Meetings</div>', unsafe_allow_html=True)
