@@ -23,7 +23,7 @@ USER_BETS_PATH = REPORTS / "user_bets_log.jsonl"
 # Supported bet types (subset of HKJC pools we can auto-settle)
 BET_TYPES = [
     "WIN", "PLACE", "QIN", "QPL", "QIN_BANKER", "QPL_BANKER",
-    "F4_BOX", "TRIO",
+    "F4_BOX", "TRIO", "QTT_BOX",
 ]
 
 
@@ -295,12 +295,17 @@ def _settle_one(bet: dict, pack: dict) -> Optional[dict]:
                     ret += per_combo / 10.0 * _lookup("TRIO", list(trio))
                     hit = True
                     break
-    elif bet_type == "F4_BOX":
-        # First-4 box: C(n,4) combos, must have the actual top-4 as subset
+    elif bet_type in ("F4_BOX", "QTT_BOX"):
+        # First-4 / Quartet box. F4 pays for the 4 horses in any order;
+        # Quartet pays for the 4 horses in EXACT finishing order. HKJC
+        # publishes one dividend per pool per race (the actual finishing
+        # combination), so we just need to verify our box covers the
+        # actual top-4 set. Stake math differs:
+        #   F4_BOX  : C(n,4) box combos
+        #   QTT_BOX : C(n,4) * 24 permutations  (1 of which is the winning order)
         from itertools import combinations
         if not pack["results"]:
             return None
-        # Need top-4 finishers — derive from results
         top4_list = []
         for race in pack["results"].get("races", []):
             if int(race.get("race_number") or 0) != int(rn):
@@ -316,10 +321,17 @@ def _settle_one(bet: dict, pack: dict) -> Optional[dict]:
         top4 = {no for _, no in top4_list}
         combos = list(combinations(sorted(set(sels)), 4))
         if combos:
-            per_combo = stake / len(combos)
+            if bet_type == "F4_BOX":
+                per_combo = stake / len(combos)
+                pool_code = "F4"
+            else:  # QTT_BOX — 24 perms per 4-horse combo
+                per_combo = stake / (len(combos) * 24)
+                pool_code = "QTT"
             for c in combos:
                 if set(c) == top4:
-                    ret += per_combo / 10.0 * _lookup("F4", list(c))
+                    # For QTT only the 1-of-24 winning permutation pays;
+                    # the dividend in the table is keyed on that perm.
+                    ret += per_combo / 10.0 * _lookup(pool_code, list(c))
                     hit = True
                     break
 

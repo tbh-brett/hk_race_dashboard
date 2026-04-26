@@ -1813,9 +1813,13 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
 
     # Unique key per (model, race) so Streamlit's column-reorder state
     # for the SARR table doesn't bleed into the ET table and vice versa.
+    # Set explicit height so the entire field shows without an inner
+    # scrollbar (35px / row + ~38px header).
+    _et_h = 38 + 35 * max(len(rows), 1) + 4
     st.dataframe(
         styled, use_container_width=True, hide_index=True,
         key=f"rd_et_table_{race['race_number']}",
+        height=_et_h,
     )
 
     # BB alerts
@@ -1959,9 +1963,12 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
 
     # Unique per-(model, race) key — see render_race_card for rationale.
+    # Height tuned so all rows fit without an inner scrollbar.
+    _sarr_h = 38 + 35 * max(len(rows), 1) + 4
     st.dataframe(
         styled, use_container_width=True, hide_index=True,
         key=f"rd_sarr_table_{race['race_number']}",
+        height=_sarr_h,
     )
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
@@ -2789,9 +2796,9 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
                     unsafe_allow_html=True,
                 )
 
-    # ── Mini speed-map (optional, collapsed by default) ────────────
-    with st.expander("Speedmap + pace research", expanded=False):
-        render_speed_map(race)
+    # ── Speed-map + pace research (always shown, no dropdown) ──────
+    st.markdown("#### Speedmap + pace research")
+    render_speed_map(race)
 
     # Footer: cross-navigation
     st.caption("★ Blackbook &nbsp; 🏇 Recent trial &nbsp; ● Pace beneficiary "
@@ -2830,14 +2837,24 @@ def page_overview():
     # ══════════════════════════════════════════════════════════════════
     if races:
         rns = [r["race_number"] for r in races]
-        sel_rn = st.radio(
-            "Race",
-            options=rns,
-            index=0, horizontal=True,
-            format_func=lambda x: f"R{x}",
-            key="cockpit_race",
-            label_visibility="collapsed",
-        )
+        # Race selector — button row matching the SARR/ET Race-Day Analysis
+        # page (one button per race, current race highlighted as primary).
+        if "cockpit_race" not in st.session_state or \
+                st.session_state["cockpit_race"] not in rns:
+            st.session_state["cockpit_race"] = rns[0]
+        _btn_cols = st.columns(len(rns))
+        for _i, _rn in enumerate(rns):
+            with _btn_cols[_i]:
+                _is_active = (st.session_state["cockpit_race"] == _rn)
+                if st.button(
+                    f"R{_rn}",
+                    key=f"rdi_tab_{_rn}",
+                    use_container_width=True,
+                    type="primary" if _is_active else "secondary",
+                ):
+                    st.session_state["cockpit_race"] = _rn
+                    st.rerun()
+        sel_rn = st.session_state["cockpit_race"]
         sel_race = next((r for r in races if r["race_number"] == sel_rn), None)
         sel_sarr = next((r for r in sarr_races if r["race_number"] == sel_rn), None) \
                    if sarr_races else None
@@ -3557,17 +3574,19 @@ def page_race_day(selected):
 
     # ── Compact model toggle right above the race-tab row (mirror) ───────
     # So users don't need to scroll up to switch ET / SARR. Label sits on
-    # the same horizontal line as the radio options.
+    # the same horizontal line as the radio options. The label and radio
+    # share one wide column so "MODEL" doesn't wrap to "MO/DEL" and the
+    # two long radio labels stay on one row.
     if sarr_available:
         def _sync_inline_toggle():
             choice = st.session_state.get("rd_model_toggle_inline")
             if choice:
                 st.session_state["rd_model_toggle"] = choice
-        _ilbl_col, _irad_col, _spacer = st.columns([0.08, 0.52, 2.4])
+        _ilbl_col, _irad_col, _spacer = st.columns([0.6, 4.0, 0.5])
         with _ilbl_col:
             st.markdown(
                 "<div style='padding-top:6px;font-weight:700;"
-                "color:#a3b3c7;font-size:0.85em'>MODEL</div>",
+                "color:#a3b3c7;font-size:0.85em;white-space:nowrap'>MODEL</div>",
                 unsafe_allow_html=True,
             )
         with _irad_col:
@@ -9335,6 +9354,7 @@ def page_my_bets():
             "QPL_BANKER": "Quinella Place Banker — 1 banker × N legs",
             "TRIO":       "Trio — box across selections (C(n,3) combos)",
             "F4_BOX":     "First 4 Box — box across selections (C(n,4) combos)",
+            "QTT_BOX":    "Quartet Box — box across selections (top-4 in EXACT order)",
         }
         _BET_TYPE_HELP = {
             "WIN":        "Enter ONE horse number in *Selections*. "
@@ -9362,6 +9382,11 @@ def page_my_bets():
             "F4_BOX":     "Enter 4+ horse numbers in *Selections*. "
                           "Wins if any 4 of them are the top-4 finishers "
                           "in any order.",
+            "QTT_BOX":    "Enter 4+ horse numbers in *Selections*. Wins ONLY "
+                          "if any 4 of them finish 1st–2nd–3rd–4th in EXACT "
+                          "order. Stake is split across C(n,4)×24 "
+                          "permutations — typically a much smaller "
+                          "per-combo unit than First 4.",
         }
 
         with st.form("my_bets_submit_form", clear_on_submit=True):

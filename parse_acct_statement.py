@@ -239,6 +239,11 @@ def _expand_to_user_bet_records(parsed: dict) -> list[dict]:
     elif "first 4" in bt_text or "first four" in bt_text:
         codes = ["F4_BOX"]
         per_code_stake = parsed["total_debit"]
+    elif "quartet" in bt_text:
+        # Quartet — top-4 in EXACT order. Treat box-style (selections form
+        # the 4-horse set; per-permutation stake = total / (C(n,4)*24)).
+        codes = ["QTT_BOX"]
+        per_code_stake = parsed["total_debit"]
     elif "win" in bt_text and "place" not in bt_text:
         codes = ["WIN"]
         per_code_stake = parsed["total_debit"]
