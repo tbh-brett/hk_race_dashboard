@@ -797,6 +797,58 @@ def _gh_push_file(repo_path: str, content_bytes: bytes, message: str) -> bool:
         return False
 
 
+def _gh_persist_postrace_outputs(date_str: str) -> tuple[int, int, list[str]]:
+    """Push post-race pipeline artifacts back to GitHub on Streamlit Cloud.
+
+    Mirrors `_gh_persist_pipeline_outputs` for the full results scraper path
+    (results / incidents / RP photos+OCR / commentary / backtest). Running-
+    position photos and OCR JSONs are pushed per-race (R1..R12 typically).
+    No-op locally.
+    """
+    if not _is_streamlit_cloud():
+        return (0, 0, [])
+    if not _gh_headers():
+        return (0, 0, ["No GITHUB_TOKEN — post-race outputs will be lost on next restart"])
+
+    dc = date_str.replace("-", "")
+    candidates: list[tuple[Path, str]] = [
+        (REPORTS / f"results_{dc}.json",       f"reports/results_{dc}.json"),
+        (REPORTS / f"dividends_{dc}.json",     f"reports/dividends_{dc}.json"),
+        (REPORTS / f"incidents_{dc}.json",     f"reports/incidents_{dc}.json"),
+        (REPORTS / f"commentary_{dc}.json",    f"reports/commentary_{dc}.json"),
+        (REPORTS / f"backtest_{dc}.json",      f"reports/backtest_{dc}.json"),
+        # Form guide cache often gets lane data added during step 6.
+        (BASE / "cache" / f"form_guide_{date_str}.json",
+         f"cache/form_guide_{date_str}.json"),
+    ]
+    rp_dir = BASE / "running_position_photos" / dc
+    if rp_dir.exists():
+        for f in sorted(rp_dir.glob("R*.json")):
+            candidates.append((f, f"running_position_photos/{dc}/{f.name}"))
+        # JPGs are larger but small enough for the Contents API; keep them
+        # so re-OCR can run on a fresh container without re-scraping HKJC.
+        for f in sorted(rp_dir.glob("R*.jpg")):
+            candidates.append((f, f"running_position_photos/{dc}/{f.name}"))
+
+    pushed = 0
+    missing = 0
+    errors: list[str] = []
+    msg = f"post-race: auto-sync {date_str} [skip ci]"
+    for local, repo_path in candidates:
+        if not local.exists():
+            missing += 1
+            continue
+        try:
+            data = local.read_bytes()
+            if _gh_push_file(repo_path, data, msg):
+                pushed += 1
+            else:
+                errors.append(repo_path)
+        except Exception as e:
+            errors.append(f"{repo_path}: {e}")
+    return (pushed, missing, errors)
+
+
 def _gh_persist_pipeline_outputs(date_str: str, model: str) -> tuple[int, int, list[str]]:
     """Push all artifacts a single pipeline run produces back to GitHub.
 
@@ -3940,14 +3992,18 @@ def page_backtest():
                                         key="bt_scrape_date")
     col_a, col_b = st.sidebar.columns(2)
     with col_a:
-        if st.button("[ Scrape ]", use_container_width=True,
-                      key="btn_scrape_results"):
+        if st.button("[ Run Post-Race ]", use_container_width=True,
+                      key="btn_scrape_results",
+                      help="Runs all 8 steps in one click: results JSON · DB scrape · "
+                           "incidents · RP photos · OCR · form-guide rebuild · "
+                           "commentary · backtest. Pushes outputs to GitHub on cloud."):
             _run_results_scraper(scrape_date.isoformat(), full=True)
             st.cache_data.clear()
             st.rerun()
     with col_b:
-        if st.button("[ Backtest ]", use_container_width=True,
-                      key="btn_run_backtest"):
+        if st.button("[ Backtest only ]", use_container_width=True,
+                      key="btn_run_backtest",
+                      help="Re-run just the backtest if results are already scraped."):
             _run_backtest_single(scrape_date.isoformat())
             st.cache_data.clear()
             st.rerun()
@@ -4239,6 +4295,7 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
         5. ``parse_rp_photos.py``     → ``running_position_photos/YYYYMMDD/R*.json`` (OCR)
         6. ``build_form_guide.py``    → refresh ``cache/form_guide_YYYY-MM-DD.json`` with lane data
         7. ``race_commentary.py``     → ``reports/commentary_YYYYMMDD.json``
+        8. ``backtest_model.py``      → ``reports/backtest_YYYYMMDD.json`` (model evaluation)
     """
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
@@ -4252,24 +4309,26 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
         full_scrape_tmp = Path(tempfile.gettempdir()) / "hkjc_results.xlsx"
 
         steps = [
-            ("1/7 Results JSON",
+            ("1/8 Results JSON",
              [PYTHON, str(BASE / "scrape_hkjc_results.py"), "--date", date_str]),
-            ("2/7 Full DB scrape (sectionals, horse profiles)",
+            ("2/8 Full DB scrape (sectionals, horse profiles)",
              [PYTHON, str(BASE / "scrape_hkjc.py"),
               "--dates", dd_mm_yyyy,
               "--horse-cache", str(horse_cache),
               "--no-cache",
               "--output", str(full_scrape_tmp)]),
-            ("3/7 Incident reports",
+            ("3/8 Incident reports",
              [PYTHON, str(BASE / "scrape_hkjc_incident_reports.py"), "--date", date_str]),
-            ("4/7 Running-position photos",
+            ("4/8 Running-position photos",
              [PYTHON, str(BASE / "scrape_hkjc_rp_photos.py"), "--date", date_str]),
-            ("5/7 OCR running-position photos → lane JSON",
+            ("5/8 OCR running-position photos → lane JSON",
              [PYTHON, str(BASE / "parse_rp_photos.py"), "--date", date_str, "--force"]),
-            ("6/7 Rebuild form guide (with lane data)",
+            ("6/8 Rebuild form guide (with lane data)",
              [PYTHON, str(BASE / "build_form_guide.py"), date_str]),
-            ("7/7 Race commentary",
+            ("7/8 Race commentary",
              [PYTHON, str(BASE / "race_commentary.py"), "--date", date_str]),
+            ("8/8 Backtest model vs actual",
+             [PYTHON, str(BASE / "backtest_model.py"), "--date", date_str]),
         ]
 
         outputs: list[tuple[str, int, str]] = []  # (label, rc, tail)
@@ -4308,6 +4367,22 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
             icon = "✅" if rc == 0 else "❌"
             with st.expander(f"{icon} {label} (exit {rc})", expanded=(rc != 0)):
                 st.code(tail or "(no output)")
+
+        # ── Persist post-race artifacts to GitHub on Streamlit Cloud ──
+        if _is_streamlit_cloud():
+            try:
+                n_pushed, n_miss, errors = _gh_persist_postrace_outputs(date_str)
+                if n_pushed:
+                    st.success(f"☁ Synced {n_pushed} post-race file(s) to GitHub "
+                               f"(skipped {n_miss} missing).")
+                elif errors:
+                    st.warning("⚠ Post-race outputs were NOT synced to GitHub: "
+                               + "; ".join(errors[:3]))
+                else:
+                    st.info("ℹ No post-race outputs synced "
+                            "(none generated, or no GITHUB_TOKEN).")
+            except Exception as e:
+                st.warning(f"⚠ GitHub sync failed: {e}")
         return
 
     # Lightweight scraper (Live Feed)
