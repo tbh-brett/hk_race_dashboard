@@ -751,6 +751,97 @@ def _gh_push_blackbook(content_bytes: bytes) -> bool:
         return False
 
 
+def _is_streamlit_cloud() -> bool:
+    """True when running on Streamlit Cloud (ephemeral filesystem)."""
+    return os.environ.get("STREAMLIT_SERVER_HEADLESS") == "true"
+
+
+def _gh_get_path_sha(repo_path: str) -> str | None:
+    """Get SHA for an arbitrary path on GitHub. Returns None if missing/no auth."""
+    headers = _gh_headers()
+    if not headers:
+        return None
+    try:
+        r = _requests.get(
+            f"https://api.github.com/repos/{_GH_REPO}/contents/{repo_path}",
+            headers=headers, timeout=10)
+        if r.status_code == 200:
+            return r.json().get("sha")
+    except Exception:
+        pass
+    return None
+
+
+def _gh_push_file(repo_path: str, content_bytes: bytes, message: str) -> bool:
+    """Generic single-file push via the GitHub Contents API.
+
+    Used to persist pipeline-generated artifacts (racecards, reports, caches)
+    so they survive Streamlit Cloud restarts. Returns True on success.
+    """
+    headers = _gh_headers()
+    if not headers:
+        return False
+    payload = {
+        "message": message,
+        "content": base64.b64encode(content_bytes).decode("ascii"),
+    }
+    sha = _gh_get_path_sha(repo_path)
+    if sha:
+        payload["sha"] = sha
+    try:
+        r = _requests.put(
+            f"https://api.github.com/repos/{_GH_REPO}/contents/{repo_path}",
+            headers=headers, json=payload, timeout=30)
+        return r.status_code in (200, 201)
+    except Exception:
+        return False
+
+
+def _gh_persist_pipeline_outputs(date_str: str, model: str) -> tuple[int, int, list[str]]:
+    """Push all artifacts a single pipeline run produces back to GitHub.
+
+    Only operates when running on Streamlit Cloud (ephemeral FS) AND a
+    GITHUB_TOKEN is configured. Skips silently otherwise (local runs commit
+    via git directly).
+
+    Returns (n_pushed, n_skipped_missing, errors).
+    """
+    if not _is_streamlit_cloud():
+        return (0, 0, [])
+    if not _gh_headers():
+        return (0, 0, ["No GITHUB_TOKEN — pipeline outputs will be lost on next restart"])
+
+    dc = date_str.replace("-", "")
+    candidates: list[tuple[Path, str]] = [
+        # (local file, repo path)
+        (BASE / "racecards" / f"racecard_{dc}.xlsx",            f"racecards/racecard_{dc}.xlsx"),
+        (BASE / "cache" / f"racecard_{date_str}.json",          f"cache/racecard_{date_str}.json"),
+        (BASE / "cache" / f"form_guide_{date_str}.json",        f"cache/form_guide_{date_str}.json"),
+        (REPORTS / f"race_day_report_{dc}_{model}.json",        f"reports/race_day_report_{dc}_{model}.json"),
+        (REPORTS / f"race_day_analysis_{dc}_{model}.txt",       f"reports/race_day_analysis_{dc}_{model}.txt"),
+        (REPORTS / f"race_day_report_{dc}_SARR.json",           f"reports/race_day_report_{dc}_SARR.json"),
+        (REPORTS / f"vet_report_{dc}.json",                     f"reports/vet_report_{dc}.json"),
+    ]
+    pushed = 0
+    missing = 0
+    errors: list[str] = []
+    msg = f"pipeline: auto-sync {date_str} ({model}+SARR) [skip ci]"
+    for local, repo_path in candidates:
+        if not local.exists():
+            missing += 1
+            continue
+        try:
+            data = local.read_bytes()
+            ok = _gh_push_file(repo_path, data, msg)
+            if ok:
+                pushed += 1
+            else:
+                errors.append(repo_path)
+        except Exception as e:
+            errors.append(f"{repo_path}: {e}")
+    return (pushed, missing, errors)
+
+
 def _load_blackbook() -> dict:
     if BLACKBOOK_FILE.exists():
         with open(BLACKBOOK_FILE, "r", encoding="utf-8") as f:
@@ -1945,6 +2036,26 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                     st.code((res.stderr or res.stdout or "")[-3000:])
             with st.expander("ET pipeline output"):
                 st.code((res.stdout or "")[-4000:])
+
+    # ── Persist artifacts back to GitHub on Streamlit Cloud ─────────
+    # Streamlit Cloud's filesystem is ephemeral — anything written by the
+    # subprocess (racecards, reports, caches) is wiped when the container
+    # sleeps and restarts. Push them via the GitHub Contents API so the
+    # next cold-start sees them. No-op locally.
+    if _is_streamlit_cloud():
+        try:
+            n_pushed, n_missing, errors = _gh_persist_pipeline_outputs(date_str, model)
+            if n_pushed:
+                st.success(f"☁ Synced {n_pushed} pipeline file(s) to GitHub "
+                           f"(skipped {n_missing} missing).")
+            elif errors:
+                st.warning("⚠ Pipeline outputs were NOT synced to GitHub: "
+                           + "; ".join(errors[:3]))
+            else:
+                st.info("ℹ No pipeline outputs synced to GitHub "
+                        "(none generated, or no GITHUB_TOKEN configured).")
+        except Exception as e:
+            st.warning(f"⚠ GitHub sync failed: {e}")
 
     # ── Clear data caches so fresh JSONs are picked up immediately ──
     try:
