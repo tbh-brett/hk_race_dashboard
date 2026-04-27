@@ -9997,6 +9997,28 @@ def page_my_bets():
     import user_bets as ub
     import datetime as _dt
 
+    # ── Password gate ──────────────────────────────────────────────────────
+    # MyBets contains real wagers + bookie statement uploads — gate behind a
+    # session-scoped password. Persist auth in st.session_state so once
+    # logged in, the user can navigate away and back without re-entering.
+    if not st.session_state.get("_mb_authed"):
+        st.markdown('<div class="page-title">🔒 My Bets</div>',
+                    unsafe_allow_html=True)
+        st.markdown(
+            '<div class="page-subtitle">Password-protected — enter to '
+            'continue.</div>', unsafe_allow_html=True,
+        )
+        with st.form("mb_login_form", clear_on_submit=False):
+            pw = st.text_input("Password", type="password", key="mb_pw")
+            ok = st.form_submit_button("Unlock", use_container_width=True)
+        if ok:
+            if (pw or "").strip() == "mighty_commander":
+                st.session_state["_mb_authed"] = True
+                st.rerun()
+            else:
+                st.error("Incorrect password.")
+        return
+
     st.markdown('<div class="page-title">💰 My Bets</div>',
                 unsafe_allow_html=True)
     st.markdown(
@@ -10481,30 +10503,72 @@ def page_my_bets():
                     import altair as _alt
                 except ImportError:
                     _alt = None
+                # ── View toggle: per-bet (every bet = one dot) or per race-day ──
+                view_mode = st.radio(
+                    "View",
+                    ["Per race day", "Per bet"],
+                    index=0, horizontal=True, key="mb_curve_view",
+                    help="Per race day aggregates all bets from a meeting "
+                         "into a single point — much less visual noise.",
+                )
                 cum = 0.0
                 cum_stake = 0.0
                 curve = []
-                for _i, r in enumerate(settled_sorted, 1):
-                    _pnl = float(r.get("pnl_hkd", 0))
-                    _stake = float(r.get("stake_hkd", 0))
-                    cum += _pnl
-                    cum_stake += _stake
-                    _md = r.get("meeting_date", "")
-                    _md_iso = (f"{_md[:4]}-{_md[4:6]}-{_md[6:]}"
-                               if len(_md) == 8 else _md)
-                    curve.append({
-                        "#":             _i,
-                        "Date":          _md_iso,
-                        "Race":          int(r.get("race_number") or 0),
-                        "Type":          r.get("bet_type", ""),
-                        "Stake":         _stake,
-                        "PnL":           _pnl,
-                        "Cumulative":    round(cum, 2),
-                        "Cum Stake":     round(cum_stake, 2),
-                        "Cum ROI %":     (round(cum / cum_stake * 100, 2)
-                                          if cum_stake else 0.0),
-                        "Hit":           bool(r.get("hit")),
-                    })
+                if view_mode == "Per race day":
+                    by_day: dict[str, dict] = {}
+                    for r in settled_sorted:
+                        md = r.get("meeting_date", "")
+                        d = by_day.setdefault(md, {
+                            "stake": 0.0, "pnl": 0.0, "ret": 0.0,
+                            "n_bets": 0, "n_hits": 0,
+                        })
+                        d["stake"] += float(r.get("stake_hkd", 0))
+                        d["pnl"]   += float(r.get("pnl_hkd", 0))
+                        d["ret"]   += float(r.get("return_hkd", 0))
+                        d["n_bets"] += 1
+                        if r.get("hit"):
+                            d["n_hits"] += 1
+                    for _i, md in enumerate(sorted(by_day.keys()), 1):
+                        d = by_day[md]
+                        cum += d["pnl"]
+                        cum_stake += d["stake"]
+                        _md_iso = (f"{md[:4]}-{md[4:6]}-{md[6:]}"
+                                   if len(md) == 8 else md)
+                        curve.append({
+                            "#":          _i,
+                            "Date":       _md_iso,
+                            "Race":       d["n_bets"],
+                            "Type":       f"{d['n_hits']}/{d['n_bets']} hits",
+                            "Stake":      d["stake"],
+                            "PnL":        d["pnl"],
+                            "Cumulative": round(cum, 2),
+                            "Cum Stake":  round(cum_stake, 2),
+                            "Cum ROI %":  (round(cum / cum_stake * 100, 2)
+                                           if cum_stake else 0.0),
+                            "Hit":        d["n_hits"] > 0,
+                        })
+                else:
+                    for _i, r in enumerate(settled_sorted, 1):
+                        _pnl = float(r.get("pnl_hkd", 0))
+                        _stake = float(r.get("stake_hkd", 0))
+                        cum += _pnl
+                        cum_stake += _stake
+                        _md = r.get("meeting_date", "")
+                        _md_iso = (f"{_md[:4]}-{_md[4:6]}-{_md[6:]}"
+                                   if len(_md) == 8 else _md)
+                        curve.append({
+                            "#":             _i,
+                            "Date":          _md_iso,
+                            "Race":          int(r.get("race_number") or 0),
+                            "Type":          r.get("bet_type", ""),
+                            "Stake":         _stake,
+                            "PnL":           _pnl,
+                            "Cumulative":    round(cum, 2),
+                            "Cum Stake":     round(cum_stake, 2),
+                            "Cum ROI %":     (round(cum / cum_stake * 100, 2)
+                                              if cum_stake else 0.0),
+                            "Hit":           bool(r.get("hit")),
+                        })
                 df_c = _pd.DataFrame(curve)
 
                 st.markdown("#### Cumulative PnL")
@@ -10882,10 +10946,11 @@ def _render_strategy_slate_tab() -> None:
     date_str = sel["date_str"]
 
     st.markdown(
-        "**What this is:** Kelly-sized HKD stakes per race using your bankroll, "
-        "model probability vs market probability, and a meeting-level cap. "
-        "Includes reasoning per leg + optional all-up chains. Override stakes "
-        "below; totals recompute automatically."
+        "**What this is:** Risk-tiered HKD bets, sized by Kelly against your "
+        "bankroll. Bet types vary by mode (PLACE → QPL → WIN/QIN → all + "
+        "FORECAST). A multi-leg banker is expanded into one bet per "
+        "(banker, leg) pair. Override stakes below; totals recompute "
+        "automatically."
     )
 
     cfg_cols = st.columns([1, 1, 1, 1.4])
@@ -10896,9 +10961,17 @@ def _render_strategy_slate_tab() -> None:
     mode = cfg_cols[1].selectbox(
         "Mode", ["conservative", "balanced", "aggressive", "uncapped"],
         index=1, key="slate_mode",
-        help=("Conservative: 1/8 Kelly · Balanced: 1/4 Kelly · "
-                "Aggressive: 1/2 Kelly · Uncapped: full Kelly + larger "
-                "all-up chains, no meeting cap."),
+        help=(
+            "**Bet types differ by risk tier** (lowest→highest risk: "
+            "PLACE < QPL < WIN < QIN < FORECAST):\n\n"
+            "• **Conservative** — PLACE on banker (1/4 Kelly)\n"
+            "• **Balanced** — QPL_BANKER per (banker, leg) pair (1/2 Kelly)\n"
+            "• **Aggressive** — WIN on banker + QIN_BANKER per pair (1/2 Kelly)\n"
+            "• **Uncapped** — WP (W+P) + QQPL (QIN+QPL) + FORECAST per pair "
+            "(full Kelly, no meeting cap, all-up satellites)\n\n"
+            "All stakes scale with bankroll. A 3-leg banker emits 3 separate "
+            "bets — one per (banker, leg) pair."
+        ),
     )
     enable_allup = cfg_cols[2].checkbox(
         "All-up chains", value=True, key="slate_allup",
@@ -11355,16 +11428,40 @@ def page_model_bets():
             settled = [r for r in log if r.get("status") == "settled"]
             if settled:
                 st.markdown("#### Equity curve (cumulative P/L)")
+                view_mode_mp = st.radio(
+                    "View",
+                    ["Per race day", "Per bet"],
+                    index=0, horizontal=True, key="mp_curve_view",
+                )
                 settled_sorted = sorted(settled, key=lambda r: (r["date"], r["race_number"]))
-                cum_stake = cum_ret = 0.0
                 curve_rows = []
-                for r in settled_sorted:
-                    cum_stake += r["stake"]
-                    cum_ret   += r["return"]
-                    curve_rows.append({
-                        "pick": f"{r['date']} R{r['race_number']}",
-                        "cum_pnl": cum_ret - cum_stake,
-                    })
+                if view_mode_mp == "Per race day":
+                    by_day: dict[str, dict] = {}
+                    for r in settled_sorted:
+                        d = by_day.setdefault(r["date"],
+                                                {"stake": 0.0, "ret": 0.0,
+                                                 "n": 0})
+                        d["stake"] += float(r.get("stake") or 0.0)
+                        d["ret"]   += float(r.get("return") or 0.0)
+                        d["n"]     += 1
+                    cum_stake = cum_ret = 0.0
+                    for d_key in sorted(by_day.keys()):
+                        agg = by_day[d_key]
+                        cum_stake += agg["stake"]
+                        cum_ret   += agg["ret"]
+                        curve_rows.append({
+                            "pick": f"{d_key} ({agg['n']} bets)",
+                            "cum_pnl": cum_ret - cum_stake,
+                        })
+                else:
+                    cum_stake = cum_ret = 0.0
+                    for r in settled_sorted:
+                        cum_stake += r["stake"]
+                        cum_ret   += r["return"]
+                        curve_rows.append({
+                            "pick": f"{r['date']} R{r['race_number']}",
+                            "cum_pnl": cum_ret - cum_stake,
+                        })
                 curve_df = pd.DataFrame(curve_rows)
                 st.line_chart(curve_df.set_index("pick")["cum_pnl"])
 

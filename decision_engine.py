@@ -60,7 +60,83 @@ PLAY_TO_POOL = {
     "F4_BOX":      "F4_BOX",
     "QTT_BOX":     "QTT_BOX",
     "F4_BOX_TOP5": "F4_BOX",
+    "FCT":         "FCT",
 }
+
+
+# ---------------------------------------------------------------------------
+# Risk-tier → bet-type mapping (lowest → highest risk: PLACE < QPL < WIN < QIN < FCT)
+# ---------------------------------------------------------------------------
+# Each mode emits a bundle of plays per race-ticket. Per-leg expansion means
+# a banker × N legs ticket becomes N separate bets — one per (banker, leg)
+# pair — for the pair-based plays (QPL_BANKER, QIN_BANKER, FCT).
+#
+#   PLACE        : banker only, 1 bet
+#   WP           : WIN + PLACE on banker, 2 bets
+#   QPL_BANKER   : 1 bet per (banker, leg) pair
+#   QIN_BANKER   : 1 bet per (banker, leg) pair
+#   QQPL         : QIN + QPL per (banker, leg) pair, 2N bets
+#   FCT          : Forecast banker→leg, 1 bet per pair (ordered)
+# ---------------------------------------------------------------------------
+MODE_PLAYS = {
+    "conservative": ["PLACE"],
+    "balanced":     ["QPL_BANKER"],
+    "aggressive":   ["WIN", "QIN_BANKER"],
+    "uncapped":     ["WP", "QQPL", "FCT"],
+}
+
+
+def _expand_ticket_to_plays(ticket: dict, mode: str) -> list[dict]:
+    """Expand a single race-ticket into one synthetic ticket per (play, pair).
+
+    For pair-based plays (QIN_BANKER, QPL_BANKER, FCT) each (banker, leg)
+    becomes its own row — so a 3-leg banker on QPL becomes 3 separate
+    QPL_BANKER bets.
+
+    For WP (Win+Place bundle) and QQPL (QIN+QPL bundle) this is implemented
+    by emitting both child plays. WP → WIN + PLACE on the banker. QQPL →
+    QIN_BANKER + QPL_BANKER per leg.
+    """
+    play_keys = list(MODE_PLAYS.get(mode, ["WIN"]))
+    banker = ticket.get("banker") or {}
+    legs = ticket.get("legs") or []
+
+    # Expand bundle keys into atomic pool keys
+    atomic: list[str] = []
+    for k in play_keys:
+        if k == "WP":
+            atomic.extend(["WIN", "PLACE"])
+        elif k == "QQPL":
+            atomic.extend(["QIN_BANKER", "QPL_BANKER"])
+        else:
+            atomic.append(k)
+
+    out: list[dict] = []
+
+    if not banker:
+        return out
+
+    for pk in atomic:
+        if pk in ("WIN", "PLACE"):
+            out.append({
+                **ticket,
+                "play": pk,
+                "banker": banker,
+                "legs": [],
+                "pair_label": f"{pk} #{banker.get('horse_no')}",
+            })
+        elif pk in ("QIN_BANKER", "QPL_BANKER", "FCT"):
+            for lg in legs:
+                if not lg or lg.get("horse_no") == banker.get("horse_no"):
+                    continue
+                out.append({
+                    **ticket,
+                    "play": pk,
+                    "banker": banker,
+                    "legs": [lg],
+                    "pair_label": f"{pk} #{banker.get('horse_no')}-#{lg.get('horse_no')}",
+                })
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -105,6 +181,13 @@ def estimate_decimal_odds_for_play(ticket: dict, divs_for_race: dict,
         # QPL proxy: same but /3 (3 possible pairs)
         denom = 2.0 if play == "QIN_BANKER" else 3.0
         return (sp * avg_leg_sp) * 0.825 / denom
+    if play == "FCT":
+        # Forecast (ordered): banker 1st × leg 2nd. Larger payout than QIN
+        # because order matters — divide by ~1 instead of 2.
+        if not legs or not sp:
+            return None
+        avg_leg_sp = sum((l.get("win_odds") or sp) for l in legs) / max(1, len(legs))
+        return (sp * avg_leg_sp) * 0.825
     if play in ("F4_BOX", "QTT_BOX", "F4_BOX_TOP5"):
         # Very rough: top-4 SP product * takeout factor
         if not banker:
@@ -131,6 +214,29 @@ def estimate_p_for_play(ticket: dict, market_probs: dict[int, float]) -> tuple[f
     if play == "PLACE":
         p_model = min(0.95, p_model * 2.5)
         p_mkt = min(0.95, p_mkt * 2.5) if p_mkt > 0 else p_mkt
+    elif play == "FCT":
+        # Banker 1st × leg 2nd (ordered). Approximate as p_b * p_l/(1-p_b)
+        legs = ticket.get("legs") or []
+        leg = legs[0] if legs else {}
+        p_l = leg.get("p_model") or 0.0
+        p_l_mkt = market_probs.get(leg.get("horse_no", -1), 0.0)
+        denom = max(0.05, 1.0 - p_model)
+        p_model = p_model * (p_l / denom) if p_l else 0.0
+        p_mkt = p_mkt * (p_l_mkt / max(0.05, 1.0 - p_mkt)) if p_l_mkt else 0.0
+    elif play in ("QIN_BANKER", "QPL_BANKER"):
+        # Per-pair (banker × single leg) when expanded. Joint top-2/top-3 mass.
+        legs = ticket.get("legs") or []
+        if len(legs) == 1:
+            leg = legs[0]
+            p_l = leg.get("p_model") or 0.0
+            p_l_mkt = market_probs.get(leg.get("horse_no", -1), 0.0)
+            mult = 1.9 if play == "QIN_BANKER" else 2.5
+            p_b_topN = min(0.95, p_model * mult)
+            p_l_topN = min(0.95, p_l * mult)
+            p_model = p_b_topN * p_l_topN
+            p_b_mkt_topN = min(0.95, p_mkt * mult) if p_mkt else 0.0
+            p_l_mkt_topN = min(0.95, p_l_mkt * mult) if p_l_mkt else 0.0
+            p_mkt = p_b_mkt_topN * p_l_mkt_topN
     elif play in ("F4_BOX", "QTT_BOX", "F4_BOX_TOP5"):
         # joint-top-4 mass — much smaller than singleton win prob
         legs = ticket.get("legs") or []
@@ -325,132 +431,128 @@ def build_meeting_slate(
             })
             continue
 
-        pool_key = PLAY_TO_POOL.get(ticket["play"], ticket["play"])
-        p_model, p_market = estimate_p_for_play(ticket, market_probs)
-        decimal_odds = estimate_decimal_odds_for_play(
-            ticket, divs_for_race={}, fallback_sp=None
-        )
-
-        # Uncapped: synthesize p_market from raw odds if needed
-        if is_uncapped:
+        # Expand the race-level ticket into one row per (play, pair) per the
+        # selected mode's bet-type whitelist. Per-leg expansion: a 3-leg
+        # banker becomes 3 rows for QPL/QIN/FCT.
+        play_tickets = _expand_ticket_to_plays(ticket, mode)
+        if not play_tickets:
+            # No legs available for pair-based modes — fall back to a single
+            # WIN/PLACE on the banker so the slate isn't empty.
             banker = ticket.get("banker") or {}
+            fallback_play = "PLACE" if mode == "conservative" else "WIN"
+            if banker:
+                play_tickets = [{
+                    **ticket, "play": fallback_play, "banker": banker,
+                    "legs": [],
+                    "pair_label": f"{fallback_play} #{banker.get('horse_no')}",
+                }]
+
+        for sub in play_tickets:
+            sub_play = sub["play"]
+            pool_key = PLAY_TO_POOL.get(sub_play, sub_play)
+            p_model, p_market = estimate_p_for_play(sub, market_probs)
+            decimal_odds = estimate_decimal_odds_for_play(
+                sub, divs_for_race={}, fallback_sp=None
+            )
+            banker = sub.get("banker") or {}
+
+            # Pre-race fallback: synthesize from morning-line odds + p_model.
             if (not p_market) and banker.get("win_odds"):
                 p_market = 1.0 / banker["win_odds"]
-            if not p_model and banker.get("p_model"):
+            if (not p_model) and banker.get("p_model"):
                 p_model = banker["p_model"]
-            if not decimal_odds and banker.get("win_odds"):
+            if (not decimal_odds) and banker.get("win_odds"):
                 decimal_odds = banker["win_odds"]
 
-        # Pre-race fallback (any mode): if dividends are missing because
-        # the meeting hasn't happened, use the banker's morning-line
-        # win_odds + model probability so the slate is still usable.
-        banker = ticket.get("banker") or {}
-        if (not p_market) and banker.get("win_odds"):
-            p_market = 1.0 / banker["win_odds"]
-        if (not p_model) and banker.get("p_model"):
-            p_model = banker["p_model"]
-        if (not decimal_odds) and banker.get("win_odds"):
-            decimal_odds = banker["win_odds"]
+            # Bankroll-scaled advisory: when no live odds at all, derive
+            # decimal_odds from p_model assuming **fair** odds (no takeout)
+            # and set p_market = p_model / (1 + trust) so a small positive
+            # edge produces a real Kelly stake that scales with bankroll.
+            #   trust factor by mode: conservative 0.10, balanced 0.15,
+            #   aggressive 0.25, uncapped 0.50
+            trust_by_mode = {
+                "conservative": 0.10, "balanced": 0.15,
+                "aggressive":   0.25, "uncapped":  0.50,
+            }
+            trust = trust_by_mode.get(mode, 0.15)
+            if p_model and not (p_market and decimal_odds):
+                p_market = max(0.01, p_model / (1.0 + trust))
+                # Fair odds (no takeout) so trust > 0 always yields +EV.
+                decimal_odds = max(1.05, 1.0 / max(p_market, 0.01))
 
-        # Last-resort pre-race advisory: when no SP / no live odds at all,
-        # surface the pick at the HKJC minimum so the user sees it on the
-        # slate with a clear "advisory" reason (rather than silently
-        # skipping the whole meeting). p_market is conservatively pegged
-        # at p_model so edge_pct=0 — stake stays at floor.
-        if p_model and not (p_market and decimal_odds):
-            p_market = p_model
-            decimal_odds = 1.0 / max(p_model, 0.01)
+            if not (p_model and p_market and decimal_odds):
+                races_out.append({
+                    "race_number": rn, "play": sub_play,
+                    "banker_no":   banker.get("horse_no"),
+                    "banker":      banker.get("horse_name"),
+                    "legs":        [(l["horse_no"], l["horse_name"])
+                                    for l in sub.get("legs", [])],
+                    "stake_hkd":   0.0,
+                    "reason":      "missing p_model / p_market / odds",
+                    "ticket":      _ticket_brief(sub),
+                    "accepted":    False,
+                })
+                continue
+
+            remaining = max(0.0, meeting_cap - spent)
+            if (not is_uncapped) and remaining < HKJC_MIN_STAKE:
+                races_out.append({
+                    "race_number": rn, "play": sub_play,
+                    "banker_no":   banker.get("horse_no"),
+                    "banker":      banker.get("horse_name"),
+                    "legs":        [(l["horse_no"], l["horse_name"])
+                                    for l in sub.get("legs", [])],
+                    "stake_hkd":   0.0,
+                    "reason":      f"meeting cap exhausted "
+                                    f"(${spent:.0f}/${meeting_cap:.0f})",
+                    "ticket":      _ticket_brief(sub),
+                    "accepted":    False,
+                })
+                continue
+
+            bet_policy = "force_min" if bankroll < 5000 else "floor"
+            stake = size_bet(
+                p_model=p_model, p_market=p_market,
+                decimal_odds=decimal_odds, bankroll=bankroll,
+                pool=pool_key, mode=mode, n_observed=n_observed,
+                min_bet_policy=bet_policy,
+            )
+
+            if (not is_uncapped) and stake.accepted and stake.stake_hkd > remaining:
+                stake.stake_hkd = math.floor(remaining / HKJC_MIN_STAKE) \
+                                  * HKJC_MIN_STAKE
+                if stake.stake_hkd < HKJC_MIN_STAKE:
+                    stake.accepted = False
+                    stake.reason += "; clipped by meeting cap"
+
+            if stake.accepted:
+                spent += stake.stake_hkd
+
             races_out.append({
-                "race_number": rn, "play": ticket["play"],
-                "banker":      (ticket.get("banker") or {}).get("horse_name"),
-                "banker_no":   (ticket.get("banker") or {}).get("horse_no"),
-                "legs":        [(l["horse_no"], l["horse_name"])
-                                for l in ticket.get("legs", [])],
-                "stake_hkd":   HKJC_MIN_STAKE,
-                "p_used":      p_model, "p_market": p_market,
-                "edge_pct":    0.0, "ev_per_dollar": 0.0,
-                "kelly_full":  0.0, "kelly_used": 0.0,
-                "decimal_odds": decimal_odds,
-                "reason":      "pre-race advisory (no live odds yet) — "
-                                "min stake $10",
-                "accepted":    True,
-                "ticket":      _ticket_brief(ticket),
+                "race_number":   rn,
+                "play":          sub_play,
+                "banker":        banker.get("horse_name"),
+                "banker_no":     banker.get("horse_no"),
+                "legs":          [(l["horse_no"], l["horse_name"])
+                                  for l in sub.get("legs", [])],
+                "stake_hkd":     stake.stake_hkd if stake.accepted else 0.0,
+                "p_used":        stake.p_used,
+                "p_market":      stake.p_market,
+                "edge_pct":      stake.edge_pct,
+                "ev_per_dollar": stake.ev_per_dollar,
+                "kelly_full":    stake.kelly_full,
+                "kelly_used":    stake.kelly_used,
+                "decimal_odds":  decimal_odds,
+                "reason":        stake.reason,
+                "accepted":      stake.accepted,
+                "ticket":        _ticket_brief(sub),
             })
-            spent += HKJC_MIN_STAKE
-            continue
 
-        if not (p_model and p_market and decimal_odds):
-            races_out.append({
-                "race_number": rn, "play": ticket["play"],
-                "stake_hkd": 0.0,
-                "reason": "missing p_model / p_market / odds",
-                "ticket": _ticket_brief(ticket),
-            })
-            continue
-
-        # Remaining cap (applied AFTER Kelly sizing — Kelly uses full bankroll)
-        remaining = max(0.0, meeting_cap - spent)
-        if (not is_uncapped) and remaining < HKJC_MIN_STAKE:
-            races_out.append({
-                "race_number": rn, "play": ticket["play"],
-                "stake_hkd": 0.0,
-                "reason": f"meeting cap exhausted (${spent:.0f}/${meeting_cap:.0f})",
-                "ticket": _ticket_brief(ticket),
-            })
-            continue
-
-        # At small bankrolls (< $5k) the $10 min is essentially the unit, so
-        # force_min lets positive-edge bets fire at the minimum even when
-        # the half-Kelly fraction would round below $10. Per-bet cap still
-        # binds, so this can't blow up exposure.
-        bet_policy = "force_min" if bankroll < 5000 else "floor"
-        stake = size_bet(
-            p_model=p_model, p_market=p_market,
-            decimal_odds=decimal_odds, bankroll=bankroll,
-            pool=pool_key, mode=mode, n_observed=n_observed,
-            min_bet_policy=bet_policy,
-        )
-
-        # Apply meeting cap to the chosen stake too (skip in uncapped mode)
-        if (not is_uncapped) and stake.accepted and stake.stake_hkd > remaining:
-            stake.stake_hkd = math.floor(remaining / HKJC_MIN_STAKE) * HKJC_MIN_STAKE
-            if stake.stake_hkd < HKJC_MIN_STAKE:
-                stake.accepted = False
-                stake.reason += "; clipped by meeting cap"
-
-        if stake.accepted:
-            spent += stake.stake_hkd
-
-        races_out.append({
-            "race_number":   rn,
-            "play":          ticket["play"],
-            "banker":        (ticket.get("banker") or {}).get("horse_name"),
-            "banker_no":     (ticket.get("banker") or {}).get("horse_no"),
-            "legs":          [(l["horse_no"], l["horse_name"])
-                              for l in ticket.get("legs", [])],
-            "stake_hkd":     stake.stake_hkd if stake.accepted else 0.0,
-            "p_used":        stake.p_used,
-            "p_market":      stake.p_market,
-            "edge_pct":      stake.edge_pct,
-            "ev_per_dollar": stake.ev_per_dollar,
-            "kelly_full":    stake.kelly_full,
-            "kelly_used":    stake.kelly_used,
-            "decimal_odds":  decimal_odds,
-            "reason":        stake.reason,
-            "accepted":      stake.accepted,
-            "ticket":        _ticket_brief(ticket),
-        })
-
-        # All-up candidates: build WIN, PLACE, QIN_BANKER, QPL_BANKER legs.
-        # Multiple legs per race; chain enumerator picks at most one per
-        # race per chain (best by EV). Value-pick horses (positive market
-        # edge, not just the model's top-1) are also surfaced as WIN/PLACE
-        # leg candidates.
+        # All-up candidates (unchanged: still emitted from the original ticket)
         if cfg["allow_allup"] and enable_allup:
             banker = ticket.get("banker") or {}
             ticket_legs = ticket.get("legs") or []
 
-            # --- (1) WIN+PLACE on the model's banker, if it has any edge
             if banker.get("win_odds") and banker.get("p_model") is not None:
                 _emit_simple_legs(
                     candidate_legs, rn, banker, market_probs,
@@ -459,7 +561,6 @@ def build_meeting_slate(
                     is_uncapped=is_uncapped,
                 )
 
-            # --- (2) QIN_BANKER + QPL_BANKER bundles
             if ticket_legs and banker.get("p_model") is not None \
                     and banker.get("win_odds"):
                 _emit_qin_qpl_legs(
@@ -469,8 +570,6 @@ def build_meeting_slate(
                     is_uncapped=is_uncapped,
                 )
 
-            # --- (3) Value picks: any other horse in the race with positive
-            # market edge (p_model > p_market) gets WIN+PLACE legs too.
             for row in rows:
                 hno = row.get("horse_no")
                 if hno is None or banker.get("horse_no") == hno:
@@ -615,6 +714,14 @@ def settle_slate(slate: dict) -> list[Bet]:
                 for lno in legs_nos:
                     if lno in top3 and lno != b_no:
                         payout += per * div_pay(race_divs, "QPL", [b_no, lno])
+        elif play == "FCT":
+            # Forecast: banker 1st AND leg 2nd (ordered)
+            if legs_nos and finishers and len(finishers) >= 2:
+                first_no = finishers[0][0]
+                second_no = finishers[1][0]
+                if b_no == first_no and legs_nos[0] == second_no:
+                    payout = stake * div_pay(race_divs, "FCT",
+                                              [b_no, legs_nos[0]])
         elif play in ("F4_BOX", "F4_BOX_TOP5"):
             sel = [b_no] + legs_nos
             from itertools import combinations

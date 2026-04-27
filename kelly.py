@@ -74,18 +74,18 @@ from typing import Literal, Optional
 MODE_TABLE = {
     "conservative": {
         "kelly_fraction":       0.25,   # quarter-Kelly
-        "min_edge_pct":         0.20,   # +20% over market
-        "min_p_used":           0.20,
+        "min_edge_pct":         0.02,   # +2% over market (low bar — bet type itself is the safety)
+        "min_p_used":           0.08,
         "max_per_bet_frac":     0.020,  # 2%
         "max_per_meeting_frac": 0.10,   # 10%
-        "shrinkage_k":          80,
+        "shrinkage_k":          40,
         "pool_whitelist":       {"WIN", "PLACE", "QPL_BANKER"},
         "allow_allup":          False,
     },
     "balanced": {
         "kelly_fraction":       0.50,   # half-Kelly  (moderate stance)
-        "min_edge_pct":         0.10,
-        "min_p_used":           0.12,
+        "min_edge_pct":         0.03,
+        "min_p_used":           0.06,
         "max_per_bet_frac":     0.030,
         "max_per_meeting_frac": 0.15,
         "shrinkage_k":          50,
@@ -94,13 +94,13 @@ MODE_TABLE = {
     },
     "aggressive": {
         "kelly_fraction":       0.50,   # cap at half-Kelly
-        "min_edge_pct":         0.05,
-        "min_p_used":           0.08,
+        "min_edge_pct":         0.0,    # any positive edge
+        "min_p_used":           0.04,
         "max_per_bet_frac":     0.050,
         "max_per_meeting_frac": 0.20,
         "shrinkage_k":          35,
         "pool_whitelist":       {"WIN", "PLACE", "QIN_BANKER", "QPL_BANKER",
-                                  "F4_BOX", "QTT_BOX"},
+                                  "F4_BOX", "QTT_BOX", "FCT"},
         "allow_allup":          True,
     },
     # ---------------------------------------------------------------
