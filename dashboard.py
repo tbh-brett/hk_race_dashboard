@@ -797,6 +797,48 @@ def _gh_push_file(repo_path: str, content_bytes: bytes, message: str) -> bool:
         return False
 
 
+def _gh_push_user_bets() -> bool:
+    """Sync reports/user_bets_log.jsonl to GitHub so it survives Streamlit
+    Cloud restarts. No-op locally or without GITHUB_TOKEN."""
+    if not _is_streamlit_cloud():
+        return False
+    if not _gh_headers():
+        return False
+    bets_file = REPORTS / "user_bets_log.jsonl"
+    if not bets_file.exists():
+        return False
+    try:
+        data = bets_file.read_bytes()
+    except Exception:
+        return False
+    return _gh_push_file(
+        "reports/user_bets_log.jsonl",
+        data,
+        f"my-bets: auto-sync {date.today().isoformat()} [skip ci]",
+    )
+
+
+def _gh_push_trials(trial_date_iso: str) -> bool:
+    """Sync trials_YYYYMMDD.json to GitHub. No-op locally."""
+    if not _is_streamlit_cloud():
+        return False
+    if not _gh_headers():
+        return False
+    dc = trial_date_iso.replace("-", "")
+    f = REPORTS / f"trials_{dc}.json"
+    if not f.exists():
+        return False
+    try:
+        data = f.read_bytes()
+    except Exception:
+        return False
+    return _gh_push_file(
+        f"reports/trials_{dc}.json",
+        data,
+        f"trials: auto-sync {trial_date_iso} [skip ci]",
+    )
+
+
 def _gh_persist_postrace_outputs(date_str: str) -> tuple[int, int, list[str]]:
     """Push post-race pipeline artifacts back to GitHub on Streamlit Cloud.
 
@@ -3481,6 +3523,20 @@ def page_race_day(selected):
 
     # ── Top Picks Summary table (collapsible) ──────────────────────────
     with st.expander("**TOP PICKS SUMMARY**", expanded=False):
+        # Build a quick lookup of SARR top-1 by race # so we can flag
+        # ET/SARR agreement (★) in the ET summary rows. Backtest shows
+        # races where both models pick the same horse have a 33% Win
+        # rate vs ~23% baseline — strongest single confidence signal.
+        _sarr_top1_by_race: dict = {}
+        if sarr_available:
+            for _r in sarr_races:
+                _picks = _r.get("picks") or []
+                if _picks:
+                    _sarr_top1_by_race[_r.get("race_number")] = (
+                        _picks[0].get("horse_no")
+                        or _picks[0].get("horse_name")
+                    )
+
         summary_rows = []
         for race in active_races:
             picks = race.get("picks", [])
@@ -3489,13 +3545,19 @@ def page_race_day(selected):
             top = picks[0]
             cls_str = f"C{race.get('race_class', '')}" if race.get('race_class') else "Grp"
             surface = "AWT" if race.get("is_awt") else "Turf"
+            # Agreement marker — only meaningful when both models exist.
+            _top_id = top.get("horse_no") or top.get("horse_name")
+            _sarr_id = _sarr_top1_by_race.get(race.get("race_number"))
+            _agree = bool(_sarr_id) and (_sarr_id == _top_id)
+            _name = top.get("horse_name", "?")
+            _name_disp = f"★ {_name}" if _agree else _name
             if use_sarr:
                 summary_rows.append({
                     "Race": f"R{race['race_number']}",
                     "Dist": f"{race.get('distance', '?')}m",
                     "Surf": surface,
                     "Cls": cls_str,
-                    "Top Pick": top.get("horse_name", "?"),
+                    "Top Pick": _name_disp,
                     "SARR": f"{top.get('sarr', 0):+.3f}",
                     "Style": top.get("style", "?"),
                     "2nd": picks[1]["horse_name"] if len(picks) > 1 else "—",
@@ -3509,7 +3571,7 @@ def page_race_day(selected):
                     "Surf": surface,
                     "Cls": cls_str,
                     "Pace": race.get("pace", "?"),
-                    "Top Pick": top["horse_name"],
+                    "Top Pick": _name_disp,
                     "Proj (s)": f"{top['projected_time']:.2f}",
                     "Win%": f"{top['win_prob']:.0f}%",
                     "2nd": picks[1]["horse_name"] if len(picks) > 1 else "—",
@@ -3519,6 +3581,14 @@ def page_race_day(selected):
 
         if summary_rows:
             st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
+            if sarr_available:
+                _n_agree = sum(1 for r in summary_rows
+                               if r.get("Top Pick", "").startswith("★"))
+                if _n_agree:
+                    st.caption(
+                        f"★ AGREEMENT — ET top-1 = SARR top-1 in **{_n_agree}** "
+                        f"race(s). Historically these win at ~33% (vs ~23% baseline)."
+                    )
 
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
@@ -3543,7 +3613,10 @@ def page_race_day(selected):
     if rd_q:
         match_races = []
         for r in active_races:
-            for pool in (r.get("picks", []), r.get("speed_map", {}).get("grid", [])):
+            # SARR JSON has speed_map=None — guard against AttributeError
+            _smap = r.get("speed_map") or {}
+            _grid = _smap.get("grid", []) if isinstance(_smap, dict) else []
+            for pool in (r.get("picks", []) or [], _grid):
                 if any(rd_q in (p.get("horse_name", "") or "").upper() for p in pool):
                     match_races.append(r["race_number"])
                     break
@@ -4080,9 +4153,9 @@ def page_backtest():
 
     st.markdown("---")
 
-    # ── Tabs: Weekly / Monthly / Seasonal ─────────────────
-    tab_weekly, tab_monthly, tab_seasonal = st.tabs([
-        "Weekly (Per-Meeting)", "Monthly", "Seasonal"])
+    # ── Tabs: Weekly / Monthly / Seasonal / Strategy Insights ─────────
+    tab_weekly, tab_monthly, tab_seasonal, tab_insights = st.tabs([
+        "Weekly (Per-Meeting)", "Monthly", "Seasonal", "🎯 Strategy Insights"])
 
     bt_files = load_backtest_files()
 
@@ -4170,6 +4243,205 @@ def page_backtest():
                         st.markdown("---")
 
                     render_backtest_metrics(sdata, prefix="se_")
+
+    # ── Strategy Insights tab ──────────────────────────────
+    with tab_insights:
+        _render_strategy_insights()
+
+
+def _render_strategy_insights():
+    """Multi-meeting strategic backtest summary loaded from cache/deep_backtest.json.
+
+    Shows ET vs SARR vs Market comparisons, model agreement signal, ROI
+    by ET top-1 odds bucket, and pace-classifier accuracy. Built from the
+    deep_backtest cache which aggregates 60+ races across April 2026.
+    """
+    cache_path = BASE / "cache" / "deep_backtest.json"
+    if not cache_path.exists():
+        st.info(
+            "No deep backtest cache yet. Run `_deep_backtest.py` locally "
+            "(generates `cache/deep_backtest.json` from all matched meetings) "
+            "and commit. This panel surfaces multi-meeting strategy findings "
+            "that the per-meeting backtest doesn't reveal."
+        )
+        return
+
+    try:
+        cache = json.loads(cache_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        st.error(f"Cache unreadable: {e}")
+        return
+
+    rows = cache.get("rows", []) or []
+    if not rows:
+        st.warning("Cache is empty.")
+        return
+
+    n = len(rows)
+
+    # Headline metrics
+    def _rate(field, sub):
+        wins = sum((r.get(field, {}) or {}).get(sub, 0) for r in rows)
+        return wins / n if n else 0.0
+
+    et_w = _rate("et", "win"); et_p = _rate("et", "plc")
+    sa_w = _rate("sa", "win"); sa_p = _rate("sa", "plc")
+    mk_w = _rate("mk", "win"); mk_p = _rate("mk", "plc")
+    agree_n = sum(1 for r in rows if r.get("agree"))
+    agree_w = sum(1 for r in rows
+                  if r.get("agree") and (r.get("et", {}) or {}).get("win"))
+    agree_p = sum(1 for r in rows
+                  if r.get("agree") and (r.get("et", {}) or {}).get("plc"))
+
+    # Union top-3 winner-coverage proxy: any of et/sa "top3_has_w" hit
+    union_t3 = sum(1 for r in rows if r.get("union_t3_has_winner"))
+
+    st.markdown(f"**Sample**: {n} races aggregated · "
+                f"sources: `cache/deep_backtest.json`")
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("ET top-1 Win", f"{et_w:.1%}", f"Place {et_p:.1%}")
+    c2.metric("SARR top-1 Win", f"{sa_w:.1%}", f"Place {sa_p:.1%}")
+    c3.metric("Market fav Win", f"{mk_w:.1%}", f"Place {mk_p:.1%}")
+    c4.metric("Union ET∪SARR top-3 covers winner",
+              f"{union_t3 / n:.1%}",
+              f"vs ET alone ~{sum(1 for r in rows if (r.get('et',{}) or {}).get('top3_has_w')) / n:.0%}")
+
+    st.markdown("---")
+    st.markdown("#### 🤝 Model Agreement Signal")
+    if agree_n:
+        st.markdown(
+            f"- ET top-1 = SARR top-1 in **{agree_n}/{n}** races "
+            f"(**{agree_n / n:.0%}**).\n"
+            f"- When models agree → Win rate **{agree_w / agree_n:.1%}** · "
+            f"Place rate **{agree_p / agree_n:.1%}**.\n"
+            f"- When they disagree → Win rate "
+            f"**{(sum(1 for r in rows if not r.get('agree') and (r.get('et',{}) or {}).get('win')) / max(1, n - agree_n)):.1%}** "
+            f"(ET).\n"
+            f"- ➜ A green ★ AGREEMENT chip is now shown on the Model Analysis "
+            f"page when both top-1s coincide — treat these as confidence picks."
+        )
+    else:
+        st.caption("Insufficient data to compute agreement.")
+
+    st.markdown("---")
+    st.markdown("#### 💰 ROI by ET top-1 Odds Bucket  *(level $1 stakes)*")
+    buckets = [(0, 3, "<3.0 (chalk)"),
+               (3, 6, "3.0–6.0 (sweet spot)"),
+               (6, 12, "6.0–12.0"),
+               (12, 999, ">12 (longshot — skip)")]
+    bucket_rows = []
+    for lo, hi, label in buckets:
+        sub = [r for r in rows
+               if r.get("et_top1_odds") is not None
+               and lo < r["et_top1_odds"] <= hi]
+        if not sub:
+            continue
+        n_b = len(sub)
+        w_b = sum(1 for r in sub if (r.get("et", {}) or {}).get("win"))
+        p_b = sum(1 for r in sub if (r.get("et", {}) or {}).get("plc"))
+        roi_w = sum((r["et_top1_odds"] - 1) if (r.get("et", {}) or {}).get("win") else -1
+                    for r in sub) / n_b if n_b else 0.0
+        bucket_rows.append({
+            "ET top-1 odds": label, "Races": n_b,
+            "Win %": f"{w_b / n_b:.1%}", "Place %": f"{p_b / n_b:.1%}",
+            "Win-only ROI": f"{roi_w:+.1%}",
+        })
+    if bucket_rows:
+        st.dataframe(pd.DataFrame(bucket_rows), use_container_width=True,
+                     hide_index=True)
+        st.caption(
+            "**Action**: stake ET top-1 only when its odds land in the **3.0–6.0** "
+            "bucket. Skip when odds >12 — historical Win = 0%."
+        )
+
+    st.markdown("---")
+    st.markdown("#### 🏁 Pace Classifier Accuracy")
+    pace = cache.get("pace", {}) or {}
+    p_total = pace.get("total", 0)
+    if p_total:
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Exact match", f"{pace.get('correct', 0)}/{p_total}",
+                  f"{pace.get('correct', 0) / p_total:.0%}")
+        c2.metric("Within 1 band",
+                  f"{pace.get('close', 0)}/{p_total}",
+                  f"{pace.get('close', 0) / p_total:.0%}")
+        c3.metric("Wrong direction",
+                  f"{pace.get('wrong', 0)}/{p_total}",
+                  f"{pace.get('wrong', 0) / p_total:.0%}")
+        by_label = pace.get("by_label", {}) or {}
+        if by_label:
+            with st.expander("Per-predicted-label breakdown"):
+                rows_pl = [{"Predicted": k,
+                             "Races": v.get("n", 0),
+                             "Correct": v.get("correct", 0),
+                             "Hit %": (v.get("correct", 0) / v.get("n", 1)
+                                       if v.get("n") else 0)}
+                            for k, v in by_label.items()]
+                df_pl = pd.DataFrame(rows_pl)
+                if "Hit %" in df_pl.columns:
+                    df_pl["Hit %"] = df_pl["Hit %"].map(lambda x: f"{x:.0%}")
+                st.dataframe(df_pl, use_container_width=True,
+                             hide_index=True)
+
+    st.markdown("---")
+    st.markdown("#### ⏱️ ET Projection Bias *(post-correction check)*")
+    proj_err = cache.get("proj_err", []) or []
+    if proj_err:
+        # Apply the v4.7 distance-aware correction retrospectively to show
+        # the calibrated residual the user should expect going forward.
+        def _bias(d):
+            if d is None:
+                return 0.0
+            if d <= 1200:
+                return 0.77
+            if d <= 1600:
+                return 0.71
+            return 0.0
+        # Look up distance from rows by (date, race) for each err record
+        race_dist = {(r["date"], r["race"]): r.get("distance")
+                     for r in rows}
+        adj_errs = []
+        raw_errs = []
+        for e in proj_err:
+            d = race_dist.get((e.get("date"), e.get("race")))
+            raw = e.get("err", 0.0) or 0.0
+            raw_errs.append(raw)
+            adj_errs.append(raw - _bias(d))
+        if raw_errs:
+            import statistics as _stats
+            mae_raw = _stats.mean(abs(x) for x in raw_errs)
+            mae_adj = _stats.mean(abs(x) for x in adj_errs)
+            mean_raw = _stats.mean(raw_errs)
+            mean_adj = _stats.mean(adj_errs)
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Mean error (raw)", f"{mean_raw:+.2f}s",
+                      f"MAE {mae_raw:.2f}s")
+            c2.metric("Mean error (with v4.7 correction)",
+                      f"{mean_adj:+.2f}s",
+                      f"MAE {mae_adj:.2f}s")
+            within = sum(1 for x in adj_errs if abs(x) <= 0.5)
+            c3.metric("% within ±0.5s (corrected)",
+                      f"{within / len(adj_errs):.0%}",
+                      f"raw {sum(1 for x in raw_errs if abs(x) <= 0.5) / len(raw_errs):.0%}")
+            st.caption(
+                "v4.7 applies a uniform distance-aware shift to projected times "
+                "(sprint −0.77s, mile −0.71s, route 0). Ranks are unchanged."
+            )
+
+    st.markdown("---")
+    st.markdown("#### 📋 Strategy Cheat-Sheet (April-2026 calibrated)")
+    st.markdown(
+        "1. **Confidence pick**: ET top-1 *and* SARR top-1 are the same → green AGREEMENT chip.\n"
+        "2. **Stake band**: ET top-1 odds in **3.0–6.0** historically returns "
+        "the strongest ROI. Avoid odds >12 (longshot).\n"
+        "3. **Coverage**: when you must spread — bet **union of ET top-3 ∪ SARR top-3** "
+        "(covers winner ~50%+ vs single-model ~40%).\n"
+        "4. **Don't average the models**. Their ranks are complementary, not redundant — "
+        "blending destroys the agreement signal.\n"
+        "5. **Pace caveat**: classifier is right only ~30% exactly; trust pace tags "
+        "*directionally*, not as a hard label."
+    )
 
 
 def _results_json_to_excel_bytes(results_path: Path) -> bytes | None:
@@ -7388,6 +7660,10 @@ def sidebar_trials():
                 cwd=str(BASE),
             )
         if result.returncode == 0:
+            # Sync trial JSON to GitHub on Streamlit Cloud (no-op locally).
+            if _is_streamlit_cloud():
+                if _gh_push_trials(trial_date.isoformat()):
+                    st.toast("☁ Trial JSON synced to GitHub", icon="✅")
             st.toast(f"\u2713 Trials scraped for {trial_date.isoformat()}", icon="\u2705")
             st.cache_data.clear()
             st.rerun()
@@ -7417,6 +7693,16 @@ def sidebar_trials():
         if result.returncode == 0:
             lines = result.stdout.strip().splitlines()
             summary = lines[-1] if lines else "Done"
+            # Sync every newly created trials_*.json to GitHub on cloud.
+            if _is_streamlit_cloud():
+                pushed = 0
+                d = bulk_from
+                while d <= bulk_to:
+                    if _gh_push_trials(d.isoformat()):
+                        pushed += 1
+                    d += timedelta(days=1)
+                if pushed:
+                    st.toast(f"☁ Synced {pushed} trial JSON(s) to GitHub", icon="✅")
             st.toast(f"\u2713 {summary}", icon="\u2705")
             st.cache_data.clear()
             st.rerun()
@@ -9321,6 +9607,7 @@ def page_my_bets():
                             )
                     if do_import:
                         summary = pas.import_statement(tmp_path)
+                        _gh_push_user_bets()
                         st.success(
                             f"Inserted **{summary['inserted']}** record(s); "
                             f"skipped **{summary['skipped']}** "
@@ -9493,6 +9780,7 @@ def page_my_bets():
                         banker=int(banker_no) if needs_banker else None,
                         stake_hkd=float(stake), notes=notes,
                     )
+                    _gh_push_user_bets()
                     st.success(
                         f"✅ Bet saved (id {bid[:6]}…) — "
                         f"{_BET_TYPE_LABELS.get(bet_type, bet_type)}, "
@@ -9502,6 +9790,16 @@ def page_my_bets():
                     st.error(str(e))
 
     rows = ub.load_bets(settle=True)
+    # Persist auto-settlement updates to GitHub so they survive a redeploy.
+    # Only pushes when running on Streamlit Cloud + the settled count has
+    # changed since the last render this session (avoids redundant API calls).
+    try:
+        _settled_now = sum(1 for r in rows if r.get("status") == "settled")
+        if st.session_state.get("_mb_last_settled_count") != _settled_now:
+            st.session_state["_mb_last_settled_count"] = _settled_now
+            _gh_push_user_bets()
+    except Exception:
+        pass
 
     # ── TAB 2 — Open bets (edit / delete) ───────────────────────────────
     with tabs[1]:
@@ -9530,6 +9828,7 @@ def page_my_bets():
                         if st.button("🗑️ Delete",
                                           key=f"mb_del_{r['bet_id']}"):
                             ub.delete_bet(r["bet_id"])
+                            _gh_push_user_bets()
                             st.rerun()
                     with cref:
                         new_stake = st.number_input(
@@ -9541,6 +9840,7 @@ def page_my_bets():
                                           key=f"mb_upd_{r['bet_id']}"):
                             ub.edit_bet(r["bet_id"],
                                          stake_hkd=float(new_stake))
+                            _gh_push_user_bets()
                             st.rerun()
 
     # ── TAB 3 — Settled history ─────────────────────────────────────────

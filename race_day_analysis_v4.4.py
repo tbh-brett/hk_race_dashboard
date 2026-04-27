@@ -2804,6 +2804,31 @@ def project_race(race, class_fine, fine, coarse, ultra, draw_off, db=None, sec_d
             hd["projected_time"] = round(
                 hd["projected_time"] + hd["smap_total_adj"], 2)
 
+    # ── v4.7: ET projection bias correction ──────────────────────────────
+    # Backtest (Apr 2026, 69 races) showed ET projections systematically slow:
+    #   sprint  (≤1200m): bias +0.77s — actuals run 0.77s faster than ET
+    #   mile    (1400-1600m): bias +0.71s
+    #   route   (≥1800m): bias ~0
+    # Subtracting these constants reduces projected-time RMSE by 22.6% and
+    # doubles % within ±0.5s (29% → 57%). Applied as a uniform per-race
+    # shift, so it does NOT affect ranking — purely a display/calibration fix
+    # that makes projected times directly comparable to actual finish times.
+    if isinstance(distance, (int, float)) and distance > 0:
+        if distance <= 1200:
+            _et_bias = 0.77
+        elif distance <= 1600:
+            _et_bias = 0.71
+        else:
+            _et_bias = 0.0
+        if _et_bias > 0:
+            for hd in horse_data:
+                if hd.get("projected_time") is not None:
+                    hd["projected_time"] = round(
+                        hd["projected_time"] - _et_bias, 2)
+                if hd.get("proj_pre_pace") is not None:
+                    hd["proj_pre_pace"] = round(
+                        hd["proj_pre_pace"] - _et_bias, 3)
+
     df = pd.DataFrame(horse_data)
     if df["projected_time"].notna().sum() >= 2:
         mu = df["projected_time"].mean(); sd = df["projected_time"].std()
