@@ -859,6 +859,7 @@ def _gh_persist_postrace_outputs(date_str: str) -> tuple[int, int, list[str]]:
         (REPORTS / f"incidents_{dc}.json",     f"reports/incidents_{dc}.json"),
         (REPORTS / f"commentary_{dc}.json",    f"reports/commentary_{dc}.json"),
         (REPORTS / f"backtest_{dc}.json",      f"reports/backtest_{dc}.json"),
+        (REPORTS / f"backtest_unified_{dc}.json", f"reports/backtest_unified_{dc}.json"),
         # Form guide cache often gets lane data added during step 6.
         (BASE / "cache" / f"form_guide_{date_str}.json",
          f"cache/form_guide_{date_str}.json"),
@@ -4072,9 +4073,370 @@ def _traffic_light(label: str, val, good: float, ok: float,
 # Backtest page — main
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _load_unified_backtest(label: str) -> dict | None:
+    """Load a unified backtest JSON by label (e.g. 'all', 'last7', 'month-2026-04',
+    or a YYYYMMDD date_compact for a per-meeting file)."""
+    if re.fullmatch(r"\d{8}", label):
+        path = REPORTS / f"backtest_unified_{label}.json"
+    else:
+        path = REPORTS / f"backtest_unified_{label}.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _list_unified_backtests() -> dict:
+    """Return {'meeting': {dc: data}, 'window': {label: data}, 'month': {ym: data}}."""
+    out = {"meeting": {}, "window": {}, "month": {}}
+    for p in REPORTS.glob("backtest_unified_*.json"):
+        label = p.stem[len("backtest_unified_"):]
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if re.fullmatch(r"\d{8}", label):
+            out["meeting"][label] = data
+        elif label.startswith("month-"):
+            out["month"][label[len("month-"):]] = data
+        else:
+            out["window"][label] = data
+    return out
+
+
+def _fmt_pct_or_dash(v) -> str:
+    return f"{v*100:.1f}%" if isinstance(v, (int, float)) else "—"
+
+
+def _fmt_signed_pct(v) -> str:
+    return f"{v*100:+.1f}%" if isinstance(v, (int, float)) else "—"
+
+
+def _fmt_secs(v) -> str:
+    if isinstance(v, (int, float)):
+        return f"{v:+.2f}s"
+    return "—"
+
+
+def _agreement_chip_html(agreed: bool) -> str:
+    if agreed:
+        return ('<span style="background:#1f6f3a;color:#dff5e5;padding:2px 8px;'
+                'border-radius:10px;font-size:0.8em;font-weight:600;">★ AGREE</span>')
+    return ('<span style="background:#5a3030;color:#f5d5d5;padding:2px 8px;'
+            'border-radius:10px;font-size:0.8em;">SPLIT</span>')
+
+
+def _render_unified_overview(data: dict, prefix: str = ""):
+    """Headline ET / SARR / Market comparison + agreement signal."""
+    s = data.get("summary") or data
+    n = data.get("n_races") or s.get("n_races", 0)
+    et = s.get("et", {}) or {}
+    sa = s.get("sa", {}) or {}
+    mk = s.get("mk", {}) or {}
+    agree = s.get("agree_top1", {}) or {}
+    union = s.get("union_top3_winner_coverage")
+
+    if not n:
+        st.info("No backtestable races in this period.")
+        return
+
+    period = data.get("period") or data.get("date") or ""
+    n_meets = data.get("n_meetings", 1)
+    st.markdown(f"**Sample:** {n_meets} meeting{'s' if n_meets != 1 else ''} · "
+                f"{n} races · {period}")
+
+    st.markdown("##### Top-1 Pick Performance")
+    rows = [
+        {"Model": "ET (v4.4)",
+         "Top-1 Win": _fmt_pct_or_dash(et.get("top1_win")),
+         "Top-1 Place": _fmt_pct_or_dash(et.get("top1_plc")),
+         "Top-3 Has Winner": _fmt_pct_or_dash(et.get("top3_has_w")),
+         "Avg Top-3 Overlap": (f"{et['avg_top3_overlap']:.2f}/3"
+                                if et.get("avg_top3_overlap") is not None else "—"),
+         "Rank ρ": (f"{s.get('et_rank_corr_avg'):.3f}"
+                    if s.get("et_rank_corr_avg") is not None else "—")},
+        {"Model": "SARR",
+         "Top-1 Win": _fmt_pct_or_dash(sa.get("top1_win")),
+         "Top-1 Place": _fmt_pct_or_dash(sa.get("top1_plc")),
+         "Top-3 Has Winner": _fmt_pct_or_dash(sa.get("top3_has_w")),
+         "Avg Top-3 Overlap": (f"{sa['avg_top3_overlap']:.2f}/3"
+                                if sa.get("avg_top3_overlap") is not None else "—"),
+         "Rank ρ": (f"{s.get('sa_rank_corr_avg'):.3f}"
+                    if s.get("sa_rank_corr_avg") is not None else "—")},
+        {"Model": "Market fav",
+         "Top-1 Win": _fmt_pct_or_dash(mk.get("top1_win")),
+         "Top-1 Place": _fmt_pct_or_dash(mk.get("top1_plc")),
+         "Top-3 Has Winner": _fmt_pct_or_dash(mk.get("top3_has_w")),
+         "Avg Top-3 Overlap": (f"{mk['avg_top3_overlap']:.2f}/3"
+                                if mk.get("avg_top3_overlap") is not None else "—"),
+         "Rank ρ": "—"},
+    ]
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    st.markdown("##### Agreement Signal")
+    if agree.get("n"):
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Races where ET=SARR top-1",
+                  f"{agree.get('n', 0)}/{n}",
+                  f"{(agree.get('rate') or 0)*100:.0f}% rate")
+        c2.metric("Win rate when agree",
+                  _fmt_pct_or_dash(agree.get("win_rate")),
+                  f"vs ET solo {(et.get('top1_win') or 0)*100:.1f}%")
+        c3.metric("Place rate when agree",
+                  _fmt_pct_or_dash(agree.get("place_rate")),
+                  f"vs ET solo {(et.get('top1_plc') or 0)*100:.1f}%")
+        c4.metric("ET ∪ SARR top-3 covers winner",
+                  _fmt_pct_or_dash(union),
+                  f"vs ET solo {(et.get('top3_has_w') or 0)*100:.1f}%")
+    else:
+        st.caption("No model-agreement races in sample.")
+
+
+def _render_unified_strategies(data: dict, prefix: str = ""):
+    """ROI by odds bucket + class/distance breakdown."""
+    s = data.get("summary") or data
+    buckets = s.get("et_odds_buckets") or []
+    if buckets:
+        st.markdown("##### ROI by ET Top-1 Odds Bucket  *(level $1 stakes)*")
+        rows = [{"Odds Bucket": b["label"],
+                 "Races": b["n"],
+                 "Win %": _fmt_pct_or_dash(b["win_rate"]),
+                 "Place %": _fmt_pct_or_dash(b["place_rate"]),
+                 "Win-only ROI": _fmt_signed_pct(b["win_roi"])}
+                for b in buckets]
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    bk = s.get("breakdown") or {}
+    by_class = bk.get("by_class") or {}
+    by_dist = bk.get("by_distance") or {}
+    if by_class:
+        st.markdown("##### Win Rate by Race Class")
+        rows = [{"Class": k, "Races": v["n"],
+                 "ET Win": _fmt_pct_or_dash(v["et_win"]),
+                 "ET Plc": _fmt_pct_or_dash(v["et_plc"]),
+                 "SARR Win": _fmt_pct_or_dash(v["sa_win"]),
+                 "SARR Plc": _fmt_pct_or_dash(v["sa_plc"]),
+                 "Market Win": _fmt_pct_or_dash(v["mk_win"])}
+                for k, v in sorted(by_class.items())]
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    if by_dist:
+        st.markdown("##### Win Rate by Distance")
+        rows = [{"Distance": k, "Races": v["n"],
+                 "ET Win": _fmt_pct_or_dash(v["et_win"]),
+                 "SARR Win": _fmt_pct_or_dash(v["sa_win"]),
+                 "Market Win": _fmt_pct_or_dash(v["mk_win"])}
+                for k, v in by_dist.items()]
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+
+def _render_unified_pace_proj(data: dict, prefix: str = ""):
+    """Pace classifier accuracy + ET projection bias."""
+    s = data.get("summary") or data
+    pace = s.get("pace") or {}
+    if pace.get("total"):
+        st.markdown("##### Pace Classifier Accuracy")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Exact match",
+                  f"{pace.get('correct',0)}/{pace.get('total',0)}",
+                  _fmt_pct_or_dash(pace.get("exact_pct")))
+        c2.metric("Same-side (F/N/S)",
+                  f"{pace.get('close',0)}/{pace.get('total',0)}",
+                  _fmt_pct_or_dash(pace.get("close_pct")))
+        c3.metric("Wrong direction",
+                  f"{pace.get('wrong',0)}/{pace.get('total',0)}",
+                  _fmt_pct_or_dash(1 - (pace.get('close_pct') or 0)))
+        by_label = pace.get("by_label") or {}
+        if by_label:
+            with st.expander("Per-predicted-label breakdown"):
+                rows = [{"Predicted": k, "Races": v["n"],
+                         "Hit": v["correct"],
+                         "Hit %": _fmt_pct_or_dash(
+                             (v["correct"] / v["n"]) if v["n"] else None)}
+                        for k, v in by_label.items()]
+                st.dataframe(pd.DataFrame(rows), use_container_width=True,
+                             hide_index=True)
+
+    pe = s.get("proj_err") or {}
+    raw = pe.get("raw") or {}
+    cor = pe.get("corrected") or {}
+    if raw:
+        st.markdown("##### ET Projected-Time Bias  *(actual winners)*")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Mean error (raw)",
+                  _fmt_secs(raw.get("mean")),
+                  f"MAE {raw.get('mae', 0):.2f}s")
+        c2.metric("Mean error (v4.7-corrected)",
+                  _fmt_secs(cor.get("mean")),
+                  f"MAE {cor.get('mae', 0):.2f}s")
+        c3.metric("% within ±0.5s (corrected)",
+                  _fmt_pct_or_dash(cor.get("within_05")),
+                  f"raw {(raw.get('within_05') or 0)*100:.0f}%")
+        st.caption("v4.7 applies a uniform distance-aware shift to projected times "
+                   "(sprint −0.77s, mile −0.71s, route 0). Ranks are unchanged.")
+
+
+def _render_unified_per_race(data: dict, prefix: str = ""):
+    """Race selector with ET / SARR / Market picks + actual finish + horse table."""
+    races = data.get("races") or []
+    if not races:
+        # Aggregate window — race-level detail not stored at window level;
+        # the meeting JSON keeps them. Direct user to per-meeting view.
+        st.info("Per-race details are stored on each per-meeting file. "
+                "Switch the period selector to a single meeting to see this.")
+        return
+
+    label_for = lambda r: (
+        f"R{r['race_number']}  {r.get('distance','?')}m  "
+        f"C{r.get('race_class','?')}  ·  "
+        f"winner #{r.get('winner','?')} {r.get('winner_name','')}"
+    )
+    sel_idx = st.selectbox("Select race:", range(len(races)),
+                           format_func=lambda i: label_for(races[i]),
+                           key=f"{prefix}race_sel")
+    r = races[sel_idx]
+
+    # Top picks summary row
+    agreed = bool(r.get("agree_top1"))
+    chip = _agreement_chip_html(agreed)
+    st.markdown(
+        f"### Race {r['race_number']} — {r.get('distance','?')}m  "
+        f"&nbsp; {chip}",
+        unsafe_allow_html=True,
+    )
+
+    cols = st.columns(3)
+    with cols[0]:
+        st.markdown("**ET Top-1**")
+        st.markdown(f"#{r.get('et_top1','?')} {r.get('et_top1_name','') or ''}")
+        st.caption(f"Win odds: {r.get('et_top1_odds') or '—'}")
+    with cols[1]:
+        st.markdown("**SARR Top-1**")
+        st.markdown(f"#{r.get('sa_top1','?')} {r.get('sa_top1_name','') or ''}")
+        st.caption(f"Win odds: {r.get('sa_top1_odds') or '—'}")
+    with cols[2]:
+        st.markdown("**Actual Winner**")
+        st.markdown(f"#{r.get('winner','?')} {r.get('winner_name','') or ''}")
+        st.caption(
+            f"Top-3: {', '.join('#'+str(h) for h in (r.get('actual_top3') or []))} "
+            f"· Fav #{r.get('fav_horse_no','?')} @ {r.get('fav_odds') or '—'}"
+        )
+
+    # Per-model hit summary
+    et_m = r.get("et") or {}
+    sa_m = r.get("sa") or {}
+    mk_m = r.get("mk") or {}
+    chk = lambda v: "✓" if v else ("—" if v is None else "✗")
+    st.markdown("##### Race-level Hit Summary")
+    rows = [
+        {"Model": "ET", "Top-1 Win": chk(et_m.get("win")),
+         "Top-1 Place": chk(et_m.get("plc")),
+         "Top-3 has winner": chk(et_m.get("top3_has_w")),
+         "Top-3 overlap": et_m.get("top3_overlap"),
+         "Rank ρ": (f"{r['et_rank_corr']:.2f}"
+                    if r.get("et_rank_corr") is not None else "—")},
+        {"Model": "SARR", "Top-1 Win": chk(sa_m.get("win")),
+         "Top-1 Place": chk(sa_m.get("plc")),
+         "Top-3 has winner": chk(sa_m.get("top3_has_w")),
+         "Top-3 overlap": sa_m.get("top3_overlap"),
+         "Rank ρ": (f"{r['sa_rank_corr']:.2f}"
+                    if r.get("sa_rank_corr") is not None else "—")},
+        {"Model": "Market", "Top-1 Win": chk(mk_m.get("win")),
+         "Top-1 Place": chk(mk_m.get("plc")),
+         "Top-3 has winner": chk(mk_m.get("top3_has_w")),
+         "Top-3 overlap": mk_m.get("top3_overlap"),
+         "Rank ρ": "—"},
+    ]
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    # Pace prediction vs actual
+    pp, pa = r.get("pace_predicted"), r.get("pace_actual")
+    if pp or pa:
+        st.markdown(f"**Pace** — predicted: `{pp or '—'}`  ·  actual: `{pa or '—'}`  "
+                    + ("✓" if pp == pa else "✗"))
+
+    # Horse-level comparison table
+    horses = r.get("horses") or []
+    if horses:
+        st.markdown("##### Horse-by-Horse")
+        rows = []
+        for h in horses:
+            rows.append({
+                "Place": h.get("actual_place"),
+                "#": h.get("horse_no"),
+                "Horse": h.get("horse_name"),
+                "Odds": h.get("win_odds"),
+                "Time": h.get("finish_time"),
+                "ET rank": h.get("et_rank") or "—",
+                "ET proj": (f"{h['et_proj']:.2f}"
+                            if h.get("et_proj") is not None else "—"),
+                "ET err": (f"{(h['et_proj'] - h['finish_time']):+.2f}"
+                           if (h.get("et_proj") is not None
+                               and h.get("finish_time") is not None) else "—"),
+                "ET win%": (f"{h['et_win_prob']*100:.1f}"
+                            if h.get("et_win_prob") is not None else "—"),
+                "ET style": h.get("et_style") or "",
+                "SA rank": h.get("sa_rank") or "—",
+                "SA score": (f"{h['sa_score']:.2f}"
+                             if h.get("sa_score") is not None else "—"),
+                "SA style": h.get("sa_style") or "",
+            })
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+
+def _render_unified_trends(data: dict, prefix: str = ""):
+    """Per-meeting trend chart for window / month / season views."""
+    s = data.get("summary") or data
+    pm = s.get("per_meeting") or []
+    if not pm:
+        st.info("Trend chart only available on aggregate windows (Last 7 / 30 / Month / All).")
+        return
+    df = pd.DataFrame(pm)
+    if "date" not in df.columns:
+        st.warning("Per-meeting data missing date column.")
+        return
+    df = df.sort_values("date")
+    df_idx = df.set_index("date")
+    show_cols = [c for c in ("et_top1_win", "sa_top1_win", "mk_top1_win") if c in df_idx.columns]
+    if show_cols:
+        st.markdown("##### Top-1 Win Rate by Meeting")
+        st.line_chart(df_idx[show_cols], use_container_width=True)
+    if "agree_rate" in df_idx.columns:
+        st.markdown("##### Model-Agreement Rate by Meeting")
+        st.line_chart(df_idx[["agree_rate"]], use_container_width=True)
+    st.markdown("##### Per-Meeting Detail")
+    fmt_df = df.copy()
+    for col in ("et_top1_win", "sa_top1_win", "mk_top1_win", "agree_rate", "agree_win_rate"):
+        if col in fmt_df.columns:
+            fmt_df[col] = fmt_df[col].apply(
+                lambda x: f"{x*100:.1f}%" if isinstance(x, (int, float)) else "—")
+    st.dataframe(fmt_df, use_container_width=True, hide_index=True)
+
+
+def _render_unified_backtest(data: dict, prefix: str = ""):
+    """Top-level renderer: 5 tabs over the unified backtest JSON."""
+    if not data:
+        st.info("No data loaded.")
+        return
+    tabs = st.tabs(["Overview", "Per-Race", "Strategies",
+                    "Pace & Projection", "Trends"])
+    with tabs[0]:
+        _render_unified_overview(data, prefix)
+    with tabs[1]:
+        _render_unified_per_race(data, prefix)
+    with tabs[2]:
+        _render_unified_strategies(data, prefix)
+    with tabs[3]:
+        _render_unified_pace_proj(data, prefix)
+    with tabs[4]:
+        _render_unified_trends(data, prefix)
+
+
 def page_backtest():
     st.markdown('<div class="page-title">Model Backtest</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Compare pre-race predictions against actual results</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-subtitle">Compare ET · SARR · Market across any time window</div>',
+                unsafe_allow_html=True)
 
     # ── Sidebar: scrape results + run backtest ─────────────
     st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
@@ -4086,7 +4448,7 @@ def page_backtest():
     with col_a:
         if st.button("[ Run Post-Race ]", use_container_width=True,
                       key="btn_scrape_results",
-                      help="Runs all 8 steps in one click: results JSON · DB scrape · "
+                      help="Full 8-step pipeline: results · DB scrape · "
                            "incidents · RP photos · OCR · form-guide rebuild · "
                            "commentary · backtest. Pushes outputs to GitHub on cloud."):
             _run_results_scraper(scrape_date.isoformat(), full=True)
@@ -4095,7 +4457,7 @@ def page_backtest():
     with col_b:
         if st.button("[ Backtest only ]", use_container_width=True,
                       key="btn_run_backtest",
-                      help="Re-run just the backtest if results are already scraped."):
+                      help="Re-run backtest (legacy + unified) for the selected date."):
             _run_backtest_single(scrape_date.isoformat())
             st.cache_data.clear()
             st.rerun()
@@ -4117,17 +4479,27 @@ def page_backtest():
     st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
     st.sidebar.markdown('<div class="sb-nav-section">Aggregate Reports</div>', unsafe_allow_html=True)
 
-    agg_month = st.sidebar.text_input("Month (YYYY-MM)", value=date.today().strftime("%Y-%m"),
+    if st.sidebar.button("[ Rebuild Unified Backtest ]",
+                         use_container_width=True,
+                         key="btn_unified_all",
+                         help="Regenerate every unified per-meeting JSON + "
+                              "rolling windows (last7/30/90/all) + per-month "
+                              "aggregates. On cloud, pushes the JSONs to GitHub."):
+        _run_backtest_unified_all()
+        st.cache_data.clear()
+        st.rerun()
+
+    agg_month = st.sidebar.text_input("Legacy Month (YYYY-MM)",
+                                       value=date.today().strftime("%Y-%m"),
                                        key="bt_month")
-    if st.sidebar.button("[ Monthly Backtest ]", use_container_width=True,
+    if st.sidebar.button("[ Legacy Monthly ]", use_container_width=True,
                           key="btn_monthly_bt"):
         _run_backtest_agg("--month", agg_month)
         st.cache_data.clear()
         st.rerun()
-
-    agg_season = st.sidebar.text_input("Season (YYYY-YYYY)", value="2025-2026",
+    agg_season = st.sidebar.text_input("Legacy Season", value="2025-2026",
                                         key="bt_season")
-    if st.sidebar.button("[ Seasonal Backtest ]", use_container_width=True,
+    if st.sidebar.button("[ Legacy Seasonal ]", use_container_width=True,
                           key="btn_season_bt"):
         _run_backtest_agg("--season", agg_season)
         st.cache_data.clear()
@@ -4149,298 +4521,66 @@ def page_backtest():
         with st.expander(f"{len(unmatched_pred)} meetings awaiting results"):
             for dc in unmatched_pred:
                 d = f"{dc[:4]}-{dc[4:6]}-{dc[6:]}"
-                st.text(f"  {d}  — need to scrape results")
+                st.text(f"  {d}  — needs results scrape")
 
     st.markdown("---")
 
-    # ── Tabs: Weekly / Monthly / Seasonal / Strategy Insights ─────────
-    tab_weekly, tab_monthly, tab_seasonal, tab_insights = st.tabs([
-        "Weekly (Per-Meeting)", "Monthly", "Seasonal", "🎯 Strategy Insights"])
+    # ── Period selector ──────────────────────────────────
+    inventory = _list_unified_backtests()
+    have_meetings = sorted(inventory["meeting"].keys(), reverse=True)
+    have_windows = sorted(inventory["window"].keys())
+    have_months = sorted(inventory["month"].keys(), reverse=True)
 
-    bt_files = load_backtest_files()
-
-    # ── Weekly tab ─────────────────────────────────────────
-    with tab_weekly:
-        meetings = bt_files.get("meeting", {})
-        if not meetings:
-            st.info("No per-meeting backtests yet. Scrape results and run backtest above.")
-        else:
-            meeting_keys = sorted(meetings.keys(), reverse=True)
-            labels = {k: f"{k[:4]}-{k[4:6]}-{k[6:]}  ({meetings[k].get('meeting_title','')})"
-                      for k in meeting_keys}
-            selected_key = st.selectbox("Select meeting:", meeting_keys,
-                                        format_func=lambda k: labels[k],
-                                        key="bt_weekly_select")
-            if selected_key:
-                render_backtest_metrics(meetings[selected_key], prefix="wk_")
-
-    # ── Monthly tab ────────────────────────────────────────
-    with tab_monthly:
-        monthlies = bt_files.get("monthly", {})
-        if not monthlies:
-            st.info("No monthly backtests yet. Use the sidebar to generate one.")
-        else:
-            month_keys = sorted(monthlies.keys(), reverse=True)
-            selected_month = st.selectbox("Select month:", month_keys,
-                                          key="bt_month_select")
-            if selected_month:
-                mdata = monthlies[selected_month]
-                st.markdown(f"**Period:** {mdata.get('period','')}  |  "
-                            f"**Meetings:** {mdata.get('n_meetings',0)}  |  "
-                            f"**Races:** {mdata.get('n_races',0)}  |  "
-                            f"**Runners:** {mdata.get('n_runners',0)}")
-
-                # Per-meeting breakdown table
-                per_m = mdata.get("per_meeting", [])
-                if per_m:
-                    st.markdown("#### Per-Meeting Breakdown")
-                    rows_pm = []
-                    for m in per_m:
-                        rows_pm.append({
-                            "Date": m.get("date", ""),
-                            "Title": m.get("title", ""),
-                            "Races": m.get("races", 0),
-                            "MAE": _fmt_val(m.get("mae"), "s"),
-                            "Rank ρ": _fmt_val(m.get("rank_corr")),
-                            "Pace Exact": _fmt_pct(m.get("pace_exact")),
-                            "Top-1 Win": _fmt_pct(m.get("top1_win")),
-                        })
-                    st.dataframe(pd.DataFrame(rows_pm), use_container_width=True,
-                                 hide_index=True)
-                    st.markdown("---")
-
-                render_backtest_metrics(mdata, prefix="mo_")
-
-    # ── Seasonal tab ───────────────────────────────────────
-    with tab_seasonal:
-        seasons = bt_files.get("season", {})
-        all_bt = bt_files.get("all")
-        if not seasons and not all_bt:
-            st.info("No seasonal backtests yet. Use the sidebar to generate one.")
-        else:
-            options_s = list(seasons.keys())
-            if all_bt:
-                options_s.insert(0, "__all__")
-            if options_s:
-                sel_s = st.selectbox(
-                    "Select period:", options_s,
-                    format_func=lambda k: "All Data" if k == "__all__" else f"Season {k}",
-                    key="bt_season_select",
-                )
-                sdata = all_bt if sel_s == "__all__" else seasons.get(sel_s, {})
-                if sdata:
-                    st.markdown(f"**Period:** {sdata.get('period','')}  |  "
-                                f"**Meetings:** {sdata.get('n_meetings',0)}  |  "
-                                f"**Races:** {sdata.get('n_races',0)}")
-
-                    per_m = sdata.get("per_meeting", [])
-                    if per_m:
-                        st.markdown("#### Meeting-by-Meeting Trend")
-                        trend_df = pd.DataFrame(per_m)
-                        if "mae" in trend_df.columns:
-                            st.line_chart(trend_df.set_index("date")[["mae"]],
-                                          use_container_width=True)
-                        st.markdown("---")
-
-                    render_backtest_metrics(sdata, prefix="se_")
-
-    # ── Strategy Insights tab ──────────────────────────────
-    with tab_insights:
-        _render_strategy_insights()
-
-
-def _render_strategy_insights():
-    """Multi-meeting strategic backtest summary loaded from cache/deep_backtest.json.
-
-    Shows ET vs SARR vs Market comparisons, model agreement signal, ROI
-    by ET top-1 odds bucket, and pace-classifier accuracy. Built from the
-    deep_backtest cache which aggregates 60+ races across April 2026.
-    """
-    cache_path = BASE / "cache" / "deep_backtest.json"
-    if not cache_path.exists():
-        st.info(
-            "No deep backtest cache yet. Run `_deep_backtest.py` locally "
-            "(generates `cache/deep_backtest.json` from all matched meetings) "
-            "and commit. This panel surfaces multi-meeting strategy findings "
-            "that the per-meeting backtest doesn't reveal."
+    if not (have_meetings or have_windows or have_months):
+        st.warning(
+            "No unified backtest JSONs yet. Click **[ Rebuild Unified Backtest ]** "
+            "in the sidebar to build them from existing predictions + results."
         )
         return
 
-    try:
-        cache = json.loads(cache_path.read_text(encoding="utf-8"))
-    except Exception as e:
-        st.error(f"Cache unreadable: {e}")
+    period_options = []
+    if "all" in have_windows:
+        period_options.append(("all", "All Time"))
+    for w in ("last7", "last30", "last90"):
+        if w in have_windows:
+            period_options.append((w, {"last7": "Last 7 Days",
+                                       "last30": "Last 30 Days",
+                                       "last90": "Last 90 Days"}[w]))
+    for ym in have_months:
+        period_options.append((f"month-{ym}", f"Month {ym}"))
+    for w in have_windows:
+        if w.startswith("season-"):
+            period_options.append((w, w.replace("season-", "Season ")))
+    for dc in have_meetings:
+        d = f"{dc[:4]}-{dc[4:6]}-{dc[6:]}"
+        period_options.append((dc, f"Meeting {d}"))
+
+    keys = [k for k, _ in period_options]
+    labels = {k: lbl for k, lbl in period_options}
+    sel_period = st.selectbox(
+        "Period:",
+        keys,
+        format_func=lambda k: labels[k],
+        key="bt_period_sel",
+        index=0,
+    )
+
+    data = _load_unified_backtest(sel_period)
+    if not data:
+        st.error(f"Could not load unified backtest for `{sel_period}`.")
         return
 
-    rows = cache.get("rows", []) or []
-    if not rows:
-        st.warning("Cache is empty.")
-        return
+    _render_unified_backtest(data, prefix=f"u_{sel_period}_")
 
-    n = len(rows)
-
-    # Headline metrics
-    def _rate(field, sub):
-        wins = sum((r.get(field, {}) or {}).get(sub, 0) for r in rows)
-        return wins / n if n else 0.0
-
-    et_w = _rate("et", "win"); et_p = _rate("et", "plc")
-    sa_w = _rate("sa", "win"); sa_p = _rate("sa", "plc")
-    mk_w = _rate("mk", "win"); mk_p = _rate("mk", "plc")
-    agree_n = sum(1 for r in rows if r.get("agree"))
-    agree_w = sum(1 for r in rows
-                  if r.get("agree") and (r.get("et", {}) or {}).get("win"))
-    agree_p = sum(1 for r in rows
-                  if r.get("agree") and (r.get("et", {}) or {}).get("plc"))
-
-    # Union top-3 winner-coverage proxy: any of et/sa "top3_has_w" hit
-    union_t3 = sum(1 for r in rows if r.get("union_t3_has_winner"))
-
-    st.markdown(f"**Sample**: {n} races aggregated · "
-                f"sources: `cache/deep_backtest.json`")
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("ET top-1 Win", f"{et_w:.1%}", f"Place {et_p:.1%}")
-    c2.metric("SARR top-1 Win", f"{sa_w:.1%}", f"Place {sa_p:.1%}")
-    c3.metric("Market fav Win", f"{mk_w:.1%}", f"Place {mk_p:.1%}")
-    c4.metric("Union ET∪SARR top-3 covers winner",
-              f"{union_t3 / n:.1%}",
-              f"vs ET alone ~{sum(1 for r in rows if (r.get('et',{}) or {}).get('top3_has_w')) / n:.0%}")
-
+    # Footer: download
     st.markdown("---")
-    st.markdown("#### 🤝 Model Agreement Signal")
-    if agree_n:
-        st.markdown(
-            f"- ET top-1 = SARR top-1 in **{agree_n}/{n}** races "
-            f"(**{agree_n / n:.0%}**).\n"
-            f"- When models agree → Win rate **{agree_w / agree_n:.1%}** · "
-            f"Place rate **{agree_p / agree_n:.1%}**.\n"
-            f"- When they disagree → Win rate "
-            f"**{(sum(1 for r in rows if not r.get('agree') and (r.get('et',{}) or {}).get('win')) / max(1, n - agree_n)):.1%}** "
-            f"(ET).\n"
-            f"- ➜ A green ★ AGREEMENT chip is now shown on the Model Analysis "
-            f"page when both top-1s coincide — treat these as confidence picks."
-        )
-    else:
-        st.caption("Insufficient data to compute agreement.")
-
-    st.markdown("---")
-    st.markdown("#### 💰 ROI by ET top-1 Odds Bucket  *(level $1 stakes)*")
-    buckets = [(0, 3, "<3.0 (chalk)"),
-               (3, 6, "3.0–6.0 (sweet spot)"),
-               (6, 12, "6.0–12.0"),
-               (12, 999, ">12 (longshot — skip)")]
-    bucket_rows = []
-    for lo, hi, label in buckets:
-        sub = [r for r in rows
-               if r.get("et_top1_odds") is not None
-               and lo < r["et_top1_odds"] <= hi]
-        if not sub:
-            continue
-        n_b = len(sub)
-        w_b = sum(1 for r in sub if (r.get("et", {}) or {}).get("win"))
-        p_b = sum(1 for r in sub if (r.get("et", {}) or {}).get("plc"))
-        roi_w = sum((r["et_top1_odds"] - 1) if (r.get("et", {}) or {}).get("win") else -1
-                    for r in sub) / n_b if n_b else 0.0
-        bucket_rows.append({
-            "ET top-1 odds": label, "Races": n_b,
-            "Win %": f"{w_b / n_b:.1%}", "Place %": f"{p_b / n_b:.1%}",
-            "Win-only ROI": f"{roi_w:+.1%}",
-        })
-    if bucket_rows:
-        st.dataframe(pd.DataFrame(bucket_rows), use_container_width=True,
-                     hide_index=True)
-        st.caption(
-            "**Action**: stake ET top-1 only when its odds land in the **3.0–6.0** "
-            "bucket. Skip when odds >12 — historical Win = 0%."
-        )
-
-    st.markdown("---")
-    st.markdown("#### 🏁 Pace Classifier Accuracy")
-    pace = cache.get("pace", {}) or {}
-    p_total = pace.get("total", 0)
-    if p_total:
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Exact match", f"{pace.get('correct', 0)}/{p_total}",
-                  f"{pace.get('correct', 0) / p_total:.0%}")
-        c2.metric("Within 1 band",
-                  f"{pace.get('close', 0)}/{p_total}",
-                  f"{pace.get('close', 0) / p_total:.0%}")
-        c3.metric("Wrong direction",
-                  f"{pace.get('wrong', 0)}/{p_total}",
-                  f"{pace.get('wrong', 0) / p_total:.0%}")
-        by_label = pace.get("by_label", {}) or {}
-        if by_label:
-            with st.expander("Per-predicted-label breakdown"):
-                rows_pl = [{"Predicted": k,
-                             "Races": v.get("n", 0),
-                             "Correct": v.get("correct", 0),
-                             "Hit %": (v.get("correct", 0) / v.get("n", 1)
-                                       if v.get("n") else 0)}
-                            for k, v in by_label.items()]
-                df_pl = pd.DataFrame(rows_pl)
-                if "Hit %" in df_pl.columns:
-                    df_pl["Hit %"] = df_pl["Hit %"].map(lambda x: f"{x:.0%}")
-                st.dataframe(df_pl, use_container_width=True,
-                             hide_index=True)
-
-    st.markdown("---")
-    st.markdown("#### ⏱️ ET Projection Bias *(post-correction check)*")
-    proj_err = cache.get("proj_err", []) or []
-    if proj_err:
-        # Apply the v4.7 distance-aware correction retrospectively to show
-        # the calibrated residual the user should expect going forward.
-        def _bias(d):
-            if d is None:
-                return 0.0
-            if d <= 1200:
-                return 0.77
-            if d <= 1600:
-                return 0.71
-            return 0.0
-        # Look up distance from rows by (date, race) for each err record
-        race_dist = {(r["date"], r["race"]): r.get("distance")
-                     for r in rows}
-        adj_errs = []
-        raw_errs = []
-        for e in proj_err:
-            d = race_dist.get((e.get("date"), e.get("race")))
-            raw = e.get("err", 0.0) or 0.0
-            raw_errs.append(raw)
-            adj_errs.append(raw - _bias(d))
-        if raw_errs:
-            import statistics as _stats
-            mae_raw = _stats.mean(abs(x) for x in raw_errs)
-            mae_adj = _stats.mean(abs(x) for x in adj_errs)
-            mean_raw = _stats.mean(raw_errs)
-            mean_adj = _stats.mean(adj_errs)
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Mean error (raw)", f"{mean_raw:+.2f}s",
-                      f"MAE {mae_raw:.2f}s")
-            c2.metric("Mean error (with v4.7 correction)",
-                      f"{mean_adj:+.2f}s",
-                      f"MAE {mae_adj:.2f}s")
-            within = sum(1 for x in adj_errs if abs(x) <= 0.5)
-            c3.metric("% within ±0.5s (corrected)",
-                      f"{within / len(adj_errs):.0%}",
-                      f"raw {sum(1 for x in raw_errs if abs(x) <= 0.5) / len(raw_errs):.0%}")
-            st.caption(
-                "v4.7 applies a uniform distance-aware shift to projected times "
-                "(sprint −0.77s, mile −0.71s, route 0). Ranks are unchanged."
-            )
-
-    st.markdown("---")
-    st.markdown("#### 📋 Strategy Cheat-Sheet (April-2026 calibrated)")
-    st.markdown(
-        "1. **Confidence pick**: ET top-1 *and* SARR top-1 are the same → green AGREEMENT chip.\n"
-        "2. **Stake band**: ET top-1 odds in **3.0–6.0** historically returns "
-        "the strongest ROI. Avoid odds >12 (longshot).\n"
-        "3. **Coverage**: when you must spread — bet **union of ET top-3 ∪ SARR top-3** "
-        "(covers winner ~50%+ vs single-model ~40%).\n"
-        "4. **Don't average the models**. Their ranks are complementary, not redundant — "
-        "blending destroys the agreement signal.\n"
-        "5. **Pace caveat**: classifier is right only ~30% exactly; trust pace tags "
-        "*directionally*, not as a hard label."
+    json_blob = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+    st.download_button(
+        "[ Download Unified Backtest JSON ]",
+        json_blob,
+        file_name=f"backtest_unified_{sel_period}.json",
+        mime="application/json",
+        key=f"dl_bt_{sel_period}",
     )
 
 
@@ -4783,23 +4923,59 @@ def _merge_full_scrape_to_db(fresh_path: Path, date_str: str):
 
 
 def _run_backtest_single(date_str: str):
-    """Run backtest for a single meeting."""
-    cmd = [PYTHON, str(BASE / "backtest_model.py"), "--date", date_str]
+    """Run backtest for a single meeting (legacy ET + unified ET+SARR+market)."""
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     with st.spinner(f"Running backtest for {date_str}..."):
-        result = subprocess.run(cmd, env=env, cwd=str(BASE),
-                                capture_output=True, text=True, encoding="utf-8")
-        if result.returncode == 0:
+        # Legacy ET-only (kept for monthly/seasonal aggregates)
+        legacy = subprocess.run(
+            [PYTHON, str(BASE / "backtest_model.py"), "--date", date_str],
+            env=env, cwd=str(BASE), capture_output=True, text=True, encoding="utf-8")
+        # New unified ET+SARR+market
+        unified = subprocess.run(
+            [PYTHON, str(BASE / "backtest_unified.py"), "--date", date_str],
+            env=env, cwd=str(BASE), capture_output=True, text=True, encoding="utf-8")
+        ok = (legacy.returncode == 0) and (unified.returncode == 0)
+        if ok:
             st.success(f"Backtest complete for {date_str}")
             with st.expander("Output"):
-                st.code(result.stdout[-2000:] if len(result.stdout) > 2000
-                        else result.stdout)
+                st.code((legacy.stdout or "") + "\n--- unified ---\n" + (unified.stdout or ""))
         else:
-            st.error(f"Backtest failed (exit code {result.returncode})")
+            st.error(f"Backtest failed (legacy={legacy.returncode}, unified={unified.returncode})")
             with st.expander("Error"):
-                st.code(result.stderr[-2000:] if result.stderr
-                        else result.stdout[-2000:])
+                st.code((legacy.stderr or legacy.stdout or "")[-2000:]
+                        + "\n--- unified ---\n"
+                        + (unified.stderr or unified.stdout or "")[-2000:])
+
+
+def _run_backtest_unified_all():
+    """Generate every unified per-meeting JSON + standard windows + per-month."""
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    with st.spinner("Building unified backtest (all meetings + windows)..."):
+        result = subprocess.run(
+            [PYTHON, str(BASE / "backtest_unified.py"), "--all"],
+            env=env, cwd=str(BASE), capture_output=True, text=True, encoding="utf-8")
+    if result.returncode == 0:
+        st.success("Unified backtest built")
+        with st.expander("Output"):
+            st.code(result.stdout or "(no output)")
+        # Push every unified JSON we just produced to GitHub on cloud.
+        if _is_streamlit_cloud() and _gh_headers():
+            pushed = 0
+            for p in REPORTS.glob("backtest_unified_*.json"):
+                try:
+                    if _gh_push_file(f"reports/{p.name}", p.read_bytes(),
+                                     "backtest_unified: rebuild [skip ci]"):
+                        pushed += 1
+                except Exception:
+                    pass
+            if pushed:
+                st.caption(f"Pushed {pushed} unified backtest JSONs to GitHub.")
+    else:
+        st.error("Unified backtest failed")
+        with st.expander("Error"):
+            st.code(result.stderr or result.stdout or "(no output)")
 
 
 def _run_backtest_agg(flag: str, value: str):
