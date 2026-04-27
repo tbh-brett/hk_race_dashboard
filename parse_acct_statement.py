@@ -64,6 +64,30 @@ MONEY_RE = re.compile(r"^\$([\d,]+(?:\.\d+)?)$")
 DATE_RE = re.compile(r"^(\d{2})/(\d{2})/(\d{4})\s+(\d{2}:\d{2})$")
 RACE_RE = re.compile(r"^Race\s+(\d+)$", re.IGNORECASE)
 
+# Bet-type keywords we recognise (substring, lowercase). Order matters for the
+# longest-match-first detection in `_detect_bet_type_line`.
+BET_TYPE_KEYWORDS = (
+    "quinella - quinella place",
+    "quinella-quinella place",
+    "quinella place",
+    "quinella",
+    "first 4",
+    "first four",
+    "quartet",
+    "qtt",
+    "trio",
+    "win-place",
+    "win - place",
+    "place",
+    "win",
+    "tierce",
+    "trifecta",
+    "double trio",
+    "six up",
+)
+SUBTYPE_KEYWORDS = ("multi-banker", "multi banker")
+DEBUG_PARSE = False  # toggled by `--debug` on the CLI; emits skip diagnostics
+
 
 def _parse_money(s: str) -> Optional[float]:
     m = MONEY_RE.match(s.strip())
@@ -103,84 +127,194 @@ def _classify_block(block: list[str]) -> str:
     return "unknown"
 
 
+def _detect_bet_type_line(lines: list[str]) -> tuple[Optional[int], str, str]:
+    """Locate the bet-type line by scanning for a known keyword.
+
+    Returns ``(index, bet_type_line, sub_type_line)`` or ``(None, "", "")``.
+    The sub-type line is appended (e.g. "Multi-Banker") if it appears
+    immediately below the bet-type line.
+    """
+    for idx, raw in enumerate(lines):
+        s = raw.strip().lower()
+        if not s:
+            continue
+        if any(kw in s for kw in BET_TYPE_KEYWORDS):
+            bet_type = lines[idx].strip()
+            sub_type = ""
+            # Look at the very next non-blank line for a Multi-Banker tag
+            j = idx + 1
+            while j < len(lines) and not lines[j].strip():
+                j += 1
+            if j < len(lines):
+                nxt = lines[j].strip().lower()
+                if any(sub in nxt for sub in SUBTYPE_KEYWORDS):
+                    sub_type = lines[j].strip()
+            return idx, bet_type, sub_type
+    return None, "", ""
+
+
 def _parse_bet_block(block: list[str]) -> Optional[dict]:
-    """Parse a single bet block → dict or None if malformed."""
+    """Parse a single bet block → dict or None if malformed.
+
+    Content-scanning parser — does not assume fixed positional indices.
+    Handles:
+      * Standard            : ref / dt / venue / weekday / bet-type / Race N / selections
+      * Banker (single)     : adds one ``Banker with`` section
+      * Multi-Banker quartet: ``Multi-Banker`` line below bet-type, then N
+        ``Banker with`` sub-sections (one leg-list per finishing position)
+    """
     lines = [ln.rstrip() for ln in block]
-    # Strip fully-blank leading/trailing lines
     while lines and not lines[0].strip():
         lines.pop(0)
     while lines and not lines[-1].strip():
         lines.pop()
-    if len(lines) < 6:
+    if len(lines) < 5:
+        if DEBUG_PARSE:
+            print(f"[skip] block too short ({len(lines)} lines)")
         return None
 
-    # Fixed positional: 0=ref, 1=date/time, 2=venue, 3=weekday, 4=bet-type, 5=race
+    # ---- Header (positional, robust) ----
     ref_no = lines[0].strip()
-    dt_line = lines[1].strip()
-    venue_line = lines[2].strip()
-    bet_type_line = lines[4].strip()
-    race_line = lines[5].strip()
+    if not ref_no.isdigit():
+        # Defensive: in some statement variants the very first non-blank line
+        # may be something other than a pure digit ref. Scan ahead.
+        for ln in lines[:4]:
+            if ln.strip().isdigit():
+                ref_no = ln.strip()
+                break
 
-    dt_m = DATE_RE.match(dt_line)
-    if not dt_m:
+    # date/time line — find it by regex anywhere in first 6 lines
+    dt_idx = next((i for i, ln in enumerate(lines[:6])
+                    if DATE_RE.match(ln.strip())), None)
+    if dt_idx is None:
+        if DEBUG_PARSE:
+            print(f"[skip] no date/time line; ref={ref_no!r} head="
+                    f"{[l.strip() for l in lines[:5]]}")
         return None
+    dt_m = DATE_RE.match(lines[dt_idx].strip())
     dd, mm, yyyy, hhmm = dt_m.groups()
     meeting_date = f"{yyyy}{mm}{dd}"
     placed_at = f"{yyyy}-{mm}-{dd}T{hhmm}:00"
 
-    venue = VENUE_MAP.get(venue_line.lower())
+    # venue — first matching line after dt_idx
+    venue = None
+    for ln in lines[dt_idx + 1: dt_idx + 4]:
+        v = VENUE_MAP.get(ln.strip().lower())
+        if v:
+            venue = v
+            break
     if not venue:
+        if DEBUG_PARSE:
+            print(f"[skip] unknown venue; ref={ref_no!r} after-dt="
+                    f"{[l.strip() for l in lines[dt_idx+1:dt_idx+4]]}")
         return None
 
-    race_m = RACE_RE.match(race_line)
-    if not race_m:
+    # bet-type by content scan
+    bt_idx, bet_type_line, sub_type_line = _detect_bet_type_line(lines)
+    if bt_idx is None:
+        if DEBUG_PARSE:
+            print(f"[skip] bet-type not detected; ref={ref_no!r} head="
+                    f"{[l.strip() for l in lines[:8]]}")
         return None
-    race_number = int(race_m.group(1))
+    is_multi_banker = bool(sub_type_line)
+    if is_multi_banker:
+        bet_type_line = f"{bet_type_line} {sub_type_line}".strip()
 
-    # Collect selections + banker from line 6 onwards until we hit the stake line ($NN).
+    # Race N — first RACE_RE match AFTER bet-type / sub-type
+    search_start = bt_idx + (2 if is_multi_banker else 1)
+    race_idx = None
+    for i in range(search_start, len(lines)):
+        if RACE_RE.match(lines[i].strip()):
+            race_idx = i
+            break
+    if race_idx is None:
+        if DEBUG_PARSE:
+            print(f"[skip] no 'Race N' line; ref={ref_no!r} bt_idx={bt_idx}")
+        return None
+    race_number = int(RACE_RE.match(lines[race_idx].strip()).group(1))
+    sel_start = race_idx + 1
+
+    # ---- Selections (with optional banker / multi-banker structure) ----
+    multi_legs: list[list[int]] = []
     banker: Optional[int] = None
     legs: list[int] = []
-    i = 6
+    i = sel_start
     n = len(lines)
-    # Phase A: lines before "Banker with" (if present) OR before blank/$
-    pre_banker: list[tuple[int, str]] = []
-    post_banker: list[tuple[int, str]] = []
-    banker_seen = False
-    while i < n:
-        raw = lines[i]
-        stripped = raw.strip()
-        if not stripped:
-            i += 1
-            continue
-        if stripped.lower().startswith("banker with"):
-            banker_seen = True
-            i += 1
-            continue
-        if MONEY_RE.match(stripped):
-            break
-        m = SELECTION_RE.match(stripped)
-        if m:
-            horse_no = int(m.group(1))
-            horse_name = m.group(2).strip()
-            if banker_seen:
-                post_banker.append((horse_no, horse_name))
-            else:
-                pre_banker.append((horse_no, horse_name))
-        i += 1
 
-    if banker_seen:
-        # Banker is the last horse before "Banker with"; legs are post-banker list.
-        if not pre_banker or not post_banker:
+    if is_multi_banker:
+        cur_leg: list[int] = []
+        while i < n:
+            stripped = lines[i].strip()
+            if not stripped:
+                i += 1
+                continue
+            if MONEY_RE.match(stripped):
+                break
+            if stripped.lower().startswith("banker with"):
+                if cur_leg:
+                    multi_legs.append(cur_leg)
+                cur_leg = []
+                i += 1
+                continue
+            m = SELECTION_RE.match(stripped)
+            if m:
+                cur_leg.append(int(m.group(1)))
+            i += 1
+        if cur_leg:
+            multi_legs.append(cur_leg)
+
+        seen: set[int] = set()
+        for lg in multi_legs:
+            for h in lg:
+                if h not in seen:
+                    legs.append(h)
+                    seen.add(h)
+        if not legs or not multi_legs:
+            if DEBUG_PARSE:
+                print(f"[skip] multi-banker block had no legs; ref={ref_no!r}")
             return None
-        banker = pre_banker[-1][0]
-        legs = [h for h, _ in post_banker]
     else:
-        legs = [h for h, _ in pre_banker]
+        pre_banker: list[tuple[int, str]] = []
+        post_banker: list[tuple[int, str]] = []
+        banker_seen = False
+        while i < n:
+            stripped = lines[i].strip()
+            if not stripped:
+                i += 1
+                continue
+            if stripped.lower().startswith("banker with"):
+                banker_seen = True
+                i += 1
+                continue
+            if MONEY_RE.match(stripped):
+                break
+            m = SELECTION_RE.match(stripped)
+            if m:
+                horse_no = int(m.group(1))
+                horse_name = m.group(2).strip()
+                if banker_seen:
+                    post_banker.append((horse_no, horse_name))
+                else:
+                    pre_banker.append((horse_no, horse_name))
+            i += 1
 
-    if not legs:
-        return None
+        if banker_seen:
+            if not pre_banker or not post_banker:
+                if DEBUG_PARSE:
+                    print(f"[skip] banker block missing pre/post lists; "
+                            f"ref={ref_no!r}")
+                return None
+            banker = pre_banker[-1][0]
+            legs = [h for h, _ in post_banker]
+        else:
+            legs = [h for h, _ in pre_banker]
 
-    # Remaining lines: per-combo stake ($10), blanks, total debit ($XX), optional credit ($YY).
+        if not legs:
+            if DEBUG_PARSE:
+                print(f"[skip] no selections found; ref={ref_no!r}")
+            return None
+
+    # ---- Stakes ----
     stakes: list[float] = []
     while i < n:
         stripped = lines[i].strip()
@@ -191,6 +325,9 @@ def _parse_bet_block(block: list[str]) -> Optional[dict]:
         i += 1
 
     if len(stakes) < 2:
+        if DEBUG_PARSE:
+            print(f"[skip] not enough $ amounts ({len(stakes)}); "
+                    f"ref={ref_no!r}")
         return None
     per_combo_stake = stakes[0]
     total_debit = stakes[1]
@@ -205,6 +342,7 @@ def _parse_bet_block(block: list[str]) -> Optional[dict]:
         "bet_type_text": bet_type_line,
         "banker": banker,
         "selections": legs,
+        "multi_legs": multi_legs if is_multi_banker else None,
         "per_combo_stake": per_combo_stake,
         "total_debit": total_debit,
         "total_credit": total_credit,
@@ -239,10 +377,13 @@ def _expand_to_user_bet_records(parsed: dict) -> list[dict]:
     elif "first 4" in bt_text or "first four" in bt_text:
         codes = ["F4_BOX"]
         per_code_stake = parsed["total_debit"]
-    elif "quartet" in bt_text:
-        # Quartet — top-4 in EXACT order. Treat box-style (selections form
-        # the 4-horse set; per-permutation stake = total / (C(n,4)*24)).
-        codes = ["QTT_BOX"]
+    elif "quartet" in bt_text or "qtt" in bt_text:
+        if parsed.get("multi_legs"):
+            # Quartet Multi-Banker — 4 leg-lists, one per finish position.
+            codes = ["QTT_MB"]
+        else:
+            # Standard quartet box.
+            codes = ["QTT_BOX"]
         per_code_stake = parsed["total_debit"]
     elif "win" in bt_text and "place" not in bt_text:
         codes = ["WIN"]
@@ -262,6 +403,7 @@ def _expand_to_user_bet_records(parsed: dict) -> list[dict]:
             "bet_type": code,
             "selections": parsed["selections"],
             "banker": parsed.get("banker"),
+            "legs": parsed.get("multi_legs") if code == "QTT_MB" else None,
             "stake_hkd": per_code_stake,
             "notes": f"Imported from bookie statement (ref {parsed['bookie_ref']}). "
                      f"Per-combo ${parsed['per_combo_stake']}, "
@@ -276,16 +418,29 @@ def _expand_to_user_bet_records(parsed: dict) -> list[dict]:
     return records
 
 
-def parse_statement(path: Path) -> list[dict]:
-    """Return list of parsed bet blocks (raw, pre-expansion)."""
+def parse_statement(path: Path, *, debug: bool = False) -> list[dict]:
+    """Return list of parsed bet blocks (raw, pre-expansion).
+
+    Set ``debug=True`` to print one diagnostic line per skipped block — useful
+    when investigating why a bet failed to import.
+    """
+    global DEBUG_PARSE
+    DEBUG_PARSE = debug
     text = path.read_text(encoding="utf-8")
     out = []
+    skipped = 0
     for block in _split_blocks(text):
         if _classify_block(block) != "bet":
             continue
         parsed = _parse_bet_block(block)
         if parsed:
             out.append(parsed)
+        else:
+            skipped += 1
+    if debug and skipped:
+        print(f"[parse_statement] {skipped} bet block(s) failed to parse "
+                f"(see diagnostics above).")
+    DEBUG_PARSE = False
     return out
 
 
@@ -311,12 +466,12 @@ def _existing_bookie_refs() -> set[str]:
     return refs
 
 
-def import_statement(path: Path) -> dict:
+def import_statement(path: Path, *, debug: bool = False) -> dict:
     """Parse + insert new bets (skipping already-imported by bookie_ref).
 
     Returns summary dict {inserted, skipped, records_by_ref}.
     """
-    parsed_blocks = parse_statement(path)
+    parsed_blocks = parse_statement(path, debug=debug)
     existing = _existing_bookie_refs()
 
     inserted = 0
@@ -347,6 +502,7 @@ def import_statement(path: Path) -> dict:
                 banker=rec["banker"],
                 stake_hkd=rec["stake_hkd"],
                 notes=rec["notes"],
+                legs=rec.get("legs"),
             )
             inserted += 1
             inserted_details.append({
@@ -374,6 +530,8 @@ def main():
     ap.add_argument("path", help="Path to acctstmt*.txt file")
     ap.add_argument("--import", dest="do_import", action="store_true",
                     help="Actually write to reports/user_bets_log.jsonl (default: preview)")
+    ap.add_argument("--debug", action="store_true",
+                    help="Print diagnostics for each block that fails to parse.")
     args = ap.parse_args()
 
     p = Path(args.path)
@@ -382,7 +540,7 @@ def main():
         return 1
 
     if args.do_import:
-        summary = import_statement(p)
+        summary = import_statement(p, debug=args.debug)
         print(f"Imported {summary['inserted']} record(s), skipped {summary['skipped']}. "
               f"(from {summary['total_blocks']} blocks)")
         for d in summary["inserted_details"]:
@@ -393,7 +551,7 @@ def main():
         if summary["skipped_refs"]:
             print(f"  Skipped: {', '.join(summary['skipped_refs'])}")
     else:
-        parsed = parse_statement(p)
+        parsed = parse_statement(p, debug=args.debug)
         print(f"Parsed {len(parsed)} bet block(s) (preview only, --import to commit):\n")
         for pb in parsed:
             bk = f" banker={pb['banker']}" if pb['banker'] else ""

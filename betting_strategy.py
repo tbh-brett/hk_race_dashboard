@@ -1231,6 +1231,69 @@ def build_meeting_tickets(date_compact: str,
 PICKS_LOG_PATH = REPORTS / "model_picks_log.jsonl"
 
 
+def _auto_refresh_picks_log() -> int:
+    """Ensure every analysed meeting on disk is represented in the picks log.
+
+    Scans ``reports/race_day_report_*_v4.4.json`` and, for any meeting whose
+    date is not already in the log (or whose analysis JSON is newer than the
+    log), regenerates the picks via :func:`build_meeting_tickets` and writes
+    them via :func:`log_meeting_picks`. Returns the number of meetings
+    refreshed.
+    """
+    pattern = "race_day_report_*_v4.4.json"
+    analysis_files = sorted(REPORTS.glob(pattern))
+    if not analysis_files:
+        return 0
+
+    existing_dates: set[str] = set()
+    log_mtime = 0.0
+    if PICKS_LOG_PATH.exists():
+        log_mtime = PICKS_LOG_PATH.stat().st_mtime
+        for ln in PICKS_LOG_PATH.read_text(encoding="utf-8").splitlines():
+            ln = ln.strip()
+            if not ln:
+                continue
+            try:
+                existing_dates.add(json.loads(ln)["date"])
+            except Exception:
+                continue
+
+    refreshed = 0
+    bb = factor_tbls = None
+    for fp in analysis_files:
+        # Extract YYYYMMDD from filename
+        stem = fp.stem  # race_day_report_YYYYMMDD_v4.4
+        parts = stem.split("_")
+        if len(parts) < 4:
+            continue
+        date_compact = parts[3]
+        if not (len(date_compact) == 8 and date_compact.isdigit()):
+            continue
+        is_new = date_compact not in existing_dates
+        is_stale = fp.stat().st_mtime > log_mtime
+        if not (is_new or is_stale):
+            continue
+        try:
+            if bb is None:
+                bb = load_blackbook()
+                factor_tbls = load_factor_tables()
+            items = build_meeting_tickets(date_compact, bb, factor_tbls)
+            if not items:
+                continue
+            # Venue: best-effort from the analysis JSON
+            venue = ""
+            try:
+                meta = json.loads(fp.read_text(encoding="utf-8"))
+                venue = meta.get("venue") or meta.get("meeting_venue") or ""
+            except Exception:
+                pass
+            log_meeting_picks(date_compact, venue, items)
+            refreshed += 1
+        except Exception as exc:
+            print(f"[auto-refresh] {date_compact}: {exc}")
+    return refreshed
+
+
 def _ticket_log_row(date_compact: str, venue: str, meeting_item: dict) -> dict:
     """Normalise a meeting_item (from build_meeting_tickets) into a log row."""
     t = meeting_item["ticket"]
@@ -1327,8 +1390,13 @@ def load_picks_log() -> list[dict]:
 
 
 def _evaluate_logged_pick(row: dict, results_by_race: dict,
-                             dividends_by_race: dict) -> dict:
+                             dividends_by_race: dict,
+                             *, stake_min_hkd: float = 10.0) -> dict:
     """Match a logged pick against real results + dividends.
+
+    Stake is denominated in **HKD** (real money). Falls back to
+    ``stake_units * 10`` when ``stake_hkd_min`` is missing on legacy rows;
+    enforces a per-bet floor of ``stake_min_hkd`` (HKJC minimum is $10).
 
     Returns {"stake": X, "return": Y, "hit": bool, "banker_finish": N}.
     Unresolved races (no results yet) yield stake=0.
@@ -1351,7 +1419,15 @@ def _evaluate_logged_pick(row: dict, results_by_race: dict,
 
     banker_no = row["banker_no"]
     legs_no = [l["no"] for l in row.get("legs", [])]
-    stake = row.get("stake_units", 1.0)
+
+    # Stake: prefer explicit HKD; legacy rows use stake_units (1u == $10).
+    stake_hkd = row.get("stake_hkd_min")
+    if stake_hkd is None or stake_hkd <= 0:
+        stake_hkd = float(row.get("stake_units", 1.0) or 1.0) * 10.0
+    stake_hkd = max(float(stake_hkd), stake_min_hkd)
+    # Dividends are quoted *per $10 stake*, so convert to that basis.
+    stake_units_for_div = stake_hkd / 10.0
+
     play = row["play"]
     divs = dividends_by_race.get(rn, {})
 
@@ -1363,15 +1439,15 @@ def _evaluate_logged_pick(row: dict, results_by_race: dict,
     hit = False
     if play == "WIN":
         if banker_no in fin1:
-            ret = stake * _div("WIN", [banker_no])
+            ret = stake_units_for_div * _div("WIN", [banker_no])
             hit = ret > 0
     elif play == "PLACE":
         if banker_no in fin3:
-            ret = stake * _div("PLACE", [banker_no])
+            ret = stake_units_for_div * _div("PLACE", [banker_no])
             hit = ret > 0
     elif play == "QIN_BANKER":
         if banker_no in fin2 and legs_no:
-            per = stake / len(legs_no)
+            per = stake_units_for_div / len(legs_no)
             for l in legs_no:
                 if l in fin2 and l != banker_no:
                     ret += per * _div("QIN", [banker_no, l])
@@ -1379,21 +1455,34 @@ def _evaluate_logged_pick(row: dict, results_by_race: dict,
                     break
     elif play == "QPL_BANKER":
         if banker_no in fin3 and legs_no:
-            per = stake / len(legs_no)
+            per = stake_units_for_div / len(legs_no)
             for l in legs_no:
                 if l in fin3 and l != banker_no:
                     ret += per * _div("QPL", [banker_no, l])
                     hit = True
     banker_finish = rb.get(banker_no, {}).get("place")
-    return {"stake": stake, "return": round(ret, 2), "hit": hit,
+    return {"stake": stake_hkd, "return": round(ret, 2), "hit": hit,
             "banker_finish": banker_finish, "status": "settled"}
 
 
-def settle_picks_log() -> dict:
+def settle_picks_log(*, stake_min_hkd: float = 10.0,
+                       auto_refresh: bool = True) -> dict:
     """Walk the picks log, attach results+dividends where available.
+
+    When ``auto_refresh=True`` (default), re-builds picks for every meeting
+    that has a ``race_day_report_*.json`` on disk so newly-analysed
+    meetings show up automatically. Stakes are reported in **HKD** with a
+    minimum floor of ``stake_min_hkd`` (HKJC minimum is $10).
 
     Returns {"rows": [...augmented rows...], "summary": {...}}.
     """
+    if auto_refresh:
+        try:
+            _auto_refresh_picks_log()
+        except Exception as exc:
+            # Never let refresh failures block settlement.
+            print(f"[settle_picks_log] auto-refresh skipped: {exc}")
+
     rows = load_picks_log()
     by_date: dict = defaultdict_local(lambda: {"results": {}, "dividends": {}})
     settled_rows: list[dict] = []
@@ -1429,7 +1518,8 @@ def settle_picks_log() -> dict:
             cache_meta[d] = {"results": res_races, "dividends": div_races}
 
         ev = _evaluate_logged_pick(row, cache_meta[d]["results"],
-                                     cache_meta[d]["dividends"])
+                                     cache_meta[d]["dividends"],
+                                     stake_min_hkd=stake_min_hkd)
         merged = dict(row)
         merged.update(ev)
         settled_rows.append(merged)

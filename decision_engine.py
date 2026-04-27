@@ -341,6 +341,44 @@ def build_meeting_slate(
             if not decimal_odds and banker.get("win_odds"):
                 decimal_odds = banker["win_odds"]
 
+        # Pre-race fallback (any mode): if dividends are missing because
+        # the meeting hasn't happened, use the banker's morning-line
+        # win_odds + model probability so the slate is still usable.
+        banker = ticket.get("banker") or {}
+        if (not p_market) and banker.get("win_odds"):
+            p_market = 1.0 / banker["win_odds"]
+        if (not p_model) and banker.get("p_model"):
+            p_model = banker["p_model"]
+        if (not decimal_odds) and banker.get("win_odds"):
+            decimal_odds = banker["win_odds"]
+
+        # Last-resort pre-race advisory: when no SP / no live odds at all,
+        # surface the pick at the HKJC minimum so the user sees it on the
+        # slate with a clear "advisory" reason (rather than silently
+        # skipping the whole meeting). p_market is conservatively pegged
+        # at p_model so edge_pct=0 — stake stays at floor.
+        if p_model and not (p_market and decimal_odds):
+            p_market = p_model
+            decimal_odds = 1.0 / max(p_model, 0.01)
+            races_out.append({
+                "race_number": rn, "play": ticket["play"],
+                "banker":      (ticket.get("banker") or {}).get("horse_name"),
+                "banker_no":   (ticket.get("banker") or {}).get("horse_no"),
+                "legs":        [(l["horse_no"], l["horse_name"])
+                                for l in ticket.get("legs", [])],
+                "stake_hkd":   HKJC_MIN_STAKE,
+                "p_used":      p_model, "p_market": p_market,
+                "edge_pct":    0.0, "ev_per_dollar": 0.0,
+                "kelly_full":  0.0, "kelly_used": 0.0,
+                "decimal_odds": decimal_odds,
+                "reason":      "pre-race advisory (no live odds yet) — "
+                                "min stake $10",
+                "accepted":    True,
+                "ticket":      _ticket_brief(ticket),
+            })
+            spent += HKJC_MIN_STAKE
+            continue
+
         if not (p_model and p_market and decimal_odds):
             races_out.append({
                 "race_number": rn, "play": ticket["play"],

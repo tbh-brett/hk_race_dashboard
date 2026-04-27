@@ -23,8 +23,27 @@ USER_BETS_PATH = REPORTS / "user_bets_log.jsonl"
 # Supported bet types (subset of HKJC pools we can auto-settle)
 BET_TYPES = [
     "WIN", "PLACE", "QIN", "QPL", "QIN_BANKER", "QPL_BANKER",
-    "F4_BOX", "TRIO", "QTT_BOX",
+    "F4_BOX", "TRIO", "QTT_BOX", "QTT_MB",
 ]
+
+
+def qtt_mb_perms(legs: list[list[int]]) -> int:
+    """Count distinct quartet permutations a Multi-Banker covers.
+
+    For 4 leg-lists ``[L1, L2, L3, L4]`` (one per finishing position),
+    counts ``Σ 1`` over all ``(h1,h2,h3,h4)`` with ``hi ∈ Li`` and all
+    four horses distinct. Used to compute per-permutation stake from a
+    bookie's reported total debit (``total_debit / n_perms``).
+    """
+    if not legs or len(legs) != 4:
+        return 0
+    L1, L2, L3, L4 = (set(int(x) for x in lg) for lg in legs)
+    n = 0
+    for h1 in L1:
+        for h2 in L2 - {h1}:
+            for h3 in L3 - {h1, h2}:
+                n += len(L4 - {h1, h2, h3})
+    return n
 
 
 # ---------------------------------------------------------------------------
@@ -55,16 +74,23 @@ def _save_all(rows: list[dict]) -> None:
 def submit_bet(*, meeting_date: str, venue: str, race_number: int,
                 bet_type: str, selections: list[int],
                 banker: Optional[int], stake_hkd: float,
-                notes: str = "") -> str:
+                notes: str = "",
+                legs: Optional[list[list[int]]] = None) -> str:
     """Create a new bet record. Returns the bet_id.
 
     meeting_date: 'YYYYMMDD'
     selections: list of horse numbers (for QIN/QPL/TRIO/F4 this is the "legs")
     banker: banker horse number or None
+    legs: only for ``QTT_MB`` (Quartet Multi-Banker) — four lists of horse
+        numbers, one per finishing position. ``selections`` should still be
+        the union of all four lists for back-compat tooling.
     """
     bet_type = (bet_type or "").upper().strip()
     if bet_type not in BET_TYPES:
         raise ValueError(f"unsupported bet_type {bet_type!r}")
+    if bet_type == "QTT_MB":
+        if not legs or len(legs) != 4 or any(not lg for lg in legs):
+            raise ValueError("QTT_MB requires exactly 4 non-empty leg lists")
     bet_id = uuid.uuid4().hex[:10]
     row = {
         "bet_id": bet_id,
@@ -79,6 +105,8 @@ def submit_bet(*, meeting_date: str, venue: str, race_number: int,
         "notes": (notes or "").strip(),
         "status": "open",
     }
+    if legs is not None:
+        row["legs"] = [[int(x) for x in lg] for lg in legs]
     rows = _load_all()
     rows.append(row)
     _save_all(rows)
@@ -295,6 +323,44 @@ def _settle_one(bet: dict, pack: dict) -> Optional[dict]:
                     ret += per_combo / 10.0 * _lookup("TRIO", list(trio))
                     hit = True
                     break
+    elif bet_type == "QTT_MB":
+        # Quartet Multi-Banker: 4 leg-sets, one per finishing position.
+        # Per-permutation stake = stake / n_perms (where n_perms counts the
+        # distinct (h1∈L1, h2∈L2\{h1}, h3∈L3\{h1,h2}, h4∈L4\{h1,h2,h3})).
+        legs = bet.get("legs") or []
+        if len(legs) != 4 or not all(legs):
+            return None
+        if not pack["results"]:
+            return None
+        # Get top-4 finishers in order [pos1, pos2, pos3, pos4]
+        top4_ordered: list[int] = []
+        for race in pack["results"].get("races", []):
+            if int(race.get("race_number") or 0) != int(rn):
+                continue
+            tmp: list[tuple[int, int]] = []
+            for r in race.get("runners", []):
+                try:
+                    p = int(r.get("place")); no = int(r.get("horse_no"))
+                except (TypeError, ValueError):
+                    continue
+                if 1 <= p <= 4:
+                    tmp.append((p, no))
+            tmp.sort()
+            top4_ordered = [no for _, no in tmp]
+            break
+        if len(top4_ordered) != 4:
+            return None
+        n_perms = qtt_mb_perms(legs)
+        if n_perms <= 0:
+            return None
+        h1, h2, h3, h4 = top4_ordered
+        L1, L2, L3, L4 = (set(int(x) for x in lg) for lg in legs)
+        # Multi-Banker covers the actual finish iff each finisher is in its
+        # leg's set (and they are distinct, which is automatic).
+        if (h1 in L1) and (h2 in L2) and (h3 in L3) and (h4 in L4):
+            per_combo = stake / n_perms
+            ret += per_combo / 10.0 * _lookup("QTT", [h1, h2, h3, h4])
+            hit = ret > 0
     elif bet_type in ("F4_BOX", "QTT_BOX"):
         # First-4 / Quartet box. F4 pays for the 4 horses in any order;
         # Quartet pays for the 4 horses in EXACT finishing order. HKJC

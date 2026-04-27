@@ -734,6 +734,7 @@ def _gh_push_blackbook(content_bytes: bytes) -> bool:
     """Push blackbook.json to GitHub via the Contents API."""
     headers = _gh_headers()
     if not headers:
+        _gh_record_error("blackbook.json: no GITHUB_TOKEN")
         return False
     sha = _gh_get_file_sha()
     payload = {
@@ -746,14 +747,211 @@ def _gh_push_blackbook(content_bytes: bytes) -> bool:
         r = _requests.put(
             f"https://api.github.com/repos/{_GH_REPO}/contents/{_GH_BB_PATH}",
             headers=headers, json=payload, timeout=15)
-        return r.status_code in (200, 201)
-    except Exception:
+        if r.status_code in (200, 201):
+            _gh_record_push(_GH_BB_PATH)
+            return True
+        _gh_record_error(
+            f"blackbook.json: HTTP {r.status_code} {r.text[:160]}")
+        return False
+    except Exception as e:
+        _gh_record_error(f"blackbook.json: {e}")
         return False
 
 
 def _is_streamlit_cloud() -> bool:
     """True when running on Streamlit Cloud (ephemeral filesystem)."""
     return os.environ.get("STREAMLIT_SERVER_HEADLESS") == "true"
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _gh_token_check() -> tuple[bool, bool, str]:
+    """Return ``(token_present, repo_writable, detail)``.
+
+    Cached for 5 minutes so the sidebar panel doesn't hammer the GitHub
+    API on every rerun. Performs a lightweight ``GET /repos/<repo>`` call;
+    a 200 with ``permissions.push == True`` means we can write.
+    """
+    token = st.secrets.get("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN", ""))
+    if not token:
+        return (False, False, "no token configured")
+    try:
+        r = _requests.get(
+            f"https://api.github.com/repos/{_GH_REPO}",
+            headers={"Authorization": f"token {token}",
+                     "Accept": "application/vnd.github.v3+json"},
+            timeout=8)
+        if r.status_code == 200:
+            perms = (r.json() or {}).get("permissions", {})
+            if perms.get("push"):
+                return (True, True, "OK (push permission verified)")
+            return (True, False, "token valid but lacks push permission")
+        if r.status_code == 401:
+            return (True, False, "token rejected (401) — expired or revoked")
+        if r.status_code == 404:
+            return (True, False, f"repo {_GH_REPO} not found via this token (404)")
+        return (True, False, f"GitHub HTTP {r.status_code}")
+    except Exception as e:
+        return (True, False, f"network error: {e}")
+
+
+def _gh_emergency_sync_all() -> tuple[int, int, list[str]]:
+    """Walk every persistence-relevant file on disk and push to GitHub.
+
+    Used by the sidebar **[ Sync All Data → GitHub ]** button as a safety
+    valve when the user notices data wasn't auto-synced. Returns
+    ``(n_pushed, n_failed, sample_errors)``.
+
+    Pushes:
+      - ``blackbook.json``
+      - ``reports/user_bets_log.jsonl``
+      - ``reports/{results,dividends,incidents,commentary,backtest,
+            backtest_unified,trials}_*.json``
+      - ``reports/race_day_report_*.json`` and ``race_day_analysis_*.txt``
+      - ``reports/vet_report_*.json``
+      - ``racecards/racecard_*.xlsx``
+      - ``cache/racecard_*.json`` and ``cache/form_guide_*.json``
+      - ``running_position_photos/*/R*.json|jpg``
+    """
+    if not _gh_headers():
+        return (0, 0, ["no GITHUB_TOKEN — cannot sync"])
+
+    candidates: list[tuple[Path, str]] = []
+
+    def _add(p: Path, repo_path: str):
+        if p.exists() and p.is_file():
+            candidates.append((p, repo_path))
+
+    _add(BLACKBOOK_FILE, "blackbook.json")
+    _add(REPORTS / "user_bets_log.jsonl", "reports/user_bets_log.jsonl")
+
+    # reports/ JSONs we know we want to persist
+    if REPORTS.exists():
+        report_globs = (
+            "results_*.json", "dividends_*.json", "incidents_*.json",
+            "commentary_*.json", "backtest_*.json", "backtest_unified_*.json",
+            "trials_*.json", "race_day_report_*.json",
+            "race_day_analysis_*.txt", "vet_report_*.json",
+            "factor_analysis_tables.json",
+        )
+        for pat in report_globs:
+            for f in REPORTS.glob(pat):
+                _add(f, f"reports/{f.name}")
+
+    # racecards/
+    rc_dir = BASE / "racecards"
+    if rc_dir.exists():
+        for f in rc_dir.glob("racecard_*.xlsx"):
+            _add(f, f"racecards/{f.name}")
+
+    # cache/
+    cache_dir = BASE / "cache"
+    if cache_dir.exists():
+        for pat in ("racecard_*.json", "form_guide_*.json"):
+            for f in cache_dir.glob(pat):
+                _add(f, f"cache/{f.name}")
+
+    # running-position photos (per-meeting subdirs)
+    rp_root = BASE / "running_position_photos"
+    if rp_root.exists():
+        for sub in rp_root.iterdir():
+            if not sub.is_dir():
+                continue
+            for f in sub.glob("R*.json"):
+                _add(f, f"running_position_photos/{sub.name}/{f.name}")
+            for f in sub.glob("R*.jpg"):
+                _add(f, f"running_position_photos/{sub.name}/{f.name}")
+
+    n_ok = 0
+    errors: list[str] = []
+    msg = f"sync-all: emergency persist {date.today().isoformat()} [skip ci]"
+    progress = st.progress(0.0, text=f"Pushing {len(candidates)} file(s)…")
+    for i, (local, repo_path) in enumerate(candidates, 1):
+        try:
+            if _gh_push_file(repo_path, local.read_bytes(), msg):
+                n_ok += 1
+            else:
+                errors.append(repo_path)
+        except Exception as e:
+            errors.append(f"{repo_path}: {e}")
+        progress.progress(i / max(1, len(candidates)),
+                          text=f"Pushed {n_ok}/{len(candidates)}…")
+    progress.empty()
+    return (n_ok, len(errors), errors[:8])
+
+
+def _render_persistence_sidebar() -> None:
+    """Render the Cloud Persistence status panel in the sidebar.
+
+    Shows whether we are on Streamlit Cloud, whether ``GITHUB_TOKEN`` is
+    configured + valid, the most-recent successful push, recent push
+    errors, and an emergency **Sync All Data → GitHub** button. The
+    panel only renders when running on cloud — locally the workspace
+    folder is the source of truth and persistence is a no-op.
+    """
+    if not _is_streamlit_cloud():
+        return
+
+    st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="sb-nav-section">Cloud Persistence</div>',
+                        unsafe_allow_html=True)
+
+    has_tok, can_push, detail = _gh_token_check()
+    if has_tok and can_push:
+        st.sidebar.success(f"☁ GitHub sync: {detail}", icon="✅")
+    elif has_tok:
+        st.sidebar.error(f"⚠ GitHub sync DISABLED — {detail}", icon="🚨")
+        st.sidebar.caption(
+            "All scrapes / bets / results written this session will be "
+            "**lost** on next reboot until this is fixed. Update the "
+            "`GITHUB_TOKEN` secret in Streamlit Cloud → app settings."
+        )
+    else:
+        st.sidebar.error("⚠ No `GITHUB_TOKEN` secret — data is NOT being "
+                         "persisted across reboots.", icon="🚨")
+        st.sidebar.caption(
+            "Configure a fine-grained PAT with **Contents: write** scope "
+            "for repo " + _GH_REPO + " in Streamlit Cloud secrets, "
+            "then refresh this page."
+        )
+
+    last = st.session_state.get("_gh_last_push")
+    pushes = st.session_state.get("_gh_push_count", 0)
+    if last:
+        ts, repo_path = last
+        st.sidebar.caption(f"Last push: `{repo_path}` @ {ts} "
+                           f"(total this session: {pushes})")
+
+    errs = st.session_state.get("_gh_errors") or []
+    if errs:
+        with st.sidebar.expander(f"⚠ {len(errs)} push error(s) this session",
+                                 expanded=False):
+            for line in errs[-10:]:
+                st.code(line, language="text")
+            if st.button("Clear errors", key="_gh_clear_errs",
+                         use_container_width=True):
+                st.session_state["_gh_errors"] = []
+                st.rerun()
+
+    if st.sidebar.button(
+        "[ Sync All Data → GitHub ]",
+        key="_gh_sync_all_btn",
+        use_container_width=True,
+        help="Walks racecards/, cache/, reports/, blackbook.json, "
+             "user_bets_log.jsonl and running_position_photos/ and pushes "
+             "everything to GitHub. Use this if data wasn't auto-synced "
+             "(e.g. token was missing during the session).",
+        disabled=not (has_tok and can_push),
+    ):
+        n_ok, n_fail, sample = _gh_emergency_sync_all()
+        if n_ok and not n_fail:
+            st.sidebar.success(f"☁ Synced {n_ok} file(s) to GitHub.")
+        elif n_ok:
+            st.sidebar.warning(
+                f"Pushed {n_ok}, failed {n_fail}. First errors:\n"
+                + "\n".join(f"• {x}" for x in sample))
+        else:
+            st.sidebar.error("Nothing pushed. Errors:\n"
+                             + "\n".join(f"• {x}" for x in sample))
 
 
 def _gh_get_path_sha(repo_path: str) -> str | None:
@@ -772,14 +970,45 @@ def _gh_get_path_sha(repo_path: str) -> str | None:
     return None
 
 
+def _gh_record_error(msg: str) -> None:
+    """Append a push-error message to a small ring buffer in session state.
+
+    Used so that silent ``return False`` paths surface as visible warnings
+    in the sidebar persistence panel. Capped at 30 entries.
+    """
+    try:
+        buf = st.session_state.setdefault("_gh_errors", [])
+        ts = datetime.now().strftime("%H:%M:%S")
+        buf.append(f"[{ts}] {msg}")
+        del buf[:-30]
+    except Exception:
+        pass
+
+
+def _gh_record_push(repo_path: str) -> None:
+    """Track the most-recent successful push for the status panel."""
+    try:
+        st.session_state["_gh_last_push"] = (
+            datetime.now().strftime("%H:%M:%S"), repo_path)
+        st.session_state["_gh_push_count"] = (
+            st.session_state.get("_gh_push_count", 0) + 1)
+    except Exception:
+        pass
+
+
 def _gh_push_file(repo_path: str, content_bytes: bytes, message: str) -> bool:
     """Generic single-file push via the GitHub Contents API.
 
     Used to persist pipeline-generated artifacts (racecards, reports, caches)
     so they survive Streamlit Cloud restarts. Returns True on success.
+
+    On failure the reason is recorded via :func:`_gh_record_error` so the
+    sidebar persistence panel can surface it (instead of silent loss).
+    Retries once on 409/422 (sha race) by re-fetching the SHA.
     """
     headers = _gh_headers()
     if not headers:
+        _gh_record_error(f"{repo_path}: no GITHUB_TOKEN")
         return False
     payload = {
         "message": message,
@@ -792,8 +1021,27 @@ def _gh_push_file(repo_path: str, content_bytes: bytes, message: str) -> bool:
         r = _requests.put(
             f"https://api.github.com/repos/{_GH_REPO}/contents/{repo_path}",
             headers=headers, json=payload, timeout=30)
-        return r.status_code in (200, 201)
-    except Exception:
+        if r.status_code in (200, 201):
+            _gh_record_push(repo_path)
+            return True
+        # Retry once on sha conflict (someone else pushed between get/put)
+        if r.status_code in (409, 422):
+            sha2 = _gh_get_path_sha(repo_path)
+            if sha2 and sha2 != sha:
+                payload["sha"] = sha2
+                r2 = _requests.put(
+                    f"https://api.github.com/repos/{_GH_REPO}/contents/{repo_path}",
+                    headers=headers, json=payload, timeout=30)
+                if r2.status_code in (200, 201):
+                    _gh_record_push(repo_path)
+                    return True
+                _gh_record_error(
+                    f"{repo_path}: HTTP {r2.status_code} {r2.text[:160]}")
+                return False
+        _gh_record_error(f"{repo_path}: HTTP {r.status_code} {r.text[:160]}")
+        return False
+    except Exception as e:
+        _gh_record_error(f"{repo_path}: {e}")
         return False
 
 
@@ -1193,7 +1441,12 @@ def _format_bet_selections(bet: dict) -> str:
     parts = []
     if banker is not None:
         parts.append(f"BANKER {_fmt(banker)}")
-    if sels:
+    # Quartet Multi-Banker: show one line per finishing position.
+    legs = bet.get("legs") or []
+    if bet.get("bet_type") == "QTT_MB" and len(legs) == 4:
+        for i, lg in enumerate(legs, start=1):
+            parts.append(f"P{i} " + " · ".join(_fmt(x) for x in lg))
+    elif sels:
         parts.append("SEL " + " · ".join(_fmt(x) for x in sels))
     return "  |  ".join(parts) if parts else "(no selections)"
 
@@ -2251,6 +2504,30 @@ def _save_uploaded_racecard(uploaded_json: bytes, date_str: str) -> bool:
         f"({len(df)} horses, {df['race_number'].nunique() if 'race_number' in df.columns else '?'} races)",
         icon="\u2705",
     )
+
+    # ── Persist uploaded racecard to GitHub on Streamlit Cloud ─────────
+    # Without this push, the uploaded JSON + Excel live only on the
+    # ephemeral container FS and disappear on the next reboot/redeploy.
+    if _is_streamlit_cloud() and _gh_headers():
+        try:
+            msg = f"racecard: upload {date_str} [skip ci]"
+            n_ok = 0
+            if _gh_push_file(
+                f"cache/racecard_{date_str}.json",
+                cache_path.read_bytes(), msg):
+                n_ok += 1
+            if _gh_push_file(
+                f"racecards/racecard_{date_compact}.xlsx",
+                xl_path.read_bytes(), msg):
+                n_ok += 1
+            if n_ok:
+                st.toast(f"☁ Synced {n_ok} racecard file(s) to GitHub",
+                         icon="✅")
+            else:
+                st.warning("⚠ Uploaded racecard NOT synced to GitHub — "
+                           "see sidebar persistence status for details.")
+        except Exception as e:
+            st.warning(f"⚠ GitHub sync of uploaded racecard failed: {e}")
     return True
 
 
@@ -9818,6 +10095,7 @@ def page_my_bets():
             "TRIO":       "Trio — box across selections (C(n,3) combos)",
             "F4_BOX":     "First 4 Box — box across selections (C(n,4) combos)",
             "QTT_BOX":    "Quartet Box — box across selections (top-4 in EXACT order)",
+            "QTT_MB":     "Quartet Multi-Banker — 4 leg-lists, one per finishing position",
         }
         _BET_TYPE_HELP = {
             "WIN":        "Enter ONE horse number in *Selections*. "
@@ -9850,6 +10128,12 @@ def page_my_bets():
                           "order. Stake is split across C(n,4)×24 "
                           "permutations — typically a much smaller "
                           "per-combo unit than First 4.",
+            "QTT_MB":     "Quartet Multi-Banker is currently **import-only** "
+                          "(via `Import bookie statement`). It carries four "
+                          "separate leg-lists (one per 1st/2nd/3rd/4th "
+                          "position) and auto-settles correctly. To log a "
+                          "new one manually, paste the relevant block into a "
+                          "`acctstmt*.txt` file and re-import.",
         }
 
         with st.form("my_bets_submit_form", clear_on_submit=True):
@@ -9868,9 +10152,12 @@ def page_my_bets():
                                             key="mb_submit_race")
             c4, c5 = st.columns([1.4, 0.6])
             with c4:
+                # QTT_MB needs four leg-lists which the manual form doesn't
+                # capture — keep it import-only.
+                _manual_types = [t for t in ub.BET_TYPES if t != "QTT_MB"]
                 bet_type = st.selectbox(
-                    "Bet type", ub.BET_TYPES,
-                    index=ub.BET_TYPES.index("QIN"),
+                    "Bet type", _manual_types,
+                    index=_manual_types.index("QIN"),
                     format_func=lambda t: _BET_TYPE_LABELS.get(t, t),
                     key="mb_submit_type",
                 )
@@ -10567,6 +10854,251 @@ def page_my_bets():
 # ─────────────────────────────────────────────────────────────────────────────
 # Model Bets page — filter-based tickets + live track record
 # ─────────────────────────────────────────────────────────────────────────────
+def _render_strategy_slate_tab() -> None:
+    """🎯 Strategy Slate — Kelly-sized HKD bets with reasoning + stake controls.
+
+    Reads ``decision_engine.build_meeting_slate`` for the selected meeting,
+    presents per-race + all-up plans, lets the user override the bankroll,
+    mode, individual stakes, and total exposure cap, and persists the chosen
+    plan to ``reports/strategy_slate_<date>_<mode>.json`` for later
+    settlement.
+    """
+    try:
+        from decision_engine import build_meeting_slate, format_slate
+    except Exception as exc:
+        st.error(f"Could not import decision_engine: {exc}")
+        return
+
+    meetings = load_available_meetings()
+    if not meetings:
+        st.info("No analysed meetings found. Run a Model Analysis first.")
+        return
+
+    options = {m["title"]: m for m in meetings}
+    sel_title = st.selectbox(
+        "Meeting:", list(options.keys()), index=0, key="slate_meeting"
+    )
+    sel = options[sel_title]
+    date_str = sel["date_str"]
+
+    st.markdown(
+        "**What this is:** Kelly-sized HKD stakes per race using your bankroll, "
+        "model probability vs market probability, and a meeting-level cap. "
+        "Includes reasoning per leg + optional all-up chains. Override stakes "
+        "below; totals recompute automatically."
+    )
+
+    cfg_cols = st.columns([1, 1, 1, 1.4])
+    bankroll = cfg_cols[0].number_input(
+        "Bankroll ($)", min_value=100.0, max_value=200000.0, value=5000.0,
+        step=100.0, key="slate_bankroll",
+    )
+    mode = cfg_cols[1].selectbox(
+        "Mode", ["conservative", "balanced", "aggressive", "uncapped"],
+        index=1, key="slate_mode",
+        help=("Conservative: 1/8 Kelly · Balanced: 1/4 Kelly · "
+                "Aggressive: 1/2 Kelly · Uncapped: full Kelly + larger "
+                "all-up chains, no meeting cap."),
+    )
+    enable_allup = cfg_cols[2].checkbox(
+        "All-up chains", value=True, key="slate_allup",
+        help="Enable WIN/PLACE/QIN-banker/QPL-banker multi-leg chains.",
+    )
+    total_cap_pct = cfg_cols[3].slider(
+        "Total exposure cap (% of bankroll)", min_value=5, max_value=100,
+        value=25, step=5, key="slate_cap_pct",
+        help="Hard cap on total HKD deployed across the meeting.",
+    )
+
+    with st.spinner(f"Building slate · {sel_title} · {mode}…"):
+        try:
+            slate = build_meeting_slate(
+                date_str, bankroll=float(bankroll), mode=mode,
+                enable_allup=enable_allup,
+            )
+        except Exception as exc:
+            st.error(f"Slate build failed: {exc}")
+            import traceback
+            with st.expander("Trace"):
+                st.code(traceback.format_exc())
+            return
+
+    summary = slate.get("summary", {}) or {}
+    races = slate.get("races", []) or []
+    allup_plans = slate.get("allup_plans", []) or []
+
+    # Apply user's exposure cap (post-build, advisory only)
+    cap_hkd = bankroll * total_cap_pct / 100.0
+
+    # ── Per-race table with editable stake column ──────────────────────────
+    rows = []
+    default_total = 0.0
+    for r in races:
+        if not r.get("accepted"):
+            rows.append({
+                "R": r["race_number"],
+                "Play": r["play"],
+                "Banker": str(r.get("banker") or ""),
+                "Banker #": r.get("banker_no"),
+                "Legs": ", ".join(f"#{n} {nm}" for n, nm in r.get("legs", [])),
+                "Odds": None,
+                "p_used": None,
+                "p_mkt": None,
+                "Edge %": None,
+                "Stake $": 0.0,
+                "Why": r.get("reason", ""),
+            })
+            continue
+        default_total += r["stake_hkd"]
+        rows.append({
+            "R": r["race_number"],
+            "Play": r["play"],
+            "Banker": str(r.get("banker") or ""),
+            "Banker #": r.get("banker_no"),
+            "Legs": ", ".join(f"#{n} {nm}" for n, nm in r.get("legs", [])),
+            "Odds": r.get("decimal_odds"),
+            "p_used": r.get("p_used"),
+            "p_mkt": r.get("p_market"),
+            "Edge %": (r.get("edge_pct") or 0.0) * 100.0,
+            "Stake $": float(r["stake_hkd"]),
+            "Why": r.get("reason", ""),
+        })
+
+    df = pd.DataFrame(rows)
+    st.markdown("#### Per-race plan")
+    edited = st.data_editor(
+        df, hide_index=True, use_container_width=True,
+        key=f"slate_editor_{date_str}_{mode}",
+        disabled=["R", "Play", "Banker", "Banker #", "Legs",
+                  "Odds", "p_used", "p_mkt", "Edge %", "Why"],
+        column_config={
+            "R":       st.column_config.NumberColumn(format="%d"),
+            "Banker #": st.column_config.NumberColumn(format="%d"),
+            "Odds":    st.column_config.NumberColumn(format="%.2f"),
+            "p_used":  st.column_config.NumberColumn(format="%.2f"),
+            "p_mkt":   st.column_config.NumberColumn(format="%.2f"),
+            "Edge %":  st.column_config.NumberColumn(format="%+.1f%%"),
+            "Stake $": st.column_config.NumberColumn(
+                format="$%.0f",
+                help="Override stake — minimum $10 per HKJC; 0 = skip.",
+                min_value=0.0, max_value=float(bankroll), step=10.0,
+            ),
+        },
+    )
+
+    user_total = float(edited["Stake $"].fillna(0.0).sum())
+
+    # ── Apply cap warning + scale-down option ──────────────────────────────
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Bets accepted", int((edited["Stake $"] > 0).sum()))
+    m2.metric("Race-stake total", f"${user_total:.0f}")
+    m3.metric("Exposure cap", f"${cap_hkd:.0f}",
+                 delta=f"{(user_total/cap_hkd-1)*100:+.0f}% vs cap"
+                       if cap_hkd else None)
+    m4.metric("Mode", mode)
+
+    if user_total > cap_hkd:
+        st.warning(
+            f"⚠ Race-stake total **${user_total:.0f}** exceeds your cap "
+            f"**${cap_hkd:.0f}** ({total_cap_pct}% of bankroll). "
+            "Reduce individual stakes or raise the cap."
+        )
+
+    # ── All-up plans ────────────────────────────────────────────────────────
+    if allup_plans:
+        st.markdown("#### All-up chains")
+        au_rows = []
+        for i, plan in enumerate(allup_plans):
+            legs_str = "  →  ".join(
+                f"R{l['race']} {l['pool']} #{l['horse_no']} {l['horse_name']}"
+                for l in plan["legs"]
+            )
+            au_rows.append({
+                "#": i + 1,
+                "Stake $": float(plan["stake_hkd"]),
+                "Legs (n)": len(plan["legs"]),
+                "p_hit": plan["chain_p_hit"],
+                "Chain EV": plan["chain_ev"],
+                "Exp Payout": plan["expected_payout"],
+                "Exp PnL": plan["expected_pnl"],
+                "Chain": legs_str,
+            })
+        au_df = pd.DataFrame(au_rows)
+        st.dataframe(
+            au_df, hide_index=True, use_container_width=True,
+            column_config={
+                "#":        st.column_config.NumberColumn(format="%d"),
+                "Stake $":  st.column_config.NumberColumn(format="$%.0f"),
+                "Legs (n)": st.column_config.NumberColumn(format="%d"),
+                "p_hit":    st.column_config.NumberColumn(format="%.3f"),
+                "Chain EV": st.column_config.NumberColumn(format="%.2f"),
+                "Exp Payout": st.column_config.NumberColumn(format="$%.2f"),
+                "Exp PnL":  st.column_config.NumberColumn(format="$%.2f"),
+            },
+        )
+    else:
+        st.caption("_No all-up chains generated for this slate._")
+
+    # ── Persist ─────────────────────────────────────────────────────────────
+    save_cols = st.columns([1, 1, 3])
+    if save_cols[0].button("💾 Save plan", key="slate_save",
+                                 use_container_width=True):
+        out = {
+            "date": date_str, "mode": mode, "bankroll": float(bankroll),
+            "exposure_cap_hkd": cap_hkd,
+            "race_plan": [
+                {
+                    "race_number": int(row["R"]),
+                    "play": row["Play"],
+                    "banker_no": (int(row["Banker #"])
+                                    if pd.notna(row["Banker #"]) else None),
+                    "stake_hkd": float(row["Stake $"] or 0.0),
+                    "reason": row["Why"],
+                }
+                for _, row in edited.iterrows()
+                if (row["Stake $"] or 0.0) > 0
+            ],
+            "allup_plans": allup_plans,
+            "user_total_hkd": user_total,
+            "raw_summary": summary,
+        }
+        out_path = Path("reports") / (
+            f"strategy_slate_{date_str}_{mode}.json"
+        )
+        out_path.parent.mkdir(exist_ok=True)
+        out_path.write_text(json.dumps(out, ensure_ascii=False, indent=2),
+                                 encoding="utf-8")
+        st.success(f"Saved → {out_path}")
+
+    with save_cols[1]:
+        with st.expander("Plain-text view"):
+            st.code(format_slate(slate))
+
+    # ── Reasoning per leg ───────────────────────────────────────────────────
+    with st.expander(f"Why each bet ({len(rows)} legs)"):
+        why_rows = [
+            {"R": r["R"], "Play": r["Play"], "Stake $": r["Stake $"],
+             "Edge %": r["Edge %"], "Reason": r["Why"]}
+            for r in rows
+        ]
+        st.dataframe(
+            pd.DataFrame(why_rows), hide_index=True,
+            use_container_width=True,
+            column_config={
+                "R": st.column_config.NumberColumn(format="%d"),
+                "Stake $": st.column_config.NumberColumn(format="$%.0f"),
+                "Edge %":  st.column_config.NumberColumn(format="%+.1f%%"),
+            },
+        )
+
+    st.caption(
+        "Per-leg reasoning is the auto-generated stake-engine label. "
+        "When live odds are scraped post race-card, set them on the "
+        "Live Odds page and rebuild — the slate will use real market "
+        "prices instead of model-implied probabilities."
+    )
+
+
 def page_model_bets():
     """Filter-based betting recommendations + sustained performance tracker."""
     from betting_strategy import (build_meeting_tickets, log_meeting_picks,
@@ -10582,8 +11114,8 @@ def page_model_bets():
     )
 
     tabs = st.tabs(
-        ["📋 Today's Tickets", "📈 Track Record", "🧪 Strategy Sweep",
-         "🔧 Filter Rules"]
+        ["📋 Today's Tickets", "📈 Track Record", "🎯 Strategy Slate",
+         "🧪 Strategy Sweep", "🔧 Filter Rules"]
     )
 
     # ── TAB 1 — Today's / selected meeting tickets ──────────────────────────
@@ -10782,9 +11314,14 @@ def page_model_bets():
                        f"{s['hit_rate']*100:.1f}%",
                        delta=f"{s['hits']} wins")
             m3.metric("Return", f"${s['return']:.2f}",
-                       delta=f"stake ${s['stake']:.1f}")
+                       delta=f"stake ${s['stake']:.0f}")
             m4.metric("ROI", f"{s['roi']*100:+.1f}%",
                        delta=f"{s['pending']} pending" if s['pending'] else None)
+            st.caption(
+                "Stakes shown in **HKD** with a $10 minimum per bet "
+                "(HKJC floor). Track record auto-refreshes from "
+                "`reports/race_day_report_*_v4.4.json` every page load."
+            )
 
             st.markdown("#### By filter rule")
             br_rows = []
@@ -10875,8 +11412,12 @@ def page_model_bets():
                     },
                 )
 
-    # ── TAB 3 — Strategy sweep (reads pre-computed analysis) ───────────────
+    # ── TAB 3 — Strategy slate (Kelly-sized $-bets with reasoning) ──────────
     with tabs[2]:
+        _render_strategy_slate_tab()
+
+    # ── TAB 4 — Strategy sweep (reads pre-computed analysis) ───────────────
+    with tabs[3]:
         st.markdown("#### April 2026 strategy sweep — real HKJC dividends")
         sweep_path = REPORTS / "betting_edge_analysis.json"
         if not sweep_path.exists():
@@ -10942,8 +11483,8 @@ def page_model_bets():
                 ])
                 st.dataframe(qin_qpl, hide_index=True, use_container_width=True)
 
-    # ── TAB 4 — Filter rules ────────────────────────────────────────────────
-    with tabs[3]:
+    # ── TAB 5 — Filter rules ────────────────────────────────────────────────
+    with tabs[4]:
         st.markdown("#### Current edge configuration")
         st.markdown(
             "These thresholds are hard-coded in `betting_strategy.EDGE_CFG` and "
@@ -11223,6 +11764,11 @@ def main():
         page_blackbook()
     elif page == "PDF Builder":
         page_pdf_builder()
+
+    # Cloud persistence status panel — appears at the bottom of the sidebar
+    # on every page so the user always knows whether data is being synced
+    # to GitHub (i.e. will survive a reboot).
+    _render_persistence_sidebar()
 
 
 def sidebar_race_day():
