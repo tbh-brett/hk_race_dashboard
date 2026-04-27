@@ -9985,6 +9985,36 @@ def page_my_bets():
         else:
             open_rows.sort(key=lambda r: (r.get("meeting_date",""), r.get("race_number",0)))
             st.markdown(f"**{len(open_rows)} open** bet(s)")
+
+            # Bulk-delete by meeting date (handy after a bad re-import).
+            with st.expander("🗑️ Bulk delete", expanded=False):
+                _dates = sorted({r.get("meeting_date", "") for r in open_rows})
+                _bulk_pick = st.multiselect(
+                    "Delete ALL open bets for these meeting dates",
+                    options=_dates,
+                    key="mb_bulk_dates",
+                    help="Use this if you accidentally imported a statement "
+                         "twice and want a clean slate before re-importing.",
+                )
+                _confirm = st.checkbox(
+                    "I understand this cannot be undone.",
+                    key="mb_bulk_confirm",
+                )
+                if st.button(
+                    "Delete selected dates",
+                    key="mb_bulk_delete_btn",
+                    type="primary",
+                    disabled=not (_bulk_pick and _confirm),
+                ):
+                    _n_del = 0
+                    for _r in list(open_rows):
+                        if _r.get("meeting_date") in _bulk_pick:
+                            ub.delete_bet(_r["bet_id"])
+                            _n_del += 1
+                    _gh_push_user_bets()
+                    st.success(f"Deleted {_n_del} open bet(s).")
+                    st.rerun()
+
             for r in open_rows:
                 _sel_str = _format_bet_selections(r)
                 with st.expander(
@@ -10028,6 +10058,36 @@ def page_my_bets():
         else:
             settled_rows.sort(key=lambda r: r.get("settled_at", ""),
                                  reverse=True)
+
+            # Bulk-delete by meeting date for cleaning up duplicates.
+            with st.expander("🗑️ Delete settled records", expanded=False):
+                _sdates = sorted({r.get("meeting_date", "") for r in settled_rows})
+                _sbulk_pick = st.multiselect(
+                    "Delete ALL settled bets for these meeting dates",
+                    options=_sdates,
+                    key="mb_sbulk_dates",
+                    help="Use this to remove duplicated imports. Records are "
+                         "erased from `reports/user_bets_log.jsonl`.",
+                )
+                _sconfirm = st.checkbox(
+                    "I understand this cannot be undone.",
+                    key="mb_sbulk_confirm",
+                )
+                if st.button(
+                    "Delete selected dates",
+                    key="mb_sbulk_delete_btn",
+                    type="primary",
+                    disabled=not (_sbulk_pick and _sconfirm),
+                ):
+                    _n_sdel = 0
+                    for _r in list(settled_rows):
+                        if _r.get("meeting_date") in _sbulk_pick:
+                            ub.delete_bet(_r["bet_id"])
+                            _n_sdel += 1
+                    _gh_push_user_bets()
+                    st.success(f"Deleted {_n_sdel} settled bet(s).")
+                    st.rerun()
+
             table = []
             for r in settled_rows:
                 _md = (r.get("meeting_date") or "").replace("-", "")
@@ -10121,26 +10181,180 @@ def page_my_bets():
                     },
                 )
 
-            # Equity curve (cumulative PnL by settled_at)
+            # Equity curve (cumulative PnL by settled_at) — richer Altair view
             settled_sorted = sorted(
                 [r for r in filt if r.get("status") == "settled"],
-                key=lambda r: r.get("settled_at", ""),
+                key=lambda r: (r.get("meeting_date", ""),
+                               int(r.get("race_number") or 0),
+                               r.get("settled_at", "")),
             )
             if settled_sorted:
                 import pandas as _pd
+                try:
+                    import altair as _alt
+                except ImportError:
+                    _alt = None
                 cum = 0.0
+                cum_stake = 0.0
                 curve = []
-                for r in settled_sorted:
-                    cum += float(r.get("pnl_hkd", 0))
+                for _i, r in enumerate(settled_sorted, 1):
+                    _pnl = float(r.get("pnl_hkd", 0))
+                    _stake = float(r.get("stake_hkd", 0))
+                    cum += _pnl
+                    cum_stake += _stake
+                    _md = r.get("meeting_date", "")
+                    _md_iso = (f"{_md[:4]}-{_md[4:6]}-{_md[6:]}"
+                               if len(_md) == 8 else _md)
                     curve.append({
-                        "When":  r.get("settled_at", ""),
-                        "PnL $": r.get("pnl_hkd", 0),
-                        "Cumulative $": round(cum, 2),
+                        "#":             _i,
+                        "Date":          _md_iso,
+                        "Race":          int(r.get("race_number") or 0),
+                        "Type":          r.get("bet_type", ""),
+                        "Stake":         _stake,
+                        "PnL":           _pnl,
+                        "Cumulative":    round(cum, 2),
+                        "Cum Stake":     round(cum_stake, 2),
+                        "Cum ROI %":     (round(cum / cum_stake * 100, 2)
+                                          if cum_stake else 0.0),
+                        "Hit":           bool(r.get("hit")),
                     })
                 df_c = _pd.DataFrame(curve)
+
                 st.markdown("#### Cumulative PnL")
-                st.line_chart(df_c.set_index("When")["Cumulative $"],
-                                 use_container_width=True)
+                if _alt is None:
+                    st.line_chart(df_c.set_index("#")["Cumulative"],
+                                  use_container_width=True)
+                else:
+                    df_c["Cum$"] = df_c["Cumulative"].astype(float)
+                    df_c["Color"] = df_c["PnL"].apply(
+                        lambda v: "win" if v > 0 else ("loss" if v < 0 else "push")
+                    )
+                    base = _alt.Chart(df_c).encode(
+                        x=_alt.X("#:Q", title="Bet # (chronological)",
+                                 axis=_alt.Axis(grid=False)),
+                    )
+                    # Smoothed curve via cardinal interpolation; zero baseline
+                    zero_rule = _alt.Chart(
+                        _pd.DataFrame({"y": [0]})
+                    ).mark_rule(
+                        color="#64748b", strokeDash=[4, 3], opacity=0.6,
+                    ).encode(y="y:Q")
+                    area = base.mark_area(
+                        interpolate="monotone",
+                        line={"color": "#60a5fa", "strokeWidth": 2.4},
+                        color=_alt.Gradient(
+                            gradient="linear",
+                            stops=[
+                                _alt.GradientStop(color="#60a5fa", offset=0),
+                                _alt.GradientStop(color="#0b1220", offset=1),
+                            ],
+                            x1=1, x2=1, y1=1, y2=0,
+                        ),
+                        opacity=0.55,
+                    ).encode(
+                        y=_alt.Y("Cum$:Q", title="Cumulative PnL ($)"),
+                        tooltip=[
+                            _alt.Tooltip("#:Q", title="Bet #"),
+                            "Date", "Race", "Type",
+                            _alt.Tooltip("Stake:Q", format="$.0f"),
+                            _alt.Tooltip("PnL:Q", format="+$.2f"),
+                            _alt.Tooltip("Cum$:Q", title="Cumulative",
+                                         format="+$.2f"),
+                            _alt.Tooltip("Cum ROI %:Q", format="+.2f"),
+                        ],
+                    )
+                    pts = base.mark_circle(size=70, opacity=0.95).encode(
+                        y="Cum$:Q",
+                        color=_alt.Color(
+                            "Color:N",
+                            scale=_alt.Scale(
+                                domain=["win", "push", "loss"],
+                                range=["#22c55e", "#a3b3c7", "#ef4444"],
+                            ),
+                            legend=_alt.Legend(title="Bet outcome",
+                                               orient="top"),
+                        ),
+                        tooltip=[
+                            _alt.Tooltip("#:Q", title="Bet #"),
+                            "Date", "Race", "Type",
+                            _alt.Tooltip("Stake:Q", format="$.0f"),
+                            _alt.Tooltip("PnL:Q", format="+$.2f"),
+                            _alt.Tooltip("Cum$:Q", title="Cumulative",
+                                         format="+$.2f"),
+                            _alt.Tooltip("Cum ROI %:Q", format="+.2f"),
+                        ],
+                    )
+                    chart = (zero_rule + area + pts).properties(
+                        height=320,
+                    ).configure_view(strokeWidth=0)
+                    st.altair_chart(chart, use_container_width=True)
+
+                    # Per-bet PnL bar chart (red/green) for context.
+                    df_b = df_c.copy()
+                    bars = _alt.Chart(df_b).mark_bar(
+                        cornerRadiusTopLeft=2, cornerRadiusTopRight=2,
+                    ).encode(
+                        x=_alt.X("#:Q", title="Bet #",
+                                 axis=_alt.Axis(grid=False)),
+                        y=_alt.Y("PnL:Q", title="Per-bet PnL ($)"),
+                        color=_alt.Color(
+                            "Color:N",
+                            scale=_alt.Scale(
+                                domain=["win", "push", "loss"],
+                                range=["#22c55e", "#a3b3c7", "#ef4444"],
+                            ),
+                            legend=None,
+                        ),
+                        tooltip=[
+                            _alt.Tooltip("#:Q", title="Bet #"),
+                            "Date", "Race", "Type",
+                            _alt.Tooltip("Stake:Q", format="$.0f"),
+                            _alt.Tooltip("PnL:Q", format="+$.2f"),
+                        ],
+                    ).properties(height=180).configure_view(strokeWidth=0)
+                    st.altair_chart(bars, use_container_width=True)
+
+                    # Daily aggregation (clearer signal than per-bet noise).
+                    if df_c["Date"].nunique() >= 2:
+                        daily = (
+                            df_c.groupby("Date", as_index=False)
+                                .agg(PnL=("PnL", "sum"),
+                                     Stake=("Stake", "sum"),
+                                     Bets=("PnL", "size"))
+                                .sort_values("Date")
+                        )
+                        daily["Cum$"] = daily["PnL"].cumsum()
+                        daily["ROI %"] = (daily["PnL"] / daily["Stake"] * 100).round(2)
+                        daily["Color"] = daily["PnL"].apply(
+                            lambda v: "win" if v > 0
+                            else ("loss" if v < 0 else "push")
+                        )
+                        st.markdown("#### Daily PnL")
+                        daily_bars = _alt.Chart(daily).mark_bar(
+                            cornerRadiusTopLeft=3, cornerRadiusTopRight=3,
+                        ).encode(
+                            x=_alt.X("Date:N", title="Meeting date",
+                                     axis=_alt.Axis(labelAngle=-30)),
+                            y=_alt.Y("PnL:Q", title="Daily PnL ($)"),
+                            color=_alt.Color(
+                                "Color:N",
+                                scale=_alt.Scale(
+                                    domain=["win", "push", "loss"],
+                                    range=["#22c55e", "#a3b3c7", "#ef4444"],
+                                ),
+                                legend=None,
+                            ),
+                            tooltip=[
+                                "Date",
+                                _alt.Tooltip("Bets:Q", format="d"),
+                                _alt.Tooltip("Stake:Q", format="$.0f"),
+                                _alt.Tooltip("PnL:Q", format="+$.2f"),
+                                _alt.Tooltip("ROI %:Q", format="+.2f"),
+                                _alt.Tooltip("Cum$:Q", title="Cumulative",
+                                             format="+$.2f"),
+                            ],
+                        ).properties(height=200).configure_view(strokeWidth=0)
+                        st.altair_chart(daily_bars, use_container_width=True)
 
     # ── TAB 5 — vs Model (ROI comparison & deviation notes) ─────────────
     with tabs[4]:

@@ -333,7 +333,9 @@ def import_statement(path: Path) -> dict:
         records = _expand_to_user_bet_records(parsed)
         if not records:
             skipped += 1
-            skipped_refs.append(ref + " (unsupported bet type)")
+            skipped_refs.append(
+                f"{ref} (unsupported bet type: {parsed.get('bet_type_text', '?')!r})"
+            )
             continue
         for rec in records:
             user_bets.submit_bet(
