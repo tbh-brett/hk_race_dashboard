@@ -466,12 +466,63 @@ def _existing_bookie_refs() -> set[str]:
     return refs
 
 
-def import_statement(path: Path, *, debug: bool = False) -> dict:
-    """Parse + insert new bets (skipping already-imported by bookie_ref).
+def _purge_bookie_refs(refs_to_remove: set[str]) -> int:
+    """Remove every record whose notes/_bookie_ref matches one of *refs_to_remove*.
 
-    Returns summary dict {inserted, skipped, records_by_ref}.
+    Returns the number of rows deleted. Used by the force-reimport path so
+    that callers don't have to manually delete via the dashboard UI first.
+    """
+    if not USER_BETS_PATH.exists() or not refs_to_remove:
+        return 0
+    refs_to_remove = {str(r) for r in refs_to_remove}
+    kept: list[str] = []
+    removed = 0
+    for ln in USER_BETS_PATH.read_text(encoding="utf-8").splitlines():
+        s = ln.strip()
+        if not s:
+            continue
+        try:
+            r = json.loads(s)
+        except json.JSONDecodeError:
+            kept.append(s)
+            continue
+        ref = None
+        if "_bookie_ref" in r:
+            ref = str(r["_bookie_ref"])
+        else:
+            m = re.search(r"ref (\d+)", r.get("notes", "") or "")
+            if m:
+                ref = m.group(1)
+        if ref and ref in refs_to_remove:
+            removed += 1
+            continue
+        kept.append(s)
+    USER_BETS_PATH.write_text(
+        ("\n".join(kept) + "\n") if kept else "",
+        encoding="utf-8",
+    )
+    return removed
+
+
+def import_statement(path: Path, *, debug: bool = False,
+                     force: bool = False) -> dict:
+    """Parse + insert new bets.
+
+    Default behaviour skips bets already present (by bookie_ref). When
+    ``force=True`` every record matching a ref in the parsed file is FIRST
+    deleted from the log, then re-inserted — useful when the user has
+    edited/deleted bets manually and wants the importer to be the source
+    of truth.
+
+    Returns summary dict {inserted, skipped, purged, records_by_ref}.
     """
     parsed_blocks = parse_statement(path, debug=debug)
+
+    purged = 0
+    if force:
+        refs_in_file = {p["bookie_ref"] for p in parsed_blocks}
+        purged = _purge_bookie_refs(refs_in_file)
+
     existing = _existing_bookie_refs()
 
     inserted = 0
@@ -516,9 +567,17 @@ def import_statement(path: Path, *, debug: bool = False) -> dict:
                 "stake_hkd": rec["stake_hkd"],
             })
 
+    # Re-load with settlement so any newly-imported records are scored
+    # against existing dividends (no-op for races without published divs).
+    try:
+        user_bets.load_bets(settle=True)
+    except Exception:
+        pass
+
     return {
         "inserted": inserted,
         "skipped": skipped,
+        "purged": purged,
         "inserted_details": inserted_details,
         "skipped_refs": skipped_refs,
         "total_blocks": len(parsed_blocks),
@@ -532,6 +591,8 @@ def main():
                     help="Actually write to reports/user_bets_log.jsonl (default: preview)")
     ap.add_argument("--debug", action="store_true",
                     help="Print diagnostics for each block that fails to parse.")
+    ap.add_argument("--force", action="store_true",
+                    help="Delete-and-replace any record whose bookie ref is in the file.")
     args = ap.parse_args()
 
     p = Path(args.path)
@@ -540,8 +601,11 @@ def main():
         return 1
 
     if args.do_import:
-        summary = import_statement(p, debug=args.debug)
-        print(f"Imported {summary['inserted']} record(s), skipped {summary['skipped']}. "
+        summary = import_statement(p, debug=args.debug, force=args.force)
+        purged = summary.get("purged", 0)
+        purge_msg = f", purged {purged} pre-existing" if purged else ""
+        print(f"Imported {summary['inserted']} record(s), "
+              f"skipped {summary['skipped']}{purge_msg}. "
               f"(from {summary['total_blocks']} blocks)")
         for d in summary["inserted_details"]:
             bk = f" banker={d['banker']}" if d['banker'] else ""

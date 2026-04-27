@@ -10049,6 +10049,15 @@ def page_my_bets():
             )
             up = st.file_uploader("Statement .txt", type=["txt"],
                                   key="mb_stmt_upload")
+            force_reimport = st.checkbox(
+                "🔁 Force re-import (delete existing rows for these refs first)",
+                key="mb_stmt_force",
+                value=False,
+                help="Tick this if you've edited / deleted bets manually and want "
+                     "the statement file to be the source of truth. Every bookie "
+                     "ref that appears in the uploaded file is REMOVED from the "
+                     "log and re-inserted with fresh values.",
+            )
             if up is not None:
                 import tempfile
                 import parse_acct_statement as pas
@@ -10081,12 +10090,25 @@ def page_my_bets():
                                 use_container_width=True,
                             )
                     if do_import:
-                        summary = pas.import_statement(tmp_path)
+                        summary = pas.import_statement(
+                            tmp_path, force=force_reimport
+                        )
+                        # Force a fresh settlement pass so every bet from races
+                        # with published dividends shows return_hkd immediately.
+                        try:
+                            ub.load_bets(settle=True)
+                        except Exception:
+                            pass
                         _gh_push_user_bets()
+                        purged = summary.get("purged", 0)
+                        purge_msg = (
+                            f" Purged **{purged}** pre-existing row(s) before re-insert."
+                            if purged else ""
+                        )
                         st.success(
                             f"Inserted **{summary['inserted']}** record(s); "
                             f"skipped **{summary['skipped']}** "
-                            f"(from {summary['total_blocks']} blocks)."
+                            f"(from {summary['total_blocks']} blocks).{purge_msg}"
                         )
                         if summary["inserted_details"]:
                             st.dataframe(
