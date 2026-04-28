@@ -9364,6 +9364,274 @@ def _signal_audit_tab(window: str, factor_mtime: float) -> None:
         st.dataframe(df_t, hide_index=True, use_container_width=True)
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Horse Profile (per-horse pivot of model rank vs finish, perf score, excuses)
+# ──────────────────────────────────────────────────────────────────────────────
+
+@st.cache_data(ttl=120, show_spinner=False)
+def _horse_intel_index(_mtime: float) -> dict:
+    """Load horse_intel/_index.json, keyed by mtime so it refreshes after
+    a rebuild."""
+    p = BASE / "reports" / "horse_intel" / "_index.json"
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+@st.cache_data(ttl=120, show_spinner=False)
+def _horse_intel_record(slug: str, _mtime: float) -> dict | None:
+    p = BASE / "reports" / "horse_intel" / f"{slug}.json"
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _horse_intel_mtime() -> float:
+    p = BASE / "reports" / "horse_intel" / "_index.json"
+    return p.stat().st_mtime if p.exists() else 0.0
+
+
+def _horse_profile_tab():
+    """Per-horse contextualised performance — pivots data already produced
+    by results / commentary / race_day_report files into a single horse view."""
+    import subprocess as _sp
+
+    st.markdown("### 🐴 Horse Profile")
+    st.caption(
+        "Per-horse pivot of model rank vs. finish, performance score, "
+        "and excuse tags. Pure read on existing data — no new model. "
+        "Use as a complement to the factor model, not a substitute."
+    )
+
+    mtime = _horse_intel_mtime()
+    idx = _horse_intel_index(mtime)
+
+    c_top1, c_top2, c_top3 = st.columns([2, 1, 1])
+    with c_top1:
+        if mtime:
+            import datetime as _dt
+            mt = _dt.datetime.fromtimestamp(mtime)
+            st.caption(f"Index built **{mt:%Y-%m-%d %H:%M}** · "
+                       f"**{len(idx)}** horses")
+        else:
+            st.warning("Horse intel index not built yet — click Rebuild.")
+    with c_top2:
+        if st.button("🔄 Rebuild", key="hi_rebuild",
+                     use_container_width=True):
+            try:
+                r = _sp.run(
+                    [sys.executable, str(BASE / "horse_intel.py")],
+                    capture_output=True, text=True, timeout=180,
+                    cwd=str(BASE),
+                )
+                if r.returncode == 0:
+                    st.success(r.stdout.strip()[-200:] or "Rebuilt.")
+                    _horse_intel_index.clear()
+                    _horse_intel_record.clear()
+                    st.rerun()
+                else:
+                    st.error((r.stderr or r.stdout)[-1500:])
+            except (OSError, _sp.TimeoutExpired) as e:
+                st.error(str(e))
+
+    if not idx:
+        st.info("No horses indexed. Click **Rebuild** above.")
+        return
+
+    # ── Horse picker. Allow filtering by today's racecard if available ──
+    with c_top3:
+        only_today = st.checkbox(
+            "Today's card only",
+            value=False, key="hi_only_today",
+            help="Filter selector to runners on the most recent racecard.",
+        )
+    horses_pool = sorted(idx.keys())
+    today_runners: set[str] = set()
+    if only_today:
+        # Pull runners from latest scraped racecard
+        try:
+            cards = sorted((BASE / "racecards").glob("racecard_*.xlsx"))
+            if cards:
+                latest = cards[-1]
+                df_card = pd.read_excel(latest, sheet_name="All Races")
+                if "is_standby" in df_card.columns:
+                    df_card = df_card[df_card["is_standby"] == False]
+                today_runners = {
+                    str(n).upper().strip()
+                    for n in df_card["horse_name"].dropna().tolist()
+                }
+                horses_pool = [h for h in horses_pool if h in today_runners]
+        except Exception as e:
+            st.caption(f"Could not load today's racecard: {e}")
+
+    horse_name = st.selectbox(
+        "Pick horse",
+        options=horses_pool,
+        index=0 if horses_pool else None,
+        key="hi_horse_pick",
+    )
+    if not horse_name:
+        st.info("No horses match the current filter.")
+        return
+
+    rec = _horse_intel_record(idx[horse_name].replace(".json", ""), mtime)
+    if not rec:
+        st.error(f"Could not load record for {horse_name}.")
+        return
+
+    # ── Header card ──────────────────────────────────────
+    s = rec.get("summary", {}) or {}
+    runs = rec.get("runs", []) or []
+
+    h1, h2, h3, h4, h5 = st.columns(5)
+    h1.metric("Runs", s.get("n_runs", 0))
+    h2.metric("Win %", f"{s.get('win_pct', 0):.1f}%")
+    h3.metric("Top-3 %", f"{s.get('top3_pct', 0):.1f}%")
+    abp = s.get("avg_beat_proj_s")
+    h4.metric("Avg vs proj",
+              f"{abp:+.2f}s" if abp is not None else "—",
+              help="Negative = ran faster than ET projected. "
+                   "Only counts runs covered by a v4.4 race report.")
+    psm = s.get("perf_score_mean")
+    h5.metric("Avg perf score",
+              f"{psm:+.2f}" if psm is not None else "—",
+              help="Mean of `perf_score` across all runs. "
+                   "Higher = consistently positive context (late kicks, "
+                   "beats projection, dominant wins). "
+                   "Negative = recurring underperformance.")
+
+    bb_status = s.get("blackbook_status")
+    if bb_status:
+        st.success(f"📓 **In blackbook** — {bb_status}"
+                   + (f" — _{s.get('blackbook_note', '')}_"
+                      if s.get("blackbook_note") else ""))
+
+    # Recurring excuses
+    recs = s.get("recurring_excuses") or {}
+    if recs:
+        chips = " ".join(
+            f"<span style='display:inline-block;padding:2px 8px;margin:2px;"
+            f"border-radius:10px;background:#3a2540;color:#f4d4ff;"
+            f"font-size:0.8em;'>{tag} ×{ct}</span>"
+            for tag, ct in recs.items()
+        )
+        st.markdown(f"**Recurring tags:** {chips}", unsafe_allow_html=True)
+
+    # ── Run history table ────────────────────────────────
+    if not runs:
+        st.info("No runs in history.")
+        return
+
+    rows_t = []
+    for r in runs:
+        et_rk = r.get("et_rank")
+        sarr_rk = r.get("sarr_rank")
+        beat = r.get("beat_proj_s")
+        rows_t.append({
+            "Date":     r.get("date", ""),
+            "Vn":       r.get("venue", ""),
+            "R":        r.get("race_number"),
+            "Dist":     r.get("distance"),
+            "Surf":     r.get("surface"),
+            "Going":    r.get("going"),
+            "Cls":      r.get("race_class"),
+            "Drw":      r.get("draw"),
+            "Fin":      r.get("finish"),
+            "LBW":      r.get("lbw"),
+            "Odds":     r.get("win_odds"),
+            "ET#":      et_rk,
+            "SARR#":    sarr_rk,
+            "Δproj(s)": (round(beat, 2) if beat is not None else None),
+            "Perf":     r.get("perf_score"),
+            "Tags":     ", ".join(r.get("tags") or []),
+            "Note":     r.get("comment_short", ""),
+        })
+    df_runs = pd.DataFrame(rows_t)
+    st.markdown("#### Run history (chronological)")
+    st.dataframe(
+        df_runs, hide_index=True, use_container_width=True,
+        column_config={
+            "R":        st.column_config.NumberColumn(format="%d"),
+            "Dist":     st.column_config.NumberColumn(format="%d"),
+            "Drw":      st.column_config.NumberColumn(format="%d"),
+            "Fin":      st.column_config.NumberColumn(format="%d"),
+            "ET#":      st.column_config.NumberColumn(format="%d"),
+            "SARR#":    st.column_config.NumberColumn(format="%d"),
+            "Δproj(s)": st.column_config.NumberColumn(format="%+.2f"),
+            "Perf":     st.column_config.NumberColumn(format="%+.2f"),
+        },
+    )
+
+    # ── Perf score timeline ─────────────────────────────
+    try:
+        import altair as _alt
+        df_ts = df_runs[["Date", "Perf", "Fin"]].copy()
+        df_ts["Date"] = pd.to_datetime(df_ts["Date"], errors="coerce")
+        df_ts = df_ts.dropna(subset=["Date"])
+        if not df_ts.empty:
+            df_ts["Color"] = df_ts["Perf"].apply(
+                lambda v: "good" if (v or 0) > 0.5
+                else ("bad" if (v or 0) < -0.3 else "neutral")
+            )
+            chart = _alt.Chart(df_ts).mark_bar(
+                cornerRadiusTopLeft=2, cornerRadiusTopRight=2,
+            ).encode(
+                x=_alt.X("Date:T", title=None),
+                y=_alt.Y("Perf:Q", title="Perf score"),
+                color=_alt.Color(
+                    "Color:N",
+                    scale=_alt.Scale(
+                        domain=["good", "neutral", "bad"],
+                        range=["#22c55e", "#94a3b8", "#ef4444"],
+                    ),
+                    legend=None,
+                ),
+                tooltip=["Date:T", "Fin:Q", "Perf:Q"],
+            ).properties(height=160).configure_view(strokeWidth=0)
+            st.markdown("#### Perf score timeline")
+            st.altair_chart(chart, use_container_width=True)
+    except ImportError:
+        pass
+
+    # ── Per-run reasons (drill-down) ────────────────────
+    with st.expander("Per-run perf reasons (model excuses & highlights)",
+                     expanded=False):
+        for r in reversed(runs):  # most recent first
+            d = r.get("date", "")
+            rn = r.get("race_number", "?")
+            fin = r.get("finish", "?")
+            ps = r.get("perf_score", 0.0)
+            reasons = r.get("perf_reasons") or []
+            tags = r.get("tags") or []
+            note = r.get("comment_short", "")
+            line = (
+                f"- **{d} R{rn}** · P{fin} · "
+                f"perf {ps:+.2f}"
+            )
+            if reasons:
+                line += " · " + "; ".join(reasons)
+            if tags:
+                line += f" · _tags: {', '.join(tags)}_"
+            if note:
+                line += f" · _{note}_"
+            st.markdown(line)
+
+    st.caption(
+        "**Reading guide.** `Perf` is a contextualised performance score "
+        "borrowed from `backtest_model.find_exceptional_performers` — it "
+        "rewards dominant wins, late kicks, and beating projection; it "
+        "penalises high-rank model picks that miss the board. **Use as "
+        "a sanity-check for blackbook adds and to spot recurring trip "
+        "issues — not as a standalone bet trigger.**"
+    )
+
+
 def page_data_analysis():
     """Factor-analysis browser backed by reports/factor_analysis_tables.json.
 
@@ -9458,7 +9726,7 @@ def page_data_analysis():
     tab_names = ["Summary", "Jockeys", "Trainers", "Jockey × Trainer",
                  "Pedigree", "Class Moves", "Form & Context",
                  "Draw / Dist / Going", "Benchmark ML",
-                 "🎯 Signal Audit", "Methodology"]
+                 "🎯 Signal Audit", "🐴 Horse Profile", "Methodology"]
     tabs = st.tabs(tab_names)
 
     def _style_df(df: pd.DataFrame):
@@ -9732,6 +10000,9 @@ def page_data_analysis():
         _signal_audit_tab(window, mtime)
 
     with tabs[10]:
+        _horse_profile_tab()
+
+    with tabs[11]:
         st.markdown("""
 #### Methodology
 
@@ -10514,6 +10785,44 @@ def page_my_bets():
                                       key="mb_summary_win")
             filt = ub.filter_by_window(rows, win_opts[win_label])
             s = ub.summarise(filt)
+
+            # ── Surface unsettled meetings — why they don't show on the
+            # equity curve. Imported bets stay status="open" until BOTH
+            # results_YYYYMMDD.json AND dividends_YYYYMMDD.json exist on
+            # disk. Without this banner the chart silently appears to
+            # "revert" after every import. ──
+            _open_by_date: dict[str, int] = {}
+            for _r in filt:
+                if _r.get("status") != "settled":
+                    md = _r.get("meeting_date") or ""
+                    _open_by_date[md] = _open_by_date.get(md, 0) + 1
+            if _open_by_date:
+                _missing_lines = []
+                for md, n_open in sorted(_open_by_date.items()):
+                    res_p = REPORTS / f"results_{md}.json"
+                    div_p = REPORTS / f"dividends_{md}.json"
+                    miss = []
+                    if not res_p.exists():
+                        miss.append(f"`results_{md}.json`")
+                    if not div_p.exists():
+                        miss.append(f"`dividends_{md}.json`")
+                    if miss:
+                        _missing_lines.append(
+                            f"- **{md}** — {n_open} open bet(s); missing "
+                            + ", ".join(miss)
+                        )
+                if _missing_lines:
+                    st.warning(
+                        "**Imported bets aren't on the equity curve yet** "
+                        "because their meeting hasn't been scraped. The "
+                        "chart only includes bets with `status=settled`, "
+                        "which requires the meeting's results + dividends "
+                        "files to exist locally:\n\n"
+                        + "\n".join(_missing_lines)
+                        + "\n\nFix: run the post-race scraper for those "
+                          "dates (e.g. `python run_meeting.py --date "
+                          "YYYY-MM-DD --post-race`), then reload this page."
+                    )
 
             m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric("Bets", s["total_bets"],
