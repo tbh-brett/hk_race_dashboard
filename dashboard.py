@@ -9366,12 +9366,13 @@ def _signal_audit_tab(window: str, factor_mtime: float) -> None:
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Horse Profile (per-horse pivot of model rank vs finish, perf score, excuses)
+# Top-level nav page — backed by horse_intel.py + master DB
 # ──────────────────────────────────────────────────────────────────────────────
 
 @st.cache_data(ttl=120, show_spinner=False)
 def _horse_intel_index(_mtime: float) -> dict:
-    """Load horse_intel/_index.json, keyed by mtime so it refreshes after
-    a rebuild."""
+    """Load horse_intel/_index.json. Cache key is the file's mtime so a
+    rebuild invalidates automatically."""
     p = BASE / "reports" / "horse_intel" / "_index.json"
     if not p.exists():
         return {}
@@ -9397,39 +9398,94 @@ def _horse_intel_mtime() -> float:
     return p.stat().st_mtime if p.exists() else 0.0
 
 
-def _horse_profile_tab():
-    """Per-horse contextualised performance — pivots data already produced
-    by results / commentary / race_day_report files into a single horse view."""
-    import subprocess as _sp
+def _horse_search(query: str, idx: dict, limit: int = 12) -> list[str]:
+    """Substring + fuzzy match horse names. Ranks by:
+       1. exact equality
+       2. starts-with
+       3. token starts-with (any word starts with the query)
+       4. substring
+    Within each tier, prefers more recently active horses."""
+    q = (query or "").upper().strip()
+    if not q:
+        # No query → most recently active horses (top-N by last_run_date)
+        scored = []
+        for nm, meta in idx.items():
+            d = (meta or {}).get("last_run_date", "") if isinstance(meta, dict) else ""
+            scored.append((d, nm))
+        scored.sort(reverse=True)
+        return [nm for _, nm in scored[:limit]]
 
-    st.markdown("### 🐴 Horse Profile")
+    tiers: list[list[tuple[str, str]]] = [[], [], [], []]
+    for nm, meta in idx.items():
+        d = (meta or {}).get("last_run_date", "") if isinstance(meta, dict) else ""
+        if nm == q:
+            tiers[0].append((d, nm))
+        elif nm.startswith(q):
+            tiers[1].append((d, nm))
+        elif any(tok.startswith(q) for tok in nm.split()):
+            tiers[2].append((d, nm))
+        elif q in nm:
+            tiers[3].append((d, nm))
+    out: list[str] = []
+    for t in tiers:
+        t.sort(reverse=True)  # recent first
+        for _, nm in t:
+            if nm not in out:
+                out.append(nm)
+            if len(out) >= limit:
+                return out
+    return out
+
+
+def page_horse_profile():
+    """Per-horse contextualised performance — pivot of master DB +
+    reports + commentary into a single horse view. Top-level nav page."""
+    import subprocess as _sp
+    import datetime as _dt
+
+    st.title("🐴 Horse Profile")
     st.caption(
         "Per-horse pivot of model rank vs. finish, performance score, "
-        "and excuse tags. Pure read on existing data — no new model. "
-        "Use as a complement to the factor model, not a substitute."
+        "and excuse tags. Sourced from `hkjc_results_updated.xlsx` "
+        "(full season history) + `reports/*` (commentary, ET/SARR ranks, "
+        "actual pace). Pure read on existing data — no new model. Use as "
+        "a complement to the factor model, not a substitute."
     )
 
     mtime = _horse_intel_mtime()
     idx = _horse_intel_index(mtime)
 
-    c_top1, c_top2, c_top3 = st.columns([2, 1, 1])
-    with c_top1:
+    # ── Top status bar ─────────────────────────────────
+    c_st1, c_st2, c_st3 = st.columns([3, 1, 1])
+    with c_st1:
         if mtime:
-            import datetime as _dt
             mt = _dt.datetime.fromtimestamp(mtime)
-            st.caption(f"Index built **{mt:%Y-%m-%d %H:%M}** · "
-                       f"**{len(idx)}** horses")
+            total_runs = sum(
+                m.get("n_runs", 0) if isinstance(m, dict) else 0
+                for m in idx.values()
+            )
+            st.caption(
+                f"Index built **{mt:%Y-%m-%d %H:%M}** · "
+                f"**{len(idx):,}** horses · **{total_runs:,}** runs"
+            )
         else:
             st.warning("Horse intel index not built yet — click Rebuild.")
-    with c_top2:
+    with c_st2:
+        only_today = st.checkbox(
+            "Today's card only", value=False, key="hi_only_today",
+            help="Restrict search to runners on the most recent racecard.",
+        )
+    with c_st3:
         if st.button("🔄 Rebuild", key="hi_rebuild",
-                     use_container_width=True):
+                     use_container_width=True,
+                     help="Re-run horse_intel.py against the master DB."):
             try:
-                r = _sp.run(
-                    [sys.executable, str(BASE / "horse_intel.py")],
-                    capture_output=True, text=True, timeout=180,
-                    cwd=str(BASE),
-                )
+                with st.spinner("Rebuilding from master DB…"):
+                    r = _sp.run(
+                        [sys.executable, str(BASE / "horse_intel.py")],
+                        capture_output=True, text=True, timeout=300,
+                        cwd=str(BASE),
+                    )
                 if r.returncode == 0:
                     st.success(r.stdout.strip()[-200:] or "Rebuilt.")
                     _horse_intel_index.clear()
@@ -9441,76 +9497,138 @@ def _horse_profile_tab():
                 st.error(str(e))
 
     if not idx:
-        st.info("No horses indexed. Click **Rebuild** above.")
+        st.info(
+            "No horses indexed. Click **Rebuild** above (it reads from "
+            "`hkjc_results_updated.xlsx` and takes ~5 s)."
+        )
         return
 
-    # ── Horse picker. Allow filtering by today's racecard if available ──
-    with c_top3:
-        only_today = st.checkbox(
-            "Today's card only",
-            value=False, key="hi_only_today",
-            help="Filter selector to runners on the most recent racecard.",
-        )
-    horses_pool = sorted(idx.keys())
-    today_runners: set[str] = set()
+    # ── Filter pool by today's card if asked ───────────
+    pool = idx
     if only_today:
-        # Pull runners from latest scraped racecard
         try:
             cards = sorted((BASE / "racecards").glob("racecard_*.xlsx"))
             if cards:
-                latest = cards[-1]
-                df_card = pd.read_excel(latest, sheet_name="All Races")
+                df_card = pd.read_excel(cards[-1], sheet_name="All Races")
                 if "is_standby" in df_card.columns:
                     df_card = df_card[df_card["is_standby"] == False]
                 today_runners = {
                     str(n).upper().strip()
                     for n in df_card["horse_name"].dropna().tolist()
                 }
-                horses_pool = [h for h in horses_pool if h in today_runners]
+                pool = {k: v for k, v in idx.items() if k in today_runners}
+                if not pool:
+                    st.warning(
+                        "No runners on today's card are in the index "
+                        "(first-starters won't have history). Showing all "
+                        "horses instead."
+                    )
+                    pool = idx
         except Exception as e:
             st.caption(f"Could not load today's racecard: {e}")
 
-    horse_name = st.selectbox(
-        "Pick horse",
-        options=horses_pool,
-        index=0 if horses_pool else None,
-        key="hi_horse_pick",
+    # ── Search bar (intuitive: as-you-type substring + fuzzy) ──
+    pre_pick = st.session_state.get("hi_pick", "")
+    query = st.text_input(
+        "🔍 Search horse",
+        value=st.session_state.get("hi_search", ""),
+        key="hi_search",
+        placeholder="Type any part of a name — e.g. 'might', 'profit', "
+                    "'son pak', 'galaxy'…",
+        help="Substring match. Hit Enter or click a result below to "
+             "open. Empty = most recently active horses.",
     )
-    if not horse_name:
-        st.info("No horses match the current filter.")
+
+    matches = _horse_search(query, pool, limit=12)
+
+    if not matches:
+        st.info(f"No horses match **{query!r}**.")
         return
 
-    rec = _horse_intel_record(idx[horse_name].replace(".json", ""), mtime)
+    # Render result cards as buttons in a 3-column grid
+    st.caption(f"**{len(matches)}** result(s)" + (
+        " (top 12 — refine your search to narrow)" if len(matches) >= 12 else ""
+    ))
+    pick = pre_pick if pre_pick in matches else None
+
+    cols = st.columns(3)
+    for i, name in enumerate(matches):
+        meta = pool.get(name, {}) if isinstance(pool.get(name), dict) else {}
+        n = meta.get("n_runs", 0)
+        wp = meta.get("win_pct", 0.0)
+        last_d = meta.get("last_run_date", "")
+        last_f = meta.get("last_finish", "")
+        psm = meta.get("perf_score_mean")
+        bb = meta.get("blackbook", False)
+        psm_str = f"{psm:+.2f}" if psm is not None else "—"
+        label = (
+            f"**{name}**" + (" 📓" if bb else "")
+            + f"  \n{n} runs · W {wp:.0f}% · μperf {psm_str}"
+            + (f"  \nlast: {last_d} → P{last_f}" if last_d else "")
+        )
+        with cols[i % 3]:
+            # Use a button styled to look like a card
+            if st.button(label, key=f"hi_pick_{name}",
+                         use_container_width=True,
+                         type="primary" if name == pick else "secondary"):
+                st.session_state["hi_pick"] = name
+                pick = name
+                st.rerun()
+
+    if pick is None:
+        # Auto-pick top result if user hasn't clicked yet
+        pick = matches[0]
+
+    st.divider()
+
+    meta = pool.get(pick, {}) if isinstance(pool.get(pick), dict) else {}
+    fname = meta.get("file") if isinstance(meta, dict) else f"{pick}.json"
+    slug = (fname or "").replace(".json", "") if fname else pick.replace(" ", "_")
+    rec = _horse_intel_record(slug, mtime)
     if not rec:
-        st.error(f"Could not load record for {horse_name}.")
+        st.error(f"Could not load record for **{pick}** (slug={slug}).")
         return
 
-    # ── Header card ──────────────────────────────────────
     s = rec.get("summary", {}) or {}
     runs = rec.get("runs", []) or []
+
+    # ── Header ────────────────────────────────────────
+    head_l, head_r = st.columns([3, 1])
+    with head_l:
+        st.markdown(f"## {pick}")
+    with head_r:
+        # HKJC profile link (search redirect — robust to any horse_id format)
+        url = ("https://racing.hkjc.com/racing/information/English/Horse/"
+               "SelectHorse.aspx?HorseName=" + pick.replace(" ", "+"))
+        st.markdown(f"[🔗 HKJC profile]({url})")
 
     h1, h2, h3, h4, h5 = st.columns(5)
     h1.metric("Runs", s.get("n_runs", 0))
     h2.metric("Win %", f"{s.get('win_pct', 0):.1f}%")
     h3.metric("Top-3 %", f"{s.get('top3_pct', 0):.1f}%")
     abp = s.get("avg_beat_proj_s")
-    h4.metric("Avg vs proj",
-              f"{abp:+.2f}s" if abp is not None else "—",
-              help="Negative = ran faster than ET projected. "
-                   "Only counts runs covered by a v4.4 race report.")
+    h4.metric(
+        "Avg vs proj",
+        f"{abp:+.2f}s" if abp is not None else "—",
+        help="Negative = ran faster than ET projected. "
+             "Only counts runs covered by an ET race-day report (Apr-26+).",
+    )
     psm = s.get("perf_score_mean")
-    h5.metric("Avg perf score",
-              f"{psm:+.2f}" if psm is not None else "—",
-              help="Mean of `perf_score` across all runs. "
-                   "Higher = consistently positive context (late kicks, "
-                   "beats projection, dominant wins). "
-                   "Negative = recurring underperformance.")
+    h5.metric(
+        "Avg perf score",
+        f"{psm:+.2f}" if psm is not None else "—",
+        help="Mean contextualised performance score. Higher = consistently "
+             "positive context (late kicks, beats projection, dominant "
+             "wins). Negative = recurring underperformance.",
+    )
 
     bb_status = s.get("blackbook_status")
     if bb_status:
-        st.success(f"📓 **In blackbook** — {bb_status}"
-                   + (f" — _{s.get('blackbook_note', '')}_"
-                      if s.get("blackbook_note") else ""))
+        st.success(
+            f"📓 **In blackbook** — {bb_status}"
+            + (f" — _{s.get('blackbook_note', '')}_"
+               if s.get("blackbook_note") else "")
+        )
 
     # Recurring excuses
     recs = s.get("recurring_excuses") or {}
@@ -9523,15 +9641,13 @@ def _horse_profile_tab():
         )
         st.markdown(f"**Recurring tags:** {chips}", unsafe_allow_html=True)
 
-    # ── Run history table ────────────────────────────────
     if not runs:
         st.info("No runs in history.")
         return
 
+    # ── Run history table ────────────────────────────
     rows_t = []
     for r in runs:
-        et_rk = r.get("et_rank")
-        sarr_rk = r.get("sarr_rank")
         beat = r.get("beat_proj_s")
         rows_t.append({
             "Date":     r.get("date", ""),
@@ -9545,15 +9661,19 @@ def _horse_profile_tab():
             "Fin":      r.get("finish"),
             "LBW":      r.get("lbw"),
             "Odds":     r.get("win_odds"),
-            "ET#":      et_rk,
-            "SARR#":    sarr_rk,
+            "Jockey":   r.get("jockey"),
+            "ET#":      r.get("et_rank"),
+            "SARR#":    r.get("sarr_rank"),
             "Δproj(s)": (round(beat, 2) if beat is not None else None),
             "Perf":     r.get("perf_score"),
             "Tags":     ", ".join(r.get("tags") or []),
             "Note":     r.get("comment_short", ""),
         })
     df_runs = pd.DataFrame(rows_t)
-    st.markdown("#### Run history (chronological)")
+    # Show most recent first by default
+    df_runs = df_runs.iloc[::-1].reset_index(drop=True)
+
+    st.markdown("#### Run history (most recent first)")
     st.dataframe(
         df_runs, hide_index=True, use_container_width=True,
         column_config={
@@ -9568,12 +9688,12 @@ def _horse_profile_tab():
         },
     )
 
-    # ── Perf score timeline ─────────────────────────────
+    # ── Perf score timeline ──────────────────────────
     try:
         import altair as _alt
         df_ts = df_runs[["Date", "Perf", "Fin"]].copy()
         df_ts["Date"] = pd.to_datetime(df_ts["Date"], errors="coerce")
-        df_ts = df_ts.dropna(subset=["Date"])
+        df_ts = df_ts.dropna(subset=["Date"]).sort_values("Date")
         if not df_ts.empty:
             df_ts["Color"] = df_ts["Perf"].apply(
                 lambda v: "good" if (v or 0) > 0.5
@@ -9593,16 +9713,16 @@ def _horse_profile_tab():
                     legend=None,
                 ),
                 tooltip=["Date:T", "Fin:Q", "Perf:Q"],
-            ).properties(height=160).configure_view(strokeWidth=0)
+            ).properties(height=180).configure_view(strokeWidth=0)
             st.markdown("#### Perf score timeline")
             st.altair_chart(chart, use_container_width=True)
     except ImportError:
         pass
 
-    # ── Per-run reasons (drill-down) ────────────────────
+    # ── Per-run reasons drill-down ───────────────────
     with st.expander("Per-run perf reasons (model excuses & highlights)",
                      expanded=False):
-        for r in reversed(runs):  # most recent first
+        for r in reversed(runs):
             d = r.get("date", "")
             rn = r.get("race_number", "?")
             fin = r.get("finish", "?")
@@ -9610,10 +9730,7 @@ def _horse_profile_tab():
             reasons = r.get("perf_reasons") or []
             tags = r.get("tags") or []
             note = r.get("comment_short", "")
-            line = (
-                f"- **{d} R{rn}** · P{fin} · "
-                f"perf {ps:+.2f}"
-            )
+            line = f"- **{d} R{rn}** · P{fin} · perf {ps:+.2f}"
             if reasons:
                 line += " · " + "; ".join(reasons)
             if tags:
@@ -9626,9 +9743,11 @@ def _horse_profile_tab():
         "**Reading guide.** `Perf` is a contextualised performance score "
         "borrowed from `backtest_model.find_exceptional_performers` — it "
         "rewards dominant wins, late kicks, and beating projection; it "
-        "penalises high-rank model picks that miss the board. **Use as "
-        "a sanity-check for blackbook adds and to spot recurring trip "
-        "issues — not as a standalone bet trigger.**"
+        "penalises high-rank model picks that miss the board. "
+        "**ET#/SARR#/Δproj** are populated only for meetings that have a "
+        "race-day report on disk (Apr-26 onwards) — older runs show as —. "
+        "Use as a sanity-check for blackbook adds and to spot recurring "
+        "trip issues, not as a standalone bet trigger."
     )
 
 
@@ -9726,7 +9845,7 @@ def page_data_analysis():
     tab_names = ["Summary", "Jockeys", "Trainers", "Jockey × Trainer",
                  "Pedigree", "Class Moves", "Form & Context",
                  "Draw / Dist / Going", "Benchmark ML",
-                 "🎯 Signal Audit", "🐴 Horse Profile", "Methodology"]
+                 "🎯 Signal Audit", "Methodology"]
     tabs = st.tabs(tab_names)
 
     def _style_df(df: pd.DataFrame):
@@ -10000,9 +10119,6 @@ def page_data_analysis():
         _signal_audit_tab(window, mtime)
 
     with tabs[10]:
-        _horse_profile_tab()
-
-    with tabs[11]:
         st.markdown("""
 #### Methodology
 
@@ -12178,6 +12294,7 @@ def main():
         ("Form Guide",     "📖 Form Guide"),
         ("Model Analysis", "📊 Model Analysis"),
         ("Data Analysis",  "🔬 Data Analysis"),
+        ("Horse Profile",  "🐴 Horse Profile"),
         ("Results",        "🏆 Results"),
         ("Live Feed",      "📡 Live Feed"),
         ("Live Odds",      "💹 Live Odds"),
@@ -12216,6 +12333,8 @@ def main():
         page_race_day(selected)
     elif page == "Data Analysis":
         page_data_analysis()
+    elif page == "Horse Profile":
+        page_horse_profile()
     elif page == "Live Feed":
         page_live_feed()
     elif page == "Live Odds":
