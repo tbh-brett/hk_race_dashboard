@@ -845,6 +845,13 @@ def _gh_emergency_sync_all() -> tuple[int, int, list[str]]:
         for f in rc_dir.glob("racecard_*.xlsx"):
             _add(f, f"racecards/{f.name}")
 
+    # horse_intel — per-horse JSON pivots (kept in sync so Streamlit
+    # Cloud reflects fresh DB results without a redeploy)
+    hi_dir = REPORTS / "horse_intel"
+    if hi_dir.exists():
+        for f in hi_dir.glob("*.json"):
+            _add(f, f"reports/horse_intel/{f.name}")
+
     # cache/
     cache_dir = BASE / "cache"
     if cache_dir.exists():
@@ -1066,6 +1073,68 @@ def _gh_push_user_bets() -> bool:
         data,
         f"my-bets: auto-sync {date.today().isoformat()} [skip ci]",
     )
+
+
+def _gh_push_horse_intel_for_date(date_iso: str) -> int:
+    """After a scrape + horse_intel rebuild, push the freshly-changed
+    per-horse JSON files + the index back to GitHub. Cloud-only.
+    Returns the number of files pushed (0 locally / on failure).
+
+    Bounded scope: only horses whose `last_run_date` equals `date_iso`
+    (typically ~80–110 horses per meeting) plus `_index.json` plus the
+    master xlsx itself (~7-8 MB)."""
+    if not _is_streamlit_cloud() or not _gh_headers():
+        return 0
+    hi_dir = REPORTS / "horse_intel"
+    idx_path = hi_dir / "_index.json"
+    if not idx_path.exists():
+        return 0
+    try:
+        idx = json.loads(idx_path.read_text(encoding="utf-8"))
+    except Exception:
+        return 0
+
+    msg = (f"horse-intel: post-scrape sync {date_iso} "
+           f"[skip ci]")
+    n_ok = 0
+
+    # 1) Master DB (so the cloud's next rebuild starts from the same data)
+    db_file = BASE / "hkjc_results_updated.xlsx"
+    if db_file.exists():
+        try:
+            if _gh_push_file("hkjc_results_updated.xlsx",
+                             db_file.read_bytes(), msg):
+                n_ok += 1
+        except Exception:
+            pass
+
+    # 2) Index
+    try:
+        if _gh_push_file("reports/horse_intel/_index.json",
+                         idx_path.read_bytes(), msg):
+            n_ok += 1
+    except Exception:
+        pass
+
+    # 3) Affected per-horse files
+    for nm, meta in idx.items():
+        if not isinstance(meta, dict):
+            continue
+        if meta.get("last_run_date") != date_iso:
+            continue
+        fname = meta.get("file")
+        if not fname:
+            continue
+        p = hi_dir / fname
+        if not p.exists():
+            continue
+        try:
+            if _gh_push_file(f"reports/horse_intel/{fname}",
+                             p.read_bytes(), msg):
+                n_ok += 1
+        except Exception:
+            pass
+    return n_ok
 
 
 def _gh_push_trials(trial_date_iso: str) -> bool:
@@ -4991,6 +5060,35 @@ def _append_results_to_db(results_path: Path):
 
     st.success(f"Appended {len(new_df)} rows to {db_file.name} "
                f"(total: {len(combined)} rows)")
+
+    # Auto-rebuild horse_intel index so the Horse Profile page reflects
+    # the new runs immediately. Lazy import to avoid making horse_intel
+    # a hard dependency of the dashboard module.
+    try:
+        import horse_intel as _hi
+        stats = _hi.build_index(verbose=False)
+        # Invalidate Streamlit caches so the page picks up new files
+        try:
+            _horse_intel_index.clear()
+            _horse_intel_record.clear()
+        except Exception:
+            pass
+        st.caption(
+            f"🐴 Horse Intel rebuilt — {stats['horses']:,} horses · "
+            f"{stats['total_runs']:,} runs"
+        )
+        # On Streamlit Cloud, persist the freshly-changed horse files
+        # back to GitHub so they survive container restarts.
+        try:
+            n_pushed = _gh_push_horse_intel_for_date(race_date)
+            if n_pushed:
+                st.caption(
+                    f"☁️ Synced {n_pushed} Horse Intel file(s) to GitHub."
+                )
+        except Exception:
+            pass
+    except Exception as e:
+        st.caption(f"⚠ Horse Intel auto-rebuild skipped: {e}")
 
 
 def _run_results_scraper(date_str: str, *, full: bool = False):
@@ -9454,6 +9552,34 @@ def page_horse_profile():
 
     mtime = _horse_intel_mtime()
     idx = _horse_intel_index(mtime)
+
+    # ── Staleness check — DB newer than horse-intel index? ─────────────
+    db_path = BASE / "hkjc_results_updated.xlsx"
+    db_mtime = db_path.stat().st_mtime if db_path.exists() else 0.0
+    is_stale = bool(db_mtime and mtime and db_mtime > mtime + 1)
+    if is_stale:
+        try:
+            with st.spinner("Master DB has new data — rebuilding Horse "
+                            "Intel index…"):
+                r = _sp.run(
+                    [sys.executable, str(BASE / "horse_intel.py")],
+                    capture_output=True, text=True, timeout=300,
+                    cwd=str(BASE),
+                )
+            if r.returncode == 0:
+                _horse_intel_index.clear()
+                _horse_intel_record.clear()
+                mtime = _horse_intel_mtime()
+                idx = _horse_intel_index(mtime)
+                st.toast("Horse Intel auto-rebuilt from latest DB.",
+                         icon="🐴")
+            else:
+                st.warning(
+                    "Auto-rebuild failed — click **🔄 Rebuild** below.\n\n"
+                    f"```\n{(r.stderr or r.stdout)[-800:]}\n```"
+                )
+        except (OSError, _sp.TimeoutExpired) as e:
+            st.warning(f"Auto-rebuild skipped: {e}")
 
     # ── Top status bar ─────────────────────────────────
     c_st1, c_st2, c_st3 = st.columns([3, 1, 1])
