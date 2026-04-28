@@ -96,6 +96,8 @@ from collections import defaultdict as defaultdict_local
 from pathlib import Path
 from typing import Optional
 
+import trial_intel
+
 BASE = Path(__file__).parent
 REPORTS = BASE / "reports"
 BLACKBOOK_PATH = BASE / "blackbook.json"
@@ -372,10 +374,21 @@ def score_race(et_race: dict, sarr_race: Optional[dict],
         # Flag adjustments
         trial_flag = str(p.get("trial_flag", "")).strip()
         vet_flag = str(p.get("vet_flag", "")).strip()
-        if trial_flag == "+":
-            score += CFG["trial_plus_bonus"]
-        elif trial_flag == "-":
-            score += CFG["trial_minus_pen"]
+        # Upstream reports use ++/+/-/-- for trial_flag; map -- → - and
+        # treat ++ as a positive flag with the 'won the trial' bonus.
+        norm_flag = trial_flag
+        won_last_trial = False
+        if norm_flag == "--":
+            norm_flag = "-"
+        elif norm_flag == "++":
+            norm_flag = "+"
+            won_last_trial = True
+        trial_delta, trial_reasons = trial_intel.trial_score_delta(
+            horse_name=name_key,
+            trial_flag=norm_flag,
+            won_last_trial=won_last_trial,
+        )
+        score += trial_delta
         if vet_flag and vet_flag not in ("", "+"):
             score += CFG["vet_flag_pen"]
 
@@ -390,6 +403,9 @@ def score_race(et_race: dict, sarr_race: Optional[dict],
             "sarr_rank": sarr_rank,
             "style": p.get("style") or sarr.get("style"),
             "trial_flag": trial_flag,
+            "trial_archetype": trial_intel.archetype_for(name_key).get("archetype"),
+            "trial_score_delta": trial_delta,
+            "trial_reasons": trial_reasons,
             "vet_flag": vet_flag,
             "_score": score,
             "factor_notes": fac_notes,

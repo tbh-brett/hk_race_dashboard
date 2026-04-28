@@ -35,6 +35,8 @@ import pandas as pd
 import requests as _requests
 import streamlit as st
 
+import trial_intel
+
 BASE = Path(__file__).parent
 REPORTS = BASE / "reports"
 PYTHON = sys.executable
@@ -7551,7 +7553,8 @@ def page_form_guide():
         # ── Compact trial info (if available) ─────────────────────────────
         trial_entries = trial_index.get(hname.strip().upper(), [])
         if trial_entries:
-            st.markdown(_trial_compact_html(trial_entries), unsafe_allow_html=True)
+            st.markdown(_trial_compact_html(trial_entries, horse_name=hname),
+                        unsafe_allow_html=True)
 
         if is_debutant:
             st.caption("*Debutant — no historical form*")
@@ -8003,10 +8006,13 @@ def _trial_sentiment_badge(entry: dict) -> str:
             f'title="{title}">{display}</span>')
 
 
-def _trial_compact_html(entries: list) -> str:
+def _trial_compact_html(entries: list, horse_name: str | None = None) -> str:
     """Render compact trial info for Form Guide horse cards."""
     if not entries:
         return ""
+    # Prepend per-horse archetype badge (if classified) so the user sees
+    # whether trial signals are historically reliable for THIS horse.
+    archetype_html = trial_intel.archetype_badge_html(horse_name) if horse_name else ""
     # Show latest 2 trials max — each on its own row
     rows_html = []
     for e in entries[:2]:
@@ -8094,7 +8100,9 @@ def _trial_compact_html(entries: list) -> str:
     return (
         '<div style="background:#1a1a2e;border-left:3px solid #6366f1;padding:4px 8px;'
         'margin:2px 0 6px 0;border-radius:4px;font-size:0.88em">'
-        '<span style="color:#818cf8;font-weight:600;font-size:0.85em">TRIAL</span><br>'
+        '<span style="color:#818cf8;font-weight:600;font-size:0.85em">TRIAL</span> '
+        + archetype_html
+        + '<br>'
         + '<br>'.join(rows_html)
         + '</div>'
     )
@@ -8253,6 +8261,42 @@ def _render_horse_trial_history(horse_name: str, trial_index: dict):
         f'{len(entries)} trial{"s" if len(entries) != 1 else ""}</div>',
         unsafe_allow_html=True,
     )
+
+    # Archetype + honesty banner — uses reports/trial_archetype_index.json
+    arc = trial_intel.archetype_for(horse_name)
+    a = arc.get("archetype", "UNKNOWN")
+    if a not in ("UNKNOWN",):
+        label = arc.get("label") or a
+        colour = arc.get("colour", "#6b7280")
+        n_pairs = arc.get("n_pairs", 0)
+        n_pos = arc.get("n_pos_trials", 0)
+        n_neg = arc.get("n_neg_trials", 0)
+        win_r = arc.get("win_rate", 0)
+        top3_r = arc.get("top3_rate", 0)
+        honesty = arc.get("honesty_score", 0)
+        # Quick interpretation line
+        explain = {
+            "HONEST_GOOD":    "Trial signals from this horse have historically translated into top-3 results.",
+            "FALSE_POSITIVE": "This horse trials well but tends NOT to deliver in races \u2014 discount positive trial signals.",
+            "HIDDEN_GEM":     "This horse races better than their trials suggest \u2014 don\u2019t fade on a flat trial.",
+            "HONEST_POOR":    "Negative trials from this horse have repeatedly translated into back-half finishes.",
+            "MIXED":          "No consistent trial\u2192race pattern yet.",
+        }.get(a, "")
+        st.markdown(
+            f'<div style="background:#0f172a;border-left:4px solid {colour};'
+            f'padding:8px 12px;margin:4px 0 12px 0;border-radius:6px">'
+            f'<span style="background:{colour};color:#0b0b14;padding:2px 8px;'
+            f'border-radius:8px;font-size:0.78em;font-weight:700;'
+            f'letter-spacing:0.4px">{label.upper()}</span>'
+            f'  <span style="color:#cbd5e1;font-size:0.85em">'
+            f'{n_pairs} trial\u2192race pairs &middot; '
+            f'{n_pos}+ / {n_neg}\u2212 trials &middot; '
+            f'win {win_r:.0%} &middot; top3 {top3_r:.0%} &middot; '
+            f'honesty {honesty:.2f}</span>'
+            f'<div style="color:#9ca3af;font-size:0.82em;margin-top:4px">{explain}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
     header = (
         '<table class="form-tbl"><thead><tr>'
