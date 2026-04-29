@@ -3791,6 +3791,56 @@ def page_race_day(selected):
         unsafe_allow_html=True,
     )
 
+    # ── Stale-racecard banner ────────────────────────────────────────────
+    # If today's meeting card was scraped >12h ago, late scratchings (e.g.
+    # reserves replacing scratched horses) may NOT have propagated. Offer a
+    # one-click full pre-race refresh (re-scrape racecard + form guide +
+    # SARR + ET model) so picks reflect the current field.
+    try:
+        import datetime as _dt
+        if date_str:
+            _rc_path = BASE / "racecards" / f"racecard_{date_str}.xlsx"
+            _today = _dt.date.today()
+            _meeting_date = _dt.date(int(date_str[:4]), int(date_str[4:6]),
+                                     int(date_str[6:]))
+            _is_today = (_meeting_date == _today)
+            if _rc_path.exists():
+                _rc_age_h = (_dt.datetime.now() -
+                             _dt.datetime.fromtimestamp(_rc_path.stat().st_mtime)
+                             ).total_seconds() / 3600.0
+                # Show banner ONLY when meeting is today AND card is stale.
+                # Past meetings keep the original card; future cards fresh.
+                if _is_today and _rc_age_h > 12:
+                    _hours_ago = int(_rc_age_h)
+                    sb1, sb2 = st.columns([3, 1])
+                    with sb1:
+                        st.warning(
+                            f"⚠ **Race card last scraped {_hours_ago} h ago.** "
+                            "Late scratchings (reserves replacing "
+                            "scratched horses) may NOT be reflected in the "
+                            "model picks below. Click → to re-scrape and "
+                            "rebuild SARR + ET on the fresh field."
+                        )
+                    with sb2:
+                        if st.button(
+                            "🔄 Refresh meeting",
+                            key=f"rd_refresh_{date_str}",
+                            type="primary",
+                            use_container_width=True,
+                        ):
+                            iso = (f"{date_str[:4]}-{date_str[4:6]}-"
+                                   f"{date_str[6:]}")
+                            try:
+                                st.cache_data.clear()
+                            except Exception:
+                                pass
+                            run_pipeline(iso, no_cache=True,
+                                         going_turf="Good", going_awt="Good",
+                                         skip_scrape=False)
+                            st.rerun()
+    except (OSError, ValueError):
+        pass
+
     # ── SARR missing banner: one-click regeneration ──────────────────────
     # When ET succeeded but SARR JSON is missing, offer a focused button that
     # invokes ONLY the SARR script for the current date (no re-scrape, no
@@ -10231,13 +10281,33 @@ def _run_live_odds_scraper(date_iso: str, venue: str, races: str,
     cmd = [sys.executable, str(script),
            "--date", date_iso, "--venue", venue, "--races", races,
            "--pools", pools]
-    # On Streamlit Cloud, Playwright Chromium may not be installed.
-    # Try to install on demand (idempotent, ~30s first time).
+    # On Streamlit Cloud, Playwright Chromium may not be installed; locally
+    # it almost always is. Probe first via `playwright install --dry-run`
+    # (very fast, ~1s) and only do a real install when the reported
+    # `Install location:` path doesn't actually exist on disk. This avoids
+    # 30-180 s wasted on every click locally.
     try:
-        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"],
-                       capture_output=True, text=True, timeout=180, cwd=str(BASE))
-    except Exception:
-        pass
+        probe = subprocess.run(
+            [sys.executable, "-m", "playwright", "install", "--dry-run", "chromium"],
+            capture_output=True, text=True, timeout=20, cwd=str(BASE),
+        )
+        loc = ""
+        for line in (probe.stdout or "").splitlines():
+            if "Install location:" in line:
+                loc = line.split("Install location:", 1)[1].strip()
+                break
+        needs_install = (probe.returncode != 0 or not loc
+                         or not Path(loc).exists())
+    except (subprocess.SubprocessError, FileNotFoundError, OSError):
+        needs_install = True
+    if needs_install:
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "playwright", "install", "chromium"],
+                capture_output=True, text=True, timeout=180, cwd=str(BASE),
+            )
+        except (subprocess.SubprocessError, FileNotFoundError, OSError):
+            pass
     try:
         r = subprocess.run(cmd, capture_output=True, text=True,
                            timeout=600, cwd=str(BASE))
@@ -10279,11 +10349,35 @@ def page_live_odds():
     )
 
     # ── Scraper controls ───────────────────────────────────────────────
+    # Venue caps: HV = max 9 races, ST = max 11 races. Used to set the
+    # default race-range and to validate user input before running.
+    _VENUE_MAX = {"HV": 9, "ST": 11}
+
+    def _parse_race_list(spec: str) -> list[int]:
+        out: list[int] = []
+        for part in (spec or "").split(","):
+            part = part.strip()
+            if not part:
+                continue
+            if "-" in part:
+                try:
+                    a, b = part.split("-", 1)
+                    out.extend(range(int(a), int(b) + 1))
+                except ValueError:
+                    return []
+            else:
+                try:
+                    out.append(int(part))
+                except ValueError:
+                    return []
+        return sorted(set(out))
+
     with st.expander("🔄 Run scraper now", expanded=False):
         st.caption(
             "Fetches a fresh snapshot from bet.hkjc.com (WP + QIN + QPL "
             "from the public /wpq/ page). Run several times during the day "
-            "(overnight, morning, ~1 h before post) to build drift history."
+            "(overnight, morning, ~1 h before post) to build drift history. "
+            "**Happy Valley** runs up to 9 races, **Sha Tin** up to 11."
         )
         sc1, sc2, sc3, sc4, sc5 = st.columns([1.2, 0.8, 1, 1.2, 1])
         with sc1:
@@ -10292,10 +10386,18 @@ def page_live_odds():
         with sc2:
             scr_venue = st.selectbox("Venue", ["HV", "ST"], index=0,
                                      key="liveodds_scr_venue")
+        # Default race range follows venue cap; updates on venue change
+        # because the selectbox key triggers a rerun.
+        _default_range = f"1-{_VENUE_MAX.get(scr_venue, 11)}"
+        if st.session_state.get("_liveodds_last_venue") != scr_venue:
+            st.session_state["liveodds_scr_races"] = _default_range
+            st.session_state["_liveodds_last_venue"] = scr_venue
         with sc3:
-            scr_races = st.text_input("Races", value="1-11",
-                                      key="liveodds_scr_races",
-                                      help="e.g. 1-11 or 1,2,3")
+            scr_races = st.text_input(
+                "Races",
+                key="liveodds_scr_races",
+                help=f"e.g. 1-{_VENUE_MAX[scr_venue]} or 1,2,3",
+            )
         with sc4:
             scr_pools = st.multiselect("Pools", ["wp", "qin", "qpl"],
                                        default=["wp", "qin", "qpl"],
@@ -10306,18 +10408,55 @@ def page_live_odds():
                                 use_container_width=True,
                                 key="liveodds_run_btn")
         if run_btn:
-            with st.spinner(f"Scraping {scr_venue} {scr_date} races {scr_races}…"):
+            req_races = _parse_race_list(scr_races)
+            cap = _VENUE_MAX.get(scr_venue, 11)
+            invalid = [r for r in req_races if r < 1 or r > cap]
+            if not req_races:
+                st.error("Could not parse race list. Use e.g. `1-9` or `1,2,3`.")
+                return
+            if invalid:
+                kept = [r for r in req_races if 1 <= r <= cap]
+                st.warning(
+                    f"⚠ {scr_venue} only runs up to {cap} races — "
+                    f"dropping invalid: {invalid}. Scraping {kept}."
+                )
+                req_races = kept
+                if not req_races:
+                    st.error("No valid races left after capping.")
+                    return
+            races_arg = ",".join(str(r) for r in req_races)
+            # Pre-count snapshots so we can show how many NEW files appeared
+            _ymd = scr_date.isoformat().replace("-", "")
+            _snap_dir = BASE / "cache" / "live_odds" / _ymd
+            _before = (set(p.name for p in _snap_dir.glob(f"{scr_venue}_R*.json"))
+                       if _snap_dir.exists() else set())
+            with st.spinner(
+                f"Scraping {scr_venue} {scr_date} races {races_arg}…"
+            ):
                 rc, log = _run_live_odds_scraper(
-                    scr_date.isoformat(), scr_venue, scr_races,
+                    scr_date.isoformat(), scr_venue, races_arg,
                     pools=",".join(scr_pools or ["wp"]))
-            if rc == 0:
-                st.success("Scrape complete.")
+            _after = (set(p.name for p in _snap_dir.glob(f"{scr_venue}_R*.json"))
+                      if _snap_dir.exists() else set())
+            n_new = len(_after - _before)
+            if rc == 0 and n_new > 0:
+                st.success(
+                    f"✓ Scrape complete — **{n_new}** new snapshot(s) written."
+                )
+            elif rc == 0:
+                st.warning(
+                    "Scraper exited cleanly but **no new snapshot files** "
+                    "appeared. Check the log below — typical causes: HKJC "
+                    "page didn't render odds (too early in the day), or "
+                    "Playwright Chromium failed to launch on Streamlit Cloud."
+                )
             else:
                 st.error(f"Scraper exited {rc}")
             if log.strip():
-                with st.expander("Scraper log", expanded=(rc != 0)):
+                with st.expander("Scraper log", expanded=(rc != 0 or n_new == 0)):
                     st.code(log[-4000:])
-            st.rerun()
+            if n_new > 0:
+                st.rerun()
 
     root = BASE / "cache" / "live_odds"
     if not root.exists() or not any(root.iterdir()):
