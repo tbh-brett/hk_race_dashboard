@@ -3868,6 +3868,52 @@ def page_race_day(selected):
                         f"race(s). Historically these win at ~33% (vs ~23% baseline)."
                     )
 
+    # ── Market Pulse alerts banner (meeting-level) ──────────────────────
+    try:
+        _venue_code_top = _venue_to_code(data.get("meeting_venue", ""))
+        if date_str and _venue_code_top:
+            _alerts = _compute_meeting_alerts(
+                date_str, _venue_code_top, active_races)
+            if _alerts:
+                _warn = [a for a in _alerts if a["severity"] == "WARN"]
+                _rev = [a for a in _alerts if a["severity"] == "REVIEW"]
+                _info = [a for a in _alerts if a["severity"] == "INFO"]
+                _hdr_bits = []
+                if _warn: _hdr_bits.append(f"🔴 {len(_warn)} WARN")
+                if _rev: _hdr_bits.append(f"🟡 {len(_rev)} REVIEW")
+                if _info: _hdr_bits.append(f"⚪ {len(_info)} INFO")
+                with st.expander(
+                    f"📡 **Market alerts** — { ' · '.join(_hdr_bits) }",
+                    expanded=bool(_warn),
+                ):
+                    for a in _alerts[:30]:
+                        sev = a["severity"]
+                        icon = {"WARN": "🔴", "REVIEW": "🟡",
+                                "INFO": "⚪"}.get(sev, "·")
+                        if st.button(
+                            f"{icon} **{sev}** · {a['msg']}",
+                            key=f"rd_alert_jump_{a['race']}_{a['no']}_{sev}",
+                            use_container_width=True,
+                        ):
+                            st.session_state["rd_active_race"] = a["race"]
+                            st.rerun()
+                    st.caption(
+                        "Click an alert to jump to that race · "
+                        "WARN = top-3 pick drifting ≥+30%; "
+                        "REVIEW = outsider steaming ≤-30% or top-1 drifting ≥+20%."
+                    )
+            elif date_str and _venue_code_top:
+                _has_any = bool((BASE / "cache" / "live_odds" / date_str).exists()
+                                and any((BASE / "cache" / "live_odds" / date_str).iterdir()))
+                if _has_any:
+                    st.caption(
+                        "📡 Market alerts: no significant moves yet "
+                        "(needs ≥2 snapshots per race). "
+                        "Re-run scraper later from **Live Odds** page."
+                    )
+    except Exception as _alert_err:
+        st.caption(f"_Market alerts unavailable: {_alert_err}_")
+
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
     # ── Race tab selector ────────────────────────────────────────────────
@@ -3977,6 +4023,19 @@ def page_race_day(selected):
             race = next((r for r in et_races if r["race_number"] == active_rn), None)
             if race:
                 render_race_card(race, vet_lookup=vet_lookup, show_top=4, bb_lookup=bb_lookup)
+
+        # ── Market Pulse (live odds) for the selected race ───────────────
+        try:
+            _venue_code = _venue_to_code(data.get("meeting_venue", ""))
+            _active_race_obj = next(
+                (r for r in active_races if r["race_number"] == active_rn), None)
+            _active_picks = (_active_race_obj or {}).get("picks", []) or []
+            if date_str and _venue_code:
+                st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
+                _render_race_day_market_pulse(
+                    date_str, _venue_code, active_rn, _active_picks)
+        except Exception as _mp_err:
+            st.caption(f"_Market Pulse unavailable: {_mp_err}_")
 
     # ── Column acronym legend ────────────────────────────────────────────
     with st.expander("📖 Column Legend & Interpretation Guide"):
@@ -9743,6 +9802,332 @@ def _load_live_odds_snapshots(date_compact: str, venue: str) -> list[dict]:
         except Exception:
             pass
     return snaps
+
+
+def _venue_to_code(venue_str: str) -> str | None:
+    """Map dashboard meeting_venue ('Happy Valley'/'HV'/...) to two-letter code."""
+    if not venue_str:
+        return None
+    v = str(venue_str).upper().strip()
+    if "HAPPY VALLEY" in v or v == "HV":
+        return "HV"
+    if "SHA TIN" in v or v == "ST":
+        return "ST"
+    return None
+
+
+def _compute_race_drift(date_compact: str, venue_code: str,
+                        race_no: int) -> dict:
+    """Compute per-horse Win-odds drift (%) for one race across all snapshots.
+
+    Returns:
+        {
+          "snapshots": [...],         # ordered by scraped_at ascending
+          "n_snaps":   int,
+          "first_ts":  str | "",
+          "last_ts":   str | "",
+          "horses":    [{
+              "no": int, "horse": str,
+              "win_first": float|None, "win_last": float|None,
+              "place_last": float|None, "dpct": float|None,
+          }, ...]                     # ordered by Δ% ascending (steamers first)
+        }
+    """
+    snaps_all = _load_live_odds_snapshots(date_compact, venue_code)
+    rs = [s for s in snaps_all if str(s.get("race_no")) == str(race_no)]
+    rs.sort(key=lambda s: s.get("scraped_at", ""))
+    if not rs:
+        return {"snapshots": [], "n_snaps": 0, "first_ts": "",
+                "last_ts": "", "horses": []}
+    earliest, latest = rs[0], rs[-1]
+    first_by = {str(h.get("no")): h for h in earliest.get("odds") or []}
+    horses = []
+    for h in latest.get("odds") or []:
+        no_s = str(h.get("no"))
+        try:
+            no_n = int(no_s)
+        except (TypeError, ValueError):
+            continue
+        try:
+            wf = float(first_by.get(no_s, {}).get("win"))
+        except (TypeError, ValueError):
+            wf = None
+        try:
+            wl = float(h.get("win"))
+        except (TypeError, ValueError):
+            wl = None
+        try:
+            pl = float(h.get("place"))
+        except (TypeError, ValueError):
+            pl = None
+        d = None
+        if wf is not None and wl is not None and wf > 0:
+            d = round((wl - wf) / wf * 100, 1)
+        horses.append({
+            "no": no_n, "horse": str(h.get("horse") or ""),
+            "win_first": wf, "win_last": wl, "place_last": pl, "dpct": d,
+        })
+    horses.sort(key=lambda x: (float("inf") if x["dpct"] is None else x["dpct"]))
+    return {
+        "snapshots": rs, "n_snaps": len(rs),
+        "first_ts": earliest.get("scraped_at", ""),
+        "last_ts": latest.get("scraped_at", ""),
+        "horses": horses,
+    }
+
+
+def _pick_alignment(picks: list[dict], drift: dict,
+                    steamer_thr: float = -15.0,
+                    drifter_thr: float = 15.0,
+                    top_n: int = 3) -> dict:
+    """Score the alignment between our model picks and market drift.
+
+    Args:
+        picks:        list of model picks (top-N first), each {horse_no, horse_name, ...}
+        drift:        output of _compute_race_drift
+        steamer_thr:  Δ% ≤ this counts as a steamer (negative)
+        drifter_thr:  Δ% ≥ this counts as a drifter (positive)
+        top_n:        size of model "top picks" cohort
+
+    Returns:
+        {
+          "verdict":     "AGREE" | "DISAGREE" | "MIXED" | "NEUTRAL" | "NO_DATA"
+          "score":       int  (positive = bullish, negative = bearish)
+          "agree":       [(rank, no, horse, dpct), ...]   our top picks that steamed
+          "disagree":    [(rank, no, horse, dpct), ...]   our top picks that drifted
+          "outsiders":   [(no, horse, dpct), ...]         non-top picks that steamed
+          "messages":    [str, ...]                       ready-to-render bullets
+        }
+    """
+    horses = drift.get("horses") or []
+    if not picks or not horses:
+        return {"verdict": "NO_DATA", "score": 0, "agree": [], "disagree": [],
+                "outsiders": [], "messages": []}
+    by_no = {h["no"]: h for h in horses}
+    top_nos: list[int] = []
+    rank_lookup: dict[int, int] = {}
+    for i, p in enumerate(picks[:top_n]):
+        try:
+            n = int(p.get("horse_no") or 0)
+        except (TypeError, ValueError):
+            n = 0
+        if n > 0:
+            top_nos.append(n)
+            rank_lookup[n] = i + 1
+    agree, disagree = [], []
+    for n in top_nos:
+        h = by_no.get(n)
+        if not h:
+            continue
+        d = h["dpct"]
+        if d is None:
+            continue
+        rk = rank_lookup[n]
+        if d <= steamer_thr:
+            agree.append((rk, n, h["horse"], d))
+        elif d >= drifter_thr:
+            disagree.append((rk, n, h["horse"], d))
+    outsiders = []
+    for h in horses:
+        if h["no"] in top_nos:
+            continue
+        d = h["dpct"]
+        if d is None or d > steamer_thr:
+            continue
+        outsiders.append((h["no"], h["horse"], d))
+    outsiders.sort(key=lambda t: t[2])
+    score = len(agree) * 2 - len(disagree) * 2 - min(len(outsiders), 2)
+    if not agree and not disagree and not outsiders:
+        verdict = "NEUTRAL"
+    elif agree and not disagree:
+        verdict = "AGREE"
+    elif disagree and not agree:
+        verdict = "DISAGREE"
+    else:
+        verdict = "MIXED"
+    msgs: list[str] = []
+    for rk, n, name, d in agree:
+        msgs.append(
+            f"🟢 **AGREEMENT** — our #{rk} pick **#{n} {name}** is steaming "
+            f"(**{d:+.1f}%**). Market backs the model.")
+    for rk, n, name, d in disagree:
+        msgs.append(
+            f"🔴 **DISAGREEMENT** — our #{rk} pick **#{n} {name}** is drifting "
+            f"(**{d:+.1f}%**). Market sees something we don't — re-check.")
+    for n, name, d in outsiders[:2]:
+        msgs.append(
+            f"⚠️ **OUTSIDER STEAMING** — **#{n} {name}** is being backed "
+            f"(**{d:+.1f}%**) but isn't in our top {top_n}. Consider QPL cover.")
+    return {"verdict": verdict, "score": score,
+            "agree": agree, "disagree": disagree,
+            "outsiders": outsiders, "messages": msgs}
+
+
+def _render_race_day_market_pulse(date_compact: str, venue_code: str,
+                                  race_no: int, picks: list[dict]) -> None:
+    """Render a compact Market Pulse panel for a single race within Race Day Insight.
+
+    Shows per-race steamers and drifters from live odds snapshots, plus the
+    alignment with our model top picks. No-op when no snapshots exist.
+    """
+    if not date_compact or not venue_code or not race_no:
+        return
+    drift = _compute_race_drift(date_compact, venue_code, int(race_no))
+    if drift["n_snaps"] == 0:
+        return
+    horses = drift["horses"]
+    if drift["n_snaps"] < 2 or not any(h["dpct"] is not None for h in horses):
+        st.markdown("##### 📡 Market Pulse")
+        st.caption(
+            f"Only **{drift['n_snaps']}** snapshot for R{race_no} so far — "
+            "drift signal needs ≥2 captures. Run the scraper again later "
+            "(see Live Odds page) to build drift history."
+        )
+        return
+    st.markdown("##### 📡 Market Pulse")
+    cap_first = drift["first_ts"][11:19] if drift["first_ts"] else "?"
+    cap_last = drift["last_ts"][11:19] if drift["last_ts"] else "?"
+    st.caption(
+        f"{drift['n_snaps']} snapshots · first **{cap_first}** → "
+        f"latest **{cap_last}** · Δ% on Win odds vs first capture."
+    )
+
+    align = _pick_alignment(picks or [], drift)
+
+    steamer_thr, drifter_thr = -15.0, 15.0
+
+    def _tile_row(rows: list[tuple], color: str, empty: str) -> None:
+        if not rows:
+            st.caption(f"_{empty}_")
+            return
+        for no, name, wf, wl, d, badge in rows:
+            d_str = f"{d:+.1f}%" if d is not None else "—"
+            wf_str = f"{wf:.1f}" if wf is not None else "—"
+            wl_str = f"{wl:.1f}" if wl is not None else "—"
+            st.markdown(
+                f'<div style="background:{color};padding:6px 10px;'
+                f'border-radius:6px;margin-bottom:4px;'
+                f'display:flex;justify-content:space-between;align-items:center">'
+                f'<span><b>#{no}</b> {name} {badge}</span>'
+                f'<span style="font-family:monospace">'
+                f'{wf_str} → {wl_str} <b>({d_str})</b></span></div>',
+                unsafe_allow_html=True,
+            )
+
+    top_pick_nos = set()
+    for i, p in enumerate(picks[:3] if picks else []):
+        try:
+            top_pick_nos.add(int(p.get("horse_no") or 0))
+        except (TypeError, ValueError):
+            pass
+
+    steamers, drifters = [], []
+    for h in horses:
+        d = h["dpct"]
+        if d is None:
+            continue
+        badge = ("🎯" if h["no"] in top_pick_nos else "")
+        if d <= steamer_thr:
+            steamers.append((h["no"], h["horse"], h["win_first"],
+                             h["win_last"], d, badge))
+        elif d >= drifter_thr:
+            drifters.append((h["no"], h["horse"], h["win_first"],
+                             h["win_last"], d, badge))
+    drifters.sort(key=lambda t: -(t[4] or 0))
+
+    cL, cR = st.columns(2)
+    with cL:
+        st.markdown(f"**🟢 Steamers (≤ {steamer_thr:+.0f}%)**")
+        _tile_row(steamers[:5],
+                  color="rgba(34,139,34,0.18)",
+                  empty="No significant steamers yet.")
+    with cR:
+        st.markdown(f"**🔴 Drifters (≥ {drifter_thr:+.0f}%)**")
+        _tile_row(drifters[:5],
+                  color="rgba(192,57,43,0.18)",
+                  empty="No significant drifters yet.")
+
+    # Alignment verdict line
+    verdict = align["verdict"]
+    if verdict == "AGREE":
+        st.success(
+            f"**Verdict: 🟢 AGREEMENT** — market endorses our top pick(s). "
+            "Strong confidence signal — full Kelly is reasonable."
+        )
+    elif verdict == "DISAGREE":
+        st.error(
+            f"**Verdict: 🔴 DISAGREEMENT** — market is fading our top pick(s). "
+            "Cut stake or skip; double-check vet/draw/trainer-jockey notes."
+        )
+    elif verdict == "MIXED":
+        st.warning(
+            "**Verdict: 🟡 MIXED** — some agreement, some disagreement. "
+            "Treat as lower-confidence; QPL cover may de-risk."
+        )
+    elif verdict == "NEUTRAL":
+        st.info("**Verdict: ⚪ NEUTRAL** — no significant moves either way.")
+    for m in align["messages"]:
+        st.markdown(f"- {m}")
+    if not align["messages"] and verdict == "NEUTRAL":
+        st.caption(
+            "Move thresholds: a horse must move ≥15% on Win odds for "
+            "either column to populate."
+        )
+
+
+def _compute_meeting_alerts(date_compact: str, venue_code: str,
+                            races: list[dict],
+                            steamer_thr: float = -20.0,
+                            drifter_thr: float = 20.0,
+                            big_steamer_thr: float = -30.0,
+                            big_drifter_thr: float = 30.0) -> list[dict]:
+    """Aggregate alerts across all races in a meeting.
+
+    Severity tiers:
+      WARN   — top-3 model pick drifted ≥+30%
+      REVIEW — outsider (rank > 3) steamed ≤-30%, or top-1 drifted ≥+20%
+      INFO   — other notable moves
+
+    Each alert: {race, severity, kind, no, horse, dpct, msg}.
+    """
+    alerts: list[dict] = []
+    for r in races or []:
+        rn = r.get("race_number")
+        picks = r.get("picks") or []
+        if not rn:
+            continue
+        drift = _compute_race_drift(date_compact, venue_code, int(rn))
+        if drift["n_snaps"] < 2:
+            continue
+        align = _pick_alignment(
+            picks, drift, steamer_thr=steamer_thr,
+            drifter_thr=drifter_thr, top_n=3)
+        # disagreements
+        for rk, no, name, d in align["disagree"]:
+            sev = "WARN" if d >= big_drifter_thr else "REVIEW"
+            alerts.append({
+                "race": int(rn), "severity": sev, "kind": "TOP_PICK_DRIFT",
+                "no": no, "horse": name, "rank": rk, "dpct": d,
+                "msg": f"R{rn}: model #{rk} **{name}** (#{no}) drifting {d:+.1f}%",
+            })
+        for no, name, d in align["outsiders"]:
+            sev = "REVIEW" if d <= big_steamer_thr else "INFO"
+            alerts.append({
+                "race": int(rn), "severity": sev, "kind": "OUTSIDER_STEAM",
+                "no": no, "horse": name, "rank": None, "dpct": d,
+                "msg": f"R{rn}: outsider **{name}** (#{no}) steaming {d:+.1f}%",
+            })
+        for rk, no, name, d in align["agree"]:
+            if d <= big_steamer_thr:
+                alerts.append({
+                    "race": int(rn), "severity": "INFO", "kind": "TOP_PICK_STEAM",
+                    "no": no, "horse": name, "rank": rk, "dpct": d,
+                    "msg": f"R{rn}: model #{rk} **{name}** (#{no}) steaming {d:+.1f}%",
+                })
+    sev_order = {"WARN": 0, "REVIEW": 1, "INFO": 2}
+    alerts.sort(key=lambda a: (sev_order.get(a["severity"], 9),
+                               a["race"], -abs(a.get("dpct") or 0)))
+    return alerts
 
 
 def _run_live_odds_scraper(date_iso: str, venue: str, races: str,
