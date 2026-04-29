@@ -623,10 +623,35 @@ def load_available_meetings() -> list[dict]:
     return meetings
 
 
-def load_meeting_data(path: Path) -> dict:
-    """Load full meeting JSON data."""
-    with open(path, "r", encoding="utf-8") as f:
+@st.cache_data(ttl=120, show_spinner=False)
+def _load_meeting_data_cached(path_str: str, mtime: float, size: int) -> dict:
+    """Internal cached loader. Keyed by (path, mtime, size) so the cache
+    auto-invalidates whenever the file is rewritten by run_meeting.py
+    or _append_results_to_db. ``mtime``/``size`` are part of the cache
+    key only — they are not used inside the body."""
+    del mtime, size  # cache-key only
+    with open(path_str, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_meeting_data(path: Path) -> dict:
+    """Load full meeting JSON data (mtime-cached, 120s TTL).
+
+    Re-parses automatically when the underlying file is rewritten, so
+    callers never see stale data after a Run Analysis / scrape Results
+    pass — but repeated reads within the same Streamlit rerun (and
+    across reruns within 120s) hit the cache instead of re-parsing
+    multi-MB JSON each time.
+    """
+    try:
+        st_ = os.stat(path)
+        return _load_meeting_data_cached(str(path), st_.st_mtime, st_.st_size)
+    except OSError:
+        # Path vanished between caller's existence check and stat() —
+        # fall back to the original direct read so the caller gets the
+        # same FileNotFoundError it would have seen before.
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
 
 
 def load_sarr_data(date_str: str) -> dict | None:
@@ -1480,18 +1505,75 @@ def _safe_read_excel(path: Path) -> pd.DataFrame:
             raise
 
 
-@st.cache_data(ttl=120)
+# NOTE: cached as a *resource* (not data) so that the many
+# ``st.cache_data.clear()`` calls scattered across the app do NOT evict
+# this expensive xlsx -> DataFrame load. The form DB only changes when
+# the post-race pipeline rebuilds it; the two call sites that trigger
+# that rebuild call ``_load_form_db.clear()`` explicitly.
+@st.cache_resource(ttl=120, show_spinner=False)
 def _load_form_db() -> pd.DataFrame:
-    """Load hkjc_results_updated.xlsx for form guide lookups."""
+    """Load hkjc_results_updated.xlsx for form guide lookups.
+
+    Reads from a parquet sidecar (``cache/form_db.parquet``) when it
+    exists and is at least as fresh as the canonical xlsx — parquet
+    deserialises ~10x faster than the multi-MB OneDrive xlsx and
+    avoids the PermissionError / temp-copy hack on Windows. The
+    sidecar is regenerated automatically on cache miss whenever the
+    xlsx is newer (or the parquet is missing / corrupt).
+    """
     db_file = BASE / "hkjc_results_updated.xlsx"
     if not db_file.exists():
         return pd.DataFrame()
+
+    parquet_file = CACHE_DIR / "form_db.parquet"
+    try:
+        xlsx_mtime = db_file.stat().st_mtime
+    except OSError:
+        xlsx_mtime = 0.0
+
+    # Fast path: parquet sidecar is fresh
+    if parquet_file.exists():
+        try:
+            pq_mtime = parquet_file.stat().st_mtime
+        except OSError:
+            pq_mtime = 0.0
+        if pq_mtime >= xlsx_mtime:
+            try:
+                df = pd.read_parquet(parquet_file)
+                # parquet round-trip can demote ``date`` -> ``datetime64`` —
+                # restore for downstream comparisons that expect ``date``.
+                if "race_date" in df.columns:
+                    df["race_date"] = pd.to_datetime(df["race_date"]).dt.date
+                return df
+            except Exception:
+                # Corrupt sidecar: fall through to xlsx rebuild.
+                try:
+                    parquet_file.unlink()
+                except OSError:
+                    pass
+
+    # Slow path: read xlsx, normalise, write parquet sidecar for next time.
     df = _safe_read_excel(db_file)
     keep = [c for c in FORM_COLS if c in df.columns]
     df = df[keep].copy()
     df["race_date"] = pd.to_datetime(df["race_date"]).dt.date
     df["place_num"] = pd.to_numeric(df["place"], errors="coerce")
     df["horse_name_upper"] = df["horse_name"].str.upper().str.strip()
+    try:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        # Coerce mixed-type object columns (e.g. ``place`` = int + 'DH' / 'WV')
+        # to plain strings so pyarrow can serialise without ArrowTypeError.
+        # Preserve NaN cells (don't let astype(str) turn them into 'nan').
+        df_pq = df.copy()
+        for col in df_pq.select_dtypes(include="object").columns:
+            mask_na = df_pq[col].isna()
+            df_pq[col] = df_pq[col].astype(str)
+            df_pq.loc[mask_na, col] = None
+        df_pq.to_parquet(parquet_file, index=False)
+    except Exception:
+        # pyarrow / fastparquet missing, or write failed — non-fatal,
+        # just means the next call takes the xlsx path again.
+        pass
     return df
 
 
@@ -3868,52 +3950,6 @@ def page_race_day(selected):
                         f"race(s). Historically these win at ~33% (vs ~23% baseline)."
                     )
 
-    # ── Market Pulse alerts banner (meeting-level) ──────────────────────
-    try:
-        _venue_code_top = _venue_to_code(data.get("meeting_venue", ""))
-        if date_str and _venue_code_top:
-            _alerts = _compute_meeting_alerts(
-                date_str, _venue_code_top, active_races)
-            if _alerts:
-                _warn = [a for a in _alerts if a["severity"] == "WARN"]
-                _rev = [a for a in _alerts if a["severity"] == "REVIEW"]
-                _info = [a for a in _alerts if a["severity"] == "INFO"]
-                _hdr_bits = []
-                if _warn: _hdr_bits.append(f"🔴 {len(_warn)} WARN")
-                if _rev: _hdr_bits.append(f"🟡 {len(_rev)} REVIEW")
-                if _info: _hdr_bits.append(f"⚪ {len(_info)} INFO")
-                with st.expander(
-                    f"📡 **Market alerts** — { ' · '.join(_hdr_bits) }",
-                    expanded=bool(_warn),
-                ):
-                    for a in _alerts[:30]:
-                        sev = a["severity"]
-                        icon = {"WARN": "🔴", "REVIEW": "🟡",
-                                "INFO": "⚪"}.get(sev, "·")
-                        if st.button(
-                            f"{icon} **{sev}** · {a['msg']}",
-                            key=f"rd_alert_jump_{a['race']}_{a['no']}_{sev}",
-                            use_container_width=True,
-                        ):
-                            st.session_state["rd_active_race"] = a["race"]
-                            st.rerun()
-                    st.caption(
-                        "Click an alert to jump to that race · "
-                        "WARN = top-3 pick drifting ≥+30%; "
-                        "REVIEW = outsider steaming ≤-30% or top-1 drifting ≥+20%."
-                    )
-            elif date_str and _venue_code_top:
-                _has_any = bool((BASE / "cache" / "live_odds" / date_str).exists()
-                                and any((BASE / "cache" / "live_odds" / date_str).iterdir()))
-                if _has_any:
-                    st.caption(
-                        "📡 Market alerts: no significant moves yet "
-                        "(needs ≥2 snapshots per race). "
-                        "Re-run scraper later from **Live Odds** page."
-                    )
-    except Exception as _alert_err:
-        st.caption(f"_Market alerts unavailable: {_alert_err}_")
-
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
     # ── Race tab selector ────────────────────────────────────────────────
@@ -4023,19 +4059,6 @@ def page_race_day(selected):
             race = next((r for r in et_races if r["race_number"] == active_rn), None)
             if race:
                 render_race_card(race, vet_lookup=vet_lookup, show_top=4, bb_lookup=bb_lookup)
-
-        # ── Market Pulse (live odds) for the selected race ───────────────
-        try:
-            _venue_code = _venue_to_code(data.get("meeting_venue", ""))
-            _active_race_obj = next(
-                (r for r in active_races if r["race_number"] == active_rn), None)
-            _active_picks = (_active_race_obj or {}).get("picks", []) or []
-            if date_str and _venue_code:
-                st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
-                _render_race_day_market_pulse(
-                    date_str, _venue_code, active_rn, _active_picks)
-        except Exception as _mp_err:
-            st.caption(f"_Market Pulse unavailable: {_mp_err}_")
 
     # ── Column acronym legend ────────────────────────────────────────────
     with st.expander("📖 Column Legend & Interpretation Guide"):
@@ -4789,6 +4812,13 @@ def page_backtest():
                            "commentary · backtest. Pushes outputs to GitHub on cloud."):
             _run_results_scraper(scrape_date.isoformat(), full=True)
             st.cache_data.clear()
+            # Form DB is on cache_resource (survives cache_data.clear) — but
+            # the post-race pipeline rebuilds the underlying xlsx, so we must
+            # invalidate explicitly so the next read re-derives the parquet.
+            try:
+                _load_form_db.clear()
+            except Exception:
+                pass
             st.rerun()
     with col_b:
         if st.button("[ Backtest only ]", use_container_width=True,
@@ -6079,6 +6109,12 @@ def page_results():
     if st.sidebar.button("[ Scrape Results ]", use_container_width=True, key="res_btn_scrape"):
         _run_results_scraper(scrape_date.isoformat(), full=True)
         st.cache_data.clear()
+        # Form DB lives on cache_resource — clear explicitly because the
+        # post-race pipeline rewrites the underlying xlsx.
+        try:
+            _load_form_db.clear()
+        except Exception:
+            pass
         st.rerun()
 
     res_dates = find_results_dates()
@@ -9804,342 +9840,14 @@ def _load_live_odds_snapshots(date_compact: str, venue: str) -> list[dict]:
     return snaps
 
 
-def _venue_to_code(venue_str: str) -> str | None:
-    """Map dashboard meeting_venue ('Happy Valley'/'HV'/...) to two-letter code."""
-    if not venue_str:
-        return None
-    v = str(venue_str).upper().strip()
-    if "HAPPY VALLEY" in v or v == "HV":
-        return "HV"
-    if "SHA TIN" in v or v == "ST":
-        return "ST"
-    return None
-
-
-def _compute_race_drift(date_compact: str, venue_code: str,
-                        race_no: int) -> dict:
-    """Compute per-horse Win-odds drift (%) for one race across all snapshots.
-
-    Returns:
-        {
-          "snapshots": [...],         # ordered by scraped_at ascending
-          "n_snaps":   int,
-          "first_ts":  str | "",
-          "last_ts":   str | "",
-          "horses":    [{
-              "no": int, "horse": str,
-              "win_first": float|None, "win_last": float|None,
-              "place_last": float|None, "dpct": float|None,
-          }, ...]                     # ordered by Δ% ascending (steamers first)
-        }
-    """
-    snaps_all = _load_live_odds_snapshots(date_compact, venue_code)
-    rs = [s for s in snaps_all if str(s.get("race_no")) == str(race_no)]
-    rs.sort(key=lambda s: s.get("scraped_at", ""))
-    if not rs:
-        return {"snapshots": [], "n_snaps": 0, "first_ts": "",
-                "last_ts": "", "horses": []}
-    earliest, latest = rs[0], rs[-1]
-    first_by = {str(h.get("no")): h for h in earliest.get("odds") or []}
-    horses = []
-    for h in latest.get("odds") or []:
-        no_s = str(h.get("no"))
-        try:
-            no_n = int(no_s)
-        except (TypeError, ValueError):
-            continue
-        try:
-            wf = float(first_by.get(no_s, {}).get("win"))
-        except (TypeError, ValueError):
-            wf = None
-        try:
-            wl = float(h.get("win"))
-        except (TypeError, ValueError):
-            wl = None
-        try:
-            pl = float(h.get("place"))
-        except (TypeError, ValueError):
-            pl = None
-        d = None
-        if wf is not None and wl is not None and wf > 0:
-            d = round((wl - wf) / wf * 100, 1)
-        horses.append({
-            "no": no_n, "horse": str(h.get("horse") or ""),
-            "win_first": wf, "win_last": wl, "place_last": pl, "dpct": d,
-        })
-    horses.sort(key=lambda x: (float("inf") if x["dpct"] is None else x["dpct"]))
-    return {
-        "snapshots": rs, "n_snaps": len(rs),
-        "first_ts": earliest.get("scraped_at", ""),
-        "last_ts": latest.get("scraped_at", ""),
-        "horses": horses,
-    }
-
-
-def _pick_alignment(picks: list[dict], drift: dict,
-                    steamer_thr: float = -15.0,
-                    drifter_thr: float = 15.0,
-                    top_n: int = 3) -> dict:
-    """Score the alignment between our model picks and market drift.
-
-    Args:
-        picks:        list of model picks (top-N first), each {horse_no, horse_name, ...}
-        drift:        output of _compute_race_drift
-        steamer_thr:  Δ% ≤ this counts as a steamer (negative)
-        drifter_thr:  Δ% ≥ this counts as a drifter (positive)
-        top_n:        size of model "top picks" cohort
-
-    Returns:
-        {
-          "verdict":     "AGREE" | "DISAGREE" | "MIXED" | "NEUTRAL" | "NO_DATA"
-          "score":       int  (positive = bullish, negative = bearish)
-          "agree":       [(rank, no, horse, dpct), ...]   our top picks that steamed
-          "disagree":    [(rank, no, horse, dpct), ...]   our top picks that drifted
-          "outsiders":   [(no, horse, dpct), ...]         non-top picks that steamed
-          "messages":    [str, ...]                       ready-to-render bullets
-        }
-    """
-    horses = drift.get("horses") or []
-    if not picks or not horses:
-        return {"verdict": "NO_DATA", "score": 0, "agree": [], "disagree": [],
-                "outsiders": [], "messages": []}
-    by_no = {h["no"]: h for h in horses}
-    top_nos: list[int] = []
-    rank_lookup: dict[int, int] = {}
-    for i, p in enumerate(picks[:top_n]):
-        try:
-            n = int(p.get("horse_no") or 0)
-        except (TypeError, ValueError):
-            n = 0
-        if n > 0:
-            top_nos.append(n)
-            rank_lookup[n] = i + 1
-    agree, disagree = [], []
-    for n in top_nos:
-        h = by_no.get(n)
-        if not h:
-            continue
-        d = h["dpct"]
-        if d is None:
-            continue
-        rk = rank_lookup[n]
-        if d <= steamer_thr:
-            agree.append((rk, n, h["horse"], d))
-        elif d >= drifter_thr:
-            disagree.append((rk, n, h["horse"], d))
-    outsiders = []
-    for h in horses:
-        if h["no"] in top_nos:
-            continue
-        d = h["dpct"]
-        if d is None or d > steamer_thr:
-            continue
-        outsiders.append((h["no"], h["horse"], d))
-    outsiders.sort(key=lambda t: t[2])
-    score = len(agree) * 2 - len(disagree) * 2 - min(len(outsiders), 2)
-    if not agree and not disagree and not outsiders:
-        verdict = "NEUTRAL"
-    elif agree and not disagree:
-        verdict = "AGREE"
-    elif disagree and not agree:
-        verdict = "DISAGREE"
-    else:
-        verdict = "MIXED"
-    msgs: list[str] = []
-    for rk, n, name, d in agree:
-        msgs.append(
-            f"🟢 **AGREEMENT** — our #{rk} pick **#{n} {name}** is steaming "
-            f"(**{d:+.1f}%**). Market backs the model.")
-    for rk, n, name, d in disagree:
-        msgs.append(
-            f"🔴 **DISAGREEMENT** — our #{rk} pick **#{n} {name}** is drifting "
-            f"(**{d:+.1f}%**). Market sees something we don't — re-check.")
-    for n, name, d in outsiders[:2]:
-        msgs.append(
-            f"⚠️ **OUTSIDER STEAMING** — **#{n} {name}** is being backed "
-            f"(**{d:+.1f}%**) but isn't in our top {top_n}. Consider QPL cover.")
-    return {"verdict": verdict, "score": score,
-            "agree": agree, "disagree": disagree,
-            "outsiders": outsiders, "messages": msgs}
-
-
-def _render_race_day_market_pulse(date_compact: str, venue_code: str,
-                                  race_no: int, picks: list[dict]) -> None:
-    """Render a compact Market Pulse panel for a single race within Race Day Insight.
-
-    Shows per-race steamers and drifters from live odds snapshots, plus the
-    alignment with our model top picks. No-op when no snapshots exist.
-    """
-    if not date_compact or not venue_code or not race_no:
-        return
-    drift = _compute_race_drift(date_compact, venue_code, int(race_no))
-    if drift["n_snaps"] == 0:
-        return
-    horses = drift["horses"]
-    if drift["n_snaps"] < 2 or not any(h["dpct"] is not None for h in horses):
-        st.markdown("##### 📡 Market Pulse")
-        st.caption(
-            f"Only **{drift['n_snaps']}** snapshot for R{race_no} so far — "
-            "drift signal needs ≥2 captures. Run the scraper again later "
-            "(see Live Odds page) to build drift history."
-        )
-        return
-    st.markdown("##### 📡 Market Pulse")
-    cap_first = drift["first_ts"][11:19] if drift["first_ts"] else "?"
-    cap_last = drift["last_ts"][11:19] if drift["last_ts"] else "?"
-    st.caption(
-        f"{drift['n_snaps']} snapshots · first **{cap_first}** → "
-        f"latest **{cap_last}** · Δ% on Win odds vs first capture."
-    )
-
-    align = _pick_alignment(picks or [], drift)
-
-    steamer_thr, drifter_thr = -15.0, 15.0
-
-    def _tile_row(rows: list[tuple], color: str, empty: str) -> None:
-        if not rows:
-            st.caption(f"_{empty}_")
-            return
-        for no, name, wf, wl, d, badge in rows:
-            d_str = f"{d:+.1f}%" if d is not None else "—"
-            wf_str = f"{wf:.1f}" if wf is not None else "—"
-            wl_str = f"{wl:.1f}" if wl is not None else "—"
-            st.markdown(
-                f'<div style="background:{color};padding:6px 10px;'
-                f'border-radius:6px;margin-bottom:4px;'
-                f'display:flex;justify-content:space-between;align-items:center">'
-                f'<span><b>#{no}</b> {name} {badge}</span>'
-                f'<span style="font-family:monospace">'
-                f'{wf_str} → {wl_str} <b>({d_str})</b></span></div>',
-                unsafe_allow_html=True,
-            )
-
-    top_pick_nos = set()
-    for i, p in enumerate(picks[:3] if picks else []):
-        try:
-            top_pick_nos.add(int(p.get("horse_no") or 0))
-        except (TypeError, ValueError):
-            pass
-
-    steamers, drifters = [], []
-    for h in horses:
-        d = h["dpct"]
-        if d is None:
-            continue
-        badge = ("🎯" if h["no"] in top_pick_nos else "")
-        if d <= steamer_thr:
-            steamers.append((h["no"], h["horse"], h["win_first"],
-                             h["win_last"], d, badge))
-        elif d >= drifter_thr:
-            drifters.append((h["no"], h["horse"], h["win_first"],
-                             h["win_last"], d, badge))
-    drifters.sort(key=lambda t: -(t[4] or 0))
-
-    cL, cR = st.columns(2)
-    with cL:
-        st.markdown(f"**🟢 Steamers (≤ {steamer_thr:+.0f}%)**")
-        _tile_row(steamers[:5],
-                  color="rgba(34,139,34,0.18)",
-                  empty="No significant steamers yet.")
-    with cR:
-        st.markdown(f"**🔴 Drifters (≥ {drifter_thr:+.0f}%)**")
-        _tile_row(drifters[:5],
-                  color="rgba(192,57,43,0.18)",
-                  empty="No significant drifters yet.")
-
-    # Alignment verdict line
-    verdict = align["verdict"]
-    if verdict == "AGREE":
-        st.success(
-            f"**Verdict: 🟢 AGREEMENT** — market endorses our top pick(s). "
-            "Strong confidence signal — full Kelly is reasonable."
-        )
-    elif verdict == "DISAGREE":
-        st.error(
-            f"**Verdict: 🔴 DISAGREEMENT** — market is fading our top pick(s). "
-            "Cut stake or skip; double-check vet/draw/trainer-jockey notes."
-        )
-    elif verdict == "MIXED":
-        st.warning(
-            "**Verdict: 🟡 MIXED** — some agreement, some disagreement. "
-            "Treat as lower-confidence; QPL cover may de-risk."
-        )
-    elif verdict == "NEUTRAL":
-        st.info("**Verdict: ⚪ NEUTRAL** — no significant moves either way.")
-    for m in align["messages"]:
-        st.markdown(f"- {m}")
-    if not align["messages"] and verdict == "NEUTRAL":
-        st.caption(
-            "Move thresholds: a horse must move ≥15% on Win odds for "
-            "either column to populate."
-        )
-
-
-def _compute_meeting_alerts(date_compact: str, venue_code: str,
-                            races: list[dict],
-                            steamer_thr: float = -20.0,
-                            drifter_thr: float = 20.0,
-                            big_steamer_thr: float = -30.0,
-                            big_drifter_thr: float = 30.0) -> list[dict]:
-    """Aggregate alerts across all races in a meeting.
-
-    Severity tiers:
-      WARN   — top-3 model pick drifted ≥+30%
-      REVIEW — outsider (rank > 3) steamed ≤-30%, or top-1 drifted ≥+20%
-      INFO   — other notable moves
-
-    Each alert: {race, severity, kind, no, horse, dpct, msg}.
-    """
-    alerts: list[dict] = []
-    for r in races or []:
-        rn = r.get("race_number")
-        picks = r.get("picks") or []
-        if not rn:
-            continue
-        drift = _compute_race_drift(date_compact, venue_code, int(rn))
-        if drift["n_snaps"] < 2:
-            continue
-        align = _pick_alignment(
-            picks, drift, steamer_thr=steamer_thr,
-            drifter_thr=drifter_thr, top_n=3)
-        # disagreements
-        for rk, no, name, d in align["disagree"]:
-            sev = "WARN" if d >= big_drifter_thr else "REVIEW"
-            alerts.append({
-                "race": int(rn), "severity": sev, "kind": "TOP_PICK_DRIFT",
-                "no": no, "horse": name, "rank": rk, "dpct": d,
-                "msg": f"R{rn}: model #{rk} **{name}** (#{no}) drifting {d:+.1f}%",
-            })
-        for no, name, d in align["outsiders"]:
-            sev = "REVIEW" if d <= big_steamer_thr else "INFO"
-            alerts.append({
-                "race": int(rn), "severity": sev, "kind": "OUTSIDER_STEAM",
-                "no": no, "horse": name, "rank": None, "dpct": d,
-                "msg": f"R{rn}: outsider **{name}** (#{no}) steaming {d:+.1f}%",
-            })
-        for rk, no, name, d in align["agree"]:
-            if d <= big_steamer_thr:
-                alerts.append({
-                    "race": int(rn), "severity": "INFO", "kind": "TOP_PICK_STEAM",
-                    "no": no, "horse": name, "rank": rk, "dpct": d,
-                    "msg": f"R{rn}: model #{rk} **{name}** (#{no}) steaming {d:+.1f}%",
-                })
-    sev_order = {"WARN": 0, "REVIEW": 1, "INFO": 2}
-    alerts.sort(key=lambda a: (sev_order.get(a["severity"], 9),
-                               a["race"], -abs(a.get("dpct") or 0)))
-    return alerts
-
-
-def _run_live_odds_scraper(date_iso: str, venue: str, races: str,
-                           pools: str = "wp,qin,qpl") -> tuple[int, str]:
+def _run_live_odds_scraper(date_iso: str, venue: str, races: str) -> tuple[int, str]:
     """Run scrape_hkjc_live_odds.py as a subprocess. Returns (returncode, log)."""
     import subprocess
     script = BASE / "scrape_hkjc_live_odds.py"
     if not script.exists():
         return 1, f"scrape_hkjc_live_odds.py not found at {script}"
     cmd = [sys.executable, str(script),
-           "--date", date_iso, "--venue", venue, "--races", races,
-           "--pools", pools]
+           "--date", date_iso, "--venue", venue, "--races", races]
     # On Streamlit Cloud, Playwright Chromium may not be installed.
     # Try to install on demand (idempotent, ~30s first time).
     try:
@@ -10159,66 +9867,56 @@ def _run_live_odds_scraper(date_iso: str, venue: str, races: str,
 
 
 def page_live_odds():
-    """Live odds snapshots scraped from bet.hkjc.com.
+    """Live odds snapshots scraped from bet.hkjc.com, with drift vs first snapshot.
 
-    Captures Win/Place + Quinella + Quinella-Place pair-odds matrices.
-    Each race may have N snapshots taken across the day (overnight, morning,
-    near-post). The page shows:
-
-    * Top market movers across the meeting (biggest Win-odds drops/rises)
-    * Per-race table with green/red highlighting on Δ Win %
-    * Win-odds time-slider to inspect any captured snapshot
-    * QIN and QPL matrices with the same colour-coded drift
-    * Meeting summary (favourite + steamer per race, no horse names)
-    """
+    Each race has one or more snapshots per meeting (overnight + intraday). The
+    panel shows the latest Win / Place odds and the % change in Win odds since
+    the earliest snapshot — a large drop in Win odds means money is coming in
+    on that horse (a "market move")."""
     import json as _json
-    import pandas as _pd
-    import datetime as _dt
-    from collections import defaultdict
 
     st.markdown("## 💹 Live Odds")
     st.info(
-        "Win / Place / Quinella / Quinella-Place odds scraped from "
-        "**bet.hkjc.com**. Each race may carry multiple snapshots. "
-        "**🟢 Odds dropped → money flowing in (market support).**  "
-        "**🔴 Odds drifted out → market losing confidence.**  "
-        "Use as a sanity-check on the model — the market is not always smart, "
-        "but persistent ≥20% drops on horses we *don't* rank are worth a look, "
-        "and ≥20% drifts on our top picks deserve a re-examination."
+        "Win / Place odds scraped from **bet.hkjc.com**. Each race may have "
+        "multiple snapshots; this panel shows the latest odds and the drift "
+        "vs the earliest snapshot for the same race.  "
+        "**Odds drop = money flowing in** (market confidence rising). "
+        "Odds drift out = market losing confidence. Use as informational "
+        "market-consensus signal — not a standalone prediction."
     )
 
-    # ── Scraper controls ───────────────────────────────────────────────
+    # ── Scraper controls ────────────────────────────────────────────────
+    import datetime as _dt
     with st.expander("🔄 Run scraper now", expanded=False):
         st.caption(
-            "Fetches a fresh snapshot from bet.hkjc.com (WP + QIN + QPL "
-            "from the public /wpq/ page). Run several times during the day "
-            "(overnight, morning, ~1 h before post) to build drift history."
+            "Fetches a fresh snapshot from bet.hkjc.com. Run it several times "
+            "during the day (e.g. overnight + 1h before post) to build a drift "
+            "history. First run on a new host ~30s extra while Playwright "
+            "installs Chromium."
         )
-        sc1, sc2, sc3, sc4, sc5 = st.columns([1.2, 0.8, 1, 1.2, 1])
+        sc1, sc2, sc3, sc4 = st.columns([1.3, 0.9, 1.1, 1])
         with sc1:
-            scr_date = st.date_input("Meeting date", value=_dt.date.today(),
-                                     key="liveodds_scr_date")
+            scr_date = st.date_input(
+                "Meeting date", value=_dt.date.today(), key="liveodds_scr_date",
+            )
         with sc2:
-            scr_venue = st.selectbox("Venue", ["HV", "ST"], index=0,
-                                     key="liveodds_scr_venue")
+            scr_venue = st.selectbox(
+                "Venue", ["HV", "ST"], index=0, key="liveodds_scr_venue",
+            )
         with sc3:
-            scr_races = st.text_input("Races", value="1-11",
-                                      key="liveodds_scr_races",
-                                      help="e.g. 1-11 or 1,2,3")
+            scr_races = st.text_input(
+                "Races", value="1-11", key="liveodds_scr_races",
+                help="e.g. 1-11 or 1,2,3",
+            )
         with sc4:
-            scr_pools = st.multiselect("Pools", ["wp", "qin", "qpl"],
-                                       default=["wp", "qin", "qpl"],
-                                       key="liveodds_scr_pools")
-        with sc5:
-            st.write(""); st.write("")
+            st.write("")
+            st.write("")
             run_btn = st.button("▶ Run scraper", type="primary",
-                                use_container_width=True,
-                                key="liveodds_run_btn")
+                                use_container_width=True, key="liveodds_run_btn")
         if run_btn:
             with st.spinner(f"Scraping {scr_venue} {scr_date} races {scr_races}…"):
                 rc, log = _run_live_odds_scraper(
-                    scr_date.isoformat(), scr_venue, scr_races,
-                    pools=",".join(scr_pools or ["wp"]))
+                    scr_date.isoformat(), scr_venue, scr_races)
             if rc == 0:
                 st.success("Scrape complete.")
             else:
@@ -10231,18 +9929,20 @@ def page_live_odds():
     root = BASE / "cache" / "live_odds"
     if not root.exists() or not any(root.iterdir()):
         st.warning(
-            "No snapshots yet. Use **Run scraper now** above, or run locally:\n\n"
+            "No snapshots yet. Use **Run scraper now** above to create one, "
+            "or run the scraper locally:\n\n"
             "`python scrape_hkjc_live_odds.py --date YYYY-MM-DD --venue HV`"
         )
         return
 
-    # Discover available meetings
+    # Discover available meetings (YYYYMMDD folders with at least one JSON)
     meetings = []
     for d in sorted(root.iterdir(), reverse=True):
         if not d.is_dir():
             continue
         for fp in d.glob("*.json"):
-            parts = fp.stem.split("_")
+            name = fp.stem  # e.g. HV_R01_153726
+            parts = name.split("_")
             if len(parts) >= 2:
                 meetings.append((d.name, parts[0]))
                 break
@@ -10260,7 +9960,8 @@ def page_live_odds():
         st.warning("No snapshots for this meeting.")
         return
 
-    # Group snapshots by race
+    # Group by race
+    from collections import defaultdict
     by_race: dict[int, list[dict]] = defaultdict(list)
     for s in snaps:
         try:
@@ -10269,358 +9970,118 @@ def page_live_odds():
             pass
     for rn in by_race:
         by_race[rn].sort(key=lambda s: s.get("scraped_at", ""))
+
     races = sorted(by_race.keys())
-
-    # All distinct snapshot timestamps across the meeting (used by slider)
-    all_ts = sorted({s.get("scraped_at", "") for s in snaps if s.get("scraped_at")})
-
     st.caption(
-        f"**{len(races)} races** · {sum(len(v) for v in by_race.values())} snapshots · "
-        f"{len(all_ts)} distinct capture time(s)"
+        f"**{len(races)} races** · {sum(len(v) for v in by_race.values())} snapshots total"
     )
 
-    # ── Highlight thresholds ───────────────────────────────────────────
-    col_thr1, col_thr2 = st.columns(2)
-    with col_thr1:
-        green_thr = st.slider(
-            "🟢 Significant Win-odds drop (≤)", -50.0, -5.0, -20.0, step=1.0,
-            help="Δ ≤ this percentage is considered a 'steamer' (money in).",
-            key="liveodds_green_thr",
-        )
-    with col_thr2:
-        red_thr = st.slider(
-            "🔴 Significant Win-odds drift (≥)", 5.0, 50.0, 20.0, step=1.0,
-            help="Δ ≥ this percentage is considered a 'drifter' (market cooling).",
-            key="liveodds_red_thr",
-        )
+    # Meeting-level drift summary: biggest Win-odds drops across all races
+    movers = []
+    for rn in races:
+        rows = by_race[rn]
+        if len(rows) < 2:
+            continue
+        first = {h["no"]: h for h in rows[0]["odds"]}
+        last  = {h["no"]: h for h in rows[-1]["odds"]}
+        for no, h in last.items():
+            try:
+                lw = float(h.get("win") or "nan")
+                fw = float(first.get(no, {}).get("win") or "nan")
+                if lw == lw and fw == fw and fw > 0:
+                    pct = (lw - fw) / fw * 100
+                    movers.append({
+                        "Race": rn, "No": no, "Horse": h.get("horse", ""),
+                        "First Win": fw, "Latest Win": lw, "Δ%": round(pct, 1),
+                    })
+            except Exception:
+                pass
+    if movers:
+        import pandas as _pd
+        df_mov = _pd.DataFrame(movers).sort_values("Δ%").head(15)
+        # Coerce numeric columns for sort correctness
+        for col in ("Race", "No"):
+            if col in df_mov.columns:
+                df_mov[col] = _pd.to_numeric(df_mov[col], errors="coerce").astype("Int64")
+        with st.expander("🔥 Top market movers (biggest Win-odds drops across meeting)",
+                         expanded=False):
+            st.dataframe(
+                df_mov, hide_index=True, use_container_width=True,
+                column_config={
+                    "Race": st.column_config.NumberColumn(format="%d"),
+                    "No":   st.column_config.NumberColumn(format="%d"),
+                    "First Win":  st.column_config.NumberColumn(format="%.1f"),
+                    "Latest Win": st.column_config.NumberColumn(format="%.1f"),
+                    "Δ%": st.column_config.NumberColumn(format="%+.1f%%"),
+                },
+            )
 
-    def _fnum(v):
-        try: return float(v)
-        except (TypeError, ValueError): return None
-
-    def _delta_pct(first, last):
-        if first is None or last is None or first <= 0:
-            return None
-        return round((last - first) / first * 100, 1)
-
-    def _delta_color(d):
-        """Background colour for a Δ% cell."""
-        if d is None: return ""
-        if d <= green_thr: return "background-color: #1b7837; color: white;"  # strong green
-        if d <= -5: return "background-color: #b7e3b7; color: black;"          # mild green
-        if d >= red_thr: return "background-color: #c0392b; color: white;"     # strong red
-        if d >= 5: return "background-color: #f5cbcb; color: black;"           # mild red
-        return ""
-
-    # ════════════════════════════════════════════════════════════════
-    # 1) MEETING SUMMARY TABLE — no horse names, one row per race
-    # ════════════════════════════════════════════════════════════════
-    st.markdown("### 📋 Meeting summary")
-    summary_rows = []
+    # Per-race panels
     for rn in races:
         rows = by_race[rn]
         latest = rows[-1]
         earliest = rows[0]
-        first_by_no = {h["no"]: h for h in earliest.get("odds", [])}
-        last_odds = latest.get("odds", []) or []
-        # Favourite = lowest Win at latest snapshot
-        fav = None
-        for h in last_odds:
-            wn = _fnum(h.get("win"))
-            if wn is None: continue
-            if fav is None or wn < fav[1]: fav = (h["no"], wn, h.get("horse", ""))
-        # Biggest steamer & drifter on Win
-        big_steamer = None  # (no, Δ%)
-        big_drifter = None
-        for h in last_odds:
-            no = h["no"]
-            f = _fnum(first_by_no.get(no, {}).get("win"))
-            l = _fnum(h.get("win"))
-            d = _delta_pct(f, l)
-            if d is None: continue
-            if big_steamer is None or d < big_steamer[1]: big_steamer = (no, d)
-            if big_drifter is None or d > big_drifter[1]: big_drifter = (no, d)
-        summary_rows.append({
-            "Race": rn,
-            "Runners": latest.get("n_runners", len(last_odds)),
-            "Snapshots": len(rows),
-            "Fav #": int(fav[0]) if fav else None,
-            "Fav Win": fav[1] if fav else None,
-            "Top steamer #": int(big_steamer[0]) if big_steamer else None,
-            "Steamer Δ%": big_steamer[1] if big_steamer else None,
-            "Top drifter #": int(big_drifter[0]) if big_drifter else None,
-            "Drifter Δ%": big_drifter[1] if big_drifter else None,
-            "Latest update": latest.get("last_update", "").replace("Last Update:", "").strip(),
-        })
-    df_sum = _pd.DataFrame(summary_rows)
-    sty_sum = (df_sum.style
-               .map(_delta_color, subset=["Steamer Δ%", "Drifter Δ%"])
-               .format({
-                   "Fav Win": "{:.1f}",
-                   "Steamer Δ%": "{:+.1f}%",
-                   "Drifter Δ%": "{:+.1f}%",
-               }, na_rep="—"))
-    st.dataframe(sty_sum, hide_index=True, use_container_width=True)
-
-    # ════════════════════════════════════════════════════════════════
-    # 2) TIME SLIDER — Win odds across races at a chosen capture time
-    # ════════════════════════════════════════════════════════════════
-    if len(all_ts) >= 2:
-        st.markdown("### 🕒 Win-odds across the meeting (time slider)")
-        st.caption(
-            "Pick a snapshot time. The grid shows every race × horse Win-odds "
-            "at that moment, with Δ% vs the earliest snapshot for the same race "
-            "colour-coded."
-        )
-        ts_labels = [t[11:19] + "  (" + t[:10] + ")" for t in all_ts]
-        idx = st.select_slider(
-            "Capture time", options=list(range(len(all_ts))),
-            value=len(all_ts) - 1,
-            format_func=lambda i: ts_labels[i],
-            key="liveodds_ts_slider",
-        )
-        target_ts = all_ts[idx]
-
-        # Build wide grid: rows = races, cols = horse numbers (1..max)
-        max_no = max((int(h["no"]) for s in snaps for h in s.get("odds", [])
-                      if str(h.get("no", "")).isdigit()), default=0)
-
-        # Pick snapshot for each race closest to (≤) target_ts
-        chosen = {}
-        first = {}
-        for rn in races:
-            rows = by_race[rn]
-            # closest snapshot at or before target_ts (fallback: nearest)
-            cand = [r for r in rows if r.get("scraped_at", "") <= target_ts]
-            if not cand: cand = [min(rows, key=lambda r: r.get("scraped_at", ""))]
-            chosen[rn] = cand[-1]
-            first[rn] = rows[0]
-
-        grid_odds = []
-        grid_drift = []
-        for rn in races:
-            ld = chosen[rn]
-            fd = first[rn]
-            l_by = {str(h["no"]): _fnum(h.get("win")) for h in ld.get("odds", [])}
-            f_by = {str(h["no"]): _fnum(h.get("win")) for h in fd.get("odds", [])}
-            row_o = {"Race": rn}
-            row_d = {"Race": rn}
-            for n in range(1, max_no + 1):
-                row_o[str(n)] = l_by.get(str(n))
-                row_d[str(n)] = _delta_pct(f_by.get(str(n)), l_by.get(str(n)))
-            grid_odds.append(row_o)
-            grid_drift.append(row_d)
-        df_o = _pd.DataFrame(grid_odds)
-        df_d = _pd.DataFrame(grid_drift)
-
-        # Colour the odds grid using the matching drift grid
-        def _style_odds(_):
-            return df_d.drop(columns=["Race"]).map(_delta_color)
-        sty_o = (df_o.style
-                 .apply(lambda _: df_d.drop(columns=["Race"]).map(_delta_color)
-                        .reindex(columns=[c for c in df_o.columns if c != "Race"])
-                        .pipe(lambda x: x.assign(**{"Race": ""})[df_o.columns.tolist()])
-                        if False else None, axis=None))
-        # simpler: build matching style df via apply on whole frame
-        def _style_full(df):
-            sty = _pd.DataFrame("", index=df.index, columns=df.columns)
-            for col in df.columns:
-                if col == "Race": continue
-                sty[col] = df_d[col].map(_delta_color)
-            return sty
-        sty_o = (df_o.style.apply(_style_full, axis=None)
-                 .format({c: "{:.1f}" for c in df_o.columns if c != "Race"},
-                         na_rep="—"))
-        st.dataframe(sty_o, hide_index=True, use_container_width=True)
-        st.caption(f"Snapshot time shown: **{target_ts}** · "
-                   f"green = Win odds dropped vs first snapshot, red = drifted.")
-
-    # ════════════════════════════════════════════════════════════════
-    # 3) PER-RACE PANELS — WP table + QIN / QPL matrices, with drift
-    # ════════════════════════════════════════════════════════════════
-    st.markdown("### 🏇 Per-race panels")
-    for rn in races:
-        rows = by_race[rn]
-        latest = rows[-1]
-        earliest = rows[0]
-        first_by_no = {h["no"]: h for h in earliest.get("odds", [])}
-
         hdr_bits = [f"**Race {rn}**"]
         if latest.get("race_info"):
             hdr_bits.append(latest["race_info"])
-        st.markdown("#### " + " · ".join(hdr_bits))
+        st.markdown("### " + " · ".join(hdr_bits))
+
         meta_bits = [f"{len(rows)} snapshot(s)"]
         if latest.get("last_update"):
             meta_bits.append(latest["last_update"])
         st.caption(" · ".join(meta_bits))
 
-        # Per-snapshot picker (default: latest)
-        snap_idx = len(rows) - 1
-        if len(rows) >= 2:
-            snap_idx = st.select_slider(
-                f"Snapshot for R{rn}", options=list(range(len(rows))),
-                value=len(rows) - 1,
-                format_func=lambda i, _rs=rows: _rs[i].get("scraped_at", "?")[11:19],
-                key=f"liveodds_snap_r{rn}",
-            )
-        sel = rows[snap_idx]
-
-        # ─ WP table ──────────────────────────────────────────────────
-        sel_by_no = {h["no"]: h for h in sel.get("odds", [])}
+        # Build drift table
+        first_by_no = {h["no"]: h for h in earliest["odds"]}
         table = []
-        for h in sel.get("odds", []):
+        for h in latest["odds"]:
             no = h["no"]
-            try: no_n = int(no)
-            except (TypeError, ValueError): no_n = None
-            w_first = _fnum(first_by_no.get(no, {}).get("win"))
-            w_sel = _fnum(h.get("win"))
-            p_sel = _fnum(h.get("place"))
+            w_last = h.get("win", "")
+            p_last = h.get("place", "")
+            w_first = first_by_no.get(no, {}).get("win", "")
+            # Coerce to numeric up-front so column sorts work in Streamlit
+            def _fnum(v):
+                try:
+                    return float(v)
+                except (TypeError, ValueError):
+                    return None
+            w_first_n = _fnum(w_first)
+            w_last_n = _fnum(w_last)
+            p_last_n = _fnum(p_last)
+            try:
+                no_n = int(no)
+            except (TypeError, ValueError):
+                no_n = None
+            drift_pct = None
+            if w_first_n is not None and w_last_n is not None and w_first_n > 0:
+                drift_pct = round((w_last_n - w_first_n) / w_first_n * 100, 1)
             table.append({
-                "No": no_n, "Horse": h.get("horse", ""),
-                "Win (first)": w_first, "Win": w_sel, "Place": p_sel,
-                "Δ Win %": _delta_pct(w_first, w_sel),
+                "No": no_n,
+                "Horse": h.get("horse", ""),
+                "Win (first)": w_first_n,
+                "Win (latest)": w_last_n,
+                "Place": p_last_n,
+                "Δ Win %": drift_pct,
             })
-        if table:
-            df_wp = _pd.DataFrame(table).sort_values(
-                "Win", na_position="last", kind="mergesort").reset_index(drop=True)
-            sty_wp = (df_wp.style
-                      .map(_delta_color, subset=["Δ Win %"])
-                      .format({"Win (first)": "{:.1f}", "Win": "{:.1f}",
-                               "Place": "{:.1f}", "Δ Win %": "{:+.1f}%"},
-                              na_rep="—"))
-            st.dataframe(sty_wp, hide_index=True, use_container_width=True,
-                         height=min(420, 38 + 35 * len(df_wp)))
-
-        # ─ QIN / QPL matrices ────────────────────────────────────────
-        def _build_pair_matrix(pool_key: str):
-            """Render a triangular pair-odds matrix with drift highlighting."""
-            sel_pairs = sel.get(pool_key) or []
-            first_pairs = earliest.get(pool_key) or []
-            if not sel_pairs:
-                return None, None
-            sel_map = {(int(p["a"]), int(p["b"])): _fnum(p["odds"]) for p in sel_pairs}
-            first_map = {(int(p["a"]), int(p["b"])): _fnum(p["odds"]) for p in first_pairs}
-            nos = sorted({n for pair in sel_map for n in pair})
-            mat = _pd.DataFrame("", index=nos, columns=[str(n) for n in nos])
-            drift = _pd.DataFrame(None, index=nos, columns=[str(n) for n in nos],
-                                  dtype="float")
-            for (a, b), v in sel_map.items():
-                if v is None: continue
-                f = first_map.get((a, b))
-                d = _delta_pct(f, v)
-                # Place upper-triangle entries: row=lower, col=higher
-                mat.at[a, str(b)] = f"{v:.1f}" if v < 100 else f"{v:.0f}"
-                if d is not None:
-                    drift.at[a, str(b)] = d
-            mat.index.name = pool_key.upper()
-            return mat, drift
-
-        for pool_label, pool_key in [("Quinella (QIN)", "qin_odds"),
-                                     ("Quinella Place (QPL)", "qpl_odds")]:
-            mat, drift = _build_pair_matrix(pool_key)
-            if mat is None or mat.empty:
-                continue
-            with st.expander(f"📊 {pool_label} matrix ({len(sel.get(pool_key, []))} pairs)",
-                             expanded=False):
-                # Style cells using drift-coloring
-                def _style_pair(df):
-                    out = _pd.DataFrame("", index=df.index, columns=df.columns)
-                    for r in df.index:
-                        for c in df.columns:
-                            d = drift.at[r, c] if c in drift.columns and r in drift.index else None
-                            try:
-                                if _pd.notna(d): out.at[r, c] = _delta_color(float(d))
-                            except Exception:
-                                pass
-                    return out
-                sty = mat.style.apply(_style_pair, axis=None)
-                st.dataframe(sty, use_container_width=True)
-                st.caption(
-                    f"Cells coloured by Δ% vs earliest snapshot. "
-                    f"Pairs in the upper triangle (row #, col #). "
-                    f"Snapshot: {sel.get('scraped_at', '?')[11:19]}."
-                )
-        st.markdown("")
-
-    # ════════════════════════════════════════════════════════════════
-    # 4) MARKET-MOVERS BOARD — biggest steamers / drifters across meeting
-    # ════════════════════════════════════════════════════════════════
-    movers = []
-    for rn in races:
-        rows = by_race[rn]
-        if len(rows) < 2: continue
-        first = {h["no"]: h for h in rows[0].get("odds", [])}
-        last  = {h["no"]: h for h in rows[-1].get("odds", [])}
-        for no, h in last.items():
-            fw = _fnum(first.get(no, {}).get("win"))
-            lw = _fnum(h.get("win"))
-            d = _delta_pct(fw, lw)
-            if d is None: continue
-            try: no_n = int(no)
-            except (TypeError, ValueError): no_n = None
-            movers.append({
-                "Race": rn, "No": no_n, "Horse": h.get("horse", ""),
-                "First Win": fw, "Latest Win": lw, "Δ%": d,
-            })
-    if movers:
-        df_mov = _pd.DataFrame(movers)
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown("### 🟢 Top steamers (biggest Win-odds drops)")
-            top = df_mov.sort_values("Δ%").head(12)
-            st.dataframe(
-                top.style.map(_delta_color, subset=["Δ%"])
-                .format({"First Win": "{:.1f}", "Latest Win": "{:.1f}",
-                         "Δ%": "{:+.1f}%"}, na_rep="—"),
-                hide_index=True, use_container_width=True,
-            )
-        with c2:
-            st.markdown("### 🔴 Top drifters (biggest Win-odds rises)")
-            top = df_mov.sort_values("Δ%", ascending=False).head(12)
-            st.dataframe(
-                top.style.map(_delta_color, subset=["Δ%"])
-                .format({"First Win": "{:.1f}", "Latest Win": "{:.1f}",
-                         "Δ%": "{:+.1f}%"}, na_rep="—"),
-                hide_index=True, use_container_width=True,
-            )
-
-    # ── Strategy doc ──────────────────────────────────────────────────
-    with st.expander("📘 How to use live-odds drift as a sanity-check signal",
-                     expanded=False):
-        st.markdown(
-            """
-**Treat the market as a *second model*, not the truth.** Hong Kong tote money
-is a mix of public, syndicates, and stable connections. Persistent moves
-(≥20% over hours) carry more signal than late-flash moves (last 5–10 min,
-often noise from late stable money).
-
-**Cross-checking against our model:**
-
-| Our top pick? | Market move | Action |
-|---|---|---|
-| 🟢 yes | 🟢 steaming (≥-20%) | **Strong agreement.** Increase confidence; consider full Kelly. |
-| 🟢 yes | 🔴 drifting (≥+20%) | **Disagreement.** Lower stake or skip — late info we don't have. |
-| 🔴 no | 🟢 steaming (≥-20%) | **Market sees something we missed.** Add to QPL/QIN as cover. |
-| 🔴 no | 🔴 drifting | Confirms our fade — usually nothing to do. |
-
-**How to capture useful drift:**
-1. **Overnight snapshot** (T-12h to T-8h before post): baseline opinion.
-2. **Morning** (~T-4h): public response to mornlines / scratchings.
-3. **Pre-post** (~T-30 min): smart money + stable confidence.
-4. **Final** (T-2 min): flash, often misleading — log but discount.
-
-**Interpreting QIN/QPL drift** — pair-pool moves can reveal connection-level
-information that doesn't show up in Win odds alone (e.g. a stable backing
-the EXACTA, not the win pool). Look for QIN pairs where **both Win odds
-drifted** but the *pair* odds dropped sharply: someone is keying that exact
-combination.
-
-**Notification-worthy drift events** (future automation):
-- Our top-3 horse drifts ≥+30% from earliest snapshot → **WARN before stake**.
-- A horse outside our top-5 steams ≥-30% → **REVIEW** (re-run model, may want QPL cover).
-- A QIN pair drops ≥-25% but neither horse is in our top-3 → **REVIEW** (possible info edge).
-"""
+        import pandas as _pd
+        df = _pd.DataFrame(table)
+        # Default order: favourites first (ascending latest Win odds)
+        try:
+            df = df.sort_values("Win (latest)", na_position="last",
+                                    kind="mergesort").reset_index(drop=True)
+        except Exception:
+            pass
+        st.dataframe(
+            df, hide_index=True, use_container_width=True,
+            column_config={
+                "No": st.column_config.NumberColumn("No", format="%d"),
+                "Win (first)":  st.column_config.NumberColumn(format="%.1f"),
+                "Win (latest)": st.column_config.NumberColumn(format="%.1f"),
+                "Place":        st.column_config.NumberColumn(format="%.1f"),
+                "Δ Win %":      st.column_config.NumberColumn(format="%+.1f%%"),
+            },
         )
+        st.markdown("")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
