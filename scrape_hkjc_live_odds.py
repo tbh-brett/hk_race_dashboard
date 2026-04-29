@@ -152,155 +152,206 @@ def _extract_odds_table(page) -> tuple[str, str, list[dict]]:
 
 # ─── Quinella / Quinella-Place matrix extraction ─────────────────────────────
 # HKJC renders QIN/QPL as a triangular matrix when the user is logged in;
-# anonymous users see only the entry list (no matrix rendered as of 2026-04).
-# We therefore require *strict* matrix shape before accepting the extraction:
-#   - header row must be all-integers in 1..20 (no "Horse Name", "Draw", etc.)
-#   - row-labels must be integers in 1..20 and distinct
-#   - every odds cell must be a plausible pool odds value (<10000)
-#   - at least 5 distinct horse labels to avoid false positives
+# HKJC's /wpq/ page renders QIN and QPL pair-odds in an L-shaped layout that
+# packs a triangular matrix into a roughly-square HTML table. Each leaf table
+# (one for QIN, one for QPL) has:
+#   row 0  = column labels for the upper-right rectangle (horses 2..14)
+#   col 0  = row labels for the lower-left triangle (horses 9..14)
+#   diag   = column labels for the lower-left triangle (horses 8..14)
+#   col -1 = row labels for the upper-right rectangle (horses 1..7)
+# We rebuild the grid from cell bounding-box positions (cx, cy) clustered into
+# row/column buckets, then read odds out of every non-label cell.
 _MATRIX_JS = r"""
 () => {
-  const HEADER_BAD = ['Horse', 'Jockey', 'Trainer', 'Draw', 'Wt', 'Gear',
-                      'Last', 'Body', 'Rtg', 'Colour', 'No.', 'T/P'];
-  const tables = Array.from(document.querySelectorAll('table'));
-  for (const t of tables) {
-    const rows = Array.from(t.querySelectorAll('tr'));
-    if (rows.length < 6) continue;
-    const txt = t.innerText;
-    if (HEADER_BAD.some(w => txt.includes(w))) continue;  // entry-list table
-    // Find header row: ALL cells must be integers 1..20 (allow empty corner cell)
-    let headerRow = -1;
-    let headers = [];
-    for (let r = 0; r < Math.min(3, rows.length); r++) {
-      const cells = Array.from(rows[r].querySelectorAll('th,td'))
-        .map(c => c.innerText.trim());
-      const nonEmpty = cells.filter(x => x !== '');
-      const allInt = nonEmpty.every(x => /^\d+$/.test(x) && +x >= 1 && +x <= 20);
-      if (nonEmpty.length >= 4 && allInt) {
-        headerRow = r; headers = cells; break;
+  const all = Array.from(document.querySelectorAll('table'));
+  const leaves = all.filter(t => t.querySelectorAll('table').length === 0);
+  const matrices = [];
+  for (const t of leaves) {
+    const txt = (t.innerText || '');
+    if (!/Quinella/i.test(txt)) continue;
+    const head = txt.trim().split(/\n+/)[0].trim();
+    const label = /^Quinella Place/i.test(head) ? 'qpl' :
+                  (/^Quinella$/i.test(head) ? 'qin' : null);
+    if (!label) continue;
+
+    const cells = [];
+    for (const c of t.querySelectorAll('th,td')) {
+      const v = (c.innerText || '').trim();
+      const r = c.getBoundingClientRect();
+      if (r.width < 4 || r.height < 4) continue;
+      cells.push({
+        cx: Math.round(r.left + r.width / 2),
+        cy: Math.round(r.top + r.height / 2),
+        v: v,
+      });
+    }
+    if (!cells.length) continue;
+
+    const rowYs = [];
+    for (const c of cells) {
+      if (!rowYs.some(y => Math.abs(y - c.cy) < 8)) rowYs.push(c.cy);
+    }
+    rowYs.sort((a, b) => a - b);
+    const colXs = [];
+    for (const c of cells) {
+      if (!colXs.some(x => Math.abs(x - c.cx) < 8)) colXs.push(c.cx);
+    }
+    colXs.sort((a, b) => a - b);
+    const nR = rowYs.length, nC = colXs.length;
+    const rowOf = cy => {
+      for (let i = 0; i < nR; i++) if (Math.abs(rowYs[i] - cy) < 8) return i;
+      return -1;
+    };
+    const colOf = cx => {
+      for (let i = 0; i < nC; i++) if (Math.abs(colXs[i] - cx) < 8) return i;
+      return -1;
+    };
+    const grid = Array.from({length: nR}, () => Array(nC).fill(''));
+    for (const c of cells) {
+      const r = rowOf(c.cy), col = colOf(c.cx);
+      if (r >= 0 && col >= 0 && grid[r][col] === '') grid[r][col] = c.v;
+    }
+
+    const headerMap = {};
+    for (let col = 0; col < nC; col++) {
+      const v = grid[0][col];
+      if (/^\d+$/.test(v) && +v >= 1 && +v <= 20) headerMap[col] = +v;
+    }
+    const upperRow = {};
+    for (let r = 1; r < nR; r++) {
+      const v = grid[r][nC - 1];
+      if (/^\d+$/.test(v) && +v >= 1 && +v <= 20) upperRow[r] = +v;
+    }
+    const lowerRow = {};
+    for (let r = 1; r < nR; r++) {
+      const v = grid[r][0];
+      if (/^\d+$/.test(v) && +v >= 1 && +v <= 20) lowerRow[r] = +v;
+    }
+    const lowerCol = {};
+    for (let i = 1; i < Math.min(nR, nC); i++) {
+      const v = grid[i][i];
+      if (/^\d+$/.test(v) && +v >= 1 && +v <= 20) lowerCol[i] = +v;
+    }
+
+    const labelCells = new Set();
+    for (const col in headerMap)  labelCells.add(`0,${col}`);
+    for (const r   in upperRow)   labelCells.add(`${r},${nC - 1}`);
+    for (const r   in lowerRow)   labelCells.add(`${r},0`);
+    for (const i   in lowerCol)   labelCells.add(`${i},${i}`);
+    const upperDiagColOf = {};
+    for (let r = 1; r < nR; r++) {
+      if (!(r in upperRow)) continue;
+      for (let cc = 0; cc < nC - 1; cc++) {
+        if (grid[r][cc] === String(upperRow[r]) && !labelCells.has(`${r},${cc}`)) {
+          upperDiagColOf[r] = cc;
+          labelCells.add(`${r},${cc}`);
+          break;
+        }
       }
     }
-    if (headerRow < 0) continue;
-    const out = [];
-    const rowLabels = new Set();
-    for (let r = headerRow + 1; r < rows.length; r++) {
-      const cells = Array.from(rows[r].querySelectorAll('th,td'))
-        .map(c => c.innerText.trim());
-      if (!cells.length) continue;
-      const rowLabel = cells[0];
-      if (!/^\d+$/.test(rowLabel) || +rowLabel > 20) continue;
-      rowLabels.add(rowLabel);
-      for (let c = 1; c < cells.length && c < headers.length; c++) {
-        const v = cells[c];
-        if (!v) continue;
+
+    const pairs = {};
+    for (let r = 1; r < nR; r++) {
+      const upperDiagCol = upperDiagColOf[r] !== undefined ? upperDiagColOf[r] : -1;
+      for (let col = 0; col < nC; col++) {
+        if (labelCells.has(`${r},${col}`)) continue;
+        const v = grid[r][col];
         if (!/^\d+(\.\d+)?$/.test(v)) continue;
-        if (+v > 9999) continue;
-        const colLabel = headers[c];
-        if (!/^\d+$/.test(colLabel) || +colLabel > 20) continue;
-        if (rowLabel === colLabel) continue;
-        const a = +rowLabel, b = +colLabel;
-        const lo = Math.min(a, b), hi = Math.max(a, b);
-        out.push({a: String(lo), b: String(hi), odds: v});
+        const n = +v;
+        if (n <= 0 || n > 9999) continue;
+
+        let rowH = null, colH = null;
+        if (upperDiagCol >= 0 && col > upperDiagCol && (col in headerMap)) {
+          rowH = upperRow[r];
+          colH = headerMap[col];
+        } else if ((r in lowerRow) && (col in lowerCol) && col < r) {
+          rowH = lowerRow[r];
+          colH = lowerCol[col];
+        }
+        if (rowH === null || colH === null || rowH === colH) continue;
+        const lo = Math.min(rowH, colH), hi = Math.max(rowH, colH);
+        const k = lo + '-' + hi;
+        if (!(k in pairs)) pairs[k] = {a: String(lo), b: String(hi), odds: v};
       }
     }
-    if (rowLabels.size < 5) continue;
-    const seen = new Map();
-    for (const row of out) {
-      const k = row.a + '-' + row.b;
-      if (!seen.has(k)) seen.set(k, row);
+    if (Object.keys(pairs).length >= 5) {
+      if (!matrices.some(m => m.label === label)) {
+        matrices.push({label, pairs: Object.values(pairs)});
+      }
     }
-    const uniq = Array.from(seen.values());
-    if (uniq.length >= 10) return uniq;  // need reasonable matrix density
   }
-  return [];
+  return matrices;
 }
 """
 
 
-def _extract_matrix_odds(page) -> tuple[str, list[dict]]:
-    """Extract pairwise odds from the current QIN / QPL page.
+def _extract_all_matrices(page) -> dict:
+    """Extract QIN + QPL pair-odds matrices from the current /wpq/ DOM.
 
-    Returns (last_update, [{"a", "b", "odds"}, ...]).
+    Returns {"qin": [...pairs], "qpl": [...pairs]}. Either may be empty
+    if the matrix didn't render in time.
     """
     try:
-        pairs = page.evaluate(_MATRIX_JS) or []
+        matrices = page.evaluate(_MATRIX_JS) or []
     except Exception:
-        pairs = []
-    last_update = ""
-    try:
-        body_text = page.locator("body").inner_text(timeout=3000)
-        for ln in body_text.splitlines():
-            s = ln.strip()
-            if s.startswith("Last Update"):
-                last_update = s
-                break
-    except Exception:
-        pass
-    return last_update, pairs
+        matrices = []
+    out = {"qin": [], "qpl": []}
+    for m in matrices:
+        lab = m.get("label")
+        if lab in out and not out[lab]:
+            out[lab] = m.get("pairs") or []
+    return out
 
 
 def scrape_race(page, date_iso: str, venue: str, race_no: int,
                 pools: set[str]) -> dict:
-    """Scrape requested pools for one race. `pools` is a subset of
-    {"wp", "qin", "qpl"}."""
+    """Scrape requested pools for one race from the public /wpq/ page.
+    `pools` is a subset of {"wp", "qin", "qpl"}. All three are extracted
+    from the SAME page render — the matrix tables are visible to anonymous
+    users on /wpq/ even though /qin/ and /qpl/ require login.
+    """
     snap = {
         "scraped_at": dt.datetime.now().isoformat(timespec="seconds"),
         "date": date_iso,
         "venue": venue,
         "race_no": race_no,
     }
+    url = f"https://bet.hkjc.com/en/racing/wpq/{date_iso}/{venue}/{race_no}"
+    try:
+        page.goto(url, wait_until="domcontentloaded", timeout=30_000)
+    except Exception:
+        page.goto(url, timeout=30_000)
+    try:
+        page.wait_for_selector("text=Horse Name", timeout=15_000)
+    except Exception:
+        pass
+    # The QIN/QPL pair-odds matrices render slightly after the WP table.
+    # Wait for at least one cell containing 'Quinella Place' header text.
+    try:
+        page.wait_for_selector("text=Quinella Place", timeout=10_000)
+    except Exception:
+        pass
+    page.wait_for_timeout(2500)
 
-    # 1) Win/Place (always provides the race_info / n_runners anchor)
+    # 1) Win/Place + race info
     if "wp" in pools:
-        url = f"https://bet.hkjc.com/en/racing/wpq/{date_iso}/{venue}/{race_no}"
-        try:
-            page.goto(url, wait_until="domcontentloaded", timeout=30_000)
-        except Exception:
-            page.goto(url, timeout=30_000)
-        try:
-            page.wait_for_selector("text=Horse Name", timeout=15_000)
-        except Exception:
-            pass
-        page.wait_for_timeout(1200)
         last_update, race_info, odds = _extract_odds_table(page)
         snap.update({
             "url": url, "last_update": last_update,
             "race_info": race_info, "n_runners": len(odds), "odds": odds,
         })
 
-    # 2) Quinella matrix
-    if "qin" in pools:
-        qurl = f"https://bet.hkjc.com/en/racing/qin/{date_iso}/{venue}/{race_no}"
+    # 2) QIN + QPL matrices (extracted from the same /wpq/ DOM)
+    if "qin" in pools or "qpl" in pools:
         try:
-            try:
-                page.goto(qurl, wait_until="domcontentloaded", timeout=30_000)
-            except Exception:
-                page.goto(qurl, timeout=30_000)
-            page.wait_for_timeout(1500)
-            qin_lu, qin_pairs = _extract_matrix_odds(page)
+            mats = _extract_all_matrices(page)
         except Exception as e:
-            qin_lu, qin_pairs = "", []
-            snap["qin_error"] = str(e)
-        snap["qin_url"] = qurl
-        snap["qin_last_update"] = qin_lu
-        snap["qin_odds"] = qin_pairs
-
-    # 3) Quinella Place matrix
-    if "qpl" in pools:
-        qpurl = f"https://bet.hkjc.com/en/racing/qpl/{date_iso}/{venue}/{race_no}"
-        try:
-            try:
-                page.goto(qpurl, wait_until="domcontentloaded", timeout=30_000)
-            except Exception:
-                page.goto(qpurl, timeout=30_000)
-            page.wait_for_timeout(1500)
-            qpl_lu, qpl_pairs = _extract_matrix_odds(page)
-        except Exception as e:
-            qpl_lu, qpl_pairs = "", []
-            snap["qpl_error"] = str(e)
-        snap["qpl_url"] = qpurl
-        snap["qpl_last_update"] = qpl_lu
-        snap["qpl_odds"] = qpl_pairs
+            mats = {"qin": [], "qpl": []}
+            snap["matrix_error"] = str(e)
+        if "qin" in pools:
+            snap["qin_odds"] = mats.get("qin", [])
+        if "qpl" in pools:
+            snap["qpl_odds"] = mats.get("qpl", [])
 
     return snap
 
@@ -311,13 +362,10 @@ def main():
     ap.add_argument("--venue", default="HV", choices=["HV", "ST"])
     ap.add_argument("--races", default="1-11",
                     help="Race range e.g. 1-11 or 1,2,3 (default: 1-11)")
-    ap.add_argument("--pools", default="wp",
-                    help=("Comma-sep subset of wp,qin,qpl (default: wp). "
-                          "QIN/QPL are experimental: bet.hkjc.com currently "
-                          "requires login to render the pair-odds matrix "
-                          "for anonymous users, so QIN/QPL snapshots may "
-                          "be empty. Post-race QIN/QPL dividends are "
-                          "available via scrape_hkjc_dividends.py."))
+    ap.add_argument("--pools", default="wp,qin,qpl",
+                    help=("Comma-sep subset of wp,qin,qpl "
+                          "(default: wp,qin,qpl — all extracted from the "
+                          "single /wpq/ page render)."))
     ap.add_argument("--headless", action="store_true", default=True)
     args = ap.parse_args()
 
