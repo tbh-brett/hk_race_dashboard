@@ -4008,27 +4008,24 @@ def page_race_day(selected):
                 _rev = [a for a in _alerts if a["severity"] == "REVIEW"]
                 _info = [a for a in _alerts if a["severity"] == "INFO"]
                 _hdr_bits = []
-                if _warn: _hdr_bits.append(f"🔴 {len(_warn)} WARN")
-                if _rev: _hdr_bits.append(f"🟡 {len(_rev)} REVIEW")
-                if _info: _hdr_bits.append(f"⚪ {len(_info)} INFO")
+                if _warn: _hdr_bits.append(f"🔴 {len(_warn)}")
+                if _rev: _hdr_bits.append(f"🟡 {len(_rev)}")
+                if _info: _hdr_bits.append(f"⚪ {len(_info)}")
                 with st.expander(
-                    f"📡 **Market alerts** — { ' · '.join(_hdr_bits) }",
-                    expanded=bool(_warn),
+                    f"📡 Market alerts — { ' · '.join(_hdr_bits) }",
+                    expanded=False,
                 ):
-                    for a in _alerts[:30]:
-                        sev = a["severity"]
-                        icon = {"WARN": "🔴", "REVIEW": "🟡",
-                                "INFO": "⚪"}.get(sev, "·")
-                        if st.button(
-                            f"{icon} **{sev}** · {a['msg']}",
-                            key=f"rd_alert_jump_{a['race']}_{a['no']}_{sev}",
-                            use_container_width=True,
-                        ):
-                            st.session_state["rd_active_race"] = a["race"]
-                            st.rerun()
+                    _icon = {"WARN": "🔴", "REVIEW": "🟡", "INFO": "⚪"}
+                    _lines = [
+                        f"- {_icon.get(a['severity'], '·')} "
+                        f"**R{a['race']}** · {a['msg']}"
+                        for a in _alerts[:12]
+                    ]
+                    st.markdown("\n".join(_lines))
+                    if len(_alerts) > 12:
+                        st.caption(f"…and {len(_alerts) - 12} more.")
                     st.caption(
-                        "Click an alert to jump to that race · "
-                        "WARN = top-3 pick drifting ≥+30%; "
+                        "WARN = top-3 pick drifting ≥+30% · "
                         "REVIEW = outsider steaming ≤-30% or top-1 drifting ≥+20%."
                     )
             elif date_str and _venue_code_top:
