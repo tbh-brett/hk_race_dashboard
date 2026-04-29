@@ -623,10 +623,35 @@ def load_available_meetings() -> list[dict]:
     return meetings
 
 
-def load_meeting_data(path: Path) -> dict:
-    """Load full meeting JSON data."""
-    with open(path, "r", encoding="utf-8") as f:
+@st.cache_data(ttl=120, show_spinner=False)
+def _load_meeting_data_cached(path_str: str, mtime: float, size: int) -> dict:
+    """Internal cached loader. Keyed by (path, mtime, size) so the cache
+    auto-invalidates whenever the file is rewritten by run_meeting.py
+    or _append_results_to_db. ``mtime``/``size`` are part of the cache
+    key only — they are not used inside the body."""
+    del mtime, size  # cache-key only
+    with open(path_str, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_meeting_data(path: Path) -> dict:
+    """Load full meeting JSON data (mtime-cached, 120s TTL).
+
+    Re-parses automatically when the underlying file is rewritten, so
+    callers never see stale data after a Run Analysis / scrape Results
+    pass — but repeated reads within the same Streamlit rerun (and
+    across reruns within 120s) hit the cache instead of re-parsing
+    multi-MB JSON each time.
+    """
+    try:
+        st_ = os.stat(path)
+        return _load_meeting_data_cached(str(path), st_.st_mtime, st_.st_size)
+    except OSError:
+        # Path vanished between caller's existence check and stat() —
+        # fall back to the original direct read so the caller gets the
+        # same FileNotFoundError it would have seen before.
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
 
 
 def load_sarr_data(date_str: str) -> dict | None:
@@ -1480,18 +1505,72 @@ def _safe_read_excel(path: Path) -> pd.DataFrame:
             raise
 
 
-@st.cache_data(ttl=120)
+# NOTE: cached as a *resource* (not data) so that the many
+# ``st.cache_data.clear()`` calls scattered across the app do NOT evict
+# this expensive xlsx -> DataFrame load. The form DB only changes when
+# the post-race pipeline rebuilds it; the two call sites that trigger
+# that rebuild call ``_load_form_db.clear()`` explicitly.
+@st.cache_resource(ttl=120, show_spinner=False)
 def _load_form_db() -> pd.DataFrame:
-    """Load hkjc_results_updated.xlsx for form guide lookups."""
+    """Load hkjc_results_updated.xlsx for form guide lookups.
+
+    Reads from a parquet sidecar (``cache/form_db.parquet``) when it
+    exists and is at least as fresh as the canonical xlsx — parquet
+    deserialises ~100x faster than the multi-MB OneDrive xlsx and
+    avoids the PermissionError / temp-copy hack on Windows. The
+    sidecar is regenerated automatically on cache miss whenever the
+    xlsx is newer (or the parquet is missing / corrupt).
+    """
     db_file = BASE / "hkjc_results_updated.xlsx"
     if not db_file.exists():
         return pd.DataFrame()
+
+    parquet_file = CACHE_DIR / "form_db.parquet"
+    try:
+        xlsx_mtime = db_file.stat().st_mtime
+    except OSError:
+        xlsx_mtime = 0.0
+
+    # Fast path: parquet sidecar is fresh
+    if parquet_file.exists():
+        try:
+            pq_mtime = parquet_file.stat().st_mtime
+        except OSError:
+            pq_mtime = 0.0
+        if pq_mtime >= xlsx_mtime:
+            try:
+                df = pd.read_parquet(parquet_file)
+                if "race_date" in df.columns:
+                    df["race_date"] = pd.to_datetime(df["race_date"]).dt.date
+                return df
+            except Exception:
+                try:
+                    parquet_file.unlink()
+                except OSError:
+                    pass
+
+    # Slow path: read xlsx, normalise, write parquet sidecar for next time.
     df = _safe_read_excel(db_file)
     keep = [c for c in FORM_COLS if c in df.columns]
     df = df[keep].copy()
     df["race_date"] = pd.to_datetime(df["race_date"]).dt.date
     df["place_num"] = pd.to_numeric(df["place"], errors="coerce")
     df["horse_name_upper"] = df["horse_name"].str.upper().str.strip()
+    try:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        # Coerce mixed-type object columns (e.g. ``place`` = int + 'DH' / 'WV')
+        # to plain strings so pyarrow can serialise without ArrowTypeError.
+        # Preserve NaN cells (don't let astype(str) turn them into 'nan').
+        df_pq = df.copy()
+        for col in df_pq.select_dtypes(include="object").columns:
+            mask_na = df_pq[col].isna()
+            df_pq[col] = df_pq[col].astype(str)
+            df_pq.loc[mask_na, col] = None
+        df_pq.to_parquet(parquet_file, index=False)
+    except Exception:
+        # pyarrow / fastparquet missing or write failed — next call falls
+        # back to xlsx path; non-fatal.
+        pass
     return df
 
 
@@ -4789,6 +4868,12 @@ def page_backtest():
                            "commentary · backtest. Pushes outputs to GitHub on cloud."):
             _run_results_scraper(scrape_date.isoformat(), full=True)
             st.cache_data.clear()
+            # Form DB lives on cache_resource (survives cache_data.clear) —
+            # the pipeline rewrites the underlying xlsx so invalidate now.
+            try:
+                _load_form_db.clear()
+            except Exception:
+                pass
             st.rerun()
     with col_b:
         if st.button("[ Backtest only ]", use_container_width=True,
@@ -6079,6 +6164,12 @@ def page_results():
     if st.sidebar.button("[ Scrape Results ]", use_container_width=True, key="res_btn_scrape"):
         _run_results_scraper(scrape_date.isoformat(), full=True)
         st.cache_data.clear()
+        # Form DB lives on cache_resource — clear explicitly because the
+        # post-race pipeline rewrites the underlying xlsx.
+        try:
+            _load_form_db.clear()
+        except Exception:
+            pass
         st.rerun()
 
     res_dates = find_results_dates()
