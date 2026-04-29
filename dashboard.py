@@ -11302,7 +11302,7 @@ def page_my_bets():
 
     tabs = st.tabs(
         ["➕ New bet", "📒 Open bets", "✅ Settled history",
-         "📊 Summary", "🆚 vs Model"]
+         "📊 Summary", "📅 Calendar", "🆚 vs Model"]
     )
 
     # ── TAB 1 — Submit ──────────────────────────────────────────────────
@@ -11997,8 +11997,226 @@ def page_my_bets():
                         ).properties(height=200).configure_view(strokeWidth=0)
                         st.altair_chart(daily_bars, use_container_width=True)
 
-    # ── TAB 5 — vs Model (ROI comparison & deviation notes) ─────────────
+    # ── TAB 5 — Calendar (month/day W-L heatmap) ───────────────────────
     with tabs[4]:
+        st.markdown("### Race-day calendar")
+        st.caption(
+            "Each cell is one calendar day. Colour = net PnL on bets that "
+            "settled for that meeting. Hover for bet count, stake, and "
+            "hit-rate. Use the toggle to switch between a month grid and "
+            "a chronological day list."
+        )
+        settled_cal = [r for r in rows if r.get("status") == "settled"]
+        if not settled_cal:
+            st.info("No settled bets yet — calendar will populate as "
+                    "meetings settle.")
+        else:
+            import datetime as _dt2
+            try:
+                import altair as _alt2
+            except ImportError:
+                _alt2 = None
+
+            # Build daily aggregate keyed by ISO date.
+            day_agg: dict[str, dict] = {}
+            for r in settled_cal:
+                md = (r.get("meeting_date") or "").strip()
+                if len(md) != 8:
+                    continue
+                iso = f"{md[:4]}-{md[4:6]}-{md[6:]}"
+                d = day_agg.setdefault(iso, {
+                    "stake": 0.0, "pnl": 0.0, "ret": 0.0,
+                    "n_bets": 0, "n_hits": 0,
+                })
+                d["stake"]  += float(r.get("stake_hkd") or 0)
+                d["pnl"]    += float(r.get("pnl_hkd") or 0)
+                d["ret"]    += float(r.get("return_hkd") or 0)
+                d["n_bets"] += 1
+                if r.get("hit"):
+                    d["n_hits"] += 1
+
+            view_mode = st.radio(
+                "View",
+                ["Month grid", "Day list"],
+                index=0, horizontal=True, key="mb_cal_view",
+            )
+
+            iso_dates = sorted(day_agg.keys())
+            month_options = sorted({d[:7] for d in iso_dates}, reverse=True)
+
+            if view_mode == "Month grid" and month_options:
+                msel = st.selectbox(
+                    "Month", month_options, index=0,
+                    key="mb_cal_month",
+                    help="Months with at least one settled bet.",
+                )
+                # Build full calendar grid for that month.
+                yr, mo = int(msel[:4]), int(msel[5:7])
+                first = _dt2.date(yr, mo, 1)
+                if mo == 12:
+                    next_first = _dt2.date(yr + 1, 1, 1)
+                else:
+                    next_first = _dt2.date(yr, mo + 1, 1)
+                ndays = (next_first - first).days
+                # Monday-start week index within the month so the grid
+                # aligns with HK convention.
+                cells = []
+                for i in range(ndays):
+                    d = first + _dt2.timedelta(days=i)
+                    iso = d.isoformat()
+                    info = day_agg.get(iso)
+                    pnl = info["pnl"] if info else 0.0
+                    has_bets = info is not None
+                    # Week-of-month (rows): based on Monday-start weeks.
+                    days_from_mon = (first.weekday() + i) // 7
+                    cells.append({
+                        "Date":  iso,
+                        "Day":   d.day,
+                        "DOW":   d.strftime("%a"),
+                        "DOWi":  d.weekday(),       # 0=Mon..6=Sun
+                        "Week":  days_from_mon,
+                        "PnL":   pnl,
+                        "Stake": info["stake"] if info else 0.0,
+                        "Bets":  info["n_bets"] if info else 0,
+                        "Hits":  info["n_hits"] if info else 0,
+                        "Has":   has_bets,
+                        "HitRate": (info["n_hits"]/info["n_bets"]*100)
+                                   if (info and info["n_bets"]) else 0.0,
+                    })
+                df_cal = pd.DataFrame(cells)
+
+                if _alt2 is None:
+                    st.dataframe(df_cal[df_cal["Has"]], hide_index=True,
+                                 use_container_width=True)
+                else:
+                    pnl_max = max(
+                        abs(df_cal[df_cal["Has"]]["PnL"].max() or 0.0),
+                        abs(df_cal[df_cal["Has"]]["PnL"].min() or 0.0),
+                        1.0,
+                    )
+                    dow_labels = ["Mon", "Tue", "Wed", "Thu",
+                                  "Fri", "Sat", "Sun"]
+                    base = _alt2.Chart(df_cal).encode(
+                        x=_alt2.X(
+                            "DOW:N",
+                            sort=dow_labels,
+                            title=None,
+                            axis=_alt2.Axis(orient="top", labelAngle=0),
+                        ),
+                        y=_alt2.Y(
+                            "Week:O",
+                            title=None,
+                            axis=_alt2.Axis(labels=False, ticks=False),
+                            sort="ascending",
+                        ),
+                    )
+                    # Diverging red→neutral→green PnL fill, neutral grey
+                    # for days with no bets.
+                    cells_chart = base.mark_rect(
+                        stroke="#0b1220", strokeWidth=2,
+                        cornerRadius=4,
+                    ).encode(
+                        color=_alt2.condition(
+                            "datum.Has",
+                            _alt2.Color(
+                                "PnL:Q",
+                                scale=_alt2.Scale(
+                                    domain=[-pnl_max, 0, pnl_max],
+                                    range=["#ef4444", "#1f2937", "#22c55e"],
+                                ),
+                                legend=_alt2.Legend(
+                                    title="Daily PnL ($)",
+                                    orient="bottom",
+                                ),
+                            ),
+                            _alt2.value("#0f172a"),
+                        ),
+                        tooltip=[
+                            _alt2.Tooltip("Date:N"),
+                            _alt2.Tooltip("Bets:Q", format="d"),
+                            _alt2.Tooltip("Hits:Q", format="d"),
+                            _alt2.Tooltip("HitRate:Q",
+                                          title="Hit %",
+                                          format=".1f"),
+                            _alt2.Tooltip("Stake:Q", format="$.0f"),
+                            _alt2.Tooltip("PnL:Q",
+                                          title="PnL",
+                                          format="+$.2f"),
+                        ],
+                    )
+                    # Day-of-month label.
+                    day_text = base.mark_text(
+                        baseline="top", align="left",
+                        dx=-22, dy=-14,
+                        fontSize=11, color="#cbd5e1",
+                    ).encode(text="Day:Q")
+                    # PnL annotation for days with bets.
+                    pnl_text = _alt2.Chart(df_cal[df_cal["Has"]]).mark_text(
+                        fontSize=11, fontWeight="bold", color="white",
+                    ).encode(
+                        x=_alt2.X("DOW:N", sort=dow_labels),
+                        y=_alt2.Y("Week:O", sort="ascending"),
+                        text=_alt2.Text("PnL:Q", format="+$.0f"),
+                    )
+                    cal = (cells_chart + day_text + pnl_text).properties(
+                        height=max(160, 60 * (df_cal["Week"].max() + 1)),
+                    ).configure_view(strokeWidth=0)
+                    st.altair_chart(cal, use_container_width=True)
+
+                # Month totals strip.
+                month_rows = [c for c in cells if c["Has"]]
+                if month_rows:
+                    m_pnl   = sum(c["PnL"]   for c in month_rows)
+                    m_stake = sum(c["Stake"] for c in month_rows)
+                    m_bets  = sum(c["Bets"]  for c in month_rows)
+                    m_hits  = sum(c["Hits"]  for c in month_rows)
+                    m_w     = sum(1 for c in month_rows if c["PnL"] > 0)
+                    m_l     = sum(1 for c in month_rows if c["PnL"] < 0)
+                    m1, m2, m3, m4, m5 = st.columns(5)
+                    m1.metric("Meetings", len(month_rows),
+                              delta=f"{m_w}W / {m_l}L")
+                    m2.metric("Bets", m_bets,
+                              delta=(f"{m_hits/m_bets*100:.1f}% hit"
+                                     if m_bets else None))
+                    m3.metric("Stake", f"${m_stake:.0f}")
+                    m4.metric("PnL", f"{m_pnl:+.2f}")
+                    m5.metric("ROI",
+                              f"{m_pnl/m_stake*100:+.1f}%"
+                              if m_stake else "—")
+            else:
+                # Day-list view (chronological).
+                rows_dl = []
+                cum = 0.0
+                for iso in iso_dates:
+                    info = day_agg[iso]
+                    cum += info["pnl"]
+                    rows_dl.append({
+                        "Date":     iso,
+                        "Bets":     info["n_bets"],
+                        "Hits":     info["n_hits"],
+                        "Hit %":    (info["n_hits"]/info["n_bets"]*100)
+                                    if info["n_bets"] else 0.0,
+                        "Stake":    info["stake"],
+                        "PnL":      info["pnl"],
+                        "Cum PnL":  round(cum, 2),
+                        "Outcome":  "WIN" if info["pnl"] > 0 else
+                                    ("LOSS" if info["pnl"] < 0 else "PUSH"),
+                    })
+                st.dataframe(
+                    pd.DataFrame(rows_dl), hide_index=True,
+                    use_container_width=True,
+                    column_config={
+                        "Bets":    st.column_config.NumberColumn(format="%d"),
+                        "Hits":    st.column_config.NumberColumn(format="%d"),
+                        "Hit %":   st.column_config.NumberColumn(format="%.1f%%"),
+                        "Stake":   st.column_config.NumberColumn(format="$%.0f"),
+                        "PnL":     st.column_config.NumberColumn(format="%+.2f"),
+                        "Cum PnL": st.column_config.NumberColumn(format="%+.2f"),
+                    },
+                )
+
+    # ── TAB 6 — vs Model (ROI comparison & deviation notes) ─────────────
+    with tabs[5]:
         st.markdown("### Your bets vs the model")
         st.caption(
             "For each user bet we load that meeting's race_day_report (v4.4). "
