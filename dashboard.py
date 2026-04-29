@@ -3195,6 +3195,19 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
                     unsafe_allow_html=True,
                 )
 
+    # ── Market Pulse (live-odds drift) for the selected race ────────
+    # Stashed by page_overview so we don't have to re-derive venue here.
+    try:
+        _date_compact = st.session_state.get("_rdi_date_compact", "")
+        _venue_code = st.session_state.get("_rdi_venue_code", "")
+        if _date_compact and _venue_code and rn != "?":
+            _render_race_day_market_pulse(
+                _date_compact, _venue_code, int(rn),
+                race.get("picks") or [],
+            )
+    except Exception as _mp_err:
+        st.caption(f"_Market Pulse unavailable: {_mp_err}_")
+
     # ── Speed-map + pace research (always shown, no dropdown) ──────
     st.markdown("#### Speedmap + pace research")
     render_speed_map(race)
@@ -3221,6 +3234,11 @@ def page_overview():
     dstr = meeting_info["date_str"]
     nice_date = f"{dstr[:4]}-{dstr[4:6]}-{dstr[6:]}"
     version = meeting_info.get("model_version", data.get("model_version", ""))
+
+    # Stash for _render_race_cockpit → Market Pulse panel.
+    st.session_state["_rdi_date_compact"] = dstr
+    st.session_state["_rdi_venue_code"] = _venue_to_code(
+        data.get("meeting_venue", ""))
 
     # Load SARR data for this meeting
     sarr_data = load_sarr_data(dstr)
@@ -4132,19 +4150,6 @@ def page_race_day(selected):
             race = next((r for r in et_races if r["race_number"] == active_rn), None)
             if race:
                 render_race_card(race, vet_lookup=vet_lookup, show_top=4, bb_lookup=bb_lookup)
-
-        # ── Market Pulse (live odds) for the selected race ───────────────
-        try:
-            _venue_code = _venue_to_code(data.get("meeting_venue", ""))
-            _active_race_obj = next(
-                (r for r in active_races if r["race_number"] == active_rn), None)
-            _active_picks = (_active_race_obj or {}).get("picks", []) or []
-            if date_str and _venue_code:
-                st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
-                _render_race_day_market_pulse(
-                    date_str, _venue_code, active_rn, _active_picks)
-        except Exception as _mp_err:
-            st.caption(f"_Market Pulse unavailable: {_mp_err}_")
 
     # ── Column acronym legend ────────────────────────────────────────────
     with st.expander("📖 Column Legend & Interpretation Guide"):
@@ -12240,7 +12245,7 @@ def _render_strategy_slate_tab() -> None:
 
     cfg_cols = st.columns([1, 1, 1, 1.4])
     bankroll = cfg_cols[0].number_input(
-        "Bankroll ($)", min_value=100.0, max_value=200000.0, value=5000.0,
+        "Bankroll ($)", min_value=100.0, max_value=200000.0, value=2000.0,
         step=100.0, key="slate_bankroll",
     )
     mode = cfg_cols[1].selectbox(
@@ -12268,11 +12273,36 @@ def _render_strategy_slate_tab() -> None:
         help="Hard cap on total HKD deployed across the meeting.",
     )
 
+    cfg_cols2 = st.columns([1.5, 1.5, 3])
+    force_min_stake = cfg_cols2[0].checkbox(
+        "Force $10 min on every +EV pick", value=False,
+        key="slate_force_min",
+        help=(
+            "OFF (recommended for $2-3 k bankroll): sub-$10 Kelly stakes "
+            "are skipped, so the meeting cap goes to the highest-edge "
+            "picks instead of being padded across many marginal bets.\n\n"
+            "ON (legacy): every positive-EV pick is bumped to the $10 "
+            "HKJC minimum — exhausts the meeting cap quickly."
+        ),
+    )
+    proportional_cap = cfg_cols2[1].checkbox(
+        "Proportional cap allocation", value=True,
+        key="slate_prop_cap",
+        help=(
+            "When the sum of Kelly stakes exceeds the meeting cap, scale "
+            "every accepted bet down by the same factor instead of the "
+            "earlier greedy 'first-come eats the cap' behaviour. Lets "
+            "every structured bet type get a fair share."
+        ),
+    )
+
     with st.spinner(f"Building slate · {sel_title} · {mode}…"):
         try:
             slate = build_meeting_slate(
                 date_str, bankroll=float(bankroll), mode=mode,
                 enable_allup=enable_allup,
+                force_min_stake=force_min_stake,
+                proportional_cap=proportional_cap,
             )
         except Exception as exc:
             st.error(f"Slate build failed: {exc}")
@@ -12472,8 +12502,8 @@ def page_model_bets():
     )
 
     tabs = st.tabs(
-        ["📋 Today's Tickets", "📈 Track Record", "🎯 Strategy Slate",
-         "🧪 Strategy Sweep", "🔧 Filter Rules"]
+        ["📋 Today's Tickets", "🎯 Strategy Slate",
+         "📈 Track Record", "🧪 Strategy Sweep", "🔧 Filter Rules"]
     )
 
     # ── TAB 1 — Today's / selected meeting tickets ──────────────────────────
@@ -12657,7 +12687,7 @@ def page_model_bets():
 """)
 
     # ── TAB 2 — Track record from picks log ────────────────────────────────
-    with tabs[1]:
+    with tabs[2]:
         result = settle_picks_log()
         log = result["rows"]
         s = result["summary"]
@@ -12794,8 +12824,8 @@ def page_model_bets():
                     },
                 )
 
-    # ── TAB 3 — Strategy slate (Kelly-sized $-bets with reasoning) ──────────
-    with tabs[2]:
+    # ── TAB 2 — Strategy slate (Kelly-sized $-bets with reasoning) ──────────
+    with tabs[1]:
         _render_strategy_slate_tab()
 
     # ── TAB 4 — Strategy sweep (reads pre-computed analysis) ───────────────
@@ -13087,12 +13117,12 @@ def main():
         ("Race Day Insight", "🏁 Race Day Insight"),
         ("Form Guide",     "📖 Form Guide"),
         ("Model Analysis", "📊 Model Analysis"),
+        ("Model Bets",     "🎯 Model Bets"),
         ("Data Analysis",  "🔬 Data Analysis"),
         ("Horse Profile",  "🐴 Horse Profile"),
         ("Results",        "🏆 Results"),
         ("Live Feed",      "📡 Live Feed"),
         ("Live Odds",      "💹 Live Odds"),
-        ("Model Bets",     "🎯 Model Bets"),
         ("My Bets",        "💰 My Bets"),
         ("Blackbook",      "📓 Blackbook"),
         ("Trials",         "🎽 Trials"),

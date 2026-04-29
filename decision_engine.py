@@ -380,6 +380,8 @@ def build_meeting_slate(
     n_observed: int = 30,
     blackbook: Optional[dict] = None,
     factor_tbls: Optional[dict] = None,
+    force_min_stake: bool = False,
+    proportional_cap: bool = True,
 ) -> dict:
     """Return the recommended slate for a single meeting.
 
@@ -495,7 +497,13 @@ def build_meeting_slate(
                 continue
 
             remaining = max(0.0, meeting_cap - spent)
-            if (not is_uncapped) and remaining < HKJC_MIN_STAKE:
+            # When ``proportional_cap`` is enabled we let every Kelly stake
+            # through unchanged, then scale them all down once at the end
+            # so each bet type gets its proportional share. Otherwise we
+            # fall back to the legacy greedy "first-come eats the cap"
+            # behaviour and reject sub-$10 leftovers.
+            if (not is_uncapped) and (not proportional_cap) \
+                    and remaining < HKJC_MIN_STAKE:
                 races_out.append({
                     "race_number": rn, "play": sub_play,
                     "banker_no":   banker.get("horse_no"),
@@ -510,7 +518,17 @@ def build_meeting_slate(
                 })
                 continue
 
-            bet_policy = "force_min" if bankroll < 5000 else "floor"
+            # Stake-policy selection:
+            #   force_min_stake=True  → every +EV pick gets at least $10
+            #                            (legacy behaviour, exhausts the
+            #                            meeting cap fast on small
+            #                            bankrolls).
+            #   force_min_stake=False → "floor" — sub-$10 Kelly stakes are
+            #                            skipped, freeing the cap for the
+            #                            higher-conviction picks. This is
+            #                            the recommended setting at
+            #                            $2-3 k bankrolls.
+            bet_policy = "force_min" if force_min_stake else "floor"
             stake = size_bet(
                 p_model=p_model, p_market=p_market,
                 decimal_odds=decimal_odds, bankroll=bankroll,
@@ -518,7 +536,8 @@ def build_meeting_slate(
                 min_bet_policy=bet_policy,
             )
 
-            if (not is_uncapped) and stake.accepted and stake.stake_hkd > remaining:
+            if (not is_uncapped) and (not proportional_cap) \
+                    and stake.accepted and stake.stake_hkd > remaining:
                 stake.stake_hkd = math.floor(remaining / HKJC_MIN_STAKE) \
                                   * HKJC_MIN_STAKE
                 if stake.stake_hkd < HKJC_MIN_STAKE:
@@ -582,6 +601,37 @@ def build_meeting_slate(
                     shrinkage_k=cfg["shrinkage_k"],
                     is_uncapped=is_uncapped,
                 )
+
+    # ── Proportional cap allocation ──────────────────────────────────────
+    # The original loop is greedy: bets are sized in the order they're
+    # generated and the first ones eat the meeting cap, so structurally
+    # later bets (e.g. QPL_BANKER per-leg) get clipped or rejected even
+    # when they have higher edge. When ``proportional_cap`` is True and
+    # the sum of accepted Kelly stakes exceeds the meeting cap, we scale
+    # every accepted stake down by the same factor so each bet type gets
+    # a fair share. Each scaled stake is re-floored to the $10 multiple
+    # and dropped if it falls below the $10 minimum.
+    if (proportional_cap and not is_uncapped
+            and meeting_cap > 0):
+        accepted = [r for r in races_out if r.get("accepted")]
+        total_accepted = sum(r["stake_hkd"] for r in accepted)
+        if accepted and total_accepted > meeting_cap:
+            scale = meeting_cap / total_accepted
+            new_spent = 0.0
+            for r in accepted:
+                raw = r["stake_hkd"] * scale
+                hkd = math.floor(raw / HKJC_MIN_STAKE) * HKJC_MIN_STAKE
+                if hkd < HKJC_MIN_STAKE:
+                    r["accepted"] = False
+                    r["stake_hkd"] = 0.0
+                    r["reason"] = (r.get("reason", "")
+                                   + f"; clipped by cap (scaled to ${raw:.0f})")
+                else:
+                    r["stake_hkd"] = hkd
+                    r["reason"] = (r.get("reason", "")
+                                   + f"; cap-scaled ×{scale:.2f}")
+                    new_spent += hkd
+            spent = new_spent
 
     # Build all-up chains. Aggressive/balanced fire only the single best;
     # uncapped fires up to MAX_CHAINS chains (parallel satellites).
