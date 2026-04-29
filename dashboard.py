@@ -3888,30 +3888,13 @@ def page_race_day(selected):
                         except (OSError, subprocess.TimeoutExpired) as e:
                             st.error(f"SARR run errored: {e}")
 
-    # ── Model toggle (ET / SARR) ─────────────────────────────────────────
-    # Rendered here as well as right above the race-tab row (below) so it's
-    # always visible without scrolling — both widgets share the session_state
-    # key via a callback. Label and radio are placed on the same horizontal
-    # row so the toggle looks like a compact "Model: [SARR] [ET]" control.
+    # ── Model toggle state (UI rendered below, near the race-tab row) ───
+    # The actual radio is rendered just above the race tabs so the model
+    # selector lives next to the search bar and tabs (one toggle, no dupes).
     if sarr_available:
-        model_options = ["SARR (Sectional-Anchored)", "ET (Expected Time)"]
-        # Initialise only once
         if "rd_model_toggle" not in st.session_state:
-            st.session_state["rd_model_toggle"] = model_options[0]
-        _lbl_col, _rad_col = st.columns([0.08, 0.92])
-        with _lbl_col:
-            st.markdown(
-                "<div style='padding-top:6px;font-weight:700;"
-                "color:#a3b3c7;letter-spacing:0.5px'>MODEL</div>",
-                unsafe_allow_html=True,
-            )
-        with _rad_col:
-            sel_model = st.radio(
-                "Model", model_options, horizontal=True,
-                key="rd_model_toggle",
-                label_visibility="collapsed",
-            )
-        use_sarr = sel_model.startswith("SARR")
+            st.session_state["rd_model_toggle"] = "SARR (Sectional-Anchored)"
+        use_sarr = st.session_state["rd_model_toggle"].startswith("SARR")
     else:
         use_sarr = False
 
@@ -4025,8 +4008,8 @@ def page_race_day(selected):
                     if len(_alerts) > 12:
                         st.caption(f"…and {len(_alerts) - 12} more.")
                     st.caption(
-                        "WARN = top-3 pick drifting ≥+30% · "
-                        "REVIEW = outsider steaming ≤-30% or top-1 drifting ≥+20%."
+                        "WARN = top-3 pick drifting ≥+40% · "
+                        "REVIEW = outsider steaming ≤-40% or top-1 drifting ≥+25%."
                     )
             elif date_str and _venue_code_top:
                 _has_any = bool((BASE / "cache" / "live_odds" / date_str).exists()
@@ -9517,6 +9500,421 @@ def _signal_audit_tab(window: str, factor_mtime: float) -> None:
         st.dataframe(df_t, hide_index=True, use_container_width=True)
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Horse Profile (per-horse pivot of model rank vs finish, perf score, excuses)
+# Top-level nav page — backed by horse_intel.py + master DB
+# ──────────────────────────────────────────────────────────────────────────────
+
+@st.cache_data(ttl=120, show_spinner=False)
+def _horse_intel_index(_mtime: float) -> dict:
+    """Load horse_intel/_index.json. Cache key is the file's mtime so a
+    rebuild invalidates automatically."""
+    p = BASE / "reports" / "horse_intel" / "_index.json"
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+@st.cache_data(ttl=120, show_spinner=False)
+def _horse_intel_record(slug: str, _mtime: float) -> dict | None:
+    p = BASE / "reports" / "horse_intel" / f"{slug}.json"
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _horse_intel_mtime() -> float:
+    p = BASE / "reports" / "horse_intel" / "_index.json"
+    return p.stat().st_mtime if p.exists() else 0.0
+
+
+def _horse_search(query: str, idx: dict, limit: int = 12) -> list[str]:
+    """Substring + fuzzy match horse names. Ranks by:
+       1. exact equality
+       2. starts-with
+       3. token starts-with (any word starts with the query)
+       4. substring
+    Within each tier, prefers more recently active horses."""
+    q = (query or "").upper().strip()
+    if not q:
+        # No query → most recently active horses (top-N by last_run_date)
+        scored = []
+        for nm, meta in idx.items():
+            d = (meta or {}).get("last_run_date", "") if isinstance(meta, dict) else ""
+            scored.append((d, nm))
+        scored.sort(reverse=True)
+        return [nm for _, nm in scored[:limit]]
+
+    tiers: list[list[tuple[str, str]]] = [[], [], [], []]
+    for nm, meta in idx.items():
+        d = (meta or {}).get("last_run_date", "") if isinstance(meta, dict) else ""
+        if nm == q:
+            tiers[0].append((d, nm))
+        elif nm.startswith(q):
+            tiers[1].append((d, nm))
+        elif any(tok.startswith(q) for tok in nm.split()):
+            tiers[2].append((d, nm))
+        elif q in nm:
+            tiers[3].append((d, nm))
+    out: list[str] = []
+    for t in tiers:
+        t.sort(reverse=True)  # recent first
+        for _, nm in t:
+            if nm not in out:
+                out.append(nm)
+            if len(out) >= limit:
+                return out
+    return out
+
+
+def page_horse_profile():
+    """Per-horse contextualised performance — pivot of master DB +
+    reports + commentary into a single horse view. Top-level nav page."""
+    import subprocess as _sp
+    import datetime as _dt
+
+    st.title("🐴 Horse Profile")
+    st.caption(
+        "Per-horse pivot of model rank vs. finish, performance score, "
+        "and excuse tags. Sourced from `hkjc_results_updated.xlsx` "
+        "(full season history) + `reports/*` (commentary, ET/SARR ranks, "
+        "actual pace). Pure read on existing data — no new model. Use as "
+        "a complement to the factor model, not a substitute."
+    )
+
+    mtime = _horse_intel_mtime()
+    idx = _horse_intel_index(mtime)
+
+    # ── Staleness check — DB newer than horse-intel index? ─────────────
+    db_path = BASE / "hkjc_results_updated.xlsx"
+    db_mtime = db_path.stat().st_mtime if db_path.exists() else 0.0
+    is_stale = bool(db_mtime and mtime and db_mtime > mtime + 1)
+    if is_stale:
+        try:
+            with st.spinner("Master DB has new data — rebuilding Horse "
+                            "Intel index…"):
+                r = _sp.run(
+                    [sys.executable, str(BASE / "horse_intel.py")],
+                    capture_output=True, text=True, timeout=300,
+                    cwd=str(BASE),
+                )
+            if r.returncode == 0:
+                _horse_intel_index.clear()
+                _horse_intel_record.clear()
+                mtime = _horse_intel_mtime()
+                idx = _horse_intel_index(mtime)
+                st.toast("Horse Intel auto-rebuilt from latest DB.",
+                         icon="🐴")
+            else:
+                st.warning(
+                    "Auto-rebuild failed — click **🔄 Rebuild** below.\n\n"
+                    f"```\n{(r.stderr or r.stdout)[-800:]}\n```"
+                )
+        except (OSError, _sp.TimeoutExpired) as e:
+            st.warning(f"Auto-rebuild skipped: {e}")
+
+    # ── Top status bar ─────────────────────────────────
+    c_st1, c_st2, c_st3 = st.columns([3, 1, 1])
+    with c_st1:
+        if mtime:
+            mt = _dt.datetime.fromtimestamp(mtime)
+            total_runs = sum(
+                m.get("n_runs", 0) if isinstance(m, dict) else 0
+                for m in idx.values()
+            )
+            st.caption(
+                f"Index built **{mt:%Y-%m-%d %H:%M}** · "
+                f"**{len(idx):,}** horses · **{total_runs:,}** runs"
+            )
+        else:
+            st.warning("Horse intel index not built yet — click Rebuild.")
+    with c_st2:
+        only_today = st.checkbox(
+            "Today's card only", value=False, key="hi_only_today",
+            help="Restrict search to runners on the most recent racecard.",
+        )
+    with c_st3:
+        if st.button("🔄 Rebuild", key="hi_rebuild",
+                     use_container_width=True,
+                     help="Re-run horse_intel.py against the master DB."):
+            try:
+                with st.spinner("Rebuilding from master DB…"):
+                    r = _sp.run(
+                        [sys.executable, str(BASE / "horse_intel.py")],
+                        capture_output=True, text=True, timeout=300,
+                        cwd=str(BASE),
+                    )
+                if r.returncode == 0:
+                    st.success(r.stdout.strip()[-200:] or "Rebuilt.")
+                    _horse_intel_index.clear()
+                    _horse_intel_record.clear()
+                    st.rerun()
+                else:
+                    st.error((r.stderr or r.stdout)[-1500:])
+            except (OSError, _sp.TimeoutExpired) as e:
+                st.error(str(e))
+
+    if not idx:
+        st.info(
+            "No horses indexed. Click **Rebuild** above (it reads from "
+            "`hkjc_results_updated.xlsx` and takes ~5 s)."
+        )
+        return
+
+    # ── Filter pool by today's card if asked ───────────
+    pool = idx
+    if only_today:
+        try:
+            cards = sorted((BASE / "racecards").glob("racecard_*.xlsx"))
+            if cards:
+                df_card = pd.read_excel(cards[-1], sheet_name="All Races")
+                if "is_standby" in df_card.columns:
+                    df_card = df_card[df_card["is_standby"] == False]
+                today_runners = {
+                    str(n).upper().strip()
+                    for n in df_card["horse_name"].dropna().tolist()
+                }
+                pool = {k: v for k, v in idx.items() if k in today_runners}
+                if not pool:
+                    st.warning(
+                        "No runners on today's card are in the index "
+                        "(first-starters won't have history). Showing all "
+                        "horses instead."
+                    )
+                    pool = idx
+        except Exception as e:
+            st.caption(f"Could not load today's racecard: {e}")
+
+    # ── Search bar (intuitive: as-you-type substring + fuzzy) ──
+    pre_pick = st.session_state.get("hi_pick", "")
+    query = st.text_input(
+        "🔍 Search horse",
+        value=st.session_state.get("hi_search", ""),
+        key="hi_search",
+        placeholder="Type any part of a name — e.g. 'might', 'profit', "
+                    "'son pak', 'galaxy'…",
+        help="Substring match. Hit Enter or click a result below to "
+             "open. Empty = most recently active horses.",
+    )
+
+    matches = _horse_search(query, pool, limit=12)
+
+    if not matches:
+        st.info(f"No horses match **{query!r}**.")
+        return
+
+    # Render result cards as buttons in a 3-column grid
+    st.caption(f"**{len(matches)}** result(s)" + (
+        " (top 12 — refine your search to narrow)" if len(matches) >= 12 else ""
+    ))
+    pick = pre_pick if pre_pick in matches else None
+
+    cols = st.columns(3)
+    for i, name in enumerate(matches):
+        meta = pool.get(name, {}) if isinstance(pool.get(name), dict) else {}
+        n = meta.get("n_runs", 0)
+        wp = meta.get("win_pct", 0.0)
+        last_d = meta.get("last_run_date", "")
+        last_f = meta.get("last_finish", "")
+        psm = meta.get("perf_score_mean")
+        bb = meta.get("blackbook", False)
+        psm_str = f"{psm:+.2f}" if psm is not None else "—"
+        label = (
+            f"**{name}**" + (" 📓" if bb else "")
+            + f"  \n{n} runs · W {wp:.0f}% · μperf {psm_str}"
+            + (f"  \nlast: {last_d} → P{last_f}" if last_d else "")
+        )
+        with cols[i % 3]:
+            # Use a button styled to look like a card
+            if st.button(label, key=f"hi_pick_{name}",
+                         use_container_width=True,
+                         type="primary" if name == pick else "secondary"):
+                st.session_state["hi_pick"] = name
+                pick = name
+                st.rerun()
+
+    if pick is None:
+        # Auto-pick top result if user hasn't clicked yet
+        pick = matches[0]
+
+    st.divider()
+
+    meta = pool.get(pick, {}) if isinstance(pool.get(pick), dict) else {}
+    fname = meta.get("file") if isinstance(meta, dict) else f"{pick}.json"
+    slug = (fname or "").replace(".json", "") if fname else pick.replace(" ", "_")
+    rec = _horse_intel_record(slug, mtime)
+    if not rec:
+        st.error(f"Could not load record for **{pick}** (slug={slug}).")
+        return
+
+    s = rec.get("summary", {}) or {}
+    runs = rec.get("runs", []) or []
+
+    # ── Header ────────────────────────────────────────
+    head_l, head_r = st.columns([3, 1])
+    with head_l:
+        st.markdown(f"## {pick}")
+    with head_r:
+        # HKJC profile link (search redirect — robust to any horse_id format)
+        url = ("https://racing.hkjc.com/racing/information/English/Horse/"
+               "SelectHorse.aspx?HorseName=" + pick.replace(" ", "+"))
+        st.markdown(f"[🔗 HKJC profile]({url})")
+
+    h1, h2, h3, h4, h5 = st.columns(5)
+    h1.metric("Runs", s.get("n_runs", 0))
+    h2.metric("Win %", f"{s.get('win_pct', 0):.1f}%")
+    h3.metric("Top-3 %", f"{s.get('top3_pct', 0):.1f}%")
+    abp = s.get("avg_beat_proj_s")
+    h4.metric(
+        "Avg vs proj",
+        f"{abp:+.2f}s" if abp is not None else "—",
+        help="Negative = ran faster than ET projected. "
+             "Only counts runs covered by an ET race-day report (Apr-26+).",
+    )
+    psm = s.get("perf_score_mean")
+    h5.metric(
+        "Avg perf score",
+        f"{psm:+.2f}" if psm is not None else "—",
+        help="Mean contextualised performance score. Higher = consistently "
+             "positive context (late kicks, beats projection, dominant "
+             "wins). Negative = recurring underperformance.",
+    )
+
+    bb_status = s.get("blackbook_status")
+    if bb_status:
+        st.success(
+            f"📓 **In blackbook** — {bb_status}"
+            + (f" — _{s.get('blackbook_note', '')}_"
+               if s.get("blackbook_note") else "")
+        )
+
+    # Recurring excuses
+    recs = s.get("recurring_excuses") or {}
+    if recs:
+        chips = " ".join(
+            f"<span style='display:inline-block;padding:2px 8px;margin:2px;"
+            f"border-radius:10px;background:#3a2540;color:#f4d4ff;"
+            f"font-size:0.8em;'>{tag} ×{ct}</span>"
+            for tag, ct in recs.items()
+        )
+        st.markdown(f"**Recurring tags:** {chips}", unsafe_allow_html=True)
+
+    if not runs:
+        st.info("No runs in history.")
+        return
+
+    # ── Run history table ────────────────────────────
+    rows_t = []
+    for r in runs:
+        beat = r.get("beat_proj_s")
+        rows_t.append({
+            "Date":     r.get("date", ""),
+            "Vn":       r.get("venue", ""),
+            "R":        r.get("race_number"),
+            "Dist":     r.get("distance"),
+            "Surf":     r.get("surface"),
+            "Going":    r.get("going"),
+            "Cls":      r.get("race_class"),
+            "Drw":      r.get("draw"),
+            "Fin":      r.get("finish"),
+            "LBW":      r.get("lbw"),
+            "Odds":     r.get("win_odds"),
+            "Jockey":   r.get("jockey"),
+            "ET#":      r.get("et_rank"),
+            "SARR#":    r.get("sarr_rank"),
+            "Δproj(s)": (round(beat, 2) if beat is not None else None),
+            "Perf":     r.get("perf_score"),
+            "Tags":     ", ".join(r.get("tags") or []),
+            "Note":     r.get("comment_short", ""),
+        })
+    df_runs = pd.DataFrame(rows_t)
+    # Show most recent first by default
+    df_runs = df_runs.iloc[::-1].reset_index(drop=True)
+
+    st.markdown("#### Run history (most recent first)")
+    st.dataframe(
+        df_runs, hide_index=True, use_container_width=True,
+        column_config={
+            "R":        st.column_config.NumberColumn(format="%d"),
+            "Dist":     st.column_config.NumberColumn(format="%d"),
+            "Drw":      st.column_config.NumberColumn(format="%d"),
+            "Fin":      st.column_config.NumberColumn(format="%d"),
+            "ET#":      st.column_config.NumberColumn(format="%d"),
+            "SARR#":    st.column_config.NumberColumn(format="%d"),
+            "Δproj(s)": st.column_config.NumberColumn(format="%+.2f"),
+            "Perf":     st.column_config.NumberColumn(format="%+.2f"),
+        },
+    )
+
+    # ── Perf score timeline ──────────────────────────
+    try:
+        import altair as _alt
+        df_ts = df_runs[["Date", "Perf", "Fin"]].copy()
+        df_ts["Date"] = pd.to_datetime(df_ts["Date"], errors="coerce")
+        df_ts = df_ts.dropna(subset=["Date"]).sort_values("Date")
+        if not df_ts.empty:
+            df_ts["Color"] = df_ts["Perf"].apply(
+                lambda v: "good" if (v or 0) > 0.5
+                else ("bad" if (v or 0) < -0.3 else "neutral")
+            )
+            chart = _alt.Chart(df_ts).mark_bar(
+                cornerRadiusTopLeft=2, cornerRadiusTopRight=2,
+            ).encode(
+                x=_alt.X("Date:T", title=None),
+                y=_alt.Y("Perf:Q", title="Perf score"),
+                color=_alt.Color(
+                    "Color:N",
+                    scale=_alt.Scale(
+                        domain=["good", "neutral", "bad"],
+                        range=["#22c55e", "#94a3b8", "#ef4444"],
+                    ),
+                    legend=None,
+                ),
+                tooltip=["Date:T", "Fin:Q", "Perf:Q"],
+            ).properties(height=180).configure_view(strokeWidth=0)
+            st.markdown("#### Perf score timeline")
+            st.altair_chart(chart, use_container_width=True)
+    except ImportError:
+        pass
+
+    # ── Per-run reasons drill-down ───────────────────
+    with st.expander("Per-run perf reasons (model excuses & highlights)",
+                     expanded=False):
+        for r in reversed(runs):
+            d = r.get("date", "")
+            rn = r.get("race_number", "?")
+            fin = r.get("finish", "?")
+            ps = r.get("perf_score", 0.0)
+            reasons = r.get("perf_reasons") or []
+            tags = r.get("tags") or []
+            note = r.get("comment_short", "")
+            line = f"- **{d} R{rn}** · P{fin} · perf {ps:+.2f}"
+            if reasons:
+                line += " · " + "; ".join(reasons)
+            if tags:
+                line += f" · _tags: {', '.join(tags)}_"
+            if note:
+                line += f" · _{note}_"
+            st.markdown(line)
+
+    st.caption(
+        "**Reading guide.** `Perf` is a contextualised performance score "
+        "borrowed from `backtest_model.find_exceptional_performers` — it "
+        "rewards dominant wins, late kicks, and beating projection; it "
+        "penalises high-rank model picks that miss the board. "
+        "**ET#/SARR#/Δproj** are populated only for meetings that have a "
+        "race-day report on disk (Apr-26 onwards) — older runs show as —. "
+        "Use as a sanity-check for blackbook adds and to spot recurring "
+        "trip issues, not as a standalone bet trigger."
+    )
+
+
 def page_data_analysis():
     """Factor-analysis browser backed by reports/factor_analysis_tables.json.
 
@@ -10015,8 +10413,8 @@ def _compute_race_drift(date_compact: str, venue_code: str,
 
 
 def _pick_alignment(picks: list[dict], drift: dict,
-                    steamer_thr: float = -15.0,
-                    drifter_thr: float = 15.0,
+                    steamer_thr: float = -25.0,
+                    drifter_thr: float = 25.0,
                     top_n: int = 3) -> dict:
     """Score the alignment between our model picks and market drift.
 
@@ -10132,7 +10530,10 @@ def _render_race_day_market_pulse(date_compact: str, venue_code: str,
 
     align = _pick_alignment(picks or [], drift)
 
-    steamer_thr, drifter_thr = -15.0, 15.0
+    # Calibration: ±25% catches genuinely meaningful moves while ignoring
+    # the wider overnight-odds settling that dominates the first 1–2 hrs
+    # after market opens. Re-tighten if more granular signal is needed.
+    steamer_thr, drifter_thr = -25.0, 25.0
 
     def _tile_row(rows: list[tuple], color: str, empty: str) -> None:
         if not rows:
@@ -10208,22 +10609,23 @@ def _render_race_day_market_pulse(date_compact: str, venue_code: str,
         st.markdown(f"- {m}")
     if not align["messages"] and verdict == "NEUTRAL":
         st.caption(
-            "Move thresholds: a horse must move ≥15% on Win odds for "
-            "either column to populate."
+            "Move thresholds: a horse must move ≥25% on Win odds for "
+            "either column to populate (filters out the wider overnight "
+            "settling phase)."
         )
 
 
 def _compute_meeting_alerts(date_compact: str, venue_code: str,
                             races: list[dict],
-                            steamer_thr: float = -20.0,
-                            drifter_thr: float = 20.0,
-                            big_steamer_thr: float = -30.0,
-                            big_drifter_thr: float = 30.0) -> list[dict]:
+                            steamer_thr: float = -25.0,
+                            drifter_thr: float = 25.0,
+                            big_steamer_thr: float = -40.0,
+                            big_drifter_thr: float = 40.0) -> list[dict]:
     """Aggregate alerts across all races in a meeting.
 
     Severity tiers:
-      WARN   — top-3 model pick drifted ≥+30%
-      REVIEW — outsider (rank > 3) steamed ≤-30%, or top-1 drifted ≥+20%
+      WARN   — top-3 model pick drifted ≥+40%
+      REVIEW — outsider (rank > 3) steamed ≤-40%, or top-1 drifted ≥+25%
       INFO   — other notable moves
 
     Each alert: {race, severity, kind, no, horse, dpct, msg}.
@@ -12686,6 +13088,7 @@ def main():
         ("Form Guide",     "📖 Form Guide"),
         ("Model Analysis", "📊 Model Analysis"),
         ("Data Analysis",  "🔬 Data Analysis"),
+        ("Horse Profile",  "🐴 Horse Profile"),
         ("Results",        "🏆 Results"),
         ("Live Feed",      "📡 Live Feed"),
         ("Live Odds",      "💹 Live Odds"),
@@ -12724,6 +13127,8 @@ def main():
         page_race_day(selected)
     elif page == "Data Analysis":
         page_data_analysis()
+    elif page == "Horse Profile":
+        page_horse_profile()
     elif page == "Live Feed":
         page_live_feed()
     elif page == "Live Odds":
