@@ -12709,7 +12709,7 @@ def page_model_bets():
     """Filter-based betting recommendations + sustained performance tracker."""
     from betting_strategy import (build_meeting_tickets, log_meeting_picks,
                                      settle_picks_log, load_picks_log,
-                                     EDGE_CFG, APRIL_DATES)
+                                     EDGE_CFG, APRIL_DATES, V47_CFG, STRATEGY_MODE)
 
     st.markdown('<div class="page-title">🎯 Model Bets</div>',
                 unsafe_allow_html=True)
@@ -12878,8 +12878,49 @@ def page_model_bets():
                     f"{', '.join(sorted(set(it['ticket']['play'] for it in non_skip))) or '—'}"
                 )
 
-                with st.expander("How these picks are decided (v4.7)"):
-                    st.markdown(f"""
+                with st.expander("How these picks are decided (v4.7 — SARR-QPL)",
+                                   expanded=False):
+                    if STRATEGY_MODE == "v47_sarr_qpl":
+                        st.markdown(f"""
+**Active strategy: v4.7 SARR-banker QPL** (empirically profitable on April 2026).
+
+For every race, the model:
+
+1. Picks **SARR top-1** as the banker (the SARR ensemble was right 4/9 on
+    Apr 29 vs ET 2/9, and outperformed ET across April).
+2. **Skips** the race if the SARR top-1's composite p_model is below
+    **{V47_CFG['min_pmodel']:.2f}** (low conviction → wide-open scramble).
+3. Plays a **QPL banker** with **{V47_CFG['n_legs']} legs** — the next
+    {V47_CFG['n_legs']} runners by SARR rank (excluding the banker).
+4. Stakes **{V47_CFG['stake_units']:.1f}u** total
+    (= ${V47_CFG['stake_units'] * V47_CFG['hkd_per_unit']:.0f} at $10/unit),
+    split equally across legs.
+
+**8-meeting backtest (Apr 1 → Apr 29, real HKJC dividends):**
+
+| Variant | Bets | Hit % | ROI |
+|---|---|---|---|
+| **→ v4.7 SARR-QPL · 4 legs · pmod≥0.18** | **43** | **58.1%** | **+11.0%** |
+| SARR-QPL · 3 legs · pmod≥0.18 | 43 | 51.2% | -5.4% |
+| SARR-QPL · pmod≥0.15 · 3 legs | 46 | 52.2% | -1.1% |
+| Old QIN-anchored composite (v4.6) | 27 | 14.8% | -55.1% |
+
+**Why v4.7?** The previous QIN-anchored composite was over-weighting ET
+(`w_et = 0.35` vs `w_sarr = 0.25`), so when SARR strongly disagreed the
+banker leaned ET — and ET was the weaker signal across April. SARR
+top-1 hits the top-3 ~58% of the time, which is the natural QPL sweet spot.
+The 4th leg catches winners that fall just outside SARR's top-3 (e.g.
+Apr 29 R5 #8 GAMEPLAYER ELITE was SARR rank 1, not on the old ticket).
+
+To revert: set the env var `HK_STRATEGY_MODE=legacy_qin` before launch
+(falls back to the QIN-anchored composite + WIN/QPL/F4/hedge stack).
+""")
+                    else:
+                        st.markdown(f"""
+**Active strategy: legacy QIN-anchored composite (v4.6)** — set
+`HK_STRATEGY_MODE=v47_sarr_qpl` to enable the empirically profitable
+SARR-QPL strategy instead.
+
 **Priority order** (first rule that fires, wins):
 
 1. **🔵 QIN banker** — _primary_. Cls 3–5, SP {EDGE_CFG['qin_sp_min']:.0f}–{EDGE_CFG['qin_sp_max']:.0f}, p_mod ≥ {EDGE_CFG['banker_pmodel_min']:.2f}.
@@ -12890,18 +12931,11 @@ def page_model_bets():
 2. **🟢 WIN single** — Cls 3–5, SP in band, **top-1 edge ≥ 1.2** and p_mod ≥ 0.25.
    Stake 2u when edge ≥ 1.4 else 1u.
 3. **🟣 QPL banker** — narrow fallback when (1)+(2) didn't fire: needs
-   SARR+ET mutual-top3 AND gap ≥ {EDGE_CFG['qpl_gap_min']:.2f} (raised from 0.08).
-4. **🟡 PLACE** — same class/SP band but gap < 0.04 (low conviction safety), 0.5u.
-5. **⭐ F4 box top-5** — ultra-high conviction overlay: field ≥ {EDGE_CFG['f4_field_min']},
-   mutual+gap ≥ {EDGE_CFG['f4_gap_min']:.2f}, top-5 p-mass ≥ {EDGE_CFG['f4_top5_mass_min']:.2f}.
-   Added alongside primary play at {EDGE_CFG['f4_stake']}u × 5 combos.
-6. **💎 Value overlays** — any non-top runner with edge ≥ {EDGE_CFG['value_edge_min']:.2f}
-   and p_mod ≥ {EDGE_CFG['value_pmodel_min']:.2f} gets a WIN 0.5u suggestion.
-7. **🛡️ Hedge** — when banker SP < {EDGE_CFG['hedge_trigger_sp']:.1f} (hot fav),
-   box rank {EDGE_CFG['hedge_rank_range'][0]}-{EDGE_CFG['hedge_rank_range'][1]} runners
-   with SP ≥ {EDGE_CFG['hedge_longshot_min']:.0f} as cheap longshot cover.
-
-**Why this priority?** April 2026 post-mortem: QIN Cls3-5 SP3-8 was +10% ROI on 29 bets (most reliable). QPL mutual+gap was only 5 bets — strong but tiny sample. F4 box was +133% incl. a 65x outlier → kept but gated hard.
+   SARR+ET mutual-top3 AND gap ≥ {EDGE_CFG['qpl_gap_min']:.2f}.
+4. **🟡 PLACE** — gap < 0.04 (low conviction safety), 0.5u.
+5. **⭐ F4 box top-5** — field ≥ {EDGE_CFG['f4_field_min']}, mutual+gap ≥ {EDGE_CFG['f4_gap_min']:.2f}, p-mass ≥ {EDGE_CFG['f4_top5_mass_min']:.2f}.
+6. **💎 Value overlays** — non-top runner with edge ≥ {EDGE_CFG['value_edge_min']:.2f}, 0.5u WIN.
+7. **🛡️ Hedge** — banker SP < {EDGE_CFG['hedge_trigger_sp']:.1f}, longshot cover.
 """)
 
     # ── TAB 2 — Track record from picks log ────────────────────────────────

@@ -1,325 +1,625 @@
 {
-  "bankroll": 1000.0,
-  "configs": {
-    "conservative": {
-      "n_bets": 1,
-      "n_hits": 0,
-      "hit_rate": 0.0,
-      "total_stake": 20.0,
-      "total_payout": 0.0,
-      "starting_bankroll": 1000.0,
-      "ending_bankroll": 980.0,
-      "total_roi": -0.02,
-      "geom_return_per_bet": -0.02,
-      "log_return_mean": 0.0,
-      "log_return_std": 0.0,
-      "log_return_neg_std": 0.0,
-      "sharpe_like": 0.0,
-      "sortino_like": 0.0,
-      "max_drawdown_frac": 0.02,
-      "max_drawdown_hkd": 20.0,
-      "longest_underwater": 1,
-      "calmar": -1.0
+  "variants": [
+    {
+      "variant": "v7_sarr_qpl_filtered",
+      "bets": 43,
+      "skip": 34,
+      "hits": 22,
+      "hit_rate": 0.5116279069767442,
+      "stake": 43.0,
+      "return": 40.68333333333332,
+      "pnl": -2.316666666666677,
+      "roi": -0.05387596899224831,
+      "by_date": {
+        "20260401": {
+          "bets": 6,
+          "hits": 3,
+          "stake": 6.0,
+          "ret": 8.85
+        },
+        "20260406": {
+          "bets": 10,
+          "hits": 4,
+          "stake": 10.0,
+          "ret": 4.866666666666666
+        },
+        "20260408": {
+          "bets": 3,
+          "hits": 2,
+          "stake": 3.0,
+          "ret": 1.75
+        },
+        "20260412": {
+          "bets": 6,
+          "hits": 2,
+          "stake": 6.0,
+          "ret": 5.449999999999999
+        },
+        "20260415": {
+          "bets": 3,
+          "hits": 1,
+          "stake": 3.0,
+          "ret": 1.15
+        },
+        "20260419": {
+          "bets": 4,
+          "hits": 3,
+          "stake": 4.0,
+          "ret": 6.199999999999999
+        },
+        "20260422": {
+          "bets": 5,
+          "hits": 3,
+          "stake": 5.0,
+          "ret": 5.05
+        },
+        "20260429": {
+          "bets": 6,
+          "hits": 4,
+          "stake": 6.0,
+          "ret": 7.366666666666665
+        }
+      }
     },
-    "conservative + allup": {
-      "n_bets": 1,
-      "n_hits": 0,
-      "hit_rate": 0.0,
-      "total_stake": 20.0,
-      "total_payout": 0.0,
-      "starting_bankroll": 1000.0,
-      "ending_bankroll": 980.0,
-      "total_roi": -0.02,
-      "geom_return_per_bet": -0.02,
-      "log_return_mean": 0.0,
-      "log_return_std": 0.0,
-      "log_return_neg_std": 0.0,
-      "sharpe_like": 0.0,
-      "sortino_like": 0.0,
-      "max_drawdown_frac": 0.02,
-      "max_drawdown_hkd": 20.0,
-      "longest_underwater": 1,
-      "calmar": -1.0
+    {
+      "variant": "v1_sarr_only",
+      "bets": 77,
+      "skip": 0,
+      "hits": 34,
+      "hit_rate": 0.44155844155844154,
+      "stake": 77.0,
+      "return": 65.19999999999999,
+      "pnl": -11.800000000000011,
+      "roi": -0.15324675324675338,
+      "by_date": {
+        "20260401": {
+          "bets": 9,
+          "hits": 3,
+          "stake": 9.0,
+          "ret": 8.85
+        },
+        "20260406": {
+          "bets": 11,
+          "hits": 4,
+          "stake": 11.0,
+          "ret": 4.866666666666666
+        },
+        "20260408": {
+          "bets": 9,
+          "hits": 4,
+          "stake": 9.0,
+          "ret": 5.85
+        },
+        "20260412": {
+          "bets": 10,
+          "hits": 3,
+          "stake": 10.0,
+          "ret": 6.566666666666666
+        },
+        "20260415": {
+          "bets": 9,
+          "hits": 2,
+          "stake": 9.0,
+          "ret": 2.1999999999999997
+        },
+        "20260419": {
+          "bets": 11,
+          "hits": 8,
+          "stake": 11.0,
+          "ret": 16.6
+        },
+        "20260422": {
+          "bets": 9,
+          "hits": 4,
+          "stake": 9.0,
+          "ret": 8.883333333333333
+        },
+        "20260429": {
+          "bets": 9,
+          "hits": 6,
+          "stake": 9.0,
+          "ret": 11.383333333333333
+        }
+      }
     },
-    "balanced": {
-      "n_bets": 24,
-      "n_hits": 5,
-      "hit_rate": 0.20833333333333334,
-      "total_stake": 510.0,
-      "total_payout": 360.0,
-      "starting_bankroll": 1000.0,
-      "ending_bankroll": 850.0,
-      "total_roi": -0.15,
-      "geom_return_per_bet": -0.00675,
-      "log_return_mean": -0.00677,
-      "log_return_std": 0.03432,
-      "log_return_neg_std": 0.00365,
-      "sharpe_like": -0.967,
-      "sortino_like": -9.081,
-      "max_drawdown_frac": 0.15,
-      "max_drawdown_hkd": 150.0,
-      "longest_underwater": 24,
-      "calmar": -1.0
+    {
+      "variant": "v2_mutual_only",
+      "bets": 28,
+      "skip": 49,
+      "hits": 12,
+      "hit_rate": 0.42857142857142855,
+      "stake": 28.0,
+      "return": 22.75,
+      "pnl": -5.25,
+      "roi": -0.1875,
+      "by_date": {
+        "20260401": {
+          "bets": 5,
+          "hits": 1,
+          "stake": 5.0,
+          "ret": 0.9166666666666666
+        },
+        "20260406": {
+          "bets": 6,
+          "hits": 2,
+          "stake": 6.0,
+          "ret": 2.3
+        },
+        "20260408": {
+          "bets": 1,
+          "hits": 0,
+          "stake": 1.0,
+          "ret": 0.0
+        },
+        "20260412": {
+          "bets": 5,
+          "hits": 1,
+          "stake": 5.0,
+          "ret": 1.65
+        },
+        "20260415": {
+          "bets": 1,
+          "hits": 1,
+          "stake": 1.0,
+          "ret": 2.466666666666667
+        },
+        "20260419": {
+          "bets": 3,
+          "hits": 3,
+          "stake": 3.0,
+          "ret": 7.616666666666666
+        },
+        "20260422": {
+          "bets": 3,
+          "hits": 1,
+          "stake": 3.0,
+          "ret": 1.3166666666666667
+        },
+        "20260429": {
+          "bets": 4,
+          "hits": 3,
+          "stake": 4.0,
+          "ret": 6.4833333333333325
+        }
+      }
     },
-    "balanced + allup": {
-      "n_bets": 31,
-      "n_hits": 5,
-      "hit_rate": 0.16129032258064516,
-      "total_stake": 760.0,
-      "total_payout": 360.0,
-      "starting_bankroll": 1000.0,
-      "ending_bankroll": 600.0,
-      "total_roi": -0.4,
-      "geom_return_per_bet": -0.01634,
-      "log_return_mean": -0.01648,
-      "log_return_std": 0.03904,
-      "log_return_neg_std": 0.00935,
-      "sharpe_like": -2.35,
-      "sortino_like": -9.818,
-      "max_drawdown_frac": 0.4,
-      "max_drawdown_hkd": 400.0,
-      "longest_underwater": 31,
-      "calmar": -1.0
+    {
+      "variant": "v8_smart_banker",
+      "bets": 68,
+      "skip": 9,
+      "hits": 26,
+      "hit_rate": 0.38235294117647056,
+      "stake": 68.0,
+      "return": 54.516666666666666,
+      "pnl": -13.483333333333334,
+      "roi": -0.1982843137254902,
+      "by_date": {
+        "20260401": {
+          "bets": 8,
+          "hits": 3,
+          "stake": 8.0,
+          "ret": 9.766666666666666
+        },
+        "20260406": {
+          "bets": 11,
+          "hits": 3,
+          "stake": 11.0,
+          "ret": 2.8166666666666664
+        },
+        "20260408": {
+          "bets": 9,
+          "hits": 3,
+          "stake": 9.0,
+          "ret": 4.8
+        },
+        "20260412": {
+          "bets": 9,
+          "hits": 3,
+          "stake": 9.0,
+          "ret": 11.366666666666667
+        },
+        "20260415": {
+          "bets": 7,
+          "hits": 3,
+          "stake": 7.0,
+          "ret": 7.716666666666666
+        },
+        "20260419": {
+          "bets": 8,
+          "hits": 4,
+          "stake": 8.0,
+          "ret": 7.516666666666667
+        },
+        "20260422": {
+          "bets": 9,
+          "hits": 3,
+          "stake": 9.0,
+          "ret": 4.9
+        },
+        "20260429": {
+          "bets": 7,
+          "hits": 4,
+          "stake": 7.0,
+          "ret": 5.633333333333333
+        }
+      }
     },
-    "aggressive": {
-      "n_bets": 26,
-      "n_hits": 6,
-      "hit_rate": 0.23076923076923078,
-      "total_stake": 1000.0,
-      "total_payout": 807.75,
-      "starting_bankroll": 1000.0,
-      "ending_bankroll": 807.75,
-      "total_roi": -0.1923,
-      "geom_return_per_bet": -0.00818,
-      "log_return_mean": -0.00821,
-      "log_return_std": 0.06886,
-      "log_return_neg_std": 0.01204,
-      "sharpe_like": -0.608,
-      "sortino_like": -3.477,
-      "max_drawdown_frac": 0.24,
-      "max_drawdown_hkd": 240.0,
-      "longest_underwater": 16,
-      "calmar": -0.801
+    {
+      "variant": "v9_dual_qpl",
+      "bets": 77,
+      "skip": 0,
+      "hits": 36,
+      "hit_rate": 0.4675324675324675,
+      "stake": 77.0,
+      "return": 51.4,
+      "pnl": -25.6,
+      "roi": -0.33246753246753247,
+      "by_date": {
+        "20260401": {
+          "bets": 9,
+          "hits": 3,
+          "stake": 9.0,
+          "ret": 4.883333333333333
+        },
+        "20260406": {
+          "bets": 11,
+          "hits": 4,
+          "stake": 11.0,
+          "ret": 3.583333333333333
+        },
+        "20260408": {
+          "bets": 9,
+          "hits": 5,
+          "stake": 9.0,
+          "ret": 4.316666666666666
+        },
+        "20260412": {
+          "bets": 10,
+          "hits": 4,
+          "stake": 10.0,
+          "ret": 5.758333333333333
+        },
+        "20260415": {
+          "bets": 9,
+          "hits": 2,
+          "stake": 9.0,
+          "ret": 4.183333333333334
+        },
+        "20260419": {
+          "bets": 11,
+          "hits": 8,
+          "stake": 11.0,
+          "ret": 14.641666666666666
+        },
+        "20260422": {
+          "bets": 9,
+          "hits": 4,
+          "stake": 9.0,
+          "ret": 5.1
+        },
+        "20260429": {
+          "bets": 9,
+          "hits": 6,
+          "stake": 9.0,
+          "ret": 8.933333333333334
+        }
+      }
     },
-    "aggressive + allup": {
-      "n_bets": 33,
-      "n_hits": 6,
-      "hit_rate": 0.18181818181818182,
-      "total_stake": 1070.0,
-      "total_payout": 637.12,
-      "starting_bankroll": 1000.0,
-      "ending_bankroll": 567.12,
-      "total_roi": -0.4329,
-      "geom_return_per_bet": -0.01704,
-      "log_return_mean": -0.01719,
-      "log_return_std": 0.06086,
-      "log_return_neg_std": 0.00924,
-      "sharpe_like": -1.622,
-      "sortino_like": -10.68,
-      "max_drawdown_frac": 0.4329,
-      "max_drawdown_hkd": 432.88,
-      "longest_underwater": 33,
-      "calmar": -1.0
+    {
+      "variant": "v4_sarr_override",
+      "bets": 77,
+      "skip": 0,
+      "hits": 26,
+      "hit_rate": 0.33766233766233766,
+      "stake": 77.0,
+      "return": 49.533333333333324,
+      "pnl": -27.466666666666676,
+      "roi": -0.3567099567099568,
+      "by_date": {
+        "20260401": {
+          "bets": 9,
+          "hits": 1,
+          "stake": 9.0,
+          "ret": 0.9166666666666666
+        },
+        "20260406": {
+          "bets": 11,
+          "hits": 4,
+          "stake": 11.0,
+          "ret": 4.866666666666666
+        },
+        "20260408": {
+          "bets": 9,
+          "hits": 3,
+          "stake": 9.0,
+          "ret": 3.183333333333333
+        },
+        "20260412": {
+          "bets": 10,
+          "hits": 3,
+          "stake": 10.0,
+          "ret": 8.75
+        },
+        "20260415": {
+          "bets": 9,
+          "hits": 4,
+          "stake": 9.0,
+          "ret": 8.266666666666666
+        },
+        "20260419": {
+          "bets": 11,
+          "hits": 5,
+          "stake": 11.0,
+          "ret": 12.183333333333332
+        },
+        "20260422": {
+          "bets": 9,
+          "hits": 2,
+          "stake": 9.0,
+          "ret": 4.0
+        },
+        "20260429": {
+          "bets": 9,
+          "hits": 4,
+          "stake": 9.0,
+          "ret": 7.366666666666665
+        }
+      }
     },
-    "uncapped": {
-      "n_bets": 7,
-      "n_hits": 0,
-      "hit_rate": 0.0,
-      "total_stake": 1190.0,
-      "total_payout": 0.0,
-      "starting_bankroll": 1000.0,
-      "ending_bankroll": 0.0,
-      "total_roi": -1.0,
-      "geom_return_per_bet": -1.0,
-      "log_return_mean": -2.4342,
-      "log_return_std": 3.56277,
-      "log_return_neg_std": 3.56277,
-      "sharpe_like": -1.674,
-      "sortino_like": -1.674,
-      "max_drawdown_frac": 1.0,
-      "max_drawdown_hkd": 1000.0,
-      "longest_underwater": 7,
-      "calmar": -1.0
+    {
+      "variant": "v3_min_rank",
+      "bets": 77,
+      "skip": 0,
+      "hits": 26,
+      "hit_rate": 0.33766233766233766,
+      "stake": 77.0,
+      "return": 49.49999999999999,
+      "pnl": -27.500000000000007,
+      "roi": -0.35714285714285726,
+      "by_date": {
+        "20260401": {
+          "bets": 9,
+          "hits": 1,
+          "stake": 9.0,
+          "ret": 1.2666666666666666
+        },
+        "20260406": {
+          "bets": 11,
+          "hits": 4,
+          "stake": 11.0,
+          "ret": 4.866666666666666
+        },
+        "20260408": {
+          "bets": 9,
+          "hits": 4,
+          "stake": 9.0,
+          "ret": 6.383333333333333
+        },
+        "20260412": {
+          "bets": 10,
+          "hits": 2,
+          "stake": 10.0,
+          "ret": 4.949999999999999
+        },
+        "20260415": {
+          "bets": 9,
+          "hits": 5,
+          "stake": 9.0,
+          "ret": 10.649999999999999
+        },
+        "20260419": {
+          "bets": 11,
+          "hits": 5,
+          "stake": 11.0,
+          "ret": 10.9
+        },
+        "20260422": {
+          "bets": 9,
+          "hits": 2,
+          "stake": 9.0,
+          "ret": 4.0
+        },
+        "20260429": {
+          "bets": 9,
+          "hits": 3,
+          "stake": 9.0,
+          "ret": 6.4833333333333325
+        }
+      }
     },
-    "uncapped + allup": {
-      "n_bets": 42,
-      "n_hits": 0,
-      "hit_rate": 0.0,
-      "total_stake": 1190.0,
-      "total_payout": 0.0,
-      "starting_bankroll": 1000.0,
-      "ending_bankroll": 0.0,
-      "total_roi": -1.0,
-      "geom_return_per_bet": -1.0,
-      "log_return_mean": -2.4342,
-      "log_return_std": 3.56277,
-      "log_return_neg_std": 3.56277,
-      "sharpe_like": -1.674,
-      "sortino_like": -1.674,
-      "max_drawdown_frac": 1.0,
-      "max_drawdown_hkd": 1000.0,
-      "longest_underwater": 42,
-      "calmar": -1.0
+    {
+      "variant": "v5_qpl_universal",
+      "bets": 77,
+      "skip": 0,
+      "hits": 23,
+      "hit_rate": 0.2987012987012987,
+      "stake": 77.0,
+      "return": 44.099999999999994,
+      "pnl": -32.900000000000006,
+      "roi": -0.42727272727272736,
+      "by_date": {
+        "20260401": {
+          "bets": 9,
+          "hits": 1,
+          "stake": 9.0,
+          "ret": 0.9166666666666666
+        },
+        "20260406": {
+          "bets": 11,
+          "hits": 4,
+          "stake": 11.0,
+          "ret": 4.866666666666666
+        },
+        "20260408": {
+          "bets": 9,
+          "hits": 2,
+          "stake": 9.0,
+          "ret": 2.433333333333333
+        },
+        "20260412": {
+          "bets": 10,
+          "hits": 2,
+          "stake": 10.0,
+          "ret": 4.949999999999999
+        },
+        "20260415": {
+          "bets": 9,
+          "hits": 4,
+          "stake": 9.0,
+          "ret": 8.266666666666666
+        },
+        "20260419": {
+          "bets": 11,
+          "hits": 5,
+          "stake": 11.0,
+          "ret": 12.183333333333332
+        },
+        "20260422": {
+          "bets": 9,
+          "hits": 2,
+          "stake": 9.0,
+          "ret": 4.0
+        },
+        "20260429": {
+          "bets": 9,
+          "hits": 3,
+          "stake": 9.0,
+          "ret": 6.4833333333333325
+        }
+      }
+    },
+    {
+      "variant": "v6_qpl_with_filters",
+      "bets": 49,
+      "skip": 28,
+      "hits": 15,
+      "hit_rate": 0.30612244897959184,
+      "stake": 49.0,
+      "return": 27.083333333333336,
+      "pnl": -21.916666666666664,
+      "roi": -0.4472789115646258,
+      "by_date": {
+        "20260401": {
+          "bets": 6,
+          "hits": 1,
+          "stake": 6.0,
+          "ret": 0.9166666666666666
+        },
+        "20260406": {
+          "bets": 11,
+          "hits": 4,
+          "stake": 11.0,
+          "ret": 4.866666666666666
+        },
+        "20260408": {
+          "bets": 2,
+          "hits": 0,
+          "stake": 2.0,
+          "ret": 0.0
+        },
+        "20260412": {
+          "bets": 7,
+          "hits": 1,
+          "stake": 7.0,
+          "ret": 1.65
+        },
+        "20260415": {
+          "bets": 3,
+          "hits": 2,
+          "stake": 3.0,
+          "ret": 3.7666666666666666
+        },
+        "20260419": {
+          "bets": 6,
+          "hits": 4,
+          "stake": 6.0,
+          "ret": 9.399999999999999
+        },
+        "20260422": {
+          "bets": 7,
+          "hits": 0,
+          "stake": 7.0,
+          "ret": 0.0
+        },
+        "20260429": {
+          "bets": 7,
+          "hits": 3,
+          "stake": 7.0,
+          "ret": 6.4833333333333325
+        }
+      }
+    },
+    {
+      "variant": "v0_current",
+      "bets": 27,
+      "skip": 50,
+      "hits": 4,
+      "hit_rate": 0.14814814814814814,
+      "stake": 27.0,
+      "return": 12.133333333333333,
+      "pnl": -14.866666666666667,
+      "roi": -0.5506172839506173,
+      "by_date": {
+        "20260401": {
+          "bets": 3,
+          "hits": 0,
+          "stake": 3.0,
+          "ret": 0.0
+        },
+        "20260406": {
+          "bets": 6,
+          "hits": 1,
+          "stake": 6.0,
+          "ret": 3.1333333333333333
+        },
+        "20260408": {
+          "bets": 3,
+          "hits": 0,
+          "stake": 3.0,
+          "ret": 0.0
+        },
+        "20260412": {
+          "bets": 1,
+          "hits": 0,
+          "stake": 1.0,
+          "ret": 0.0
+        },
+        "20260415": {
+          "bets": 2,
+          "hits": 1,
+          "stake": 2.0,
+          "ret": 2.783333333333333
+        },
+        "20260419": {
+          "bets": 5,
+          "hits": 1,
+          "stake": 5.0,
+          "ret": 3.216666666666667
+        },
+        "20260422": {
+          "bets": 5,
+          "hits": 1,
+          "stake": 5.0,
+          "ret": 3.0
+        },
+        "20260429": {
+          "bets": 2,
+          "hits": 0,
+          "stake": 2.0,
+          "ret": 0.0
+        }
+      }
     }
-  },
-  "by_pool": {
-    "QIN_BANKER": {
-      "n_bets": 19,
-      "n_hits": 4,
-      "hit_rate": 0.21052631578947367,
-      "total_stake": 400.0,
-      "total_payout": 319.0,
-      "starting_bankroll": 1000.0,
-      "ending_bankroll": 919.0,
-      "total_roi": -0.081,
-      "geom_return_per_bet": -0.00444,
-      "log_return_mean": -0.00445,
-      "log_return_std": 0.03522,
-      "log_return_neg_std": 0.00362,
-      "sharpe_like": -0.55,
-      "sortino_like": -5.349,
-      "max_drawdown_frac": 0.1281,
-      "max_drawdown_hkd": 135.0,
-      "longest_underwater": 9,
-      "calmar": -0.632
-    },
-    "QPL_BANKER": {
-      "n_bets": 5,
-      "n_hits": 1,
-      "hit_rate": 0.2,
-      "total_stake": 110.0,
-      "total_payout": 41.0,
-      "starting_bankroll": 1000.0,
-      "ending_bankroll": 931.0,
-      "total_roi": -0.069,
-      "geom_return_per_bet": -0.0142,
-      "log_return_mean": -0.0143,
-      "log_return_std": 0.01825,
-      "log_return_neg_std": 0.00419,
-      "sharpe_like": -1.752,
-      "sortino_like": -7.639,
-      "max_drawdown_frac": 0.069,
-      "max_drawdown_hkd": 69.0,
-      "longest_underwater": 5,
-      "calmar": -1.0
-    },
-    "ALLUP": {
-      "n_bets": 7,
-      "n_hits": 0,
-      "hit_rate": 0.0,
-      "total_stake": 250.0,
-      "total_payout": 0.0,
-      "starting_bankroll": 1000.0,
-      "ending_bankroll": 750.0,
-      "total_roi": -0.25,
-      "geom_return_per_bet": -0.04026,
-      "log_return_mean": -0.0411,
-      "log_return_std": 0.00529,
-      "log_return_neg_std": 0.00529,
-      "sharpe_like": -20.563,
-      "sortino_like": -20.563,
-      "max_drawdown_frac": 0.25,
-      "max_drawdown_hkd": 250.0,
-      "longest_underwater": 7,
-      "calmar": -1.0
-    }
-  },
-  "walk_forward": [
-    {
-      "train": "20260401..20260408",
-      "test": "20260412..20260412",
-      "metrics": {
-        "n_bets": 4,
-        "n_hits": 0,
-        "hit_rate": 0.0,
-        "total_stake": 140.0,
-        "total_payout": 0.0,
-        "starting_bankroll": 1000.0,
-        "ending_bankroll": 860.0,
-        "total_roi": -0.14,
-        "geom_return_per_bet": -0.037,
-        "log_return_mean": -0.03771,
-        "log_return_std": 0.01088,
-        "log_return_neg_std": 0.01088,
-        "sharpe_like": -6.931,
-        "sortino_like": -6.931,
-        "max_drawdown_frac": 0.14,
-        "max_drawdown_hkd": 140.0,
-        "longest_underwater": 4,
-        "calmar": -1.0
-      }
-    },
-    {
-      "train": "20260401..20260412",
-      "test": "20260415..20260415",
-      "metrics": {
-        "n_bets": 3,
-        "n_hits": 1,
-        "hit_rate": 0.3333333333333333,
-        "total_stake": 110.0,
-        "total_payout": 125.25,
-        "starting_bankroll": 1000.0,
-        "ending_bankroll": 1015.25,
-        "total_roi": 0.0152,
-        "geom_return_per_bet": 0.00506,
-        "log_return_mean": 0.00504,
-        "log_return_std": 0.06133,
-        "log_return_neg_std": 0.01015,
-        "sharpe_like": 0.142,
-        "sortino_like": 0.861,
-        "max_drawdown_frac": 0.073,
-        "max_drawdown_hkd": 80.0,
-        "longest_underwater": 2,
-        "calmar": 0.209
-      }
-    },
-    {
-      "train": "20260401..20260415",
-      "test": "20260419..20260419",
-      "metrics": {
-        "n_bets": 6,
-        "n_hits": 1,
-        "hit_rate": 0.16666666666666666,
-        "total_stake": 200.0,
-        "total_payout": 144.75,
-        "starting_bankroll": 1000.0,
-        "ending_bankroll": 944.75,
-        "total_roi": -0.0553,
-        "geom_return_per_bet": -0.00943,
-        "log_return_mean": -0.00947,
-        "log_return_std": 0.05349,
-        "log_return_neg_std": 0.00927,
-        "sharpe_like": -0.434,
-        "sortino_like": -2.502,
-        "max_drawdown_frac": 0.1525,
-        "max_drawdown_hkd": 170.0,
-        "longest_underwater": 5,
-        "calmar": -0.362
-      }
-    },
-    {
-      "train": "20260401..20260419",
-      "test": "20260422..20260422",
-      "metrics": {
-        "n_bets": 6,
-        "n_hits": 1,
-        "hit_rate": 0.16666666666666666,
-        "total_stake": 200.0,
-        "total_payout": 67.5,
-        "starting_bankroll": 1000.0,
-        "ending_bankroll": 867.5,
-        "total_roi": -0.1325,
-        "geom_return_per_bet": -0.02341,
-        "log_return_mean": -0.02369,
-        "log_return_std": 0.02861,
-        "log_return_neg_std": 0.01017,
-        "sharpe_like": -2.029,
-        "sortino_like": -5.707,
-        "max_drawdown_frac": 0.1639,
-        "max_drawdown_hkd": 170.0,
-        "longest_underwater": 5,
-        "calmar": -0.809
-      }
-    }
+  ],
+  "n_races": 77,
+  "dates": [
+    "20260401",
+    "20260406",
+    "20260408",
+    "20260412",
+    "20260415",
+    "20260419",
+    "20260422",
+    "20260429"
   ]
 }

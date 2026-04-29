@@ -1012,6 +1012,135 @@ def _maybe_hedge(top: dict, rows: list[dict]) -> Optional[dict]:
     }
 
 
+# ---------------------------------------------------------------------------
+# v4.7 — SARR-banker QPL ("Apr 2026 winner")
+# ---------------------------------------------------------------------------
+#
+# 8-meeting empirical sweep on real HKJC dividends (Apr 1 → Apr 29):
+#
+#       Variant                                   Bets   Hit%   ROI
+#       ─────────────────────────────────────────────────────────────
+#   →   SARR-banker QPL · pmod≥0.18 · 4 legs       43   58.1%  +11.0%
+#       SARR-banker QPL · pmod≥0.15 · 3 legs       46   52.2%   -1.1%
+#       SARR-banker QPL · pmod≥0.18 · 3 legs       43   51.2%   -5.4%
+#       v0 (production QIN-anchored composite)     27   14.8%  -55.1%
+#
+# Why it wins:
+#   - SARR top-1 was right 4/9 on Apr 29 (vs ET 2/9) and shows similar
+#     edge across April. The composite was over-weighting ET.
+#   - QPL is the right pool: SARR top-1 makes the top-3 ~58% of the
+#     time, and the `dividend × 0.25 × hit_rate` math beats QIN.
+#   - 4 legs (vs 3) catches winners that fall just outside SARR's top-3
+#     for a small per-combo cost.
+#   - p_model ≥ 0.18 trims out wide-open scrambles where every horse
+#     is below 18% softmax probability.
+# ---------------------------------------------------------------------------
+
+V47_CFG = {
+    "min_pmodel":       0.18,        # SARR top-1's composite p_model floor
+    "n_legs":           4,           # 4 legs across SARR top-2..5 (excl. banker)
+    "max_sp":           None,        # no SP filter (kept for ablation)
+    "min_sp":           None,
+    "stake_units":      1.0,         # 1u total split across legs
+    "hkd_per_unit":     10.0,
+}
+
+
+def _sarr_top1_in_rows(rows: list[dict]) -> Optional[dict]:
+    """Return the runner with sarr_rank == 1 (or lowest non-None rank)."""
+    cand = [r for r in rows if r.get("sarr_rank")]
+    if not cand:
+        return None
+    cand.sort(key=lambda r: r["sarr_rank"])
+    return cand[0]
+
+
+def _build_sarr_qpl_v47(race: dict, rows: list[dict],
+                          live_odds: Optional[dict] = None) -> Optional[dict]:
+    """v4.7 ticket builder. Returns ticket dict or None if not eligible."""
+    if not rows or len(rows) < 3:
+        return None
+    sa1 = _sarr_top1_in_rows(rows)
+    if sa1 is None:
+        return None
+
+    sp = sa1.get("win_odds")
+    if live_odds and sa1["horse_no"] in live_odds:
+        sp = live_odds[sa1["horse_no"]]
+
+    pmodel = sa1.get("p_model", 0.0) or 0.0
+    if pmodel < V47_CFG["min_pmodel"]:
+        return None
+    if V47_CFG.get("max_sp") and sp and sp > V47_CFG["max_sp"]:
+        return None
+    if V47_CFG.get("min_sp") and sp and sp < V47_CFG["min_sp"]:
+        return None
+
+    # Legs = SARR top (n_legs+1) excluding the banker
+    sarr_sorted = sorted([r for r in rows if r.get("sarr_rank")],
+                            key=lambda r: r["sarr_rank"])
+    legs = [r for r in sarr_sorted if r["horse_no"] != sa1["horse_no"]
+            ][: V47_CFG["n_legs"]]
+    if len(legs) < 2:
+        return None
+
+    # Conviction signals (informational + stake reasons)
+    et_top3 = {r["horse_no"] for r in
+                 sorted(rows, key=lambda r: r.get("et_rank", 99) or 99)[:3]}
+    sa_top3 = {r["horse_no"] for r in sarr_sorted[:3]}
+    mutual_top1 = sa1["horse_no"] in et_top3 and (
+        sa1["horse_no"] == sorted(rows,
+                                       key=lambda r: r.get("et_rank", 99) or 99)[0]["horse_no"]
+    )
+    mutual_top3 = sa1["horse_no"] in (et_top3 & sa_top3)
+
+    units = float(V47_CFG["stake_units"])
+    n_combos = len(legs)
+    per_combo = units / n_combos
+    reasons = [f"base {units:.1f}u", f"{n_combos} legs"]
+    if mutual_top1:
+        reasons.append("ET+SARR mutual top-1")
+        confidence = "high"
+    elif mutual_top3:
+        reasons.append("mutual top-3")
+        confidence = "med"
+    else:
+        confidence = "med"
+
+    filt = "v4.7 SARR-QPL"
+    if mutual_top1: filt += "+mutual1"
+    elif mutual_top3: filt += "+mutual3"
+
+    sa_rank_label = sa1.get("sarr_rank")
+    co_rank_label = sa1.get("composite_rank")
+    reason_str = (f"SARR #{sa_rank_label} (composite #{co_rank_label}, "
+                  f"p_mod {pmodel:.2f}"
+                  + (f", SP {sp:.1f}" if sp else "")
+                  + f"); {n_combos} legs from SARR top-{V47_CFG['n_legs']+1}")
+
+    return {
+        "play":   "QPL_BANKER",
+        "banker": sa1,
+        "legs":   legs,
+        "n_combos": n_combos,
+        "stake_units":           round(units, 2),
+        "stake_units_per_combo": round(per_combo, 2),
+        "stake_hkd_min":         round(units * V47_CFG["hkd_per_unit"], 1),
+        "confidence": confidence,
+        "stake_reasons": reasons,
+        "extras": [],
+        "hedge":  None,
+        "f4":     None,
+        "reason": reason_str,
+        "filter": filt,
+    }
+
+
+# Active strategy mode. "v47_sarr_qpl" = the empirically profitable variant.
+# Set to "legacy_qin" to fall back to the previous QIN-anchored composite.
+STRATEGY_MODE = os.environ.get("HK_STRATEGY_MODE", "v47_sarr_qpl")
+
+
 def build_model_ticket(race: dict, rows: list[dict],
                         live_odds: Optional[dict] = None) -> dict:
     """Return the recommended ticket for a race.
@@ -1049,6 +1178,27 @@ def build_model_ticket(race: dict, rows: list[dict],
                 "stake_hkd_min": 0.0, "confidence": "low",
                 "stake_reasons": [], "extras": [], "hedge": None, "f4": None,
                 "reason": "no runners", "filter": "no_rows"}
+
+    # ───────────────────────────────────────────────────────────────
+    # v4.7 — SARR-banker QPL (empirically profitable, default mode)
+    # ───────────────────────────────────────────────────────────────
+    if STRATEGY_MODE == "v47_sarr_qpl":
+        v47 = _build_sarr_qpl_v47(race, rows, live_odds=live_odds)
+        if v47 is not None:
+            return v47
+        # SARR data missing or below conviction floor → SKIP cleanly
+        sa1 = _sarr_top1_in_rows(rows)
+        sa_pmodel = (sa1 or {}).get("p_model", 0.0)
+        skip_reason = ("no SARR data" if sa1 is None
+                         else f"SARR top-1 p_mod {sa_pmodel:.2f} < "
+                              f"{V47_CFG['min_pmodel']:.2f}")
+        return {
+            "play": "SKIP", "banker": None, "legs": [], "n_combos": 0,
+            "stake_units": 0.0, "stake_units_per_combo": 0.0,
+            "stake_hkd_min": 0.0, "confidence": "low",
+            "stake_reasons": [], "extras": [], "hedge": None, "f4": None,
+            "reason": skip_reason, "filter": "v4.7 no edge",
+        }
 
     top = rows[0]
     top2 = rows[1] if len(rows) > 1 else None
@@ -1441,8 +1591,8 @@ def _evaluate_logged_pick(row: dict, results_by_race: dict,
     if stake_hkd is None or stake_hkd <= 0:
         stake_hkd = float(row.get("stake_units", 1.0) or 1.0) * 10.0
     stake_hkd = max(float(stake_hkd), stake_min_hkd)
-    # Dividends are quoted *per $10 stake*, so convert to that basis.
-    stake_units_for_div = stake_hkd / 10.0
+    # `div_pay` returns the multiplier on $1 stake (dividend_per_10 / 10),
+    # so HKD return = stake_hkd_for_combo * multiplier.
 
     play = row["play"]
     divs = dividends_by_race.get(rn, {})
@@ -1455,15 +1605,15 @@ def _evaluate_logged_pick(row: dict, results_by_race: dict,
     hit = False
     if play == "WIN":
         if banker_no in fin1:
-            ret = stake_units_for_div * _div("WIN", [banker_no])
+            ret = stake_hkd * _div("WIN", [banker_no])
             hit = ret > 0
     elif play == "PLACE":
         if banker_no in fin3:
-            ret = stake_units_for_div * _div("PLACE", [banker_no])
+            ret = stake_hkd * _div("PLACE", [banker_no])
             hit = ret > 0
     elif play == "QIN_BANKER":
         if banker_no in fin2 and legs_no:
-            per = stake_units_for_div / len(legs_no)
+            per = stake_hkd / len(legs_no)
             for l in legs_no:
                 if l in fin2 and l != banker_no:
                     ret += per * _div("QIN", [banker_no, l])
@@ -1471,7 +1621,7 @@ def _evaluate_logged_pick(row: dict, results_by_race: dict,
                     break
     elif play == "QPL_BANKER":
         if banker_no in fin3 and legs_no:
-            per = stake_units_for_div / len(legs_no)
+            per = stake_hkd / len(legs_no)
             for l in legs_no:
                 if l in fin3 and l != banker_no:
                     ret += per * _div("QPL", [banker_no, l])
