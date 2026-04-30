@@ -11630,58 +11630,29 @@ combination.
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Multi Builder page — Q+QPL banker-box ticket constructor
+# Multi Builder page — per-race banker-box + cross-race All-Up
 # ─────────────────────────────────────────────────────────────────────────────
 def page_multi_builder():
-    """Q+QPL Multi Builder.
-
-    Workflow (1 = Builder, 2 = AI suggestions):
-      1. User picks meeting + race
-      2. User picks BANKER (or accepts AI default)
-      3. User picks LEGS (auto-filled from model top-4 + edge overlays)
-      4. Tool computes coverage shape, total stake, evidence breakdown,
-         Apr-2026 historical ROI for that shape/banker-rank class
-      5. One-click → submits N × QIN_BANKER + N × QPL_BANKER to user_bets
-
-    The whole point: replicate the user's actual winning shape
-    (`mixed_banker+box`, +28% ROI in April) with stake calibration in the
-    +45%-ROI band ($200-$300 max per race).
+    """Two builders, one page:
+      • Per-race — banker × N-leg QIN+QPL coverage (one race at a time)
+      • All-Up  — HKJC cross-race parlay over the QIN and QPL pools
     """
+    st.markdown('<div class="page-title">🧮 Multi Builder</div>',
+                unsafe_allow_html=True)
+
+    main_tabs = st.tabs(["🪜 All-Up (cross-race)", "🎯 Per-race banker"])
+    with main_tabs[0]:
+        _mb_render_allup_tab()
+    with main_tabs[1]:
+        _mb_render_per_race_tab()
+
+
+def _mb_render_per_race_tab():
+    """Original per-race banker-box builder (one banker × N legs)."""
     import user_bets as ub
     from multi_builder import (
         build_multi_suggestion, evaluate_user_choice, build_meeting_multi,
-        settle_suggestion,
     )
-
-    st.markdown('<div class="page-title">🧮 Multi Builder</div>',
-                unsafe_allow_html=True)
-    st.markdown(
-        '<div class="page-subtitle">Q+QPL banker-box constructor — '
-        'evidence-backed coverage with calibrated stakes</div>',
-        unsafe_allow_html=True,
-    )
-
-    with st.expander("ℹ️ What this is + April-2026 evidence", expanded=False):
-        st.markdown(
-            """
-**This tool addresses the four leaks identified in your April history:**
-
-| Leak | Apr ROI | Tool fix |
-|------|--------:|----------|
-| Pure boxes (no banker) | −13% to −63% | Forces a banker shape |
-| Spread too thin (>9 combos/race) | −13% on QQPL pool | Caps at 6 legs by default |
-| Over-staking (>$300/race) | −84% | Stake band $80–$240 (4-6 legs × $20) |
-| Following model rank-1 banker | −59% | Defaults banker to your pick (shows model rank as evidence) |
-
-**What works:** `mixed_banker+box` shape (+28% ROI), banker rank 5+ (+63% to +76%),
-$200–$300 conviction band (+45%).
-
-**What "agree bucket" means** *(now visible inline below)*:
-- 🟢 **Agree** — banker + ≥2 legs in model top-3 (consensus play)
-- 🟡 **Mid** — banker rank 4–6, edge ≥ +5pp
-- 🔴 **Contrarian** — banker rank ≥7 (lottery — high variance, paid 76% in April)
-"""
-        )
 
     # ── Meeting selector ────────────────────────────────────────────
     meetings = load_available_meetings()
@@ -11928,6 +11899,256 @@ $200–$300 conviction band (+45%).
             st.caption(f"Actionable races: {len(actionable)} · "
                        f"Total stake if you took every AI suggestion: "
                        f"${total_stake:.0f}")
+
+
+def _mb_render_allup_tab():
+    """HKJC-spec All-Up across multiple races for QIN + QPL pools."""
+    from all_up import (build_all_up_ticket, settle_all_up_ticket,
+                         blended_pair, SHAPE_PRESETS)
+    import all_up_log as aul
+
+    st.caption(
+        "HKJC All-Up: pick N races, one Quinella pair per race, choose a "
+        "combination shape (e.g. **3×4** = any-2-of-3 + all-3 = 4 units). "
+        "Two tickets are built — one for QIN, one for QPL — at $1/unit "
+        "minimum. Winnings cascade leg-to-leg automatically per HKJC rules."
+    )
+
+    with st.expander("📊 April-2026 backtest evidence", expanded=False):
+        st.markdown(
+            """
+| Pair source | 3×4 ROI | 3×7 ROI | 4×11 ROI | 4×15 ROI |
+|---|---:|---:|---:|---:|
+| **Market favourite + 2nd fav** | **+207%** | **+130%** | **+53%** | **+53%** |
+| Model rank-1 + rank-2 | −100% | −66% | −59% | −50% |
+| 50/50 blend | −100% | −73% | −100% | −82% |
+
+Across 8 April meetings, the top-2 horses by **market** odds were
+substantially more reliable than the model's top-2. The model's
+`win_prob` field is currently mis-scaled (Brier ≈ 11/race vs target ≤0.25),
+so until that's recalibrated, the market is the better banker source.
+The default below is therefore **market** — model is available for
+reference / overlay plays.
+"""
+        )
+
+    # ── Meeting selector ───────────────────────────────────────
+    meetings = load_available_meetings()
+    if not meetings:
+        st.info("No analysed meetings found.")
+        return
+    options = {m["title"]: m for m in meetings}
+    sel_title = st.selectbox("Meeting", list(options.keys()), key="mb_au_mt")
+    meeting = options[sel_title]
+    date_compact = meeting["date_str"]
+    venue_code = _venue_to_code(meeting.get("venue", "")) or "ST"
+    data = load_meeting_data(meeting["file"])
+    races = data.get("races", []) or []
+    if not races:
+        st.warning("No races in this meeting report.")
+        return
+
+    # ── Pair-mode + shape ──────────────────────────────────────
+    c1, c2, c3 = st.columns([1, 1, 1])
+    with c1:
+        pair_mode = st.selectbox(
+            "Pair source",
+            ["market", "model", "blend"],
+            index=0, key="mb_au_pair_mode",
+            help="market = top-2 by SP odds (April backtest winner). "
+                 "model = v4.4 rank-1 + rank-2. blend = 50/50.",
+        )
+    with c2:
+        # Filter shape options by what's reasonable; default to 3x4
+        shape_keys = list(SHAPE_PRESETS.keys())
+        shape_label = st.selectbox(
+            "Shape", shape_keys,
+            index=shape_keys.index("3x4"),
+            key="mb_au_shape",
+        )
+    with c3:
+        spu = st.selectbox("$ per unit", [1, 2, 5, 10], index=0,
+                            key="mb_au_spu",
+                            help="HKJC minimum is $1/unit.")
+    n_legs_target, sizes = SHAPE_PRESETS[shape_label]
+
+    # ── Auto-suggest legs by edge (descending) ─────────────────
+    @st.cache_data(ttl=120, show_spinner=False)
+    def _auto_legs(date_compact: str, venue_code: str,
+                    n_target: int, mode: str, race_keys: tuple) -> dict:
+        from market_loader import compute_edge_table
+        out = {}
+        for rn in race_keys:
+            race = next((r for r in races if int(r.get("race_number") or 0) == rn), None)
+            if not race:
+                continue
+            picks = race.get("picks") or []
+            try:
+                rows = compute_edge_table(date_compact, venue_code,
+                                            int(rn), picks).get("rows") or []
+            except Exception:
+                rows = []
+            pair = blended_pair(picks, rows, mode=mode)
+            edges = {int(r["horse_no"]): float(r.get("edge", 0) or 0)
+                     for r in rows if r.get("horse_no") is not None}
+            score = max([edges.get(pair[0], 0), edges.get(pair[1], 0)]) if pair else -99
+            out[rn] = {"pair": pair, "score": score}
+        return out
+
+    race_keys = tuple(int(r.get("race_number") or 0) for r in races)
+    auto = _auto_legs(date_compact, venue_code, n_legs_target,
+                       pair_mode, race_keys)
+
+    # Default leg picks: top-N by score that have a valid pair
+    ranked = sorted(((v["score"], rn) for rn, v in auto.items() if v["pair"]),
+                     reverse=True)
+    default_leg_races = [rn for _, rn in ranked[:n_legs_target]]
+
+    # ── Leg editor ─────────────────────────────────────────────
+    st.markdown("##### Legs")
+    leg_options = {f"R{rn}": rn for rn in race_keys}
+    chosen_labels = st.multiselect(
+        f"Pick exactly {n_legs_target} races (auto-selected by edge)",
+        list(leg_options.keys()),
+        default=[f"R{rn}" for rn in default_leg_races
+                  if rn in race_keys][:n_legs_target],
+        key="mb_au_legs",
+    )
+    chosen_races = [leg_options[lbl] for lbl in chosen_labels]
+    if len(chosen_races) != n_legs_target:
+        st.warning(f"Shape **{shape_label}** requires exactly "
+                   f"**{n_legs_target}** legs (you picked {len(chosen_races)}).")
+        return
+
+    # Per-leg pair display + override
+    leg_rows = []
+    final_legs: list[dict] = []
+    for rn in chosen_races:
+        race = next((r for r in races if int(r.get("race_number") or 0) == rn), None)
+        picks = race.get("picks") or []
+        runner_options = {f"#{p['horse_no']} (rk{p.get('rank','?')})":
+                           int(p["horse_no"])
+                           for p in sorted(picks, key=lambda x: int(x.get("rank") or 99))}
+        runner_to_label = {v: k for k, v in runner_options.items()}
+        suggested = auto.get(rn, {}).get("pair")
+        c_a, c_b = st.columns(2)
+        with c_a:
+            h1 = st.selectbox(
+                f"R{rn} · horse A", list(runner_options.keys()),
+                index=(list(runner_options.values()).index(suggested[0])
+                        if suggested and suggested[0] in runner_options.values() else 0),
+                key=f"mb_au_h1_{rn}",
+            )
+        with c_b:
+            opts = [k for k in runner_options.keys()
+                     if runner_options[k] != runner_options[h1]]
+            default_b = (runner_to_label.get(suggested[1])
+                          if suggested and suggested[1] in runner_options.values()
+                          else (opts[0] if opts else h1))
+            h2 = st.selectbox(
+                f"R{rn} · horse B", opts,
+                index=opts.index(default_b) if default_b in opts else 0,
+                key=f"mb_au_h2_{rn}",
+            )
+        ha, hb = runner_options[h1], runner_options[h2]
+        final_legs.append({"race_no": rn, "pair": (ha, hb)})
+        score = auto.get(rn, {}).get("score") or 0
+        leg_rows.append({"R#": rn, "Pair": f"{min(ha,hb)}-{max(ha,hb)}",
+                          "Edge max": f"{score*100:+.1f}pp"})
+
+    st.dataframe(pd.DataFrame(leg_rows), hide_index=True,
+                 use_container_width=True)
+
+    # ── Build tickets ──────────────────────────────────────────
+    qin_t = build_all_up_ticket(legs=final_legs, pool="QIN",
+                                 sizes=sizes, stake_per_unit=spu)
+    qpl_t = build_all_up_ticket(legs=final_legs, pool="QPL",
+                                 sizes=sizes, stake_per_unit=spu)
+    if not (qin_t.get("valid") and qpl_t.get("valid")):
+        st.error("Invalid ticket configuration.")
+        return
+
+    # ── Summary metrics ────────────────────────────────────────
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Shape", qin_t["shape_label"])
+    m1.caption(f"{qin_t['n_legs']} legs · "
+               f"sizes parlayed: {','.join(str(s) for s in qin_t['sizes'])}")
+    m2.metric("Units / pool", f"{qin_t['n_units']}")
+    m2.caption(f"$ per unit: ${spu}")
+    total = qin_t["total_stake"] + qpl_t["total_stake"]
+    m3.metric("Total stake (QIN + QPL)", f"${total:.0f}")
+    m3.caption(f"Q: ${qin_t['total_stake']:.0f}  ·  "
+                f"QPL: ${qpl_t['total_stake']:.0f}")
+
+    # Joint hit estimate (rough, based on April-2026 priors)
+    if pair_mode == "market":
+        per_leg_qin = 0.397   # market fav top-2
+        per_leg_qpl = 0.564
+    elif pair_mode == "model":
+        per_leg_qin = 0.065   # model top-2 pair joint
+        per_leg_qpl = 0.143
+    else:
+        per_leg_qin = 0.230
+        per_leg_qpl = 0.354
+    full_p_qin = per_leg_qin ** n_legs_target
+    full_p_qpl = per_leg_qpl ** n_legs_target
+    st.caption(
+        f"_Rough joint probability (Apr-2026 priors): full {n_legs_target}-leg "
+        f"QIN parlay ≈ **{full_p_qin*100:.2f}%** · QPL ≈ **{full_p_qpl*100:.1f}%**. "
+        f"Lower-size combinations in shape {shape_label} hit more often._"
+    )
+
+    # ── Submit + log ───────────────────────────────────────────
+    confirm = st.checkbox("Confirm — log to all_up_log.jsonl",
+                           key="mb_au_confirm")
+    notes = st.text_input("Notes (optional)", key="mb_au_notes")
+    if st.button("💸 Log All-Up tickets",
+                  type="primary", disabled=not confirm,
+                  use_container_width=False):
+        try:
+            qid = aul.submit_ticket(qin_t, meeting_date=date_compact,
+                                     venue=venue_code, pair_mode=pair_mode,
+                                     notes=notes)
+            pid = aul.submit_ticket(qpl_t, meeting_date=date_compact,
+                                     venue=venue_code, pair_mode=pair_mode,
+                                     notes=notes)
+            try:
+                push_ok = _gh_push_user_bets()
+            except Exception:
+                push_ok = False
+            msg = f"✅ Logged tickets {qid} (QIN) and {pid} (QPL)"
+            if push_ok:
+                msg += " · Pushed to GitHub"
+            st.success(msg)
+        except Exception as e:
+            st.error(f"Log failed: {e}")
+
+    # ── Existing tickets table ─────────────────────────────────
+    st.markdown("---")
+    st.markdown("##### 📒 Logged All-Up tickets")
+    rows = aul.load_tickets(settle=True)
+    rows.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+    if not rows:
+        st.caption("_No tickets logged yet._")
+    else:
+        table = []
+        for r in rows[:30]:
+            t = r["ticket"]
+            legs_str = " → ".join(f"R{l['race_no']}({l['pair'][0]}-{l['pair'][1]})"
+                                    for l in t["legs"])
+            table.append({
+                "Date": r["meeting_date"], "Pool": t["pool"],
+                "Shape": t["shape_label"], "Legs": legs_str,
+                "Stake": f"${t['total_stake']:.0f}",
+                "Mode": r.get("pair_mode", ""),
+                "Status": r.get("status", "open"),
+                "Return": (f"${r.get('return_hkd', 0):.0f}"
+                            if r.get("status") == "settled" else "—"),
+                "PnL": (f"${r.get('pnl_hkd', 0):+.0f}"
+                         if r.get("status") == "settled" else "—"),
+            })
+        st.dataframe(pd.DataFrame(table), hide_index=True,
+                     use_container_width=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
