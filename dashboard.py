@@ -5830,6 +5830,119 @@ def page_blackbook():
 
     # ══ ANALYTICS TAB ════════════════════════════════════════
     with tab_analytics:
+        # ── Subsequent-run ROI (real dividends) ──
+        st.markdown("### Subsequent-run ROI — would 1u flat-stake on every BB pick have been profitable?")
+        st.caption("Walks every BB entry's runs since `added_date` and prices each at real HKJC "
+                     "WIN/PLACE dividends (SP fallback). 50/50 = ½u WIN + ½u PLACE per run.")
+        bb_perf_path = REPORTS / "blackbook_performance.json"
+        bb_chart_path = REPORTS / "blackbook_roi_chart.png"
+        col_a, col_b = st.columns([1, 4])
+        with col_a:
+            if st.button("🔄 Recompute", key="bb_roi_refresh",
+                            help="Re-runs analyze_blackbook.py against the live DB."):
+                with st.spinner("Crunching subsequent runs…"):
+                    try:
+                        import analyze_blackbook
+                        import importlib
+                        importlib.reload(analyze_blackbook)
+                        analyze_blackbook.analyse()
+                        st.success("Refreshed.")
+                    except Exception as exc:
+                        st.error(f"Failed: {exc}")
+        if bb_perf_path.exists():
+            try:
+                bb_perf = json.loads(bb_perf_path.read_text(encoding="utf-8"))
+            except Exception as exc:
+                bb_perf = None
+                st.warning(f"Could not load blackbook_performance.json: {exc}")
+        else:
+            bb_perf = None
+            st.info("Click **Recompute** to generate the first ROI snapshot.")
+
+        if bb_perf:
+            g = bb_perf.get("grand", {})
+            ua = bb_perf.get("user_actual", {})
+            with col_b:
+                st.caption(f"Snapshot: {bb_perf.get('generated_at','?')}  · "
+                              f"{g.get('horses_with_runs',0)}/{g.get('blackbook_size',0)} horses with subsequent runs")
+            mc1, mc2, mc3, mc4 = st.columns(4)
+            mc1.metric("Total runs tracked", g.get("total_runs", 0))
+            mc2.metric("WIN strike",
+                          f"{(g.get('win_strike_rate') or 0)*100:.1f}%",
+                          delta=f"ROI {(g.get('win_roi') or 0)*100:+.1f}%")
+            mc3.metric("PLACE strike",
+                          f"{(g.get('pla_strike_rate') or 0)*100:.1f}%",
+                          delta=f"ROI {(g.get('pla_roi') or 0)*100:+.1f}%")
+            mc4.metric("50/50 ROI",
+                          f"{(g.get('split_50_50_roi') or 0)*100:+.1f}%",
+                          help="½u WIN + ½u PLACE per run, real dividends, SP fallback for missing.")
+
+            if bb_chart_path.exists():
+                st.image(str(bb_chart_path), use_container_width=True)
+
+            with st.expander("By confidence cohort", expanded=False):
+                rows = []
+                for c, v in (bb_perf.get("by_confidence") or {}).items():
+                    rows.append({
+                        "Confidence": c.title(), "Horses": v.get("horses", 0),
+                        "Runs": v.get("runs", 0),
+                        "WIN hits": v.get("win_hits", 0), "PLA hits": v.get("pla_hits", 0),
+                        "WIN ROI": f"{(v.get('win_roi') or 0)*100:+.1f}%",
+                        "PLA ROI": f"{(v.get('pla_roi') or 0)*100:+.1f}%",
+                    })
+                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+            with st.expander("Per-horse verdicts (KEEP / WATCH / EXPIRE)", expanded=False):
+                horses = bb_perf.get("horses", [])
+                from collections import Counter as _Cnt
+                vc = _Cnt(h.get("verdict") for h in horses)
+                st.caption(f"KEEP={vc.get('KEEP',0)} · WATCH={vc.get('WATCH',0)} · "
+                              f"EXPIRE={vc.get('EXPIRE',0)} · NO_RUNS={vc.get('NO_RUNS',0)}")
+                tab_k, tab_e = st.tabs([f"KEEP ({vc.get('KEEP',0)})",
+                                              f"EXPIRE candidates ({vc.get('EXPIRE',0)})"])
+                with tab_k:
+                    rows = []
+                    for h in sorted([x for x in horses if x.get("verdict") == "KEEP"],
+                                       key=lambda x: (x.get("pla_roi") or 0), reverse=True):
+                        rows.append({
+                            "Horse": h["horse"], "Conf": (h.get("confidence") or "").title(),
+                            "Runs": h["runs"], "WIN": h["win_hits"], "PLA": h["pla_hits"],
+                            "WIN ROI": f"{(h.get('win_roi') or 0)*100:+.1f}%",
+                            "PLA ROI": f"{(h.get('pla_roi') or 0)*100:+.1f}%",
+                            "Tags": ", ".join(h.get("tags") or []),
+                        })
+                    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                with tab_e:
+                    rows = []
+                    for h in sorted([x for x in horses if x.get("verdict") == "EXPIRE"],
+                                       key=lambda x: (x.get("pla_roi") or 0)):
+                        rows.append({
+                            "Horse": h["horse"], "Conf": (h.get("confidence") or "").title(),
+                            "Runs": h["runs"], "PLA": h["pla_hits"],
+                            "PLA ROI": f"{(h.get('pla_roi') or 0)*100:+.1f}%",
+                            "Reasoning": h.get("reasoning", ""),
+                        })
+                    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+            with st.expander("Cross-check: BB vs your actual bookie bets", expanded=False):
+                if ua.get("settled_bets"):
+                    u1, u2, u3, u4 = st.columns(4)
+                    u1.metric("Your settled bets", ua.get("settled_bets", 0))
+                    u2.metric("Your hit rate",
+                                 f"{(ua.get('user_hit_rate') or 0)*100:.1f}%")
+                    u3.metric("Your ROI",
+                                 f"{(ua.get('user_roi') or 0)*100:+.1f}%",
+                                 delta=f"PnL ${ua.get('user_pnl',0):+,.0f}")
+                    u4.metric("BB-overlap bets", ua.get("bb_overlap_count", 0),
+                                 delta=f"PnL attr ${ua.get('bb_overlap_pnl_attr',0):+,.0f}")
+                    examples = ua.get("bb_overlap_examples") or []
+                    if examples:
+                        st.caption("Where a BB horse appeared in one of your tickets:")
+                        st.dataframe(pd.DataFrame(examples), use_container_width=True, hide_index=True)
+                else:
+                    st.caption("No settled user bets yet — upload bookie statements via My Bets.")
+        st.markdown("---")
+
         all_entries = bb["entries"]
         all_perfs = [(e, p) for e in all_entries for p in e.get("performances", [])]
 
