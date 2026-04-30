@@ -36,17 +36,27 @@ FORM_COLS = [
 
 
 def _load_form_db() -> pd.DataFrame:
-    db_file = BASE / "hkjc_results_updated.xlsx"
-    if not db_file.exists():
-        sys.exit(f"ERROR: {db_file} not found.")
+    # v4.7: prefer hkjc.db (sqlite mirror) — ~35x faster than xlsx, no
+    # OneDrive lock issues. Falls back to xlsx only if sqlite missing.
     try:
-        df = pd.read_excel(db_file)
-    except PermissionError:
-        tmp = Path(tempfile.gettempdir()) / db_file.name
-        shutil.copy2(db_file, tmp)
-        df = pd.read_excel(tmp)
-    keep = [c for c in FORM_COLS if c in df.columns]
-    df = df[keep].copy()
+        from db_utils import read_sqlite, SQLITE_FILE
+    except ImportError:
+        SQLITE_FILE = None
+    if SQLITE_FILE is not None and Path(SQLITE_FILE).exists():
+        cols = ", ".join(f'"{c}"' for c in FORM_COLS)
+        df = read_sqlite(f"SELECT {cols} FROM results")
+    else:
+        db_file = BASE / "hkjc_results_updated.xlsx"
+        if not db_file.exists():
+            sys.exit(f"ERROR: {db_file} not found.")
+        try:
+            df = pd.read_excel(db_file)
+        except PermissionError:
+            tmp = Path(tempfile.gettempdir()) / db_file.name
+            shutil.copy2(db_file, tmp)
+            df = pd.read_excel(tmp)
+        keep = [c for c in FORM_COLS if c in df.columns]
+        df = df[keep].copy()
     df["race_date"] = pd.to_datetime(df["race_date"]).dt.date
     df["place_num"] = pd.to_numeric(df["place"], errors="coerce")
     df["horse_name_upper"] = df["horse_name"].str.upper().str.strip()

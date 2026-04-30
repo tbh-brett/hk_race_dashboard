@@ -35,6 +35,13 @@ BASE = Path(__file__).parent
 
 
 def _load_db() -> pd.DataFrame:
+    # v4.7: prefer sqlite mirror (~35x faster than xlsx).
+    try:
+        from db_utils import read_sqlite, SQLITE_FILE
+        if Path(SQLITE_FILE).exists():
+            return read_sqlite()
+    except ImportError:
+        pass
     src = BASE / "hkjc_results_updated.xlsx"
     if not src.exists():
         sys.exit(f"ERROR: {src} not found")

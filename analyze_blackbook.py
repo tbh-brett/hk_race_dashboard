@@ -51,9 +51,17 @@ def _norm_date(v) -> str | None:
 
 
 def _load_db() -> pd.DataFrame:
-    tmp = Path(os.environ["TEMP"]) / "_bb_db.xlsx"
-    shutil.copy2(DB_PATH, tmp)
-    df = pd.read_excel(tmp)
+    # v4.7: prefer sqlite mirror (~35x faster than xlsx).
+    try:
+        from db_utils import read_sqlite, SQLITE_FILE
+    except ImportError:
+        SQLITE_FILE = None
+    if SQLITE_FILE is not None and Path(SQLITE_FILE).exists():
+        df = read_sqlite()
+    else:
+        tmp = Path(os.environ["TEMP"]) / "_bb_db.xlsx"
+        shutil.copy2(DB_PATH, tmp)
+        df = pd.read_excel(tmp)
     df["race_date_norm"] = df["race_date"].apply(_norm_date)
     df = df[df["race_date_norm"].notna()].copy()
     df["horse_name_u"] = df["horse_name"].astype(str).str.upper().str.strip()

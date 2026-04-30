@@ -1547,6 +1547,34 @@ def _load_form_db() -> pd.DataFrame:
     if not db_file.exists():
         return pd.DataFrame()
 
+    # v4.7: fastest path — sqlite mirror (hkjc.db). Auto-rebuilt by
+    # db_utils.append_results_to_db on every results scrape, so it tracks
+    # the xlsx automatically. ~0.8 s vs 27 s xlsx, no parquet rebuild step.
+    try:
+        from db_utils import SQLITE_FILE, read_sqlite
+        sqlite_path = Path(SQLITE_FILE)
+        if sqlite_path.exists():
+            try:
+                xlsx_mtime = db_file.stat().st_mtime
+            except OSError:
+                xlsx_mtime = 0.0
+            try:
+                sql_mtime = sqlite_path.stat().st_mtime
+            except OSError:
+                sql_mtime = 0.0
+            # Only trust sqlite if it's at least as fresh as the xlsx
+            # (otherwise fall through to parquet/xlsx path which will
+            # see the new rows from the xlsx).
+            if sql_mtime >= xlsx_mtime:
+                cols = ", ".join(f'"{c}"' for c in FORM_COLS)
+                df = read_sqlite(f"SELECT {cols} FROM results")
+                df["race_date"] = pd.to_datetime(df["race_date"]).dt.date
+                df["place_num"] = pd.to_numeric(df["place"], errors="coerce")
+                df["horse_name_upper"] = df["horse_name"].str.upper().str.strip()
+                return df
+    except Exception:
+        pass
+
     parquet_file = CACHE_DIR / "form_db.parquet"
     try:
         xlsx_mtime = db_file.stat().st_mtime
