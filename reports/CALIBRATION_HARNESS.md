@@ -9,6 +9,7 @@ Lower is better for Brier and log-loss. Skill scores are vs Shin market baseline
 | Source | Brier | LogLoss | ECE | BrierSkill | LogLossLift |
 |--------|------:|--------:|----:|-----------:|------------:|
 | p_model | 0.0722 | 0.2728 | 0.0370 | -3.11% | -0.0251 |
+| p_gbm | 0.0699 | 0.2607 | 0.0388 | -1.38% | -0.0158 |
 | p_market_basic | 0.0694 | 0.2463 | 0.0287 | +0.83% | +0.0014 |
 | p_market_shin | 0.0700 | 0.2478 | 0.0232 | +0.00% | +0.0000 |
 

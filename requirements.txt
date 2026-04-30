@@ -16,16 +16,15 @@ beautifulsoup4>=4.12
 # PDF generation
 reportlab>=4.0
 
-# OCR for running-position photos (parse_rp_photos.py)
-opencv-python-headless>=4.8   # cv2 — headless variant for cloud (no GUI libs)
-rapidocr-onnxruntime>=1.3     # RapidOCR engine (CPU-only, ONNX)
-Pillow>=10.0                   # image I/O for OCR pre/post-processing
-
 # Database (used by scrape_hkjc.py results scraper)
 duckdb>=0.9
 
 # Dashboard
 streamlit>=1.35
+
+# Modelling — gradient-boosted classifier (train_gbm.py)
+lightgbm>=4.0
+scikit-learn>=1.3       # GroupKFold for race-grouped CV
 
 # Optional: headless browser fallback for JS-rendered pages
 playwright>=1.40

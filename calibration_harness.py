@@ -46,6 +46,15 @@ from backtest_market import (
     BASE, REPORTS, list_dates, load_results, load_model_winprob,
 )
 
+try:
+    from train_gbm import (score_report as _gbm_score_report,
+                           MODEL_FILE as _GBM_MODEL_FILE,
+                           OOF_FILE as _GBM_OOF_FILE)
+except Exception:  # pragma: no cover
+    _gbm_score_report = None
+    _GBM_MODEL_FILE = None
+    _GBM_OOF_FILE = None
+
 OUT_JSON = REPORTS / "calibration_harness.json"
 OUT_MD = REPORTS / "CALIBRATION_HARNESS.md"
 
@@ -63,6 +72,19 @@ def build_rows(d_from: str | None, d_to: str | None,
     the edge, the realised win indicator, and the SP.
     """
     rows: list[dict] = []
+    # Try to load GBM scores. Prefer OOF predictions (honest, no leakage)
+    # for any meeting that was in the training set; fall back to the
+    # in-sample final model for meetings the GBM hasn't seen.
+    gbm_available = (_gbm_score_report is not None and
+                     _GBM_MODEL_FILE is not None and
+                     _GBM_MODEL_FILE.exists())
+    oof_map: dict[str, float] = {}
+    if (_GBM_OOF_FILE is not None) and _GBM_OOF_FILE.exists():
+        try:
+            import json as _json
+            oof_map = _json.loads(_GBM_OOF_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            oof_map = {}
     for d in list_dates(d_from, d_to):
         runners = load_results(d)
         if not runners:
@@ -70,6 +92,18 @@ def build_rows(d_from: str | None, d_to: str | None,
         p_model = load_model_winprob(d, version=version)
         if not p_model:
             continue
+        p_gbm = {}
+        if gbm_available:
+            try:
+                p_gbm = _gbm_score_report(d, version=version) or {}
+            except Exception:
+                p_gbm = {}
+        # Override with OOF where available (honest scores).
+        if oof_map:
+            for (rn, hn) in list(p_gbm.keys()):
+                k = f"{d}_{int(rn)}_{int(hn)}"
+                if k in oof_map:
+                    p_gbm[(rn, hn)] = oof_map[k]
         by_race: dict[int, list] = defaultdict(list)
         for r in runners:
             by_race[r.race_no].append(r)
@@ -92,6 +126,7 @@ def build_rows(d_from: str | None, d_to: str | None,
             for rank, (r, pm) in enumerate(scored, start=1):
                 ps_b = p_basic.get(r.horse_no, 0.0)
                 ps_s = p_shin.get(r.horse_no, 0.0)
+                pg = p_gbm.get((rn, r.horse_no))
                 rows.append({
                     "date": d, "race_no": rn, "horse_no": r.horse_no,
                     "horse_name": r.horse_name,
@@ -100,6 +135,7 @@ def build_rows(d_from: str | None, d_to: str | None,
                     "won": (r.place == 1),
                     "n_runners": r.n_runners,
                     "p_model": pm,
+                    "p_gbm": pg,
                     "p_market_basic": ps_b,
                     "p_market_shin": ps_s,
                     "rank_model": rank,
@@ -298,6 +334,10 @@ def evaluate(rows: list[dict], n_bins: int = 10) -> dict:
         "p_market_basic":  [(r["p_market_basic"], r["won"]) for r in rows],
         "p_market_shin":   [(r["p_market_shin"], r["won"]) for r in rows],
     }
+    # Add GBM source restricted to rows that actually have a valid p_gbm.
+    gbm_rows = [r for r in rows if r.get("p_gbm") is not None]
+    if gbm_rows:
+        sources["p_gbm"] = [(r["p_gbm"], r["won"]) for r in gbm_rows]
     cal: dict[str, dict] = {}
     for name, pairs in sources.items():
         bins = reliability_bins(pairs, n_bins=n_bins)
@@ -311,10 +351,21 @@ def evaluate(rows: list[dict], n_bins: int = 10) -> dict:
     ref_brier = cal["p_market_shin"]["brier"]
     ref_ll = cal["p_market_shin"]["log_loss"]
     for name, m in cal.items():
-        m["brier_skill_vs_shin"] = (
-            1.0 - m["brier"] / ref_brier if ref_brier else None)
-        m["logloss_lift_vs_shin"] = (
-            ref_ll - m["log_loss"] if ref_ll else None)
+        if name == "p_gbm" and gbm_rows:
+            # Use a baseline computed on the SAME row subset for fairness.
+            shin_sub = [(r["p_market_shin"], r["won"]) for r in gbm_rows]
+            ref_b_sub = brier(shin_sub)
+            ref_ll_sub = log_loss(shin_sub)
+            m["brier_skill_vs_shin"] = (
+                1.0 - m["brier"] / ref_b_sub if ref_b_sub else None)
+            m["logloss_lift_vs_shin"] = (
+                ref_ll_sub - m["log_loss"] if ref_ll_sub else None)
+            m["n_rows"] = len(gbm_rows)
+        else:
+            m["brier_skill_vs_shin"] = (
+                1.0 - m["brier"] / ref_brier if ref_brier else None)
+            m["logloss_lift_vs_shin"] = (
+                ref_ll - m["log_loss"] if ref_ll else None)
 
     # Edge analyses
     q_edge_shin = quintile_roi(rows, edge_key="edge", n_q=5)
@@ -360,7 +411,9 @@ def render_md(summary: dict, version: str) -> str:
     a("")
     a("| Source | Brier | LogLoss | ECE | BrierSkill | LogLossLift |")
     a("|--------|------:|--------:|----:|-----------:|------------:|")
-    for name in ("p_model", "p_market_basic", "p_market_shin"):
+    src_names = [n for n in ("p_model", "p_gbm", "p_market_basic",
+                              "p_market_shin") if n in summary["calibration"]]
+    for name in src_names:
         m = summary["calibration"][name]
         a(f"| {name} | {m['brier']:.4f} | {m['log_loss']:.4f} | "
           f"{m['ece']:.4f} | "

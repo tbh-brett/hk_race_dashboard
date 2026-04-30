@@ -10317,10 +10317,13 @@ def page_calibration():
                "baseline. On a small sample, expect p_model to be "
                "slightly NEGATIVE — beating the HK win pool is hard.")
     metric_rows = []
-    for name in ("p_model", "p_market_basic", "p_market_shin"):
+    src_order = [n for n in ("p_model", "p_gbm", "p_market_basic",
+                              "p_market_shin") if n in cal]
+    for name in src_order:
         m = cal[name]
         metric_rows.append({
             "Source": name,
+            "n": m.get("n_rows", s["n_rows"]),
             "Brier": round(m["brier"], 4),
             "LogLoss": round(m["log_loss"], 4),
             "ECE": round(m["ece"], 4),
@@ -10339,7 +10342,9 @@ def page_calibration():
                "45° line is perfect calibration. Points above the line "
                "= source UNDER-estimates probability; below = OVER.")
     rel_rows = []
-    for src in ("p_model", "p_market_shin"):
+    rel_sources = [s_ for s_ in ("p_model", "p_gbm", "p_market_shin")
+                   if s_ in cal]
+    for src in rel_sources:
         for b in cal[src]["bins"]:
             rel_rows.append({
                 "source": src, "bin": b["bin"], "n": b["n"],
@@ -10364,8 +10369,10 @@ def page_calibration():
                     color=alt.Color("source:N",
                                     title="",
                                     scale=alt.Scale(
-                                        domain=["p_model", "p_market_shin"],
-                                        range=["#ff6e00", "#5b8def"])),
+                                        domain=["p_model", "p_gbm",
+                                                "p_market_shin"],
+                                        range=["#ff6e00", "#22c55e",
+                                               "#5b8def"])),
                     tooltip=["source", "bin", "n", "p_predicted",
                              "win_rate", "gap"],
                 )
@@ -10490,6 +10497,192 @@ def page_calibration():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# GBM Lab — gradient-boosted model trainer/inspector
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_gbm():
+    """Train + inspect the LightGBM model that learns from v4.4 features."""
+    st.markdown('<div class="page-title">GBM Lab</div>',
+                unsafe_allow_html=True)
+    st.markdown('<div class="page-subtitle">Gradient-boosted model that '
+                're-learns the v4.4 weights from data — same features, '
+                'no manual tuning, regularised by cross-validation.</div>',
+                unsafe_allow_html=True)
+
+    train_path = REPORTS / "gbm_training.json"
+    model_path = BASE / "models" / "gbm_v1.txt"
+
+    # ── Sidebar controls ───────────────────────────────────────────────────
+    st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="sb-nav-section">GBM</div>',
+                        unsafe_allow_html=True)
+    g_from = st.sidebar.text_input("From (YYYY-MM-DD)", value="2026-04-01",
+                                   key="gbm_from")
+    g_to = st.sidebar.text_input("To (YYYY-MM-DD)", value="",
+                                 key="gbm_to")
+    g_version = st.sidebar.text_input("Source model version", value="v4.4",
+                                      key="gbm_version")
+    g_splits = st.sidebar.number_input("CV splits", min_value=2,
+                                       max_value=10, value=5, step=1,
+                                       key="gbm_splits")
+    if st.sidebar.button("[ Train GBM ]", key="btn_gbm_train",
+                         use_container_width=True):
+        try:
+            from train_gbm import run as _gbm_run
+            d_from = (g_from or "").replace("-", "") or None
+            d_to = (g_to or "").replace("-", "") or None
+            with st.spinner("Training LightGBM ..."):
+                _gbm_run(d_from, d_to, version=g_version or "v4.4",
+                         n_splits=int(g_splits))
+            st.success("GBM trained — refresh below.")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Training failed: {e}")
+
+    score_date = st.sidebar.date_input("Score a meeting",
+                                        value=date.today(),
+                                        key="gbm_score_date")
+    if st.sidebar.button("[ Score Meeting ]", key="btn_gbm_score",
+                         use_container_width=True):
+        try:
+            from train_gbm import score_report as _gbm_score
+            d = score_date.isoformat().replace("-", "")
+            with st.spinner("Scoring ..."):
+                out = _gbm_score(d) or {}
+            if not out:
+                st.warning("No predictions — missing report or model.")
+            else:
+                st.session_state["_gbm_last_scored"] = {
+                    "date": d,
+                    "rows": [{"race_no": k[0], "horse_no": k[1],
+                              "p_gbm_pct": round(v * 100, 2)}
+                             for k, v in sorted(out.items())],
+                }
+                st.success(f"Scored {len(out)} runners on {d}.")
+        except Exception as e:
+            st.error(f"Scoring failed: {e}")
+
+    if not train_path.exists():
+        st.warning("No training output yet. Click **Train GBM** in the "
+                   "sidebar, or run\n\n```\npython train_gbm.py\n```\n"
+                   "from the project folder.")
+        return
+    try:
+        s = json.loads(train_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        st.error(f"Could not parse {train_path.name}: {e}")
+        return
+    if s.get("n_rows", 0) == 0:
+        st.info("Training ran but found no rows.")
+        return
+
+    # ── Header summary ────────────────────────────────────────────────
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Meetings trained", s["n_meetings"])
+    c2.metric("Races", s["n_races"])
+    c3.metric("Rows", s["n_rows"])
+    c4.metric("Date range", f"{s['date_min']} → {s['date_max']}")
+
+    # ── Section 1: head-to-head with v4.4 ───────────────────────────────
+    st.markdown("### 1 · GBM vs handcrafted v4.4 (out-of-fold)")
+    st.caption("All metrics here are computed on out-of-fold predictions "
+               "— the GBM never saw the rows it's being scored on. "
+               "BrierSkill > 0 means GBM beats v4.4.")
+    g = s["metrics"]["p_gbm"]
+    v = s["metrics"]["p_v44"]
+    h2h = pd.DataFrame([
+        {"Source": "p_v44 (handcrafted)",
+         "Brier": round(v["brier"], 4),
+         "LogLoss": round(v["log_loss"], 4),
+         "BrierSkill vs v44": "baseline",
+         "LogLoss lift": "baseline"},
+        {"Source": "p_gbm (LightGBM)",
+         "Brier": round(g["brier"], 4),
+         "LogLoss": round(g["log_loss"], 4),
+         "BrierSkill vs v44":
+             f"{(g.get('brier_skill_vs_v44') or 0)*100:+.2f}%",
+         "LogLoss lift":
+             f"{(g.get('logloss_lift_vs_v44') or 0):+.4f}"},
+    ])
+    st.dataframe(h2h, hide_index=True, use_container_width=True)
+
+    # ── Section 2: feature importance ───────────────────────────────────
+    st.markdown("### 2 · What the GBM learned")
+    st.caption("Higher gain = the feature explained more variance in "
+               "win/loss. Compare to your v4.4 weights: features at the "
+               "top that v4.4 down-weighted are where the GBM disagrees "
+               "with the handcrafted score.")
+    imp = s.get("feature_importance") or []
+    if imp:
+        idf = pd.DataFrame(imp).head(20).copy()
+        try:
+            import altair as alt
+            chart = (
+                alt.Chart(idf).mark_bar(color="#22c55e").encode(
+                    x=alt.X("gain:Q", title="Gain"),
+                    y=alt.Y("feature:N", sort="-x", title=""),
+                    tooltip=["feature", "gain", "split"],
+                )
+                .properties(height=420)
+            )
+            st.altair_chart(chart, use_container_width=True)
+        except Exception:
+            st.dataframe(idf, hide_index=True, use_container_width=True)
+
+    # ── Section 3: reliability ──────────────────────────────────────────
+    st.markdown("### 3 · Reliability — p_gbm (OOF)")
+    bins = g.get("bins") or []
+    if bins:
+        bdf = pd.DataFrame(bins)
+        try:
+            import altair as alt
+            line = (
+                alt.Chart(bdf).mark_line(point=True, color="#22c55e")
+                .encode(
+                    x=alt.X("p_mean:Q", scale=alt.Scale(domain=[0, 0.6]),
+                            title="Predicted P(win)"),
+                    y=alt.Y("win_rate:Q", scale=alt.Scale(domain=[0, 0.6]),
+                            title="Observed win rate"),
+                    tooltip=["bin", "n", "p_mean", "win_rate", "diff"],
+                )
+                .properties(height=300)
+            )
+            ideal = alt.Chart(
+                pd.DataFrame({"x": [0, 0.6], "y": [0, 0.6]})
+            ).mark_line(strokeDash=[4, 4], color="#888").encode(
+                x="x:Q", y="y:Q")
+            st.altair_chart(ideal + line, use_container_width=True)
+        except Exception:
+            st.dataframe(bdf, hide_index=True, use_container_width=True)
+
+    # ── Section 4: per-fold CV ────────────────────────────────────────
+    folds = (s.get("cv") or {}).get("folds") or []
+    if folds:
+        st.markdown("### 4 · Cross-validation folds")
+        st.caption("Each fold trains on N−1 meetings and validates on the "
+                   "held-out meeting. Stable logloss across folds = GBM "
+                   "isn't overfitting one particular meeting.")
+        st.dataframe(pd.DataFrame(folds), hide_index=True,
+                     use_container_width=True)
+
+    # ── Section 5: most-recent scored meeting (if any) ─────────────────────
+    last = st.session_state.get("_gbm_last_scored")
+    if last:
+        st.markdown(f"### 5 · GBM scores for {last['date']}")
+        st.dataframe(pd.DataFrame(last["rows"]),
+                     hide_index=True, use_container_width=True)
+
+    md_path = REPORTS / "GBM_TRAINING.md"
+    if md_path.exists():
+        with st.expander("Full markdown report"):
+            st.markdown(md_path.read_text(encoding="utf-8"))
+
+    if model_path.exists():
+        st.caption(f"Model file: `{model_path.relative_to(BASE)}`  ·  "
+                   f"size: {model_path.stat().st_size//1024} KB")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Entry point — page router
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -10519,6 +10712,7 @@ def main():
         ("Trials",         "🎽 Trials"),
         ("Backtest",       "🧪 Backtest"),
         ("Calibration",    "📐 Calibration Lab"),
+        ("GBM",            "🌲 GBM Lab"),
         ("PDF Builder",    "📄 PDF Builder"),
     ]
     if "nav_page" not in st.session_state:
@@ -10565,6 +10759,8 @@ def main():
         page_backtest()
     elif page == "Calibration":
         page_calibration()
+    elif page == "GBM":
+        page_gbm()
     elif page == "Results":
         page_results()
     elif page == "Blackbook":
