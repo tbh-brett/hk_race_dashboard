@@ -11630,6 +11630,307 @@ combination.
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Multi Builder page — Q+QPL banker-box ticket constructor
+# ─────────────────────────────────────────────────────────────────────────────
+def page_multi_builder():
+    """Q+QPL Multi Builder.
+
+    Workflow (1 = Builder, 2 = AI suggestions):
+      1. User picks meeting + race
+      2. User picks BANKER (or accepts AI default)
+      3. User picks LEGS (auto-filled from model top-4 + edge overlays)
+      4. Tool computes coverage shape, total stake, evidence breakdown,
+         Apr-2026 historical ROI for that shape/banker-rank class
+      5. One-click → submits N × QIN_BANKER + N × QPL_BANKER to user_bets
+
+    The whole point: replicate the user's actual winning shape
+    (`mixed_banker+box`, +28% ROI in April) with stake calibration in the
+    +45%-ROI band ($200-$300 max per race).
+    """
+    import user_bets as ub
+    from multi_builder import (
+        build_multi_suggestion, evaluate_user_choice, build_meeting_multi,
+        settle_suggestion,
+    )
+
+    st.markdown('<div class="page-title">🧮 Multi Builder</div>',
+                unsafe_allow_html=True)
+    st.markdown(
+        '<div class="page-subtitle">Q+QPL banker-box constructor — '
+        'evidence-backed coverage with calibrated stakes</div>',
+        unsafe_allow_html=True,
+    )
+
+    with st.expander("ℹ️ What this is + April-2026 evidence", expanded=False):
+        st.markdown(
+            """
+**This tool addresses the four leaks identified in your April history:**
+
+| Leak | Apr ROI | Tool fix |
+|------|--------:|----------|
+| Pure boxes (no banker) | −13% to −63% | Forces a banker shape |
+| Spread too thin (>9 combos/race) | −13% on QQPL pool | Caps at 6 legs by default |
+| Over-staking (>$300/race) | −84% | Stake band $80–$240 (4-6 legs × $20) |
+| Following model rank-1 banker | −59% | Defaults banker to your pick (shows model rank as evidence) |
+
+**What works:** `mixed_banker+box` shape (+28% ROI), banker rank 5+ (+63% to +76%),
+$200–$300 conviction band (+45%).
+
+**What "agree bucket" means** *(now visible inline below)*:
+- 🟢 **Agree** — banker + ≥2 legs in model top-3 (consensus play)
+- 🟡 **Mid** — banker rank 4–6, edge ≥ +5pp
+- 🔴 **Contrarian** — banker rank ≥7 (lottery — high variance, paid 76% in April)
+"""
+        )
+
+    # ── Meeting selector ────────────────────────────────────────────
+    meetings = load_available_meetings()
+    if not meetings:
+        st.info("No analysed meetings found. Run an analysis from Race Day first.")
+        return
+    options = {m["title"]: m for m in meetings}
+    sel_title = st.selectbox("Meeting", list(options.keys()), key="mb_mt")
+    meeting = options[sel_title]
+    date_compact = meeting["date_str"]
+    venue_code = _venue_to_code(meeting.get("venue", "")) or "ST"
+
+    data = load_meeting_data(meeting["file"])
+    races = data.get("races", []) or []
+    if not races:
+        st.warning("No races in this meeting report.")
+        return
+
+    # ── Race selector ───────────────────────────────────────────────
+    race_labels = {f"R{r.get('race_number')} — {r.get('race_class', '?')} "
+                    f"{r.get('distance_m', '?')}m": r for r in races}
+    sel_race_label = st.selectbox("Race", list(race_labels.keys()), key="mb_rc")
+    race = race_labels[sel_race_label]
+    rn = int(race.get("race_number") or 0)
+    picks = race.get("picks") or []
+    if not picks:
+        st.warning("No picks in this race.")
+        return
+
+    # Build horse table
+    runners = []
+    for p in sorted(picks, key=lambda x: int(x.get("rank") or 99)):
+        runners.append({
+            "no": int(p.get("horse_no") or 0),
+            "name": p.get("horse_name") or p.get("horse") or "",
+            "rank": int(p.get("rank") or 99),
+            "win_prob": float(p.get("win_prob") or 0),
+        })
+
+    # ── AI Suggestion panel ────────────────────────────────────────
+    st.markdown("##### 🤖 AI suggestion")
+    ai_col1, ai_col2 = st.columns([1, 3])
+    with ai_col1:
+        ai_mode = st.selectbox("Mode",
+                                ["contrarian_banker", "model_consensus"],
+                                key="mb_ai_mode",
+                                help="contrarian_banker = rank 2-6 banker w/ edge "
+                                     "(default); model_consensus = rank-1 banker "
+                                     "(historical loser, shown for reference).")
+    ai = build_multi_suggestion(
+        date_compact=date_compact, venue_code=venue_code,
+        race_no=rn, picks=picks, mode=ai_mode,
+    )
+    with ai_col2:
+        if ai.get("skip_reason"):
+            st.warning(f"AI skipped: {ai['skip_reason']}")
+        else:
+            ev = ai["evidence"]
+            st.markdown(
+                f"**Banker:** #{ai['banker']} (model rank {ev['banker_rank']}, "
+                f"edge {ev['banker_edge_pp']:+.1f}pp)  \n"
+                f"**Legs:** {ai['legs']} (ranks {ev['leg_ranks']}, "
+                f"{ev['consensus_count']}/3 in model top-3)  \n"
+                f"**Shape:** {ai['shape']} · "
+                f"**Stake total:** ${ai['stake_total']:.0f} (@ "
+                f"${ai['stake_per_pair']:.0f} per pair × 2 pools)"
+            )
+            if st.button("⬇ Use this suggestion", key="mb_use_ai"):
+                st.session_state[f"mb_banker_{date_compact}_{rn}"] = ai["banker"]
+                st.session_state[f"mb_legs_{date_compact}_{rn}"] = list(ai["legs"])
+                st.rerun()
+
+    st.markdown("---")
+    st.markdown("##### 🛠️ Builder")
+
+    # ── Builder controls ───────────────────────────────────────────
+    runner_options = {f"#{r['no']} {r['name']} (rank {r['rank']})": r["no"]
+                       for r in runners}
+    runner_labels_by_no = {r["no"]: f"#{r['no']} {r['name']} (rank {r['rank']})"
+                            for r in runners}
+
+    default_banker = st.session_state.get(f"mb_banker_{date_compact}_{rn}")
+    if default_banker is None and runners:
+        default_banker = runners[0]["no"]
+    default_banker_label = runner_labels_by_no.get(default_banker,
+                                                     list(runner_options.keys())[0])
+
+    bcol, sccol = st.columns([2, 1])
+    with bcol:
+        banker_label = st.selectbox(
+            "Banker", list(runner_options.keys()),
+            index=list(runner_options.keys()).index(default_banker_label)
+            if default_banker_label in runner_options else 0,
+            key="mb_banker_pick",
+        )
+        banker_no = runner_options[banker_label]
+    with sccol:
+        stake_per_pair = st.selectbox(
+            "$ per pair (each pool)",
+            [10, 20, 30, 50],
+            index=0,
+            key="mb_spp",
+            help="$10 per pair = $20 per leg ($10 QIN + $10 QPL). "
+                 "Apr +45% ROI band was $200-$300 total.",
+        )
+
+    # Default legs: model top-4 minus banker
+    default_legs = st.session_state.get(f"mb_legs_{date_compact}_{rn}")
+    if default_legs is None:
+        default_legs = [r["no"] for r in runners[:4] if r["no"] != banker_no][:4]
+    default_leg_labels = [runner_labels_by_no[h] for h in default_legs
+                           if h in runner_labels_by_no and h != banker_no]
+    leg_choices = {k: v for k, v in runner_options.items() if v != banker_no}
+    leg_labels = st.multiselect(
+        f"Legs (suggested: model top-4)",
+        list(leg_choices.keys()),
+        default=default_leg_labels,
+        key="mb_legs_pick",
+    )
+    legs = [leg_choices[lbl] for lbl in leg_labels]
+
+    # ── Evidence panel ─────────────────────────────────────────────
+    if not legs:
+        st.info("Pick at least one leg to see evidence + stake breakdown.")
+        return
+    evald = evaluate_user_choice(
+        date_compact=date_compact, venue_code=venue_code,
+        race_no=rn, picks=picks,
+        banker=banker_no, legs=legs,
+        stake_per_pair=stake_per_pair,
+    )
+    ev = evald["evidence"]
+
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Coverage shape", evald["shape"])
+    m2.metric("Total stake", f"${evald['stake_total']:.0f}")
+    m3.metric("Banker class", "")
+    m3.caption(ev.get("banker_class", ""))
+    # Bucket badge
+    if (ev["banker_rank"] <= 3 and ev["consensus_count"] >= 2):
+        badge = "🟢 Agree (consensus)"
+    elif (4 <= ev["banker_rank"] <= 6
+          and (ev.get("banker_edge_pp") or 0) >= 5):
+        badge = "🟡 Mid (edge play)"
+    elif ev["banker_rank"] >= 7:
+        badge = "🔴 Contrarian (high-variance)"
+    else:
+        badge = "⚪ Mixed"
+    m4.metric("Bucket", "")
+    m4.caption(badge)
+
+    st.caption(evald["rationale"])
+
+    # Per-leg evidence table
+    leg_rows = []
+    for h, rk, eg in zip(legs, ev["leg_ranks"], ev["leg_edges_pp"]):
+        leg_rows.append({
+            "#": h, "Horse": runner_labels_by_no.get(h, str(h)),
+            "Mdl rank": rk, "Edge": f"{eg:+.1f}pp",
+            "In top-3": "✓" if rk <= 3 else "",
+        })
+    st.dataframe(pd.DataFrame(leg_rows), hide_index=True,
+                 use_container_width=True)
+
+    st.markdown(
+        f"**Will submit:** {evald['n_pairs']} × QIN_BANKER + "
+        f"{evald['n_pairs']} × QPL_BANKER = "
+        f"**{2*evald['n_pairs']} bets** at ${stake_per_pair} each = "
+        f"**${evald['stake_total']:.0f} total.**"
+    )
+
+    # ── Submit button ──────────────────────────────────────────────
+    submit_col, _ = st.columns([1, 2])
+    with submit_col:
+        confirm = st.checkbox("Confirm submission", key="mb_confirm")
+        if st.button("💸 Submit to My Bets", type="primary",
+                      disabled=not confirm, use_container_width=True):
+            note = (f"Multi Builder · {evald['shape']} · {badge} · "
+                    f"banker rank {ev['banker_rank']} edge "
+                    f"{ev.get('banker_edge_pp', 0):+.1f}pp")
+            n_ok = 0
+            for leg in legs:
+                try:
+                    ub.submit_bet(
+                        meeting_date=date_compact,
+                        venue=venue_code, race_number=rn,
+                        bet_type="QIN_BANKER",
+                        selections=[leg], banker=banker_no,
+                        stake_hkd=float(stake_per_pair), notes=note,
+                    )
+                    ub.submit_bet(
+                        meeting_date=date_compact,
+                        venue=venue_code, race_number=rn,
+                        bet_type="QPL_BANKER",
+                        selections=[leg], banker=banker_no,
+                        stake_hkd=float(stake_per_pair), notes=note,
+                    )
+                    n_ok += 2
+                except Exception as e:
+                    st.error(f"Failed leg {leg}: {e}")
+            if n_ok > 0:
+                # Trigger GitHub push so the bets persist on Cloud
+                try:
+                    push_ok = _gh_push_user_bets()
+                except Exception:
+                    push_ok = False
+                msg = f"✅ Submitted {n_ok} bets (${evald['stake_total']:.0f} total)"
+                if push_ok:
+                    msg += " · Pushed to GitHub"
+                st.success(msg)
+                st.cache_data.clear()
+
+    # ── Meeting-wide overview ──────────────────────────────────────
+    st.markdown("---")
+    with st.expander("📊 Meeting-wide AI scan", expanded=False):
+        st.caption("Runs the AI rule across every race in this meeting "
+                   "and ranks them by banker edge.")
+        picks_by_race = {int(r.get("race_number") or 0): (r.get("picks") or [])
+                          for r in races if r.get("picks")}
+        all_sugs = build_meeting_multi(
+            date_compact=date_compact, venue_code=venue_code,
+            picks_by_race=picks_by_race, mode=ai_mode,
+            stake_per_pair=stake_per_pair,
+        )
+        scan_rows = []
+        for s in all_sugs:
+            ev = s.get("evidence") or {}
+            scan_rows.append({
+                "R#": s["race_number"],
+                "Banker": s["banker"] if s["banker"] else "—",
+                "Bk rank": ev.get("banker_rank", "—"),
+                "Bk edge": (f"{ev['banker_edge_pp']:+.1f}pp"
+                            if ev.get("banker_edge_pp") is not None else "—"),
+                "Legs": ",".join(str(x) for x in s["legs"]) if s["legs"] else "—",
+                "Shape": s["shape"] or "—",
+                "Stake": f"${s['stake_total']:.0f}" if s["stake_total"] else "—",
+                "Status": s.get("skip_reason") or "ok",
+            })
+        st.dataframe(pd.DataFrame(scan_rows), hide_index=True,
+                     use_container_width=True)
+        actionable = [s for s in all_sugs if not s.get("skip_reason")]
+        if actionable:
+            total_stake = sum(s["stake_total"] for s in actionable)
+            st.caption(f"Actionable races: {len(actionable)} · "
+                       f"Total stake if you took every AI suggestion: "
+                       f"${total_stake:.0f}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # My Bets page — personal wager tracker (submit / edit / settle / summary)
 # ─────────────────────────────────────────────────────────────────────────────
 def page_my_bets():
@@ -14238,6 +14539,7 @@ def main():
         ("Form Guide",     "📖 Form Guide"),
         ("Model Analysis", "📊 Model Analysis"),
         ("Model Bets",     "🎯 Model Bets"),
+        ("Multi Builder",  "🧮 Multi Builder"),
         ("Data Analysis",  "🔬 Data Analysis"),
         ("Horse Profile",  "🐴 Horse Profile"),
         ("Results",        "🏆 Results"),
@@ -14285,6 +14587,8 @@ def main():
         page_live_odds()
     elif page == "Model Bets":
         page_model_bets()
+    elif page == "Multi Builder":
+        page_multi_builder()
     elif page == "My Bets":
         page_my_bets()
     elif page == "Form Guide":
