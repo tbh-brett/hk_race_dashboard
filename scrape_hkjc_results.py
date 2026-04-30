@@ -113,12 +113,7 @@ def discover_races(session: requests.Session,
 
 # ── Result parsing ────────────────────────────────────────────────────────────
 
-GOING_ABBREV = {
-    "GOOD": "G", "GOOD TO FIRM": "GF", "GOOD TO YIELDING": "GY",
-    "FIRM": "FT", "YIELDING": "Y", "SOFT": "SE",
-    "YIELDING TO SOFT": "YS", "WET FAST": "WF", "WET SLOW": "WS",
-    "HEAVY": "HV",
-}
+from hkjc_client import GOING_ABBREV
 
 
 def parse_race_header(html: str) -> Dict[str, str]:

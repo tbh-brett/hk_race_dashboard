@@ -43,22 +43,17 @@ from typing import List, Optional
 
 import requests
 
+from hkjc_client import (
+    BASE_URL, RP_PHOTO_URL_TMPL as PHOTO_URL_TMPL, HEADERS as _BASE_HEADERS,
+    fetch_bytes,
+)
+
 BASE_DIR = Path(__file__).parent
 PHOTOS_DIR = BASE_DIR / "running_position_photos"
 
-BASE_URL = "https://racing.hkjc.com"
-PHOTO_URL_TMPL = (
-    BASE_URL
-    + "/general/-/media/Sites/JCRW/RaceResult/{season}/{ymd}/{ymd}R{race}_L.jpg"
-)
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Referer": f"{BASE_URL}/en-us/local/information/localresults",
-}
+# Static-media requests need a Referer pointing to localresults so the CDN
+# returns the JPG instead of a redirect.
+HEADERS = {**_BASE_HEADERS, "Referer": f"{BASE_URL}/en-us/local/information/localresults"}
 
 MAX_RACES_PROBE = 12  # HKJC meetings have up to 11 races; probe one extra
 CONSECUTIVE_MISS_LIMIT = 3  # stop probing a date after N consecutive 404s
@@ -92,10 +87,9 @@ def download_photo(
     if out_path.exists() and not force:
         return "skipped"
     url = build_photo_url(d, race_no)
-    try:
-        resp = session.get(url, headers=HEADERS, timeout=30)
-    except Exception as e:
-        print(f"    R{race_no}: network error — {e}")
+    resp = fetch_bytes(session, url, extra_headers={"Referer": HEADERS["Referer"]})
+    if resp is None:
+        print(f"    R{race_no}: network error")
         return "error"
     if resp.status_code == 404:
         return "missing"

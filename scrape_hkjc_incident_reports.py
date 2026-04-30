@@ -27,35 +27,21 @@ from typing import Dict, List, Optional
 import requests
 from bs4 import BeautifulSoup
 
+from hkjc_client import (
+    BASE_URL, LOCALRESULTS_URL, CORUNNING_URL,
+    HEADERS, fetch_html as _fetch_html,
+)
+
 BASE_DIR = Path(__file__).parent
 REPORTS_DIR = BASE_DIR / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
-
-BASE_URL = "https://racing.hkjc.com"
-LOCALRESULTS_URL = f"{BASE_URL}/en-us/local/information/localresults"
-CORUNNING_URL = f"{BASE_URL}/en-us/local/information/corunning"
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    ),
-}
 
 MAX_RACES_PROBE = 12
 CONSECUTIVE_MISS_LIMIT = 3
 
 
 def fetch_html(session: requests.Session, url: str, params: Dict) -> str:
-    for attempt in range(1, 4):
-        try:
-            resp = session.get(url, params=params, headers=HEADERS, timeout=30)
-            resp.raise_for_status()
-            return resp.text
-        except Exception as e:
-            print(f"  Warning: attempt {attempt} failed — {e}")
-            time.sleep(1.5 * attempt)
-    return ""
+    return _fetch_html(session, url, params=params)
 
 
 def parse_incident_report(html: str) -> List[Dict]:

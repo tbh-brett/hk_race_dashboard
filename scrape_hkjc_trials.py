@@ -28,54 +28,27 @@ from typing import Dict, List, Optional, Tuple
 import requests
 from bs4 import BeautifulSoup, Tag
 
+from hkjc_client import (
+    BASE_URL, BTRESULT_URL, HEADERS,
+    fetch_html as _fetch_html,
+    iso_to_query, clean_whitespace as _clean_whitespace,
+    extract_horse_id as _extract_horse_id_from_href,
+)
+
 BASE_DIR = Path(__file__).parent
 REPORTS_DIR = BASE_DIR / "reports"
-
-BASE_URL = "https://racing.hkjc.com"
-BTRESULT_URL = f"{BASE_URL}/en-us/local/information/btresult"
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    ),
-}
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def fetch_html(session: requests.Session, url: str,
                params: Optional[Dict] = None) -> str:
-    for attempt in range(1, 4):
-        try:
-            resp = session.get(url, params=params, headers=HEADERS, timeout=30)
-            resp.raise_for_status()
-            return resp.text
-        except Exception as e:
-            print(f"  Warning: attempt {attempt} failed — {e}")
-            time.sleep(1.5 * attempt)
-    return ""
-
-
-def iso_to_query(date_str: str) -> str:
-    """YYYY-MM-DD → YYYY/MM/DD"""
-    d = datetime.strptime(date_str, "%Y-%m-%d")
-    return d.strftime("%Y/%m/%d")
-
-
-def _clean_whitespace(text: str) -> str:
-    """Collapse multiple whitespace, strip nbsps."""
-    return re.sub(r"[\xa0\s]+", " ", text).strip()
+    return _fetch_html(session, url, params=params)
 
 
 def _extract_horse_id(cell: Tag) -> str:
     """Extract horse ID from link href like horseid=HK_2025_L097."""
-    link = cell.find("a")
-    if link and link.get("href"):
-        m = re.search(r"horseid=([^&]+)", link["href"])
-        if m:
-            return m.group(1)
-    return ""
+    return _extract_horse_id_from_href(cell) or ""
 
 
 def _parse_horse_name(raw: str) -> Tuple[str, str]:

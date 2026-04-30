@@ -32,18 +32,10 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup, Tag
 
-# ── Constants ─────────────────────────────────────────────────────────────────
-BASE_URL = "https://racing.hkjc.com"
-RACECARD_URL = f"{BASE_URL}/en-us/local/information/racecard"
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.5",
-}
+from hkjc_client import (
+    BASE_URL, RACECARD_URL, HEADERS,
+    fetch_html as _fetch_html, safe_excel_write,
+)
 
 # Fixed column indices for the HKJC "My Race Card" / "starter" table (27 cols)
 # Verified empirically against live HTML as of March 2026.
@@ -97,19 +89,11 @@ def fetch_page(url: str, session: requests.Session, params: Optional[dict] = Non
 
     Returns the HTML text, or None on failure.
     """
-    for attempt in range(1, retries + 1):
-        try:
-            resp = session.get(url, params=params, headers=HEADERS, timeout=30)
-            resp.raise_for_status()
-            return resp.text
-        except requests.RequestException as exc:
-            wait = backoff * attempt
-            log.warning("Attempt %d/%d failed for %s: %s — retrying in %.1fs",
-                        attempt, retries, url, exc, wait)
-            if attempt < retries:
-                time.sleep(wait)
-    log.error("All %d attempts failed for %s", retries, url)
-    return None
+    html = _fetch_html(session, url, params=params, retries=retries, backoff=backoff, quiet=True)
+    if not html:
+        log.error("All %d attempts failed for %s", retries, url)
+        return None
+    return html
 
 
 def _ensure_playwright_browser() -> bool:
@@ -606,21 +590,23 @@ def export_to_excel(df: pd.DataFrame, output_path: Path) -> None:
     """Export DataFrame to Excel with separate sheet per race.
 
     Also creates a 'Summary' sheet with all races combined.
+    Uses safe_excel_write to avoid OneDrive PermissionError.
     """
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    def _write(tmp_path: Path) -> None:
+        with pd.ExcelWriter(str(tmp_path), engine="openpyxl") as writer:
+            # Summary sheet — all horses
+            df.to_excel(writer, sheet_name="All Races", index=False)
 
-    with pd.ExcelWriter(str(output_path), engine="openpyxl") as writer:
-        # Summary sheet — all horses
-        df.to_excel(writer, sheet_name="All Races", index=False)
+            # Per-race sheets
+            if "race_number" in df.columns:
+                for rn in sorted(df["race_number"].dropna().unique()):
+                    race_df = df[df["race_number"] == rn].copy()
+                    sheet_name = f"Race {int(rn)}"
+                    if len(sheet_name) > 31:
+                        sheet_name = sheet_name[:31]
+                    race_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-        # Per-race sheets
-        if "race_number" in df.columns:
-            for rn in sorted(df["race_number"].dropna().unique()):
-                race_df = df[df["race_number"] == rn].copy()
-                sheet_name = f"Race {int(rn)}"
-                if len(sheet_name) > 31:
-                    sheet_name = sheet_name[:31]
-                race_df.to_excel(writer, sheet_name=sheet_name, index=False)
+    safe_excel_write(output_path, _write)
 
     log.info("Excel saved: %s (%d horses across %d races)",
              output_path.name, len(df),

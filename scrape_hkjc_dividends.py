@@ -29,19 +29,13 @@ from typing import Dict, List, Optional
 import requests
 from bs4 import BeautifulSoup
 
+from hkjc_client import (
+    BASE_URL, LOCALRESULTS_URL, RESULTSALL_URL,
+    HEADERS, fetch_html as _fetch_html,
+)
+
 BASE_DIR = Path(__file__).parent
 REPORTS_DIR = BASE_DIR / "reports"
-
-BASE_URL = "https://racing.hkjc.com"
-LOCALRESULTS_URL = f"{BASE_URL}/en-us/local/information/localresults"
-RESULTSALL_URL = f"{BASE_URL}/en-us/local/information/resultsall"
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    ),
-}
 
 POOLS = [
     "WIN", "PLACE", "QUINELLA", "QUINELLA PLACE", "FORECAST",
@@ -65,15 +59,7 @@ POOL_ALIASES = {
 
 def fetch_html(session: requests.Session, url: str,
                params: Optional[Dict] = None, retries: int = 3) -> str:
-    for i in range(1, retries + 1):
-        try:
-            r = session.get(url, params=params, headers=HEADERS, timeout=30)
-            r.raise_for_status()
-            return r.text
-        except Exception as e:
-            print(f"  warn attempt {i}: {e}")
-            time.sleep(1.3 * i)
-    return ""
+    return _fetch_html(session, url, params=params, retries=retries, backoff=1.3)
 
 
 def discover_races(session: requests.Session, date_iso: str):

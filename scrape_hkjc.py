@@ -15,22 +15,13 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-BASE_URL = "https://racing.hkjc.com"
-LOCALRESULTS_URL = f"{BASE_URL}/en-us/local/information/localresults"
-RESULTSALL_URL = f"{BASE_URL}/en-us/local/information/resultsall"
-SECTIONAL_URL = f"{BASE_URL}/en-us/local/information/displaysectionaltime"
-HORSE_URL = f"{BASE_URL}/en-us/local/information/horse"
-HORSE_URL_ZH = f"{BASE_URL}/zh-hk/local/information/horse"
-OTHERHORSE_URL = f"{BASE_URL}/en-us/local/information/otherhorse"
-OTHERHORSE_URL_ZH = f"{BASE_URL}/zh-hk/local/information/otherhorse"
-
-DATE_FMT_UI = "%d/%m/%Y"
-DATE_FMT_QUERY = "%Y/%m/%d"
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-}
+from hkjc_client import (
+    BASE_URL, LOCALRESULTS_URL, RESULTSALL_URL, SECTIONAL_URL,
+    HORSE_URL, HORSE_URL_ZH, OTHERHORSE_URL, OTHERHORSE_URL_ZH,
+    HEADERS, DATE_FMT_UI, DATE_FMT_QUERY, GOING_ABBREV,
+    abbreviate_going, fetch_html, extract_horse_id,
+    strip_html_to_text, split_slash_value, safe_excel_write,
+)
 
 
 @dataclass
@@ -42,26 +33,6 @@ class SectionalRow:
 
 # --- Helper Functions ---
 
-# Going abbreviation mapping
-GOING_ABBREV = {
-    "GOOD": "G",
-    "GOOD TO FIRM": "GF",
-    "GOOD TO YIELDING": "GY",
-    "FIRM": "FT",
-    "YIELDING": "Y",
-    "SOFT": "SE",
-    "YIELDING TO SOFT": "YS",
-    "WET FAST": "WF",
-    "WET SLOW": "WS",
-    "HEAVY": "HV",
-}
-
-
-def abbreviate_going(going: str) -> str:
-    """Convert full going description to abbreviation."""
-    return GOING_ABBREV.get(going.upper().strip(), going)
-
-
 def convert_date_ui_to_query(date_ui: str) -> str:
     """Convert DD/MM/YYYY to YYYY/MM/DD for query params."""
     return dt.datetime.strptime(date_ui, DATE_FMT_UI).strftime(DATE_FMT_QUERY)
@@ -70,45 +41,6 @@ def convert_date_ui_to_query(date_ui: str) -> str:
 def convert_date_ui_to_iso(date_ui: str) -> str:
     """Convert DD/MM/YYYY to YYYY-MM-DD for storage."""
     return dt.datetime.strptime(date_ui, DATE_FMT_UI).strftime("%Y-%m-%d")
-
-
-def extract_horse_id(href: str) -> Optional[str]:
-    """Extract horse ID from a URL href."""
-    match = re.search(r"horseid=([^&]+)", href)
-    return match.group(1) if match else None
-
-
-def strip_html_to_text(html: str) -> str:
-    """Strip HTML tags and normalize whitespace."""
-    text = re.sub(r'<[^>]+>', ' ', html)
-    return ' '.join(text.split())
-
-
-def split_slash_value(value: str, index: int) -> str:
-    """Split a slash-separated value and return the part at index."""
-    parts = [p.strip() for p in value.split("/")]
-    return parts[index] if len(parts) > index else ""
-
-
-def fetch_html(
-    session: requests.Session,
-    url: str,
-    params: Optional[Dict[str, str]] = None,
-    retries: int = 3,
-    backoff: float = 1.5,
-) -> str:
-    last_err: Optional[Exception] = None
-    for attempt in range(1, retries + 1):
-        try:
-            resp = session.get(url, params=params, headers=HEADERS, timeout=30)
-            resp.raise_for_status()
-            return resp.text
-        except Exception as err:
-            last_err = err
-            print(f"Warning: request failed (attempt {attempt}/{retries}) {url} -> {err}")
-            time.sleep(backoff * attempt)
-    print(f"Warning: giving up on {url}: {last_err}")
-    return ""
 
 
 def parse_available_dates(html: str) -> List[str]:
@@ -1148,10 +1080,15 @@ def main() -> None:
     print(f"Total rows collected: {len(df)}")
     if not df.empty:
         # Sort by race_date descending (latest first), then race_number ascending
+        # Sort by race_date descending (latest first), then race_number ascending
         if "race_date" in df.columns and "race_number" in df.columns:
             df["race_date"] = pd.to_datetime(df["race_date"], errors="coerce")
             df = df.sort_values(["race_date", "race_number"], ascending=[False, True]).reset_index(drop=True)
-        df.to_excel(args.output, index=False, sheet_name="Sample Data")
+        # OneDrive-safe write: build to TEMP first, then move into place.
+        safe_excel_write(
+            Path(args.output),
+            lambda tmp: df.to_excel(tmp, index=False, sheet_name="Sample Data"),
+        )
         print(f"Saved Excel: {args.output}")
     else:
         print("No new data to save.")
