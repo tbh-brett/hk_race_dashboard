@@ -3818,8 +3818,7 @@ def _traffic_light(label: str, val, good: float, ok: float,
 # ══════════════════════════════════════════════════════════════════════════════
 
 def page_backtest():
-    st.markdown('<div class="page-title">Model Backtest</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Compare pre-race predictions against actual results</div>', unsafe_allow_html=True)
+    st.caption("Compare pre-race predictions against actual results.")
 
     # ── Sidebar: scrape results + run backtest ─────────────
     st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
@@ -10253,12 +10252,8 @@ def page_calibration():
     All numbers come from reports/calibration_harness.json. The page only
     visualises; the harness itself is what produces the data.
     """
-    st.markdown('<div class="page-title">Calibration & Value Lab</div>',
-                unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Probability calibration and '
-                'edge stratification — does the model add information '
-                'beyond the market?</div>',
-                unsafe_allow_html=True)
+    st.caption("Probability calibration and edge stratification — "
+               "does the model add information beyond the market?")
 
     harness_path = REPORTS / "calibration_harness.json"
 
@@ -10502,12 +10497,9 @@ def page_calibration():
 
 def page_gbm():
     """Train + inspect the LightGBM model that learns from v4.4 features."""
-    st.markdown('<div class="page-title">GBM Lab</div>',
-                unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Gradient-boosted model that '
-                're-learns the v4.4 weights from data — same features, '
-                'no manual tuning, regularised by cross-validation.</div>',
-                unsafe_allow_html=True)
+    st.caption("Gradient-boosted model that re-learns the v4.4 weights "
+               "from data — same features, no manual tuning, regularised "
+               "by race-grouped cross-validation.")
 
     train_path = REPORTS / "gbm_training.json"
     model_path = BASE / "models" / "gbm_v1.txt"
@@ -10683,6 +10675,35 @@ def page_gbm():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Model Lab — combines GBM, Calibration and Backtest under one nav entry
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_model_lab():
+    """Single entry that hosts the three modelling/diagnostic views as tabs.
+
+    GBM Lab is the default tab (first). The Backtest tab still exposes the
+    full strategy backtest sidebar workflow (scrape results, run backtest,
+    monthly aggregates) — those controls only render when that tab is
+    active so they don't pollute other tabs.
+    """
+    st.markdown('<div class="page-title">Model Lab</div>',
+                unsafe_allow_html=True)
+    st.markdown('<div class="page-subtitle">Train, calibrate and stress-test '
+                'the modelling pipeline. Tabs are independent — flick '
+                'between them without losing state.</div>',
+                unsafe_allow_html=True)
+    tab_gbm, tab_cal, tab_bt = st.tabs([
+        "🌲 GBM Lab", "📐 Calibration Lab", "🧪 Strategy Backtest",
+    ])
+    with tab_gbm:
+        page_gbm()
+    with tab_cal:
+        page_calibration()
+    with tab_bt:
+        page_backtest()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Entry point — page router
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -10710,9 +10731,7 @@ def main():
         ("My Bets",        "💰 My Bets"),
         ("Blackbook",      "📓 Blackbook"),
         ("Trials",         "🎽 Trials"),
-        ("Backtest",       "🧪 Backtest"),
-        ("Calibration",    "📐 Calibration Lab"),
-        ("GBM",            "🌲 GBM Lab"),
+        ("Model Lab",      "🧠 Model Lab"),
         ("PDF Builder",    "📄 PDF Builder"),
     ]
     if "nav_page" not in st.session_state:
@@ -10755,12 +10774,8 @@ def main():
         page_form_guide()
     elif page == "Trials":
         page_trials()
-    elif page == "Backtest":
-        page_backtest()
-    elif page == "Calibration":
-        page_calibration()
-    elif page == "GBM":
-        page_gbm()
+    elif page == "Model Lab":
+        page_model_lab()
     elif page == "Results":
         page_results()
     elif page == "Blackbook":

@@ -55,6 +55,31 @@ from sklearn.model_selection import GroupKFold
 
 from backtest_market import BASE, REPORTS, list_dates, load_results
 
+
+def list_dates_with_reports(d_from, d_to, version: str = "v4.4") -> list[str]:
+    """Like backtest_market.list_dates but driven by available
+    race_day_report_<date>_<version>.json files instead of results files.
+    Lets us score upcoming meetings that don't yet have results.
+    """
+    out = set()
+    # any date with results
+    for d in list_dates(d_from, d_to):
+        out.add(d)
+    # any date with a v4.4 race day report
+    import re as _re
+    pat = _re.compile(rf"race_day_report_(\d{{8}})_{_re.escape(version)}\.json$")
+    for f in REPORTS.glob(f"race_day_report_*_{version}.json"):
+        m = pat.search(f.name)
+        if not m:
+            continue
+        d = m.group(1)
+        if d_from and d < d_from:
+            continue
+        if d_to and d > d_to:
+            continue
+        out.add(d)
+    return sorted(out)
+
 MODELS = BASE / "models"
 MODELS.mkdir(parents=True, exist_ok=True)
 MODEL_FILE = MODELS / "gbm_v1.txt"
@@ -131,9 +156,18 @@ def _rank(values: list[float], descending: bool = True) -> list[int]:
 # Feature extraction
 # ---------------------------------------------------------------------------
 def build_dataset(d_from: str | None = None, d_to: str | None = None,
-                  version: str = "v4.4") -> pd.DataFrame:
+                  version: str = "v4.4",
+                  require_results: bool = True) -> pd.DataFrame:
+    """Build a feature DataFrame.
+
+    require_results=True (training): only emit rows for which we have a
+      realised winner (place == 1) so the GBM can supervise on `won`.
+    require_results=False (inference on upcoming meeting): emit every
+      pick from the report. `won` is set to 0 as a placeholder; do NOT
+      use those rows for metric computation.
+    """
     rows = []
-    for d in list_dates(d_from, d_to):
+    for d in list_dates_with_reports(d_from, d_to, version):
         rep_path = REPORTS / f"race_day_report_{d}_{version}.json"
         if not rep_path.exists():
             continue
@@ -145,7 +179,7 @@ def build_dataset(d_from: str | None = None, d_to: str | None = None,
         winners = {(r.race_no, r.horse_no): (r.place == 1) for r in runners}
         sps = {(r.race_no, r.horse_no): r.win_odds for r in runners}
         n_runners_by_race = {r.race_no: r.n_runners for r in runners}
-        if not winners:
+        if require_results and not winners:
             continue
         for race in rep.get("races", []):
             rn = _to_int(race.get("race_number"))
@@ -182,14 +216,14 @@ def build_dataset(d_from: str | None = None, d_to: str | None = None,
                 if hn is None:
                     continue
                 key = (rn, hn)
-                if key not in winners:
+                if require_results and key not in winners:
                     continue
                 row = {
                     "date": d,
                     "race_no": rn,
                     "horse_no": hn,
                     "horse_name": p.get("horse_name"),
-                    "won": int(winners[key]),
+                    "won": int(winners.get(key, False)),
                     "win_odds": sps.get(key, float("nan")),
                     # raw numerics
                     "projected_time":  _to_float(p.get("projected_time")),
@@ -359,10 +393,15 @@ def _reliability(p, y, n_bins=10):
 # ---------------------------------------------------------------------------
 def score_report(date_compact: str, version: str = "v4.4"
                  ) -> dict[tuple[int, int], float]:
-    """Return {(race_no, horse_no): p_gbm} for one meeting."""
+    """Return {(race_no, horse_no): p_gbm} for one meeting.
+
+    Works for upcoming meetings (no results required). Returns {} if
+    the model file or race_day_report doesn't exist.
+    """
     if not MODEL_FILE.exists():
         return {}
-    df = build_dataset(date_compact, date_compact, version=version)
+    df = build_dataset(date_compact, date_compact, version=version,
+                        require_results=False)
     if df.empty:
         return {}
     booster = lgb.Booster(model_file=str(MODEL_FILE))
