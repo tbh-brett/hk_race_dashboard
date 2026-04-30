@@ -3208,6 +3208,18 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
     except Exception as _mp_err:
         st.caption(f"_Market Pulse unavailable: {_mp_err}_")
 
+    # ── Value Lens (static p_model vs p_market) ─────────────────────
+    # Companion to Market Pulse: Pulse = "where is money moving?",
+    # Lens = "is the current price a value vs our model?".
+    try:
+        if _date_compact and _venue_code and rn != "?":
+            _render_race_day_value_lens(
+                _date_compact, _venue_code, int(rn),
+                race.get("picks") or [],
+            )
+    except Exception as _vl_err:
+        st.caption(f"_Value Lens unavailable: {_vl_err}_")
+
     # ── Speed-map + pace research (always shown, no dropdown) ──────
     st.markdown("#### Speedmap + pace research")
     render_speed_map(race)
@@ -10731,6 +10743,141 @@ def _render_race_day_market_pulse(date_compact: str, venue_code: str,
             "either column to populate (filters out the wider overnight "
             "settling phase)."
         )
+
+
+# ── Value Lens (cross-sectional probability comparison) ─────────────────
+# DIFFERENT from Market Pulse:
+#   • Market Pulse  = TIME (Δ% odds across snapshots, steamers/drifters)
+#   • Value Lens    = NOW (p_model vs p_market right now, edge & Kelly)
+# Both can run in the same cockpit; they answer different questions.
+@st.cache_data(ttl=120, show_spinner=False)
+def _value_lens_table(date_compact: str, venue_code: str, race_no: int,
+                      picks_key: str):
+    """Cached wrapper around market_loader.compute_edge_table.
+
+    `picks_key` is a deterministic JSON string of (horse_no, win_prob)
+    so the cache invalidates when the model output changes.
+    """
+    try:
+        import json as _json
+        from market_loader import compute_edge_table  # local import
+        picks = _json.loads(picks_key) if picks_key else []
+        return compute_edge_table(date_compact, venue_code,
+                                  int(race_no), picks)
+    except Exception as e:
+        return {"meta": {"source": "error", "error": str(e)}, "rows": []}
+
+
+def _render_race_day_value_lens(date_compact: str, venue_code: str,
+                                race_no: int, picks: list[dict]) -> None:
+    """Static probability comparison: model vs market, right now.
+
+    Uses the latest live-odds snapshot if available, otherwise final SP
+    (post-race) as fallback for retrospective review. No-op when neither
+    is available or the picks don't contain win_prob.
+    """
+    if not date_compact or not venue_code or not race_no or not picks:
+        return
+    # Quick gate — if no picks have win_prob, this is a SARR-only race,
+    # there's nothing to compare against.
+    if not any(p.get("win_prob") is not None for p in picks):
+        return
+    import json as _json
+    picks_key = _json.dumps(
+        sorted(
+            [(int(p.get("horse_no") or 0), float(p.get("win_prob") or 0))
+             for p in picks if p.get("horse_no") is not None]
+        )
+    )
+    try:
+        out = _value_lens_table(date_compact, venue_code,
+                                int(race_no), picks_key)
+    except Exception as e:
+        st.caption(f"_Value Lens unavailable: {e}_")
+        return
+    meta = out.get("meta", {})
+    rows = out.get("rows", [])
+    if not rows or meta.get("source") in ("none", "error"):
+        return
+
+    st.markdown("##### 🎯 Value Lens")
+    src = meta.get("source", "?")
+    src_label = {"live": "live odds", "sp": "final SP (post-race)"
+                 }.get(src, src)
+    ts = meta.get("scraped_at", "")
+    ts_short = ts[11:19] if len(ts) >= 19 else ts
+    st.caption(
+        f"Snapshot: **{src_label}** · "
+        f"{ts_short or '—'} · "
+        f"`p_market` from implied odds (basic) · "
+        f"`p_model` from v4.4 win-prob · "
+        f"`edge = p_model − p_market`"
+    )
+
+    # Quadrant counts
+    quads = {"A": 0, "B": 0, "C": 0, "D": 0}
+    for r in rows:
+        quads[r.get("quadrant", "D")] = quads.get(r.get("quadrant", "D"), 0) + 1
+    qA, qB, qC, qD = st.columns(4)
+    qA.metric("A · Consensus", quads["A"],
+              help="Both model and market rate ≥15% — strongest signal.")
+    qB.metric("B · Market-only", quads["B"],
+              help="Market loves it, model doesn't → likely overbet.")
+    qC.metric("C · Model-only", quads["C"],
+              help="Model loves it, market doesn't → potential overlay.")
+    qD.metric("D · Ignore", quads["D"],
+              help="Both rate it low — skip.")
+
+    # Top edges table
+    top = [r for r in rows if r["edge"] > 0][:6]
+    if top:
+        st.markdown("**Top positive edges**")
+        df = pd.DataFrame([
+            {
+                "#": r["horse_no"],
+                "Horse": r["horse"],
+                "Odds": f"{r['win_odds']:.1f}",
+                "p_market": f"{r['p_market']*100:5.1f}%",
+                "p_model":  f"{r['p_model']*100:5.1f}%",
+                "Edge":     f"{r['edge']*100:+5.1f}pp",
+                "Kelly":    f"{r['kelly']*100:.1f}%",
+                "Quad":     r["quadrant"],
+            }
+            for r in top
+        ])
+        st.dataframe(df, hide_index=True, use_container_width=True)
+    else:
+        st.caption(
+            "_No positive-edge runners — model agrees with the market._"
+        )
+
+    # Bottom edges (overbet by market) — useful as a fade list
+    bot = sorted([r for r in rows if r["edge"] < 0],
+                 key=lambda r: r["edge"])[:3]
+    if bot:
+        with st.expander(f"Market overbets vs model "
+                         f"({len(bot)} shown)", expanded=False):
+            df2 = pd.DataFrame([
+                {
+                    "#": r["horse_no"],
+                    "Horse": r["horse"],
+                    "Odds": f"{r['win_odds']:.1f}",
+                    "p_market": f"{r['p_market']*100:5.1f}%",
+                    "p_model":  f"{r['p_model']*100:5.1f}%",
+                    "Edge":     f"{r['edge']*100:+5.1f}pp",
+                    "Quad":     r["quadrant"],
+                }
+                for r in bot
+            ])
+            st.dataframe(df2, hide_index=True, use_container_width=True)
+
+    # Backtest reference
+    st.caption(
+        "Reference (Apr 2026, n=58): rank-1 model picks **with** "
+        "positive edge returned **+23.3% ROI / 22.4% strike**. "
+        "Rank-1 picks with negative edge: **−61% ROI**. "
+        "See `reports/COMBINED_EDGE_BACKTEST.md`."
+    )
 
 
 def _compute_meeting_alerts(date_compact: str, venue_code: str,
