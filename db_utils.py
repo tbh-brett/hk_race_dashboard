@@ -6,6 +6,7 @@ Mirrors dashboard._append_results_to_db / _safe_read_excel logic.
 from __future__ import annotations
 import json
 import shutil
+import sqlite3
 import tempfile
 import zipfile
 from pathlib import Path
@@ -15,6 +16,8 @@ import pandas as pd
 
 BASE = Path(__file__).parent
 DB_FILE = BASE / "hkjc_results_updated.xlsx"
+SQLITE_FILE = BASE / "hkjc.db"
+SQLITE_TABLE = "results"
 
 
 def safe_read_excel(path: Path) -> pd.DataFrame:
@@ -129,4 +132,102 @@ def append_results_to_db(results_path: Path,
     except PermissionError:
         if verbose:
             print(f"  [db] OneDrive lock — saved to {tmp_out} instead.")
+
+    # v4.7: also mirror full table to SQLite (hkjc.db). Drop-in replacement
+    # for xlsx reads — no OneDrive lock, ~10x faster, queryable with SQL.
+    try:
+        n_sql = write_sqlite(combined, SQLITE_FILE)
+        if verbose:
+            print(f"  [db] mirrored {n_sql} rows → {SQLITE_FILE.name}")
+    except Exception as e:
+        if verbose:
+            print(f"  [db] sqlite mirror skipped: {e}")
+
     return len(new_df)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SQLite mirror (v4.7)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def write_sqlite(df: pd.DataFrame,
+                 sqlite_path: Path = SQLITE_FILE,
+                 table: str = SQLITE_TABLE) -> int:
+    """Write the master results DataFrame to SQLite, replacing the table.
+
+    Atomic: writes to a sibling .tmp file then os.replace.
+    Adds indexes on race_date, horse_id, horse_name, race_track for fast
+    lookups (the three common access patterns in the dashboard + backtests).
+    Returns the row count written.
+    """
+    import os
+    sqlite_path = Path(sqlite_path)
+    sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = sqlite_path.with_suffix(sqlite_path.suffix + ".tmp")
+    if tmp.exists():
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+
+    # Coerce race_date → ISO string so SQLite stores it as TEXT (sortable,
+    # comparable with WHERE race_date >= '2026-04-01').
+    out = df.copy()
+    if "race_date" in out.columns:
+        out["race_date"] = pd.to_datetime(
+            out["race_date"], errors="coerce"
+        ).dt.strftime("%Y-%m-%d")
+
+    conn = sqlite3.connect(str(tmp))
+    try:
+        out.to_sql(table, conn, if_exists="replace", index=False)
+        cur = conn.cursor()
+        for col in ("race_date", "horse_id", "horse_name", "race_track"):
+            if col in out.columns:
+                cur.execute(
+                    f'CREATE INDEX IF NOT EXISTS '
+                    f'idx_{table}_{col} ON {table}("{col}")'
+                )
+        conn.commit()
+    finally:
+        conn.close()
+
+    os.replace(tmp, sqlite_path)
+    return len(out)
+
+
+def rebuild_sqlite_from_xlsx(xlsx_path: Path = DB_FILE,
+                             sqlite_path: Path = SQLITE_FILE) -> int:
+    """Bootstrap helper: rebuild hkjc.db from the master xlsx in one shot."""
+    df = safe_read_excel(Path(xlsx_path))
+    return write_sqlite(df, Path(sqlite_path))
+
+
+def read_sqlite(query: str = f"SELECT * FROM {SQLITE_TABLE}",
+                sqlite_path: Path = SQLITE_FILE) -> pd.DataFrame:
+    """Convenience reader. Returns empty DF if hkjc.db missing."""
+    sqlite_path = Path(sqlite_path)
+    if not sqlite_path.exists():
+        return pd.DataFrame()
+    conn = sqlite3.connect(str(sqlite_path))
+    try:
+        df = pd.read_sql_query(query, conn)
+    finally:
+        conn.close()
+    if "race_date" in df.columns:
+        df["race_date"] = pd.to_datetime(df["race_date"], errors="coerce")
+    return df
+
+
+if __name__ == "__main__":
+    import argparse
+    ap = argparse.ArgumentParser(
+        description="db_utils: master DB helpers (xlsx + sqlite mirror)")
+    ap.add_argument("--rebuild-sqlite", action="store_true",
+                    help="Rebuild hkjc.db from hkjc_results_updated.xlsx")
+    args = ap.parse_args()
+    if args.rebuild_sqlite:
+        n = rebuild_sqlite_from_xlsx()
+        print(f"[db] rebuilt {SQLITE_FILE.name}: {n} rows")
+    else:
+        ap.print_help()
