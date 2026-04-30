@@ -35,7 +35,7 @@ from bs4 import BeautifulSoup, Tag
 from hkjc_client import (
     BASE_URL, RACECARD_URL, HEADERS,
     fetch_html as _fetch_html, safe_excel_write,
-    safe_json_read, safe_json_write,
+    safe_json_read, safe_json_write, FileLock,
 )
 
 # Fixed column indices for the HKJC "My Race Card" / "starter" table (27 cols)
@@ -651,10 +651,12 @@ def load_cache(cache_dir: Path, race_date: str) -> Optional[Dict]:
 
 
 def save_cache(cache_dir: Path, race_date: str, data: Dict) -> None:
-    """Save race card data to cache atomically (.tmp → rename)."""
+    """Save race card data to cache atomically (.tmp → rename) under an
+    advisory FileLock so concurrent racecard / vet scrapes don't corrupt it."""
     cache_dir.mkdir(parents=True, exist_ok=True)
     fp = _cache_path(cache_dir, race_date)
-    safe_json_write(fp, data)
+    with FileLock(fp, timeout=15.0):
+        safe_json_write(fp, data)
     log.info("  Cache saved: %s", fp.name)
 
 

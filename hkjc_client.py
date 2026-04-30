@@ -403,6 +403,136 @@ def safe_json_read(target_path: Path) -> Optional[Any]:
         return None
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Snapshot rotation (Bug F)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def prune_old_snapshots(
+    directory: Path,
+    pattern: str,
+    keep: int = 10,
+    *,
+    quiet: bool = False,
+) -> int:
+    """Keep only the `keep` most recent files matching `pattern` inside
+    `directory`. Returns the number of files deleted.
+
+    Used by live-odds scraper to stop the cache/live_odds/YYYYMMDD/ folders
+    from accumulating thousands of timestamped snapshots over weeks.
+    """
+    directory = Path(directory)
+    if not directory.exists():
+        return 0
+    files = sorted(directory.glob(pattern), key=lambda p: p.stat().st_mtime,
+                   reverse=True)
+    to_delete = files[keep:]
+    deleted = 0
+    for f in to_delete:
+        try:
+            f.unlink()
+            deleted += 1
+        except OSError as e:
+            if not quiet:
+                print(f"  warn: could not prune {f.name}: {e}", file=sys.stderr)
+    if deleted and not quiet:
+        print(f"  pruned {deleted} old snapshot(s) from {directory.name}")
+    return deleted
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Advisory file lock (Bug D)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class FileLock:
+    """Cross-platform best-effort advisory lock backed by a sibling .lock file
+    that records the holder's PID. Use as a context manager around critical
+    sections like cache writes that two scrapers might race on.
+
+    Not a true OS file lock — this is a lightweight pidfile guard. Stale lock
+    files (process no longer alive) are reclaimed automatically.
+
+    Usage:
+        with FileLock(cache_dir / 'racecard_2026-05-03.json'):
+            ...write the cache...
+    """
+    def __init__(self, target_path: Path, *, timeout: float = 30.0,
+                 poll_interval: float = 0.25):
+        self.target_path = Path(target_path)
+        self.lock_path = self.target_path.with_suffix(self.target_path.suffix + ".lock")
+        self.timeout = timeout
+        self.poll_interval = poll_interval
+        self._acquired = False
+
+    @staticmethod
+    def _pid_alive(pid: int) -> bool:
+        if pid <= 0:
+            return False
+        try:
+            if os.name == "nt":
+                # On Windows, opening the process is the simplest liveness probe.
+                import ctypes
+                PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+                h = ctypes.windll.kernel32.OpenProcess(
+                    PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+                if not h:
+                    return False
+                ctypes.windll.kernel32.CloseHandle(h)
+                return True
+            else:
+                os.kill(pid, 0)
+                return True
+        except (OSError, PermissionError):
+            return False
+
+    def _try_acquire(self) -> bool:
+        # O_EXCL ensures atomic create-only-if-not-exists.
+        try:
+            fd = os.open(str(self.lock_path),
+                         os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            # Existing lock — check liveness of holder
+            try:
+                with open(self.lock_path, "r", encoding="utf-8") as f:
+                    pid_str = f.read().strip()
+                pid = int(pid_str) if pid_str.isdigit() else 0
+            except (OSError, ValueError):
+                pid = 0
+            if pid and self._pid_alive(pid):
+                return False
+            # Stale — try to reclaim
+            try:
+                self.lock_path.unlink()
+            except OSError:
+                return False
+            return self._try_acquire()
+        with os.fdopen(fd, "w") as f:
+            f.write(str(os.getpid()))
+        return True
+
+    def __enter__(self):
+        deadline = time.time() + self.timeout
+        while True:
+            if self._try_acquire():
+                self._acquired = True
+                return self
+            if time.time() >= deadline:
+                raise TimeoutError(
+                    f"Could not acquire lock {self.lock_path} within "
+                    f"{self.timeout}s (held by another scraper?)"
+                )
+            time.sleep(self.poll_interval)
+
+    def __exit__(self, exc_type, exc, tb):
+        if self._acquired:
+            try:
+                self.lock_path.unlink()
+            except OSError:
+                pass
+            self._acquired = False
+        return False
+
+
+
 __all__ = [
     # URLs
     "BASE_URL", "LOCALRESULTS_URL", "RESULTSALL_URL", "SECTIONAL_URL",
@@ -423,4 +553,6 @@ __all__ = [
     "safe_excel_write",
     # JSON cache
     "safe_json_write", "safe_json_read",
+    # Snapshot rotation + locks
+    "prune_old_snapshots", "FileLock",
 ]

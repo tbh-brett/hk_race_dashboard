@@ -49,6 +49,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+from hkjc_client import prune_old_snapshots
+
 BASE = Path(__file__).parent
 OUT_ROOT = BASE / "cache" / "live_odds"
 
@@ -367,6 +369,10 @@ def main():
                           "(default: wp,qin,qpl — all extracted from the "
                           "single /wpq/ page render)."))
     ap.add_argument("--headless", action="store_true", default=True)
+    ap.add_argument("--keep", type=int, default=20,
+                    help="Keep only the N most recent snapshots per race in "
+                         "cache/live_odds/YYYYMMDD/ (default: 20). Set 0 to "
+                         "disable rotation.")
     args = ap.parse_args()
 
     date_iso = args.date or dt.date.today().isoformat()
@@ -396,33 +402,52 @@ def main():
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=args.headless)
-        context = browser.new_context(
-            viewport={"width": 1400, "height": 900},
-            user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                        "AppleWebKit/537.36 (KHTML, like Gecko) "
-                        "Chrome/124.0 Safari/537.36"),
-        )
-        page = context.new_page()
+        try:
+            context = browser.new_context(
+                viewport={"width": 1400, "height": 900},
+                user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                            "AppleWebKit/537.36 (KHTML, like Gecko) "
+                            "Chrome/124.0 Safari/537.36"),
+            )
+            page = context.new_page()
 
-        for rn in races:
-            print(f"[{args.venue}] R{rn} ...", end=" ", flush=True)
+            for rn in races:
+                print(f"[{args.venue}] R{rn} ...", end=" ", flush=True)
+                try:
+                    snap = scrape_race(page, date_iso, args.venue, rn, pools)
+                    outf = out_dir / f"{args.venue}_R{rn:02d}_{ts}.json"
+                    outf.write_text(json.dumps(snap, indent=2, ensure_ascii=False),
+                                    encoding="utf-8")
+                    parts = []
+                    if "odds" in snap:
+                        parts.append(f"WP={snap.get('n_runners', 0)}")
+                    if "qin_odds" in snap:
+                        parts.append(f"QIN={len(snap['qin_odds'])}")
+                    if "qpl_odds" in snap:
+                        parts.append(f"QPL={len(snap['qpl_odds'])}")
+                    print(f"{' '.join(parts)} → {outf.name}")
+                    # Bug F: rotate per-race snapshots so the directory doesn't
+                    # accumulate hundreds of files over a meeting.
+                    if args.keep and args.keep > 0:
+                        prune_old_snapshots(
+                            out_dir,
+                            f"{args.venue}_R{rn:02d}_*.json",
+                            keep=args.keep,
+                            quiet=True,
+                        )
+                except KeyboardInterrupt:
+                    raise
+                except Exception as e:
+                    print(f"ERR {e}")
+        except KeyboardInterrupt:
+            print("\nInterrupted — closing browser cleanly.", file=sys.stderr)
+        finally:
+            # Bug E: ensure Chromium is always closed even on Ctrl-C or error,
+            # so subsequent runs don't hang on zombie processes / port reuse.
             try:
-                snap = scrape_race(page, date_iso, args.venue, rn, pools)
-                outf = out_dir / f"{args.venue}_R{rn:02d}_{ts}.json"
-                outf.write_text(json.dumps(snap, indent=2, ensure_ascii=False),
-                                encoding="utf-8")
-                parts = []
-                if "odds" in snap:
-                    parts.append(f"WP={snap.get('n_runners', 0)}")
-                if "qin_odds" in snap:
-                    parts.append(f"QIN={len(snap['qin_odds'])}")
-                if "qpl_odds" in snap:
-                    parts.append(f"QPL={len(snap['qpl_odds'])}")
-                print(f"{' '.join(parts)} → {outf.name}")
-            except Exception as e:
-                print(f"ERR {e}")
-
-        browser.close()
+                browser.close()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
