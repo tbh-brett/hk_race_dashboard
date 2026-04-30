@@ -365,6 +365,44 @@ def safe_excel_write(
     raise last_err if last_err else RuntimeError("safe_excel_write failed")
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Atomic JSON cache I/O
+# ─────────────────────────────────────────────────────────────────────────────
+
+import json as _json
+
+
+def safe_json_write(target_path: Path, data: Any, *, indent: int = 2) -> Path:
+    """Write JSON atomically: dump to a sibling .tmp file, then rename. Avoids
+    leaving half-written caches behind on Ctrl-C or disk error.
+
+    Use this for any per-meeting JSON cache (racecard, results, dividends).
+    """
+    target_path = Path(target_path)
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = target_path.with_suffix(target_path.suffix + ".tmp")
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        _json.dump(data, f, ensure_ascii=False, indent=indent, default=str)
+    # os.replace is atomic on POSIX and Win when src/dst are on the same volume.
+    os.replace(str(tmp_path), str(target_path))
+    return target_path
+
+
+def safe_json_read(target_path: Path) -> Optional[Any]:
+    """Read a JSON cache; return None on missing/corrupt file. Tolerates a
+    leftover .tmp from a crashed write by ignoring it (caller should rewrite).
+    """
+    target_path = Path(target_path)
+    if not target_path.exists():
+        return None
+    try:
+        with open(target_path, "r", encoding="utf-8") as f:
+            return _json.load(f)
+    except (OSError, _json.JSONDecodeError) as e:
+        print(f"  warn: cache corrupt at {target_path.name}: {e}", file=sys.stderr)
+        return None
+
+
 __all__ = [
     # URLs
     "BASE_URL", "LOCALRESULTS_URL", "RESULTSALL_URL", "SECTIONAL_URL",
@@ -383,4 +421,6 @@ __all__ = [
     "strip_html_to_text", "split_slash_value",
     # Excel
     "safe_excel_write",
+    # JSON cache
+    "safe_json_write", "safe_json_read",
 ]

@@ -980,6 +980,8 @@ def main() -> None:
     parser.add_argument("--horse-cache", default=".horse_cache.json", help="Path to horse cache JSON.")
     parser.add_argument("--race-cache", default=".race_cache.csv", help="Path to race cache CSV.")
     parser.add_argument("--no-cache", action="store_true", help="Ignore race cache and rescrape all.")
+    parser.add_argument("--force", dest="no_cache", action="store_true",
+                        help="Alias for --no-cache (force re-scrape, bypassing race + horse profile cache).")
     args = parser.parse_args()
 
     session = requests.Session()

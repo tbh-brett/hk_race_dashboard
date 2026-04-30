@@ -35,6 +35,7 @@ from bs4 import BeautifulSoup, Tag
 from hkjc_client import (
     BASE_URL, RACECARD_URL, HEADERS,
     fetch_html as _fetch_html, safe_excel_write,
+    safe_json_read, safe_json_write,
 )
 
 # Fixed column indices for the HKJC "My Race Card" / "starter" table (27 cols)
@@ -624,23 +625,36 @@ def _cache_path(cache_dir: Path, race_date: str) -> Path:
 
 
 def load_cache(cache_dir: Path, race_date: str) -> Optional[Dict]:
-    """Load cached race card data for a date. Returns None if not cached."""
+    """Load cached race card data for a date.
+
+    Returns None if not cached, OR if the cached file is incomplete (e.g. a
+    previous scrape crashed mid-meeting). This prevents Bug A — partial-cache
+    poisoning — where re-running would otherwise silently return a 3-of-11
+    cache as if the meeting had only 3 races.
+    """
     fp = _cache_path(cache_dir, race_date)
-    if fp.exists():
-        try:
-            with open(fp, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except (json.JSONDecodeError, OSError) as exc:
-            log.warning("Cache corrupt for %s: %s", race_date, exc)
-    return None
+    data = safe_json_read(fp)
+    if data is None:
+        return None
+    # Reject incomplete caches written by older versions or crashed runs.
+    if not data.get("complete", False):
+        log.warning("Cache for %s is incomplete (no completion flag) — ignoring",
+                    race_date)
+        return None
+    races = data.get("races") or []
+    expected = data.get("expected_races")
+    if expected is not None and len(races) != expected:
+        log.warning("Cache for %s has %d/%d races — ignoring partial cache",
+                    race_date, len(races), expected)
+        return None
+    return data
 
 
 def save_cache(cache_dir: Path, race_date: str, data: Dict) -> None:
-    """Save race card data to cache."""
+    """Save race card data to cache atomically (.tmp → rename)."""
     cache_dir.mkdir(parents=True, exist_ok=True)
     fp = _cache_path(cache_dir, race_date)
-    with open(fp, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2, default=str)
+    safe_json_write(fp, data)
     log.info("  Cache saved: %s", fp.name)
 
 
@@ -770,17 +784,31 @@ def scrape_race_day(race_date: str, use_cache: bool = True,
         log.error("No race data collected for %s", race_date)
         return None
 
-    # Save to cache
+    # Save to cache with completeness metadata so partial scrapes can't poison
+    # subsequent runs (Bug A fix).
+    races_with_horses = [(m, h) for m, h in all_race_data if h]
+    is_complete = (
+        len(races_with_horses) == len(race_numbers)
+        and len(races_with_horses) > 0
+    )
     cache_data = {
         "race_date": race_date,
         "racecourse": racecourse,
         "scraped_at": datetime.now().isoformat(),
+        "expected_races": len(race_numbers),
+        "complete": is_complete,
         "races": [
             {"meta": meta, "horses": horses}
             for meta, horses in all_race_data
+            if horses  # only persist non-empty races
         ],
     }
     save_cache(cache_dir, race_date, cache_data)
+    if not is_complete:
+        log.warning(
+            "  Cache for %s saved as INCOMPLETE (%d/%d races) — next run will refetch",
+            race_date, len(races_with_horses), len(race_numbers),
+        )
 
     # Normalize
     df = normalize_data(race_date, racecourse, all_race_data)
@@ -817,6 +845,10 @@ Examples:
     parser.add_argument(
         "--no-cache", dest="use_cache", action="store_false",
         help="Ignore cache and re-scrape.",
+    )
+    parser.add_argument(
+        "--force", dest="use_cache", action="store_false",
+        help="Alias for --no-cache (force re-scrape).",
     )
     parser.add_argument(
         "--cache-dir", default=str(DEFAULT_CACHE_DIR),
