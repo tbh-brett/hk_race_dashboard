@@ -1,28 +1,29 @@
 {
   "horse_name": "SERANGOON",
   "summary": {
-    "n_runs": 19,
+    "n_runs": 20,
     "n_wins": 2,
     "n_top3": 4,
-    "win_pct": 10.5,
-    "top3_pct": 21.1,
-    "avg_beat_proj_s": null,
+    "win_pct": 10.0,
+    "top3_pct": 20.0,
+    "avg_beat_proj_s": -0.92,
     "recurring_excuses": {
-      "wide_barrier": 2
+      "wide_barrier": 2,
+      "wide_all_way": 1
     },
     "perf_score_recent": [
-      2.188,
       0.0,
       2.1,
       0.0,
-      0.0
+      0.0,
+      -1.16
     ],
-    "perf_score_mean": 0.439,
+    "perf_score_mean": 0.359,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-29",
-    "last_finish": 6,
-    "last_jockey": "H Bowman",
+    "last_run_date": "2026-04-29",
+    "last_finish": 9,
+    "last_jockey": "K Teetan",
     "last_trainer": "A S Cruz"
   },
   "runs": [
@@ -775,6 +776,52 @@
       ],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 3,
+      "distance": 2200,
+      "race_class": "4",
+      "going": "GY",
+      "surface": "Turf",
+      "actual_pace": "Fast",
+      "horse_no": 3,
+      "horse_name": "SERANGOON",
+      "finish": 9,
+      "lbw": "8",
+      "win_odds": "9.3",
+      "draw": 1,
+      "weight": 132,
+      "jockey": "K Teetan",
+      "trainer": "A S Cruz",
+      "finish_time_s": 138.07,
+      "running_position": "12 12 12 12 11 9",
+      "sectiontimes": [
+        "15.05",
+        "23.71",
+        "24.42",
+        "24.34",
+        "25.41",
+        "25.14"
+      ],
+      "et_rank": 2,
+      "et_proj_time": 137.15,
+      "et_win_prob": 13.3,
+      "sarr_rank": 1,
+      "beat_proj_s": -0.92,
+      "perf_score": -1.16,
+      "perf_reasons": [
+        "model Rk#2 → P9 (underperformed)",
+        "ran 0.92s slower than projected"
+      ],
+      "tags": [
+        "vet_ok",
+        "bumped_mid",
+        "wide_all_way"
+      ],
+      "polarity": 0,
+      "comment_short": "Caught wide the entire run"
     }
   ]
 }

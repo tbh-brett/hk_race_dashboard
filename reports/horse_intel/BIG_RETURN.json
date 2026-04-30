@@ -1,26 +1,28 @@
 {
   "horse_name": "BIG RETURN",
   "summary": {
-    "n_runs": 12,
-    "n_wins": 1,
-    "n_top3": 2,
-    "win_pct": 8.3,
-    "top3_pct": 16.7,
+    "n_runs": 13,
+    "n_wins": 2,
+    "n_top3": 3,
+    "win_pct": 15.4,
+    "top3_pct": 23.1,
     "avg_beat_proj_s": -0.86,
     "recurring_excuses": {
-      "held_up": 1
+      "held_up": 1,
+      "shifted_in": 1,
+      "wide_all_way": 1
     },
     "perf_score_recent": [
       0.0,
-      0.0,
       0.5,
       0.0,
-      5.47
+      5.47,
+      0.0
     ],
-    "perf_score_mean": 0.497,
+    "perf_score_mean": 0.459,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-04-06",
+    "last_run_date": "2026-04-26",
     "last_finish": 1,
     "last_jockey": "A Badel",
     "last_trainer": "J Richards"
@@ -480,6 +482,48 @@
       ],
       "polarity": 1,
       "comment_short": "Held up for run"
+    },
+    {
+      "date": "2026-04-26",
+      "venue": "ST",
+      "race_number": 2,
+      "distance": 1600,
+      "race_class": "4",
+      "going": "GF",
+      "surface": "Turf",
+      "actual_pace": "Fast",
+      "horse_no": 6,
+      "horse_name": "BIG RETURN",
+      "finish": 1,
+      "lbw": "---",
+      "win_odds": "3.6",
+      "draw": 3,
+      "weight": 126,
+      "jockey": "A Badel",
+      "trainer": "J Richards",
+      "finish_time_s": 93.74000000000001,
+      "running_position": "7 7 6 1",
+      "sectiontimes": [
+        "24.77",
+        "22.73",
+        "23.14",
+        "23.10"
+      ],
+      "et_rank": null,
+      "et_proj_time": null,
+      "et_win_prob": null,
+      "sarr_rank": null,
+      "beat_proj_s": null,
+      "perf_score": 0.0,
+      "perf_reasons": [],
+      "tags": [
+        "sampling",
+        "bumped_mid",
+        "shifted_in",
+        "wide_all_way"
+      ],
+      "polarity": 0,
+      "comment_short": "Caught wide the entire run"
     }
   ]
 }

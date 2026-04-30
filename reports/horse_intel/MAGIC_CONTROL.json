@@ -1,29 +1,30 @@
 {
   "horse_name": "MAGIC CONTROL",
   "summary": {
-    "n_runs": 24,
+    "n_runs": 25,
     "n_wins": 3,
     "n_top3": 9,
-    "win_pct": 12.5,
-    "top3_pct": 37.5,
-    "avg_beat_proj_s": -0.32,
+    "win_pct": 12.0,
+    "top3_pct": 36.0,
+    "avg_beat_proj_s": -0.52,
     "recurring_excuses": {
       "wide_no_cover": 1,
-      "held_up": 1
+      "held_up": 1,
+      "bumped_start": 1
     },
     "perf_score_recent": [
       0.0,
       0.0,
       0.0,
       0.0,
-      0.0
+      -0.355
     ],
-    "perf_score_mean": 0.097,
+    "perf_score_mean": 0.079,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-04-12",
-    "last_finish": 8,
-    "last_jockey": "K C Leung",
+    "last_run_date": "2026-04-29",
+    "last_finish": 5,
+    "last_jockey": "K Teetan",
     "last_trainer": "W K Mo"
   },
   "runs": [
@@ -905,6 +906,47 @@
       "tags": [],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 7,
+      "distance": 1000,
+      "race_class": "2",
+      "going": "G",
+      "surface": "Turf",
+      "actual_pace": "Slow",
+      "horse_no": 4,
+      "horse_name": "MAGIC CONTROL",
+      "finish": 5,
+      "lbw": "2",
+      "win_odds": "7.1",
+      "draw": 1,
+      "weight": 119,
+      "jockey": "K Teetan",
+      "trainer": "W K Mo",
+      "finish_time_s": 57.12,
+      "running_position": "4 5 5",
+      "sectiontimes": [
+        "12.92",
+        "21.68",
+        "22.52"
+      ],
+      "et_rank": 2,
+      "et_proj_time": 56.41,
+      "et_win_prob": 8.1,
+      "sarr_rank": 4,
+      "beat_proj_s": -0.71,
+      "perf_score": -0.355,
+      "perf_reasons": [
+        "ran 0.71s slower than projected"
+      ],
+      "tags": [
+        "bumped_start",
+        "bumped_mid"
+      ],
+      "polarity": 1,
+      "comment_short": "Bumped at start"
     }
   ]
 }

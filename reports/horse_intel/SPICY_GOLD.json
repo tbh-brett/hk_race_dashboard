@@ -1,28 +1,29 @@
 {
   "horse_name": "SPICY GOLD",
   "summary": {
-    "n_runs": 17,
+    "n_runs": 18,
     "n_wins": 3,
     "n_top3": 6,
-    "win_pct": 17.6,
-    "top3_pct": 35.3,
-    "avg_beat_proj_s": -0.38,
+    "win_pct": 16.7,
+    "top3_pct": 33.3,
+    "avg_beat_proj_s": -2.54,
     "recurring_excuses": {
-      "unbalanced": 1
+      "unbalanced": 1,
+      "wide_no_cover": 1
     },
     "perf_score_recent": [
       0.0,
       0.0,
       0.0,
       0.0,
-      0.0
+      -2.35
     ],
-    "perf_score_mean": 0.12,
+    "perf_score_mean": -0.017,
     "blackbook_status": "medium",
     "blackbook_note": null,
-    "last_run_date": "2026-04-08",
-    "last_finish": 11,
-    "last_jockey": "A Badel",
+    "last_run_date": "2026-04-29",
+    "last_finish": 12,
+    "last_jockey": "M Chadwick",
     "last_trainer": "J Richards"
   },
   "runs": [
@@ -652,6 +653,48 @@
       "tags": [],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 9,
+      "distance": 1650,
+      "race_class": "3",
+      "going": "G",
+      "surface": "Turf",
+      "actual_pace": "Slightly Fast",
+      "horse_no": 8,
+      "horse_name": "SPICY GOLD",
+      "finish": 12,
+      "lbw": "37",
+      "win_odds": "77",
+      "draw": 5,
+      "weight": 122,
+      "jockey": "M Chadwick",
+      "trainer": "J Richards",
+      "finish_time_s": 105.51,
+      "running_position": "5 5 8 12",
+      "sectiontimes": [
+        "28.08",
+        "23.22",
+        "24.96",
+        "29.25"
+      ],
+      "et_rank": 9,
+      "et_proj_time": 100.81,
+      "et_win_prob": 4.0,
+      "sarr_rank": 8,
+      "beat_proj_s": -4.7,
+      "perf_score": -2.35,
+      "perf_reasons": [
+        "ran 4.70s slower than projected"
+      ],
+      "tags": [
+        "vet_ok",
+        "wide_no_cover"
+      ],
+      "polarity": 1,
+      "comment_short": "Wide without cover (tough trip)"
     }
   ]
 }

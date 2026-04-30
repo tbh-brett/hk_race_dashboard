@@ -1,31 +1,32 @@
 {
   "horse_name": "SOLID CAR",
   "summary": {
-    "n_runs": 9,
+    "n_runs": 10,
     "n_wins": 0,
-    "n_top3": 3,
+    "n_top3": 4,
     "win_pct": 0.0,
-    "top3_pct": 33.3,
+    "top3_pct": 40.0,
     "avg_beat_proj_s": null,
     "recurring_excuses": {
       "steadied": 1,
       "bleeding": 1,
       "vet_hold": 1,
-      "raced_keenly": 1
+      "raced_keenly": 1,
+      "held_up": 1
     },
     "perf_score_recent": [
       0.0,
-      0.0,
       0.885,
       1.14,
-      0.0
+      0.0,
+      0.5
     ],
-    "perf_score_mean": 0.398,
+    "perf_score_mean": 0.408,
     "blackbook_status": "high",
     "blackbook_note": null,
-    "last_run_date": "2026-02-14",
-    "last_finish": 8,
-    "last_jockey": "Z Purton",
+    "last_run_date": "2026-04-26",
+    "last_finish": 3,
+    "last_jockey": "E Brown",
     "last_trainer": "D J Hall"
   },
   "runs": [
@@ -371,6 +372,46 @@
       ],
       "polarity": -3,
       "comment_short": "Post-race scope: blood in trachea (bleeder)"
+    },
+    {
+      "date": "2026-04-26",
+      "venue": "ST",
+      "race_number": 3,
+      "distance": 1200,
+      "race_class": "4",
+      "going": "GF",
+      "surface": "Turf",
+      "actual_pace": "Fast",
+      "horse_no": 6,
+      "horse_name": "SOLID CAR",
+      "finish": 3,
+      "lbw": "4-1/2",
+      "win_odds": "6.8",
+      "draw": 3,
+      "weight": 127,
+      "jockey": "E Brown",
+      "trainer": "D J Hall",
+      "finish_time_s": 69.28999999999999,
+      "running_position": "11 10 3",
+      "sectiontimes": [
+        "24.34",
+        "21.94",
+        "23.01"
+      ],
+      "et_rank": null,
+      "et_proj_time": null,
+      "et_win_prob": null,
+      "sarr_rank": null,
+      "beat_proj_s": null,
+      "perf_score": 0.5,
+      "perf_reasons": [
+        "closed from pos 11 to P3"
+      ],
+      "tags": [
+        "held_up"
+      ],
+      "polarity": 1,
+      "comment_short": "Held up for run"
     }
   ]
 }

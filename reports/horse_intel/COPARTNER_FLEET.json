@@ -1,28 +1,30 @@
 {
   "horse_name": "COPARTNER FLEET",
   "summary": {
-    "n_runs": 11,
+    "n_runs": 12,
     "n_wins": 2,
     "n_top3": 3,
-    "win_pct": 18.2,
-    "top3_pct": 27.3,
-    "avg_beat_proj_s": null,
+    "win_pct": 16.7,
+    "top3_pct": 25.0,
+    "avg_beat_proj_s": -0.33,
     "recurring_excuses": {
       "held_up": 1,
-      "crowded": 1
+      "crowded": 1,
+      "bumped_start": 1,
+      "steadied": 1
     },
     "perf_score_recent": [
       0.0,
-      0.0,
       1.9,
+      0.0,
       0.0,
       0.0
     ],
-    "perf_score_mean": 0.354,
+    "perf_score_mean": 0.324,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-25",
-    "last_finish": 12,
+    "last_run_date": "2026-04-29",
+    "last_finish": 5,
     "last_jockey": "M L Yeung",
     "last_trainer": "K W Lui"
   },
@@ -437,6 +439,47 @@
       ],
       "polarity": 1,
       "comment_short": "Crowded"
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 8,
+      "distance": 1200,
+      "race_class": "3",
+      "going": "G",
+      "surface": "Turf",
+      "actual_pace": "Slow",
+      "horse_no": 9,
+      "horse_name": "COPARTNER FLEET",
+      "finish": 5,
+      "lbw": "3-1/2",
+      "win_odds": "104",
+      "draw": 8,
+      "weight": 116,
+      "jockey": "M L Yeung",
+      "trainer": "K W Lui",
+      "finish_time_s": 70.52,
+      "running_position": "10 10 5",
+      "sectiontimes": [
+        "24.07",
+        "22.81",
+        "23.64"
+      ],
+      "et_rank": 12,
+      "et_proj_time": 70.19,
+      "et_win_prob": 0.2,
+      "sarr_rank": 11,
+      "beat_proj_s": -0.33,
+      "perf_score": 0.0,
+      "perf_reasons": [],
+      "tags": [
+        "bumped_start",
+        "bumped_mid",
+        "steadied",
+        "jumped_fairly"
+      ],
+      "polarity": 2,
+      "comment_short": "Bumped at start"
     }
   ]
 }

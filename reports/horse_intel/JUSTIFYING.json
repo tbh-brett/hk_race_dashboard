@@ -1,26 +1,28 @@
 {
   "horse_name": "JUSTIFYING",
   "summary": {
-    "n_runs": 9,
+    "n_runs": 10,
     "n_wins": 1,
     "n_top3": 1,
-    "win_pct": 11.1,
-    "top3_pct": 11.1,
-    "avg_beat_proj_s": 0.58,
-    "recurring_excuses": {},
+    "win_pct": 10.0,
+    "top3_pct": 10.0,
+    "avg_beat_proj_s": -0.76,
+    "recurring_excuses": {
+      "shifted_in": 1
+    },
     "perf_score_recent": [
       0.0,
       0.0,
       0.0,
-      0.0,
-      0.464
+      0.464,
+      -1.755
     ],
-    "perf_score_mean": 0.052,
+    "perf_score_mean": -0.129,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-04-01",
-    "last_finish": 4,
-    "last_jockey": "J Orman",
+    "last_run_date": "2026-04-29",
+    "last_finish": 12,
+    "last_jockey": "E C W Wong",
     "last_trainer": "C Fownes"
   },
   "runs": [
@@ -352,6 +354,49 @@
       ],
       "tags": [
         "bumped_mid"
+      ],
+      "polarity": 0,
+      "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 6,
+      "distance": 1650,
+      "race_class": "4",
+      "going": "G",
+      "surface": "Turf",
+      "actual_pace": "Very Slow",
+      "horse_no": 9,
+      "horse_name": "JUSTIFYING",
+      "finish": 12,
+      "lbw": "11-3/4",
+      "win_odds": "17",
+      "draw": 1,
+      "weight": 126,
+      "jockey": "E C W Wong",
+      "trainer": "C Fownes",
+      "finish_time_s": 102.91,
+      "running_position": "4 3 3 12",
+      "sectiontimes": [
+        "28.13",
+        "23.68",
+        "24.58",
+        "26.52"
+      ],
+      "et_rank": 4,
+      "et_proj_time": 100.8,
+      "et_win_prob": 10.6,
+      "sarr_rank": 3,
+      "beat_proj_s": -2.11,
+      "perf_score": -1.755,
+      "perf_reasons": [
+        "model Rk#4 → P12 (underperformed)",
+        "ran 2.11s slower than projected"
+      ],
+      "tags": [
+        "vet_ok",
+        "shifted_in"
       ],
       "polarity": 0,
       "comment_short": ""

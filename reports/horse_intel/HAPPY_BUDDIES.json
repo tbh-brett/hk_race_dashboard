@@ -1,30 +1,31 @@
 {
   "horse_name": "HAPPY BUDDIES",
   "summary": {
-    "n_runs": 8,
+    "n_runs": 9,
     "n_wins": 0,
     "n_top3": 0,
     "win_pct": 0.0,
     "top3_pct": 0.0,
-    "avg_beat_proj_s": null,
+    "avg_beat_proj_s": -0.81,
     "recurring_excuses": {
       "wide_no_cover": 1,
       "raced_keenly": 1,
-      "steadied": 1
+      "steadied": 1,
+      "wide_all_way": 1
     },
     "perf_score_recent": [
       0.0,
       0.0,
       0.0,
       0.0,
-      0.0
+      -1.105
     ],
-    "perf_score_mean": 0.0,
+    "perf_score_mean": -0.123,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-29",
-    "last_finish": 12,
-    "last_jockey": "K Teetan",
+    "last_run_date": "2026-04-29",
+    "last_finish": 7,
+    "last_jockey": "K C Leung",
     "last_trainer": "W K Mo"
   },
   "runs": [
@@ -324,6 +325,49 @@
       ],
       "polarity": -1,
       "comment_short": "Raced keenly, failed to settle"
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 1,
+      "distance": 1800,
+      "race_class": "5",
+      "going": "GY",
+      "surface": "Turf",
+      "actual_pace": "Slightly Slow",
+      "horse_no": 10,
+      "horse_name": "HAPPY BUDDIES",
+      "finish": 7,
+      "lbw": "5-3/4",
+      "win_odds": "58",
+      "draw": 12,
+      "weight": 133,
+      "jockey": "K C Leung",
+      "trainer": "W K Mo",
+      "finish_time_s": 111.32,
+      "running_position": "2 3 2 2 7",
+      "sectiontimes": [
+        "13.63",
+        "23.35",
+        "24.08",
+        "25.09",
+        "25.17"
+      ],
+      "et_rank": 2,
+      "et_proj_time": 110.51,
+      "et_win_prob": 14.8,
+      "sarr_rank": 11,
+      "beat_proj_s": -0.81,
+      "perf_score": -1.105,
+      "perf_reasons": [
+        "model Rk#2 → P7 (underperformed)",
+        "ran 0.81s slower than projected"
+      ],
+      "tags": [
+        "wide_all_way"
+      ],
+      "polarity": 0,
+      "comment_short": "Caught wide the entire run"
     }
   ]
 }

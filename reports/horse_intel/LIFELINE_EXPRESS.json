@@ -1,26 +1,29 @@
 {
   "horse_name": "LIFELINE EXPRESS",
   "summary": {
-    "n_runs": 19,
+    "n_runs": 20,
     "n_wins": 1,
     "n_top3": 10,
-    "win_pct": 5.3,
-    "top3_pct": 52.6,
+    "win_pct": 5.0,
+    "top3_pct": 50.0,
     "avg_beat_proj_s": null,
-    "recurring_excuses": {},
+    "recurring_excuses": {
+      "held_up": 1,
+      "wide_all_way": 1
+    },
     "perf_score_recent": [
-      1.01,
       1.235,
       2.415,
       2.12,
+      0.0,
       0.0
     ],
-    "perf_score_mean": 1.135,
+    "perf_score_mean": 1.078,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-22",
-    "last_finish": 6,
-    "last_jockey": "D B McMonagle",
+    "last_run_date": "2026-04-26",
+    "last_finish": 11,
+    "last_jockey": "A Atzeni",
     "last_trainer": "J Size"
   },
   "runs": [
@@ -747,6 +750,46 @@
       ],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-26",
+      "venue": "ST",
+      "race_number": 6,
+      "distance": 1200,
+      "race_class": "3",
+      "going": "GF",
+      "surface": "Turf",
+      "actual_pace": "Normal",
+      "horse_no": 6,
+      "horse_name": "LIFELINE EXPRESS",
+      "finish": 11,
+      "lbw": "6",
+      "win_odds": "11",
+      "draw": 2,
+      "weight": 129,
+      "jockey": "A Atzeni",
+      "trainer": "J Size",
+      "finish_time_s": 69.78999999999999,
+      "running_position": "8 9 11",
+      "sectiontimes": [
+        "24.22",
+        "22.20",
+        "23.37"
+      ],
+      "et_rank": null,
+      "et_proj_time": null,
+      "et_win_prob": null,
+      "sarr_rank": null,
+      "beat_proj_s": null,
+      "perf_score": 0.0,
+      "perf_reasons": [],
+      "tags": [
+        "vet_ok",
+        "held_up",
+        "wide_all_way"
+      ],
+      "polarity": 1,
+      "comment_short": "Held up for run"
     }
   ]
 }

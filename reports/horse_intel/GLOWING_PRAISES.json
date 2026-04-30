@@ -1,27 +1,30 @@
 {
   "horse_name": "GLOWING PRAISES",
   "summary": {
-    "n_runs": 4,
+    "n_runs": 5,
     "n_wins": 1,
-    "n_top3": 3,
-    "win_pct": 25.0,
-    "top3_pct": 75.0,
-    "avg_beat_proj_s": 1.53,
+    "n_top3": 4,
+    "win_pct": 20.0,
+    "top3_pct": 80.0,
+    "avg_beat_proj_s": 0.78,
     "recurring_excuses": {
-      "wide_leader": 1
+      "wide_leader": 2,
+      "crowded": 1,
+      "shifted_in": 1
     },
     "perf_score_recent": [
       2.0,
       0.0,
       0.5,
-      1.724
+      1.724,
+      1.0
     ],
-    "perf_score_mean": 1.056,
+    "perf_score_mean": 1.045,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-04-06",
+    "last_run_date": "2026-04-29",
     "last_finish": 2,
-    "last_jockey": "Z Purton",
+    "last_jockey": "P N Wong",
     "last_trainer": "C W Chang"
   },
   "runs": [
@@ -180,6 +183,50 @@
       ],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 7,
+      "distance": 1000,
+      "race_class": "2",
+      "going": "G",
+      "surface": "Turf",
+      "actual_pace": "Slow",
+      "horse_no": 8,
+      "horse_name": "GLOWING PRAISES",
+      "finish": 2,
+      "lbw": "3/4",
+      "win_odds": "11",
+      "draw": 8,
+      "weight": 108,
+      "jockey": "P N Wong",
+      "trainer": "C W Chang",
+      "finish_time_s": 56.95,
+      "running_position": "5 4 2",
+      "sectiontimes": [
+        "12.96",
+        "21.56",
+        "22.43"
+      ],
+      "et_rank": 10,
+      "et_proj_time": 56.98,
+      "et_win_prob": 0.6,
+      "sarr_rank": 3,
+      "beat_proj_s": 0.03,
+      "perf_score": 1.0,
+      "perf_reasons": [
+        "model Rk#10 → P2"
+      ],
+      "tags": [
+        "sampling",
+        "bumped_mid",
+        "crowded",
+        "shifted_in",
+        "wide_leader"
+      ],
+      "polarity": 1,
+      "comment_short": "Crowded"
     }
   ]
 }

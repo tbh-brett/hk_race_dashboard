@@ -1,31 +1,32 @@
 {
   "horse_name": "NOBLE PURSUIT",
   "summary": {
-    "n_runs": 19,
+    "n_runs": 20,
     "n_wins": 1,
     "n_top3": 2,
-    "win_pct": 5.3,
-    "top3_pct": 10.5,
-    "avg_beat_proj_s": 0.15,
+    "win_pct": 5.0,
+    "top3_pct": 10.0,
+    "avg_beat_proj_s": -0.16,
     "recurring_excuses": {
       "wide_barrier": 3,
       "shifted_in": 2,
       "held_up": 1,
-      "crowded": 1
+      "crowded": 1,
+      "rail_all_way": 1
     },
     "perf_score_recent": [
-      0.0,
       2.61,
       0.0,
       0.0,
-      0.0
+      0.0,
+      -0.7
     ],
-    "perf_score_mean": 0.278,
+    "perf_score_mean": 0.229,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-04-15",
-    "last_finish": 4,
-    "last_jockey": "J Moreira",
+    "last_run_date": "2026-04-29",
+    "last_finish": 7,
+    "last_jockey": "H Bowman",
     "last_trainer": "C Fownes"
   },
   "runs": [
@@ -758,6 +759,49 @@
       "tags": [],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 3,
+      "distance": 2200,
+      "race_class": "4",
+      "going": "GY",
+      "surface": "Turf",
+      "actual_pace": "Fast",
+      "horse_no": 2,
+      "horse_name": "NOBLE PURSUIT",
+      "finish": 7,
+      "lbw": "5",
+      "win_odds": "13",
+      "draw": 3,
+      "weight": 133,
+      "jockey": "H Bowman",
+      "trainer": "C Fownes",
+      "finish_time_s": 137.57,
+      "running_position": "10 10 11 10 9 7",
+      "sectiontimes": [
+        "14.65",
+        "23.67",
+        "24.50",
+        "24.38",
+        "25.33",
+        "25.04"
+      ],
+      "et_rank": 1,
+      "et_proj_time": 137.1,
+      "et_win_prob": 14.0,
+      "sarr_rank": 5,
+      "beat_proj_s": -0.47,
+      "perf_score": -0.7,
+      "perf_reasons": [
+        "model Rk#1 → P7 (underperformed)"
+      ],
+      "tags": [
+        "rail_all_way"
+      ],
+      "polarity": 0,
+      "comment_short": "Saved ground on the rail"
     }
   ]
 }

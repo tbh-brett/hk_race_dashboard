@@ -1,28 +1,31 @@
 {
   "horse_name": "CORLEONE",
   "summary": {
-    "n_runs": 10,
+    "n_runs": 11,
     "n_wins": 3,
     "n_top3": 6,
-    "win_pct": 30.0,
-    "top3_pct": 60.0,
-    "avg_beat_proj_s": null,
+    "win_pct": 27.3,
+    "top3_pct": 54.5,
+    "avg_beat_proj_s": -1.42,
     "recurring_excuses": {
       "shifted_out": 2,
-      "wide_barrier": 1
+      "wide_barrier": 1,
+      "raced_keenly": 1,
+      "steadied": 1,
+      "wide_all_way": 1
     },
     "perf_score_recent": [
-      2.577,
       1.047,
       0.763,
       2.04,
-      0.0
+      0.0,
+      -1.41
     ],
-    "perf_score_mean": 0.972,
+    "perf_score_mean": 0.755,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-04",
-    "last_finish": 8,
+    "last_run_date": "2026-04-29",
+    "last_finish": 9,
     "last_jockey": "E C W Wong",
     "last_trainer": "C Fownes"
   },
@@ -420,6 +423,51 @@
       ],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 9,
+      "distance": 1650,
+      "race_class": "3",
+      "going": "G",
+      "surface": "Turf",
+      "actual_pace": "Slightly Fast",
+      "horse_no": 3,
+      "horse_name": "CORLEONE",
+      "finish": 9,
+      "lbw": "8-1/4",
+      "win_odds": "10",
+      "draw": 8,
+      "weight": 129,
+      "jockey": "E C W Wong",
+      "trainer": "C Fownes",
+      "finish_time_s": 100.91,
+      "running_position": "8 7 10 9",
+      "sectiontimes": [
+        "28.44",
+        "23.18",
+        "24.68",
+        "24.61"
+      ],
+      "et_rank": 1,
+      "et_proj_time": 99.49,
+      "et_win_prob": 33.0,
+      "sarr_rank": 5,
+      "beat_proj_s": -1.42,
+      "perf_score": -1.41,
+      "perf_reasons": [
+        "model Rk#1 → P9 (underperformed)",
+        "ran 1.42s slower than projected"
+      ],
+      "tags": [
+        "vet_ok",
+        "raced_keenly",
+        "steadied",
+        "wide_all_way"
+      ],
+      "polarity": -1,
+      "comment_short": "Raced keenly, failed to settle"
     }
   ]
 }

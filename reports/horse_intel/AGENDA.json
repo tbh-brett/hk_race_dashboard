@@ -1,29 +1,29 @@
 {
   "horse_name": "AGENDA",
   "summary": {
-    "n_runs": 12,
+    "n_runs": 13,
     "n_wins": 0,
     "n_top3": 0,
     "win_pct": 0.0,
     "top3_pct": 0.0,
-    "avg_beat_proj_s": null,
+    "avg_beat_proj_s": -1.38,
     "recurring_excuses": {
-      "unbalanced": 1,
-      "shifted_in": 1
+      "shifted_in": 2,
+      "unbalanced": 1
     },
     "perf_score_recent": [
       0.0,
       0.0,
       0.0,
       0.0,
-      0.0
+      -1.39
     ],
-    "perf_score_mean": 0.0,
+    "perf_score_mean": -0.107,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-29",
-    "last_finish": 4,
-    "last_jockey": "Z Purton",
+    "last_run_date": "2026-04-29",
+    "last_finish": 11,
+    "last_jockey": "J Orman",
     "last_trainer": "D J Hall"
   },
   "runs": [
@@ -492,6 +492,53 @@
       ],
       "polarity": 1,
       "comment_short": "Unbalanced"
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 3,
+      "distance": 2200,
+      "race_class": "4",
+      "going": "GY",
+      "surface": "Turf",
+      "actual_pace": "Fast",
+      "horse_no": 1,
+      "horse_name": "AGENDA",
+      "finish": 11,
+      "lbw": "11",
+      "win_odds": "25",
+      "draw": 10,
+      "weight": 135,
+      "jockey": "J Orman",
+      "trainer": "D J Hall",
+      "finish_time_s": 138.57,
+      "running_position": "4 2 2 2 2 11",
+      "sectiontimes": [
+        "14.29",
+        "23.15",
+        "24.46",
+        "24.46",
+        "25.69",
+        "26.52"
+      ],
+      "et_rank": 3,
+      "et_proj_time": 137.19,
+      "et_win_prob": 12.7,
+      "sarr_rank": 10,
+      "beat_proj_s": -1.38,
+      "perf_score": -1.39,
+      "perf_reasons": [
+        "model Rk#3 → P11 (underperformed)",
+        "ran 1.38s slower than projected"
+      ],
+      "tags": [
+        "vet_ok",
+        "bumped_mid",
+        "jumped_fairly",
+        "shifted_in"
+      ],
+      "polarity": 1,
+      "comment_short": "Missed the kick / jumped slowly"
     }
   ]
 }

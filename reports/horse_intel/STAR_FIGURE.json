@@ -1,29 +1,31 @@
 {
   "horse_name": "STAR FIGURE",
   "summary": {
-    "n_runs": 8,
+    "n_runs": 9,
     "n_wins": 0,
-    "n_top3": 2,
+    "n_top3": 3,
     "win_pct": 0.0,
-    "top3_pct": 25.0,
+    "top3_pct": 33.3,
     "avg_beat_proj_s": -0.39,
     "recurring_excuses": {
       "crowded": 1,
-      "one_paced": 1
+      "one_paced": 1,
+      "unbalanced": 1,
+      "wide_all_way": 1
     },
     "perf_score_recent": [
-      0.0,
       0.5,
       0.0,
       0.0,
-      0.0
+      0.0,
+      0.5
     ],
-    "perf_score_mean": 0.125,
+    "perf_score_mean": 0.167,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-04-08",
-    "last_finish": 10,
-    "last_jockey": "A Atzeni",
+    "last_run_date": "2026-04-26",
+    "last_finish": 3,
+    "last_jockey": "B Avdulla",
     "last_trainer": "J Richards"
   },
   "runs": [
@@ -326,6 +328,50 @@
       ],
       "polarity": 0,
       "comment_short": "One-paced"
+    },
+    {
+      "date": "2026-04-26",
+      "venue": "ST",
+      "race_number": 4,
+      "distance": 1400,
+      "race_class": "4",
+      "going": "GF",
+      "surface": "Turf",
+      "actual_pace": "Fast",
+      "horse_no": 14,
+      "horse_name": "STAR FIGURE",
+      "finish": 3,
+      "lbw": "1/2",
+      "win_odds": "54",
+      "draw": 8,
+      "weight": 121,
+      "jockey": "B Avdulla",
+      "trainer": "J Richards",
+      "finish_time_s": 81.34,
+      "running_position": "10 9 9 3",
+      "sectiontimes": [
+        "13.89",
+        "21.69",
+        "22.69",
+        "23.07"
+      ],
+      "et_rank": null,
+      "et_proj_time": null,
+      "et_win_prob": null,
+      "sarr_rank": null,
+      "beat_proj_s": null,
+      "perf_score": 0.5,
+      "perf_reasons": [
+        "closed from pos 10 to P3"
+      ],
+      "tags": [
+        "bumped_mid",
+        "unbalanced",
+        "jumped_fairly",
+        "wide_all_way"
+      ],
+      "polarity": 2,
+      "comment_short": "Unbalanced"
     }
   ]
 }

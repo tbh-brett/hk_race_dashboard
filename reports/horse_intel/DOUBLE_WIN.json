@@ -1,27 +1,28 @@
 {
   "horse_name": "DOUBLE WIN",
   "summary": {
-    "n_runs": 18,
+    "n_runs": 19,
     "n_wins": 2,
-    "n_top3": 5,
-    "win_pct": 11.1,
-    "top3_pct": 27.8,
-    "avg_beat_proj_s": null,
+    "n_top3": 6,
+    "win_pct": 10.5,
+    "top3_pct": 31.6,
+    "avg_beat_proj_s": 1.19,
     "recurring_excuses": {
-      "held_up": 1
+      "held_up": 1,
+      "shifted_in": 1
     },
     "perf_score_recent": [
       0.0,
       0.0,
       0.0,
       0.0,
-      0.0
+      2.452
     ],
-    "perf_score_mean": 0.278,
+    "perf_score_mean": 0.393,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-29",
-    "last_finish": 5,
+    "last_run_date": "2026-04-29",
+    "last_finish": 2,
     "last_jockey": "C Y Ho",
     "last_trainer": "K L Man"
   },
@@ -725,6 +726,54 @@
       "tags": [],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 3,
+      "distance": 2200,
+      "race_class": "4",
+      "going": "GY",
+      "surface": "Turf",
+      "actual_pace": "Fast",
+      "horse_no": 5,
+      "horse_name": "DOUBLE WIN",
+      "finish": 2,
+      "lbw": "1",
+      "win_odds": "14",
+      "draw": 7,
+      "weight": 129,
+      "jockey": "C Y Ho",
+      "trainer": "K L Man",
+      "finish_time_s": 136.97,
+      "running_position": "9 9 10 11 8 2",
+      "sectiontimes": [
+        "14.61",
+        "23.59",
+        "24.58",
+        "24.50",
+        "25.25",
+        "24.44"
+      ],
+      "et_rank": 10,
+      "et_proj_time": 138.16,
+      "et_win_prob": 4.4,
+      "sarr_rank": 3,
+      "beat_proj_s": 1.19,
+      "perf_score": 2.452,
+      "perf_reasons": [
+        "ran 1.19s faster than projected",
+        "model Rk#10 → P2",
+        "closed from pos 9 to P2"
+      ],
+      "tags": [
+        "sampling",
+        "bumped_mid",
+        "jumped_fairly",
+        "shifted_in"
+      ],
+      "polarity": 1,
+      "comment_short": "Missed the kick / jumped slowly"
     }
   ]
 }

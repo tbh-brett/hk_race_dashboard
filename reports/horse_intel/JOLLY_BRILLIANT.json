@@ -1,29 +1,30 @@
 {
   "horse_name": "JOLLY BRILLIANT",
   "summary": {
-    "n_runs": 5,
+    "n_runs": 6,
     "n_wins": 0,
-    "n_top3": 1,
+    "n_top3": 2,
     "win_pct": 0.0,
-    "top3_pct": 20.0,
+    "top3_pct": 33.3,
     "avg_beat_proj_s": null,
     "recurring_excuses": {
       "crowded": 1,
-      "wide_barrier": 1
+      "wide_barrier": 1,
+      "held_up": 1
     },
     "perf_score_recent": [
       0.0,
       0.0,
       0.0,
-      0.0,
-      0.5
+      0.5,
+      1.037
     ],
-    "perf_score_mean": 0.1,
+    "perf_score_mean": 0.256,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-22",
-    "last_finish": 3,
-    "last_jockey": "D B McMonagle",
+    "last_run_date": "2026-04-26",
+    "last_finish": 2,
+    "last_jockey": "H Bowman",
     "last_trainer": "P F Yiu"
   },
   "runs": [
@@ -217,6 +218,49 @@
       ],
       "polarity": 1,
       "comment_short": "Missed the kick / jumped slowly"
+    },
+    {
+      "date": "2026-04-26",
+      "venue": "ST",
+      "race_number": 2,
+      "distance": 1600,
+      "race_class": "4",
+      "going": "GF",
+      "surface": "Turf",
+      "actual_pace": "Fast",
+      "horse_no": 7,
+      "horse_name": "JOLLY BRILLIANT",
+      "finish": 2,
+      "lbw": "N",
+      "win_odds": "3.4",
+      "draw": 8,
+      "weight": 126,
+      "jockey": "H Bowman",
+      "trainer": "P F Yiu",
+      "finish_time_s": 93.81,
+      "running_position": "10 11 8 2",
+      "sectiontimes": [
+        "24.97",
+        "22.85",
+        "22.94",
+        "23.05"
+      ],
+      "et_rank": null,
+      "et_proj_time": null,
+      "et_win_prob": null,
+      "sarr_rank": null,
+      "beat_proj_s": null,
+      "perf_score": 1.037,
+      "perf_reasons": [
+        "late kick 23.05s vs 23.59s avg early",
+        "closed from pos 10 to P2"
+      ],
+      "tags": [
+        "sampling",
+        "held_up"
+      ],
+      "polarity": 1,
+      "comment_short": "Held up for run"
     }
   ]
 }

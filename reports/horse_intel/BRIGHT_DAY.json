@@ -1,31 +1,34 @@
 {
   "horse_name": "BRIGHT DAY",
   "summary": {
-    "n_runs": 20,
+    "n_runs": 21,
     "n_wins": 1,
     "n_top3": 3,
-    "win_pct": 5.0,
-    "top3_pct": 15.0,
-    "avg_beat_proj_s": 0.16,
+    "win_pct": 4.8,
+    "top3_pct": 14.3,
+    "avg_beat_proj_s": -0.39,
     "recurring_excuses": {
       "wide_barrier": 2,
       "wide_no_cover": 1,
       "shifted_in": 1,
-      "rail_all_way": 1
+      "rail_all_way": 1,
+      "held_up": 1,
+      "bumped_start": 1,
+      "unbalanced": 1
     },
     "perf_score_recent": [
       0.0,
       0.0,
       0.0,
-      0.0,
-      0.515
+      0.515,
+      -0.465
     ],
-    "perf_score_mean": 0.173,
+    "perf_score_mean": 0.143,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-04-08",
-    "last_finish": 2,
-    "last_jockey": "P N Wong",
+    "last_run_date": "2026-04-29",
+    "last_finish": 5,
+    "last_jockey": "C L Chau",
     "last_trainer": "K L Man"
   },
   "runs": [
@@ -779,6 +782,49 @@
       ],
       "polarity": 0,
       "comment_short": "Saved ground on the rail"
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 4,
+      "distance": 1200,
+      "race_class": "4",
+      "going": "GY",
+      "surface": "Turf",
+      "actual_pace": "Normal",
+      "horse_no": 4,
+      "horse_name": "BRIGHT DAY",
+      "finish": 5,
+      "lbw": "1-1/2",
+      "win_odds": "16",
+      "draw": 10,
+      "weight": 126,
+      "jockey": "C L Chau",
+      "trainer": "K L Man",
+      "finish_time_s": 70.47,
+      "running_position": "8 9 5",
+      "sectiontimes": [
+        "24.18",
+        "22.70",
+        "23.59"
+      ],
+      "et_rank": 4,
+      "et_proj_time": 69.54,
+      "et_win_prob": 12.3,
+      "sarr_rank": 8,
+      "beat_proj_s": -0.93,
+      "perf_score": -0.465,
+      "perf_reasons": [
+        "ran 0.93s slower than projected"
+      ],
+      "tags": [
+        "held_up",
+        "bumped_start",
+        "bumped_mid",
+        "unbalanced"
+      ],
+      "polarity": 3,
+      "comment_short": "Bumped at start"
     }
   ]
 }

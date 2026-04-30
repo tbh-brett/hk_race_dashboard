@@ -1,29 +1,32 @@
 {
   "horse_name": "KING GLORIOSO",
   "summary": {
-    "n_runs": 10,
+    "n_runs": 11,
     "n_wins": 1,
     "n_top3": 1,
-    "win_pct": 10.0,
-    "top3_pct": 10.0,
-    "avg_beat_proj_s": null,
+    "win_pct": 9.1,
+    "top3_pct": 9.1,
+    "avg_beat_proj_s": -1.22,
     "recurring_excuses": {
-      "shifted_in": 1
+      "shifted_in": 2,
+      "disappointing": 1,
+      "crowded": 1,
+      "wide_all_way": 1
     },
     "perf_score_recent": [
-      1.0,
       0.0,
       0.0,
       0.0,
-      0.0
+      0.0,
+      -1.31
     ],
-    "perf_score_mean": 0.1,
+    "perf_score_mean": -0.028,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-11",
-    "last_finish": 6,
-    "last_jockey": "B Avdulla",
-    "last_trainer": "D J Whyte"
+    "last_run_date": "2026-04-29",
+    "last_finish": 8,
+    "last_jockey": "C Y Ho",
+    "last_trainer": "K L Man"
   },
   "runs": [
     {
@@ -389,6 +392,51 @@
       "tags": [],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 2,
+      "distance": 1200,
+      "race_class": "4",
+      "going": "GY",
+      "surface": "Turf",
+      "actual_pace": "Fast",
+      "horse_no": 9,
+      "horse_name": "KING GLORIOSO",
+      "finish": 8,
+      "lbw": "8-3/4",
+      "win_odds": "5.1",
+      "draw": 3,
+      "weight": 123,
+      "jockey": "C Y Ho",
+      "trainer": "K L Man",
+      "finish_time_s": 70.87,
+      "running_position": "5 6 8",
+      "sectiontimes": [
+        "23.62",
+        "22.99",
+        "24.26"
+      ],
+      "et_rank": 4,
+      "et_proj_time": 69.65,
+      "et_win_prob": 9.3,
+      "sarr_rank": 2,
+      "beat_proj_s": -1.22,
+      "perf_score": -1.31,
+      "perf_reasons": [
+        "model Rk#4 → P8 (underperformed)",
+        "ran 1.22s slower than projected"
+      ],
+      "tags": [
+        "vet_ok",
+        "disappointing",
+        "crowded",
+        "shifted_in",
+        "wide_all_way"
+      ],
+      "polarity": 0,
+      "comment_short": "Crowded"
     }
   ]
 }

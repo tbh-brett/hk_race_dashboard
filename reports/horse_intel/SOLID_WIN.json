@@ -1,31 +1,33 @@
 {
   "horse_name": "SOLID WIN",
   "summary": {
-    "n_runs": 20,
+    "n_runs": 21,
     "n_wins": 4,
     "n_top3": 8,
-    "win_pct": 20.0,
-    "top3_pct": 40.0,
-    "avg_beat_proj_s": null,
+    "win_pct": 19.0,
+    "top3_pct": 38.1,
+    "avg_beat_proj_s": -0.78,
     "recurring_excuses": {
-      "held_up": 1,
+      "held_up": 2,
       "unbalanced": 1,
       "shifted_in": 1,
-      "bumped_start": 1
+      "bumped_start": 1,
+      "raced_keenly": 1,
+      "crowded": 1
     },
     "perf_score_recent": [
-      0.0,
       2.297,
       0.0,
       2.09,
-      2.853
+      2.853,
+      -0.39
     ],
-    "perf_score_mean": 0.537,
+    "perf_score_mean": 0.493,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-25",
-    "last_finish": 4,
-    "last_jockey": "D B McMonagle",
+    "last_run_date": "2026-04-29",
+    "last_finish": 11,
+    "last_jockey": "H Bowman",
     "last_trainer": "P F Yiu"
   },
   "runs": [
@@ -798,6 +800,50 @@
       "tags": [],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 9,
+      "distance": 1650,
+      "race_class": "3",
+      "going": "G",
+      "surface": "Turf",
+      "actual_pace": "Slightly Fast",
+      "horse_no": 1,
+      "horse_name": "SOLID WIN",
+      "finish": 11,
+      "lbw": "10-1/4",
+      "win_odds": "6.9",
+      "draw": 9,
+      "weight": 135,
+      "jockey": "H Bowman",
+      "trainer": "P F Yiu",
+      "finish_time_s": 101.23,
+      "running_position": "11 11 11 11",
+      "sectiontimes": [
+        "28.88",
+        "23.06",
+        "24.52",
+        "24.77"
+      ],
+      "et_rank": 6,
+      "et_proj_time": 100.45,
+      "et_win_prob": 7.1,
+      "sarr_rank": 7,
+      "beat_proj_s": -0.78,
+      "perf_score": -0.39,
+      "perf_reasons": [
+        "ran 0.78s slower than projected"
+      ],
+      "tags": [
+        "vet_ok",
+        "raced_keenly",
+        "held_up",
+        "crowded"
+      ],
+      "polarity": 1,
+      "comment_short": "Crowded"
     }
   ]
 }

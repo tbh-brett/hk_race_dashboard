@@ -1,28 +1,29 @@
 {
   "horse_name": "HEY BROS",
   "summary": {
-    "n_runs": 3,
+    "n_runs": 4,
     "n_wins": 0,
     "n_top3": 0,
     "win_pct": 0.0,
     "top3_pct": 0.0,
-    "avg_beat_proj_s": null,
+    "avg_beat_proj_s": -1.86,
     "recurring_excuses": {
-      "unbalanced": 1,
+      "unbalanced": 2,
       "wide_barrier": 1,
       "bumped_start": 1
     },
     "perf_score_recent": [
       0.0,
       0.0,
-      0.0
+      0.0,
+      -1.63
     ],
-    "perf_score_mean": 0.0,
+    "perf_score_mean": -0.407,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-25",
-    "last_finish": 8,
-    "last_jockey": "K Teetan",
+    "last_run_date": "2026-04-29",
+    "last_finish": 10,
+    "last_jockey": "P N Wong",
     "last_trainer": "B Crawford"
   },
   "runs": [
@@ -141,6 +142,48 @@
       ],
       "polarity": 1,
       "comment_short": "Bumped at start"
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 8,
+      "distance": 1200,
+      "race_class": "3",
+      "going": "G",
+      "surface": "Turf",
+      "actual_pace": "Slow",
+      "horse_no": 10,
+      "horse_name": "HEY BROS",
+      "finish": 10,
+      "lbw": "5-1/4",
+      "win_odds": "43",
+      "draw": 1,
+      "weight": 109,
+      "jockey": "P N Wong",
+      "trainer": "B Crawford",
+      "finish_time_s": 70.78,
+      "running_position": "5 4 10",
+      "sectiontimes": [
+        "23.55",
+        "22.69",
+        "24.54"
+      ],
+      "et_rank": 4,
+      "et_proj_time": 68.92,
+      "et_win_prob": 5.1,
+      "sarr_rank": 8,
+      "beat_proj_s": -1.86,
+      "perf_score": -1.63,
+      "perf_reasons": [
+        "model Rk#4 → P10 (underperformed)",
+        "ran 1.86s slower than projected"
+      ],
+      "tags": [
+        "bumped_mid",
+        "unbalanced"
+      ],
+      "polarity": 1,
+      "comment_short": "Unbalanced"
     }
   ]
 }

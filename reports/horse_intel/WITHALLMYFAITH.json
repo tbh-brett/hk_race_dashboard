@@ -1,29 +1,30 @@
 {
   "horse_name": "WITHALLMYFAITH",
   "summary": {
-    "n_runs": 13,
+    "n_runs": 14,
     "n_wins": 0,
-    "n_top3": 4,
+    "n_top3": 5,
     "win_pct": 0.0,
-    "top3_pct": 30.8,
-    "avg_beat_proj_s": -0.1,
+    "top3_pct": 35.7,
+    "avg_beat_proj_s": 0.46,
     "recurring_excuses": {
       "unbalanced": 1,
-      "wide_leader": 1
+      "wide_leader": 1,
+      "bumped_start": 1
     },
     "perf_score_recent": [
-      0.5,
       0.817,
       0.0,
       0.0,
-      0.897
+      0.897,
+      2.826
     ],
-    "perf_score_mean": 0.265,
+    "perf_score_mean": 0.448,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-04-12",
-    "last_finish": 3,
-    "last_jockey": "M L Yeung",
+    "last_run_date": "2026-04-29",
+    "last_finish": 2,
+    "last_jockey": "K Teetan",
     "last_trainer": "D A Hayes"
   },
   "runs": [
@@ -524,6 +525,51 @@
       ],
       "polarity": 1,
       "comment_short": "Unbalanced"
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 9,
+      "distance": 1650,
+      "race_class": "3",
+      "going": "G",
+      "surface": "Turf",
+      "actual_pace": "Slightly Fast",
+      "horse_no": 12,
+      "horse_name": "WITHALLMYFAITH",
+      "finish": 2,
+      "lbw": "3-3/4",
+      "win_odds": "5.6",
+      "draw": 3,
+      "weight": 118,
+      "jockey": "K Teetan",
+      "trainer": "D A Hayes",
+      "finish_time_s": 100.19,
+      "running_position": "6 6 5 2",
+      "sectiontimes": [
+        "28.20",
+        "23.18",
+        "24.52",
+        "24.29"
+      ],
+      "et_rank": 10,
+      "et_proj_time": 101.21,
+      "et_win_prob": 2.1,
+      "sarr_rank": 3,
+      "beat_proj_s": 1.02,
+      "perf_score": 2.826,
+      "perf_reasons": [
+        "late kick 24.29s vs 25.30s avg early",
+        "ran 1.02s faster than projected",
+        "model Rk#10 → P2"
+      ],
+      "tags": [
+        "sampling",
+        "bumped_start",
+        "bumped_mid"
+      ],
+      "polarity": 1,
+      "comment_short": "Bumped at start"
     }
   ]
 }

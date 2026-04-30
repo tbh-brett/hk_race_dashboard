@@ -1,28 +1,29 @@
 {
   "horse_name": "HONEST WITNESS",
   "summary": {
-    "n_runs": 12,
-    "n_wins": 1,
-    "n_top3": 4,
-    "win_pct": 8.3,
-    "top3_pct": 33.3,
-    "avg_beat_proj_s": null,
+    "n_runs": 13,
+    "n_wins": 2,
+    "n_top3": 5,
+    "win_pct": 15.4,
+    "top3_pct": 38.5,
+    "avg_beat_proj_s": -0.41,
     "recurring_excuses": {
       "shifted_in": 1,
       "wide_barrier": 1,
-      "steadied": 1
+      "steadied": 1,
+      "rail_all_way": 1
     },
     "perf_score_recent": [
-      0.5,
       0.0,
       0.0,
       0.0,
-      0.0
+      0.0,
+      1.22
     ],
-    "perf_score_mean": 0.178,
-    "blackbook_status": null,
+    "perf_score_mean": 0.258,
+    "blackbook_status": "high",
     "blackbook_note": null,
-    "last_run_date": "2026-03-25",
+    "last_run_date": "2026-04-29",
     "last_finish": 1,
     "last_jockey": "Z Purton",
     "last_trainer": "D A Hayes"
@@ -479,6 +480,47 @@
       ],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 2,
+      "distance": 1200,
+      "race_class": "4",
+      "going": "GY",
+      "surface": "Turf",
+      "actual_pace": "Fast",
+      "horse_no": 4,
+      "horse_name": "HONEST WITNESS",
+      "finish": 1,
+      "lbw": "---",
+      "win_odds": "2.5",
+      "draw": 4,
+      "weight": 129,
+      "jockey": "Z Purton",
+      "trainer": "D A Hayes",
+      "finish_time_s": 69.48,
+      "running_position": "1 1 1",
+      "sectiontimes": [
+        "23.34",
+        "22.39",
+        "23.75"
+      ],
+      "et_rank": 1,
+      "et_proj_time": 69.07,
+      "et_win_prob": 42.1,
+      "sarr_rank": 1,
+      "beat_proj_s": -0.41,
+      "perf_score": 1.22,
+      "perf_reasons": [
+        "won by 1.2s vs median — dominant"
+      ],
+      "tags": [
+        "sampling",
+        "rail_all_way"
+      ],
+      "polarity": 0,
+      "comment_short": "Saved ground on the rail"
     }
   ]
 }

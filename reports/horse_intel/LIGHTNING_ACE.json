@@ -1,27 +1,30 @@
 {
   "horse_name": "LIGHTNING ACE",
   "summary": {
-    "n_runs": 2,
+    "n_runs": 3,
     "n_wins": 0,
     "n_top3": 0,
     "win_pct": 0.0,
     "top3_pct": 0.0,
-    "avg_beat_proj_s": null,
+    "avg_beat_proj_s": -1.18,
     "recurring_excuses": {
-      "unbalanced": 2,
+      "unbalanced": 3,
+      "steadied": 2,
       "raced_keenly": 1,
-      "steadied": 1
+      "crowded": 1,
+      "wide_all_way": 1
     },
     "perf_score_recent": [
       0.0,
-      0.0
+      0.0,
+      -0.59
     ],
-    "perf_score_mean": 0.0,
+    "perf_score_mean": -0.197,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-29",
-    "last_finish": 12,
-    "last_jockey": "C L Chau",
+    "last_run_date": "2026-04-29",
+    "last_finish": 10,
+    "last_jockey": "E Brown",
     "last_trainer": "W K Mo"
   },
   "runs": [
@@ -103,6 +106,50 @@
       ],
       "polarity": 0,
       "comment_short": "Unbalanced"
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 4,
+      "distance": 1200,
+      "race_class": "4",
+      "going": "GY",
+      "surface": "Turf",
+      "actual_pace": "Normal",
+      "horse_no": 6,
+      "horse_name": "LIGHTNING ACE",
+      "finish": 10,
+      "lbw": "7-1/2",
+      "win_odds": "93",
+      "draw": 11,
+      "weight": 125,
+      "jockey": "E Brown",
+      "trainer": "W K Mo",
+      "finish_time_s": 71.42,
+      "running_position": "11 12 10",
+      "sectiontimes": [
+        "24.54",
+        "23.02",
+        "23.86"
+      ],
+      "et_rank": 11,
+      "et_proj_time": 70.24,
+      "et_win_prob": 1.1,
+      "sarr_rank": 12,
+      "beat_proj_s": -1.18,
+      "perf_score": -0.59,
+      "perf_reasons": [
+        "ran 1.18s slower than projected"
+      ],
+      "tags": [
+        "bumped_mid",
+        "crowded",
+        "unbalanced",
+        "steadied",
+        "wide_all_way"
+      ],
+      "polarity": 2,
+      "comment_short": "Crowded"
     }
   ]
 }

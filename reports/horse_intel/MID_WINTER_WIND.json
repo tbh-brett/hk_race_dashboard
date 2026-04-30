@@ -1,28 +1,30 @@
 {
   "horse_name": "MID WINTER WIND",
   "summary": {
-    "n_runs": 12,
+    "n_runs": 13,
     "n_wins": 1,
     "n_top3": 4,
-    "win_pct": 8.3,
-    "top3_pct": 33.3,
-    "avg_beat_proj_s": null,
+    "win_pct": 7.7,
+    "top3_pct": 30.8,
+    "avg_beat_proj_s": -1.6,
     "recurring_excuses": {
-      "wide_barrier": 1
+      "wide_barrier": 2,
+      "bleeding": 1,
+      "vet_hold": 1
     },
     "perf_score_recent": [
-      0.0,
       0.5,
       0.0,
       0.5,
-      0.0
+      0.0,
+      -0.8
     ],
-    "perf_score_mean": 0.461,
+    "perf_score_mean": 0.364,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-02-01",
-    "last_finish": 7,
-    "last_jockey": "H Bowman",
+    "last_run_date": "2026-04-29",
+    "last_finish": 11,
+    "last_jockey": "L Ferraris",
     "last_trainer": "M Newnham"
   },
   "runs": [
@@ -474,6 +476,49 @@
       ],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 8,
+      "distance": 1200,
+      "race_class": "3",
+      "going": "G",
+      "surface": "Turf",
+      "actual_pace": "Slow",
+      "horse_no": 1,
+      "horse_name": "MID WINTER WIND",
+      "finish": 11,
+      "lbw": "6-3/4",
+      "win_odds": "30",
+      "draw": 7,
+      "weight": 135,
+      "jockey": "L Ferraris",
+      "trainer": "M Newnham",
+      "finish_time_s": 71.02,
+      "running_position": "9 9 11",
+      "sectiontimes": [
+        "24.03",
+        "22.65",
+        "24.34"
+      ],
+      "et_rank": 11,
+      "et_proj_time": 69.42,
+      "et_win_prob": 1.9,
+      "sarr_rank": 7,
+      "beat_proj_s": -1.6,
+      "perf_score": -0.8,
+      "perf_reasons": [
+        "ran 1.60s slower than projected"
+      ],
+      "tags": [
+        "bleeding",
+        "vet_hold",
+        "bumped_mid",
+        "wide_barrier"
+      ],
+      "polarity": -2,
+      "comment_short": "Post-race scope: blood in trachea (bleeder)"
     }
   ]
 }

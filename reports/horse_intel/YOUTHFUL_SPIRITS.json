@@ -1,29 +1,31 @@
 {
   "horse_name": "YOUTHFUL SPIRITS",
   "summary": {
-    "n_runs": 23,
+    "n_runs": 24,
     "n_wins": 1,
     "n_top3": 10,
-    "win_pct": 4.3,
-    "top3_pct": 43.5,
-    "avg_beat_proj_s": null,
+    "win_pct": 4.2,
+    "top3_pct": 41.7,
+    "avg_beat_proj_s": -1.42,
     "recurring_excuses": {
       "shifted_in": 1,
-      "bumped_start": 1
+      "bumped_start": 1,
+      "raced_keenly": 1,
+      "crowded": 1
     },
     "perf_score_recent": [
       0.0,
       0.0,
       0.0,
       0.0,
-      0.0
+      -1.41
     ],
-    "perf_score_mean": 0.087,
+    "perf_score_mean": 0.025,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-25",
-    "last_finish": 5,
-    "last_jockey": "L Ferraris",
+    "last_run_date": "2026-04-29",
+    "last_finish": 10,
+    "last_jockey": "M Chadwick",
     "last_trainer": "M Newnham"
   },
   "runs": [
@@ -867,6 +869,49 @@
       ],
       "polarity": 1,
       "comment_short": "Bumped at start"
+    },
+    {
+      "date": "2026-04-29",
+      "venue": "HV",
+      "race_number": 7,
+      "distance": 1000,
+      "race_class": "2",
+      "going": "G",
+      "surface": "Turf",
+      "actual_pace": "Slow",
+      "horse_no": 9,
+      "horse_name": "YOUTHFUL SPIRITS",
+      "finish": 10,
+      "lbw": "7",
+      "win_odds": "10",
+      "draw": 6,
+      "weight": 115,
+      "jockey": "M Chadwick",
+      "trainer": "M Newnham",
+      "finish_time_s": 57.92,
+      "running_position": "10 9 10",
+      "sectiontimes": [
+        "13.32",
+        "21.76",
+        "22.84"
+      ],
+      "et_rank": 4,
+      "et_proj_time": 56.5,
+      "et_win_prob": 5.6,
+      "sarr_rank": 8,
+      "beat_proj_s": -1.42,
+      "perf_score": -1.41,
+      "perf_reasons": [
+        "model Rk#4 → P10 (underperformed)",
+        "ran 1.42s slower than projected"
+      ],
+      "tags": [
+        "raced_keenly",
+        "crowded",
+        "jumped_fairly"
+      ],
+      "polarity": 1,
+      "comment_short": "Crowded"
     }
   ]
 }

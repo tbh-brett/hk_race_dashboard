@@ -1,31 +1,33 @@
 {
   "horse_name": "ENDUED",
   "summary": {
-    "n_runs": 20,
+    "n_runs": 21,
     "n_wins": 3,
-    "n_top3": 7,
-    "win_pct": 15.0,
-    "top3_pct": 35.0,
+    "n_top3": 8,
+    "win_pct": 14.3,
+    "top3_pct": 38.1,
     "avg_beat_proj_s": -0.84,
     "recurring_excuses": {
       "wide_barrier": 3,
       "wide_no_cover": 1,
       "held_up": 1,
-      "rail_all_way": 1
+      "rail_all_way": 1,
+      "crowded": 1,
+      "wide_all_way": 1
     },
     "perf_score_recent": [
-      1.12,
       2.17,
       3.137,
       1.297,
-      -1.12
+      -1.12,
+      1.87
     ],
-    "perf_score_mean": 0.405,
+    "perf_score_mean": 0.475,
     "blackbook_status": "medium",
     "blackbook_note": null,
-    "last_run_date": "2026-04-12",
-    "last_finish": 8,
-    "last_jockey": "A Atzeni",
+    "last_run_date": "2026-04-26",
+    "last_finish": 3,
+    "last_jockey": "C Williams",
     "last_trainer": "J Size"
   },
   "runs": [
@@ -798,6 +800,51 @@
       ],
       "polarity": 1,
       "comment_short": "Held up for run"
+    },
+    {
+      "date": "2026-04-26",
+      "venue": "ST",
+      "race_number": 10,
+      "distance": 1600,
+      "race_class": "3",
+      "going": "GF",
+      "surface": "Turf",
+      "actual_pace": "Normal",
+      "horse_no": 3,
+      "horse_name": "ENDUED",
+      "finish": 3,
+      "lbw": "1-1/4",
+      "win_odds": "5.5",
+      "draw": 8,
+      "weight": 132,
+      "jockey": "C Williams",
+      "trainer": "J Size",
+      "finish_time_s": 94.67,
+      "running_position": "10 9 9 3",
+      "sectiontimes": [
+        "25.55",
+        "22.91",
+        "23.57",
+        "22.64"
+      ],
+      "et_rank": null,
+      "et_proj_time": null,
+      "et_win_prob": null,
+      "sarr_rank": null,
+      "beat_proj_s": null,
+      "perf_score": 1.87,
+      "perf_reasons": [
+        "late kick 22.64s vs 24.01s avg early",
+        "closed from pos 10 to P3"
+      ],
+      "tags": [
+        "sampling",
+        "crowded",
+        "jumped_fairly",
+        "wide_all_way"
+      ],
+      "polarity": 2,
+      "comment_short": "Crowded"
     }
   ]
 }

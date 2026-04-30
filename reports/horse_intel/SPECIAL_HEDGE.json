@@ -1,16 +1,18 @@
 {
   "horse_name": "SPECIAL HEDGE",
   "summary": {
-    "n_runs": 21,
+    "n_runs": 22,
     "n_wins": 2,
     "n_top3": 5,
-    "win_pct": 9.5,
-    "top3_pct": 23.8,
+    "win_pct": 9.1,
+    "top3_pct": 22.7,
     "avg_beat_proj_s": 0.02,
     "recurring_excuses": {
+      "unbalanced": 2,
       "wide_no_cover": 2,
-      "unbalanced": 1,
-      "wide_barrier": 1
+      "wide_barrier": 1,
+      "shifted_in": 1,
+      "wide_all_way": 1
     },
     "perf_score_recent": [
       0.0,
@@ -19,11 +21,11 @@
       0.0,
       0.0
     ],
-    "perf_score_mean": 0.286,
+    "perf_score_mean": 0.273,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-04-01",
-    "last_finish": 10,
+    "last_run_date": "2026-04-26",
+    "last_finish": 13,
     "last_jockey": "H T Mo",
     "last_trainer": "C W Chang"
   },
@@ -828,6 +830,49 @@
       ],
       "polarity": 1,
       "comment_short": "Wide without cover (tough trip)"
+    },
+    {
+      "date": "2026-04-26",
+      "venue": "ST",
+      "race_number": 2,
+      "distance": 1600,
+      "race_class": "4",
+      "going": "GF",
+      "surface": "Turf",
+      "actual_pace": "Fast",
+      "horse_no": 14,
+      "horse_name": "SPECIAL HEDGE",
+      "finish": 13,
+      "lbw": "9-1/2",
+      "win_odds": "25",
+      "draw": 2,
+      "weight": 114,
+      "jockey": "H T Mo",
+      "trainer": "C W Chang",
+      "finish_time_s": 95.28,
+      "running_position": "2 3 3 13",
+      "sectiontimes": [
+        "24.25",
+        "22.73",
+        "23.46",
+        "24.84"
+      ],
+      "et_rank": null,
+      "et_proj_time": null,
+      "et_win_prob": null,
+      "sarr_rank": null,
+      "beat_proj_s": null,
+      "perf_score": 0.0,
+      "perf_reasons": [],
+      "tags": [
+        "bumped_mid",
+        "unbalanced",
+        "jumped_fairly",
+        "shifted_in",
+        "wide_all_way"
+      ],
+      "polarity": 2,
+      "comment_short": "Unbalanced"
     }
   ]
 }

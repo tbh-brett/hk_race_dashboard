@@ -1,29 +1,31 @@
 {
   "horse_name": "INVINCIBLE IBIS",
   "summary": {
-    "n_runs": 10,
+    "n_runs": 11,
     "n_wins": 5,
     "n_top3": 9,
-    "win_pct": 50.0,
-    "top3_pct": 90.0,
+    "win_pct": 45.5,
+    "top3_pct": 81.8,
     "avg_beat_proj_s": null,
     "recurring_excuses": {
       "shifted_in": 2,
-      "unbalanced": 1
+      "unbalanced": 1,
+      "shifted_out": 1,
+      "wide_all_way": 1
     },
     "perf_score_recent": [
-      2.197,
       1.133,
       0.0,
       0.0,
-      1.245
+      1.245,
+      1.04
     ],
-    "perf_score_mean": 0.861,
+    "perf_score_mean": 0.877,
     "blackbook_status": null,
     "blackbook_note": null,
-    "last_run_date": "2026-03-22",
-    "last_finish": 1,
-    "last_jockey": "H Bowman",
+    "last_run_date": "2026-04-26",
+    "last_finish": 4,
+    "last_jockey": "J McDonald",
     "last_trainer": "M Newnham"
   },
   "runs": [
@@ -427,6 +429,49 @@
       ],
       "polarity": 0,
       "comment_short": ""
+    },
+    {
+      "date": "2026-04-26",
+      "venue": "ST",
+      "race_number": 7,
+      "distance": 1600,
+      "race_class": null,
+      "going": "GF",
+      "surface": "Turf",
+      "actual_pace": "Very Fast",
+      "horse_no": 10,
+      "horse_name": "INVINCIBLE IBIS",
+      "finish": 4,
+      "lbw": "1",
+      "win_odds": "9.8",
+      "draw": 5,
+      "weight": 126,
+      "jockey": "J McDonald",
+      "trainer": "M Newnham",
+      "finish_time_s": 92.52000000000001,
+      "running_position": "11 11 12 4",
+      "sectiontimes": [
+        "25.31",
+        "22.27",
+        "22.59",
+        "22.35"
+      ],
+      "et_rank": null,
+      "et_proj_time": null,
+      "et_win_prob": null,
+      "sarr_rank": null,
+      "beat_proj_s": null,
+      "perf_score": 1.04,
+      "perf_reasons": [
+        "late kick 22.35s vs 23.39s avg early"
+      ],
+      "tags": [
+        "bumped_mid",
+        "shifted_out",
+        "wide_all_way"
+      ],
+      "polarity": 0,
+      "comment_short": "Caught wide the entire run"
     }
   ]
 }
