@@ -784,8 +784,26 @@ def _gh_push_blackbook(content_bytes: bytes) -> bool:
 
 
 def _is_streamlit_cloud() -> bool:
-    """True when running on Streamlit Cloud (ephemeral filesystem)."""
-    return os.environ.get("STREAMLIT_SERVER_HEADLESS") == "true"
+    """True when running on Streamlit Community Cloud (ephemeral filesystem).
+
+    Streamlit Cloud doesn't reliably set a single canonical env-var, so we
+    probe several signals: the documented ``STREAMLIT_SERVER_HEADLESS``
+    flag, the ``/mount/src`` working-directory prefix used by the
+    platform, and the ``HOSTNAME``/``HOME`` patterns. Any one is enough.
+    """
+    if os.environ.get("STREAMLIT_SERVER_HEADLESS", "").lower() == "true":
+        return True
+    try:
+        cwd = str(Path.cwd())
+        if cwd.startswith("/mount/src") or "/mount/src/" in cwd:
+            return True
+    except Exception:
+        pass
+    if os.environ.get("HOSTNAME", "").startswith("streamlit"):
+        return True
+    if os.environ.get("HOME") == "/home/appuser":
+        return True
+    return False
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -1072,9 +1090,13 @@ def _gh_push_file(repo_path: str, content_bytes: bytes, message: str) -> bool:
 
 def _gh_push_user_bets() -> bool:
     """Sync reports/user_bets_log.jsonl to GitHub so it survives Streamlit
-    Cloud restarts. No-op locally or without GITHUB_TOKEN."""
-    if not _is_streamlit_cloud():
-        return False
+    Cloud restarts.
+
+    Pushes whenever a ``GITHUB_TOKEN`` is configured — not only on cloud.
+    This avoids the previous failure mode where ``_is_streamlit_cloud()``
+    mis-detected the runtime, the push was silently skipped, and imports
+    appeared to revert on the next container restart.
+    """
     if not _gh_headers():
         return False
     bets_file = REPORTS / "user_bets_log.jsonl"
@@ -11627,7 +11649,7 @@ def page_my_bets():
                             ub.load_bets(settle=True)
                         except Exception:
                             pass
-                        _gh_push_user_bets()
+                        push_ok = _gh_push_user_bets()
                         purged = summary.get("purged", 0)
                         purge_msg = (
                             f" Purged **{purged}** pre-existing row(s) before re-insert."
@@ -11638,6 +11660,31 @@ def page_my_bets():
                             f"skipped **{summary['skipped']}** "
                             f"(from {summary['total_blocks']} blocks).{purge_msg}"
                         )
+                        # Surface persistence status — critical on Streamlit
+                        # Cloud where the local filesystem is ephemeral.
+                        if push_ok:
+                            st.success(
+                                "☁ Pushed to GitHub — changes will survive "
+                                "the next container restart.",
+                                icon="✅",
+                            )
+                        elif _gh_headers():
+                            st.error(
+                                "⚠ GitHub push FAILED. Imports are saved to "
+                                "local disk only — they will revert on the "
+                                "next container restart. Check the **Cloud "
+                                "Persistence** panel in the sidebar for the "
+                                "exact error.",
+                                icon="🚨",
+                            )
+                        else:
+                            st.warning(
+                                "No `GITHUB_TOKEN` configured — imports are "
+                                "saved to local disk only and will revert on "
+                                "container restart. Add a fine-grained PAT to "
+                                "Streamlit Cloud secrets to enable persistence.",
+                                icon="⚠️",
+                            )
                         if summary["inserted_details"]:
                             st.dataframe(
                                 pd.DataFrame(summary["inserted_details"]),
