@@ -3101,6 +3101,96 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
         unsafe_allow_html=True,
     )
 
+    # ── Blackbooked picks for THIS race (always-visible strip) ──────
+    # Surfaces every active blackbook horse running in this race so the
+    # user sees them on first sight without needing to open the rollup.
+    # Picks list is checked first (preferred: includes ET rank / win%);
+    # speed-map grid is checked as a fallback so horses outside ET top-N
+    # still show.
+    bb_in_race: list[dict] = []
+    _seen_bb: set[str] = set()
+    for pick in (race.get("picks") or []):
+        _hn = str(pick.get("horse_name", "")).upper().strip()
+        if _hn and _hn in bb_active and _hn not in _seen_bb:
+            _seen_bb.add(_hn)
+            bb_in_race.append({
+                "horse": pick.get("horse_name", ""),
+                "horse_no": pick.get("horse_no", "?"),
+                "draw": pick.get("draw", ""),
+                "rank": pick.get("rank"),
+                "win_pct": pick.get("win_prob", 0),
+                "jockey": pick.get("jockey", ""),
+                "entry": bb_active[_hn],
+            })
+    for sm in (race.get("speed_map", {}).get("grid", []) or []):
+        _hn = str(sm.get("horse_name", "")).upper().strip()
+        if _hn and _hn in bb_active and _hn not in _seen_bb:
+            _seen_bb.add(_hn)
+            bb_in_race.append({
+                "horse": sm.get("horse_name", ""),
+                "horse_no": sm.get("horse_no", "?"),
+                "draw": sm.get("draw", ""),
+                "rank": None,
+                "win_pct": 0,
+                "jockey": sm.get("jockey", ""),
+                "entry": bb_active[_hn],
+            })
+
+    if bb_in_race:
+        _conf_colour = {"high": "#22c55e", "medium": "#f59e0b",
+                        "low": "#9ca3af"}
+        cards: list[str] = []
+        for m in bb_in_race:
+            e = m["entry"]
+            conf = str(e.get("confidence", "")).lower()
+            ccol = _conf_colour.get(conf, "#9ca3af")
+            tags = e.get("tags", []) or []
+            tag_html = ""
+            if tags:
+                tag_html = (
+                    '<span style="opacity:0.65;font-size:0.75em">&nbsp;· '
+                    + " · ".join(str(t) for t in tags[:3]) + "</span>"
+                )
+            rank_html = (f' <span style="opacity:0.55;font-size:0.78em">'
+                         f'ET&nbsp;#{m["rank"]} · {m["win_pct"]:.1f}%</span>'
+                         if m.get("rank") is not None else "")
+            reasoning = str(e.get("reasoning", "")).strip()
+            reason_html = ""
+            if reasoning:
+                # Trim long reasoning so the strip stays compact.
+                short = reasoning if len(reasoning) <= 90 else reasoning[:87] + "…"
+                reason_html = (f'<div style="opacity:0.7;font-size:0.78em;'
+                               f'margin-top:2px">{short}</div>')
+            draw_str = (f", draw {m['draw']}"
+                        if m.get("draw") not in ("", None) else "")
+            cards.append(
+                f'<div style="display:inline-block;border-left:3px solid {ccol};'
+                f'background:rgba(251,191,36,0.06);padding:5px 9px;margin:0 6px 6px 0;'
+                f'border-radius:4px;vertical-align:top;max-width:320px">'
+                f'<div style="font-size:0.92em">'
+                f'<span style="color:#fbbf24">★</span> '
+                f'<span style="font-weight:700">{m["horse"]}</span>'
+                f' <span style="opacity:0.6;font-size:0.82em">'
+                f'(#{m["horse_no"]}{draw_str})</span>'
+                f'{rank_html}'
+                f' <span style="color:{ccol};font-size:0.78em;font-weight:700;'
+                f'text-transform:uppercase">&nbsp;· {conf or "?"}</span>'
+                f'{tag_html}</div>'
+                f'{reason_html}'
+                f'</div>'
+            )
+        st.markdown(
+            '<div style="margin:-4px 0 10px 0;padding:8px 10px;'
+            'background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.25);'
+            'border-radius:6px">'
+            '<div style="font-size:0.82em;font-weight:700;color:#fbbf24;'
+            'letter-spacing:0.04em;margin-bottom:4px">'
+            f'★ BLACKBOOK · {len(bb_in_race)} active in R{rn}</div>'
+            + "".join(cards)
+            + '</div>',
+            unsafe_allow_html=True,
+        )
+
     # ── 3 columns: quick meta / mutual top-3 / factor edges ─────────
     c1, c2, c3 = st.columns([1.1, 1.4, 1.5])
 
