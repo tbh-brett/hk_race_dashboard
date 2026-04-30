@@ -1,0 +1,545 @@
+{
+  "date": "2026-04-29",
+  "race_number": 2,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "646",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 473,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 451
+    },
+    {
+      "y_top": 473,
+      "y_bot": 483,
+      "label": null,
+      "kind": null,
+      "y_center": 478
+    },
+    {
+      "y_top": 483,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 542
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "AMO ERGO SUM",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 346,
+          "cy": 189,
+          "x_frac": 0.48055555555555557,
+          "conf": 0.964,
+          "match_score": 1.0,
+          "ocr_text": "Amo Ergo Sum",
+          "band_label": "800M",
+          "y_in_band": 0.389
+        },
+        {
+          "band_idx": 2,
+          "cx": 423,
+          "cy": 403,
+          "x_frac": 0.5881944444444445,
+          "conf": 0.928,
+          "match_score": 1.0,
+          "ocr_text": "Amo Ergo Sum",
+          "band_label": "400M",
+          "y_in_band": 0.82
+        },
+        {
+          "band_idx": 5,
+          "cx": 643,
+          "cy": 555,
+          "x_frac": 0.8940972222222222,
+          "conf": 0.915,
+          "match_score": 1.0,
+          "ocr_text": "Amo Ergo Sum",
+          "band_label": null,
+          "y_in_band": 0.605
+        }
+      ],
+      "ocr_texts": [
+        "Amo Ergo Sum",
+        "Amo Ergo Sum",
+        "Amo Ergo Sum"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.605,
+      "avg_x_frac": 0.654,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CHEAHA",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 703,
+          "cy": 248,
+          "x_frac": 0.9770833333333333,
+          "conf": 0.988,
+          "match_score": 1.0,
+          "ocr_text": "Cheaha",
+          "band_label": "800M",
+          "y_in_band": 0.785
+        },
+        {
+          "band_idx": 2,
+          "cx": 631,
+          "cy": 394,
+          "x_frac": 0.8763888888888889,
+          "conf": 0.986,
+          "match_score": 1.0,
+          "ocr_text": "Cheaha",
+          "band_label": "400M",
+          "y_in_band": 0.76
+        }
+      ],
+      "ocr_texts": [
+        "Cheaha",
+        "Cheaha"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.772,
+      "avg_x_frac": 0.927,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "EVERSTAR",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 435,
+          "cy": 111,
+          "x_frac": 0.6041666666666666,
+          "conf": 0.978,
+          "match_score": 1.0,
+          "ocr_text": "Everstar",
+          "band_label": "646",
+          "y_in_band": 0.835
+        },
+        {
+          "band_idx": 1,
+          "cx": 553,
+          "cy": 271,
+          "x_frac": 0.7680555555555556,
+          "conf": 0.991,
+          "match_score": 1.0,
+          "ocr_text": "Everstar",
+          "band_label": "800M",
+          "y_in_band": 0.94
+        },
+        {
+          "band_idx": 2,
+          "cx": 589,
+          "cy": 411,
+          "x_frac": 0.8180555555555555,
+          "conf": 0.988,
+          "match_score": 1.0,
+          "ocr_text": "Everstar",
+          "band_label": "400M",
+          "y_in_band": 0.873
+        },
+        {
+          "band_idx": 5,
+          "cx": 592,
+          "cy": 593,
+          "x_frac": 0.8222222222222222,
+          "conf": 0.994,
+          "match_score": 1.0,
+          "ocr_text": "Everstar",
+          "band_label": null,
+          "y_in_band": 0.924
+        }
+      ],
+      "ocr_texts": [
+        "Everstar",
+        "Everstar",
+        "Everstar",
+        "Everstar"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.893,
+      "avg_x_frac": 0.753,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GOLDEN FRIENDSHIP",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 237,
+          "cy": 186,
+          "x_frac": 0.3298611111111111,
+          "conf": 0.986,
+          "match_score": 0.97,
+          "ocr_text": "GoldenFriendship",
+          "band_label": "800M",
+          "y_in_band": 0.369
+        },
+        {
+          "band_idx": 5,
+          "cx": 384,
+          "cy": 552,
+          "x_frac": 0.5333333333333333,
+          "conf": 0.957,
+          "match_score": 1.0,
+          "ocr_text": "Golden Friendship",
+          "band_label": null,
+          "y_in_band": 0.58
+        }
+      ],
+      "ocr_texts": [
+        "GoldenFriendship",
+        "Golden Friendship"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.474,
+      "avg_x_frac": 0.432,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HONEST WITNESS",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 90,
+          "cy": 37,
+          "x_frac": 0.125,
+          "conf": 0.963,
+          "match_score": 1.0,
+          "ocr_text": "Honest Witness",
+          "band_label": "646",
+          "y_in_band": 0.223
+        },
+        {
+          "band_idx": 1,
+          "cx": 102,
+          "cy": 183,
+          "x_frac": 0.14166666666666666,
+          "conf": 0.934,
+          "match_score": 1.0,
+          "ocr_text": "Honest Witness",
+          "band_label": "800M",
+          "y_in_band": 0.349
+        }
+      ],
+      "ocr_texts": [
+        "Honest Witness",
+        "Honest Witness"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.286,
+      "avg_x_frac": 0.133,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "KING GLORIOSO",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 206,
+          "cy": 104,
+          "x_frac": 0.28715277777777776,
+          "conf": 0.936,
+          "match_score": 0.88,
+          "ocr_text": "KingGlonioso",
+          "band_label": "646",
+          "y_in_band": 0.777
+        },
+        {
+          "band_idx": 1,
+          "cx": 375,
+          "cy": 266,
+          "x_frac": 0.5215277777777778,
+          "conf": 0.95,
+          "match_score": 0.96,
+          "ocr_text": "KingGlorioso",
+          "band_label": "800M",
+          "y_in_band": 0.906
+        },
+        {
+          "band_idx": 2,
+          "cx": 454,
+          "cy": 424,
+          "x_frac": 0.6305555555555555,
+          "conf": 0.923,
+          "match_score": 0.96,
+          "ocr_text": "KingGlorioso",
+          "band_label": "400M",
+          "y_in_band": 0.96
+        },
+        {
+          "band_idx": 5,
+          "cx": 588,
+          "cy": 571,
+          "x_frac": 0.8173611111111111,
+          "conf": 0.918,
+          "match_score": 0.833,
+          "ocr_text": "KingGlonoso",
+          "band_label": null,
+          "y_in_band": 0.739
+        }
+      ],
+      "ocr_texts": [
+        "KingGlonioso",
+        "KingGlorioso",
+        "KingGlorioso",
+        "KingGlonoso"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.845,
+      "avg_x_frac": 0.564,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LEAN MASTER",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 95,
+          "cy": 123,
+          "x_frac": 0.13194444444444445,
+          "conf": 0.974,
+          "match_score": 1.0,
+          "ocr_text": "Lean Master",
+          "band_label": "646",
+          "y_in_band": 0.934
+        },
+        {
+          "band_idx": 2,
+          "cx": 304,
+          "cy": 406,
+          "x_frac": 0.42291666666666666,
+          "conf": 0.95,
+          "match_score": 1.0,
+          "ocr_text": "Lean Master",
+          "band_label": "400M",
+          "y_in_band": 0.84
+        },
+        {
+          "band_idx": 5,
+          "cx": 522,
+          "cy": 568,
+          "x_frac": 0.7253472222222223,
+          "conf": 0.944,
+          "match_score": 1.0,
+          "ocr_text": "Lean Master",
+          "band_label": null,
+          "y_in_band": 0.714
+        }
+      ],
+      "ocr_texts": [
+        "Lean Master",
+        "Lean Master",
+        "Lean Master"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.829,
+      "avg_x_frac": 0.427,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SEA DIAMOND",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 133,
+          "cy": 102,
+          "x_frac": 0.18472222222222223,
+          "conf": 0.989,
+          "match_score": 0.952,
+          "ocr_text": "SeaDiamond",
+          "band_label": "646",
+          "y_in_band": 0.76
+        },
+        {
+          "band_idx": 1,
+          "cx": 306,
+          "cy": 262,
+          "x_frac": 0.42569444444444443,
+          "conf": 0.954,
+          "match_score": 1.0,
+          "ocr_text": "Sea Diamond",
+          "band_label": "800M",
+          "y_in_band": 0.879
+        },
+        {
+          "band_idx": 2,
+          "cx": 504,
+          "cy": 410,
+          "x_frac": 0.7,
+          "conf": 0.946,
+          "match_score": 1.0,
+          "ocr_text": "Sea Diamond",
+          "band_label": "400M",
+          "y_in_band": 0.867
+        }
+      ],
+      "ocr_texts": [
+        "SeaDiamond",
+        "Sea Diamond",
+        "Sea Diamond"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.835,
+      "avg_x_frac": 0.437,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE PERFECT MATCH",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 493,
+          "cy": 266,
+          "x_frac": 0.6847222222222222,
+          "conf": 0.94,
+          "match_score": 1.0,
+          "ocr_text": "The Perfect Match",
+          "band_label": "800M",
+          "y_in_band": 0.906
+        },
+        {
+          "band_idx": 3,
+          "cx": 515,
+          "cy": 435,
+          "x_frac": 0.7152777777777778,
+          "conf": 0.934,
+          "match_score": 0.97,
+          "ocr_text": "The PerfectMatch",
+          "band_label": "200M",
+          "y_in_band": 0.116
+        },
+        {
+          "band_idx": 5,
+          "cx": 462,
+          "cy": 579,
+          "x_frac": 0.6423611111111112,
+          "conf": 0.968,
+          "match_score": 0.909,
+          "ocr_text": "ThePerlect Match",
+          "band_label": null,
+          "y_in_band": 0.807
+        }
+      ],
+      "ocr_texts": [
+        "The Perfect Match",
+        "The PerfectMatch",
+        "ThePerlect Match"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.61,
+      "avg_x_frac": 0.681,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VERY GRATEFUL",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 392,
+          "cy": 103,
+          "x_frac": 0.5451388888888888,
+          "conf": 0.97,
+          "match_score": 0.96,
+          "ocr_text": "VeryGrateful",
+          "band_label": "646",
+          "y_in_band": 0.769
+        },
+        {
+          "band_idx": 1,
+          "cx": 470,
+          "cy": 189,
+          "x_frac": 0.6534722222222222,
+          "conf": 0.921,
+          "match_score": 1.0,
+          "ocr_text": "Very Grateful",
+          "band_label": "800M",
+          "y_in_band": 0.389
+        }
+      ],
+      "ocr_texts": [
+        "VeryGrateful",
+        "Very Grateful"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.579,
+      "avg_x_frac": 0.599,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 59,
+    "matched_horses": 10,
+    "field_size": 12,
+    "coverage": 0.833,
+    "parsed_at": "2026-04-30T04:51:06"
+  }
+}
