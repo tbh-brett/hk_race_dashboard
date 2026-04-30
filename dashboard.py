@@ -11930,35 +11930,22 @@ def _mb_render_per_race_tab():
 
 
 def _mb_render_allup_tab():
-    """HKJC-spec All-Up across multiple races for QIN + QPL pools."""
+    """HKJC-spec All-Up cross-race parlay with EV / Kelly / shape optimiser."""
     from all_up import (build_all_up_ticket, settle_all_up_ticket,
-                         blended_pair, SHAPE_PRESETS)
+                         blended_pair, rank_horses, prob_for_pool,
+                         evaluate_ticket, compare_shapes, recommend_legs,
+                         kelly_fraction, horse_prob, _place_prob, _pair_prob,
+                         SHAPE_PRESETS, POOLS, PAIR_POOLS, SINGLE_POOLS)
+    from market_loader import compute_edge_table
     import all_up_log as aul
 
     st.caption(
-        "HKJC All-Up: pick N races, one Quinella pair per race, choose a "
-        "combination shape (e.g. **3×4** = any-2-of-3 + all-3 = 4 units). "
-        "Two tickets are built — one for QIN, one for QPL — at $1/unit "
-        "minimum. Winnings cascade leg-to-leg automatically per HKJC rules."
+        "HKJC All-Up cross-race parlay. Pick legs, choose any pool "
+        "(WIN / PLACE / QIN / QPL), add as many selections per leg as "
+        "you like — units = base shape × Π selections. EV, full-parlay "
+        "probability, Kelly stake and best-shape recommendation update "
+        "live as you change picks."
     )
-
-    with st.expander("📊 April-2026 backtest evidence", expanded=False):
-        st.markdown(
-            """
-| Pair source | 3×4 ROI | 3×7 ROI | 4×11 ROI | 4×15 ROI |
-|---|---:|---:|---:|---:|
-| **Market favourite + 2nd fav** | **+207%** | **+130%** | **+53%** | **+53%** |
-| Model rank-1 + rank-2 | −100% | −66% | −59% | −50% |
-| 50/50 blend | −100% | −73% | −100% | −82% |
-
-Across 8 April meetings, the top-2 horses by **market** odds were
-substantially more reliable than the model's top-2. The model's
-`win_prob` field is currently mis-scaled (Brier ≈ 11/race vs target ≤0.25),
-so until that's recalibrated, the market is the better banker source.
-The default below is therefore **market** — model is available for
-reference / overlay plays.
-"""
-        )
 
     # ── Meeting selector ───────────────────────────────────────
     meetings = load_available_meetings()
@@ -11975,178 +11962,448 @@ reference / overlay plays.
     if not races:
         st.warning("No races in this meeting report.")
         return
+    races_by_no = {int(r.get("race_number") or 0): r for r in races}
 
-    # ── Pair-mode + shape ──────────────────────────────────────
-    c1, c2, c3 = st.columns([1, 1, 1])
+    # ── Edge tables (cached, lazy per race) ────────────────────
+    @st.cache_data(ttl=120, show_spinner=False)
+    def _edges(date_compact: str, venue_code: str, rn: int,
+                _picks_sig: tuple) -> list[dict]:
+        race = races_by_no.get(int(rn))
+        picks = race.get("picks") if race else []
+        try:
+            return compute_edge_table(date_compact, venue_code,
+                                        int(rn), picks).get("rows") or []
+        except Exception:
+            return []
+
+    def edges_of(rn: int) -> list[dict]:
+        race = races_by_no.get(int(rn))
+        sig = tuple(int(p.get("horse_no") or 0) for p in (race or {}).get("picks") or [])
+        return _edges(date_compact, venue_code, int(rn), sig)
+
+    # ── Pool / mode / stake controls ───────────────────────────
+    c1, c2, c3, c4 = st.columns([1.2, 1.1, 1.1, 1])
     with c1:
-        pair_mode = st.selectbox(
-            "Pair source",
-            ["market", "model", "blend"],
-            index=0, key="mb_au_pair_mode",
-            help="market = top-2 by SP odds (April backtest winner). "
-                 "model = v4.4 rank-1 + rank-2. blend = 50/50.",
+        pool_label = st.selectbox(
+            "Pool",
+            ["WIN", "PLACE", "WIN + PLACE", "QIN", "QPL", "QIN + QPL"],
+            index=4, key="mb_au_pool",
+            help="WIN/PLACE = single horse per leg. "
+                 "QIN/QPL = pair per leg. "
+                 "Composite pools issue two tickets.",
         )
     with c2:
-        # Filter shape options by what's reasonable; default to 3x4
-        shape_keys = list(SHAPE_PRESETS.keys())
-        shape_label = st.selectbox(
-            "Shape", shape_keys,
-            index=shape_keys.index("3x4"),
-            key="mb_au_shape",
+        prob_mode = st.selectbox(
+            "Probability source",
+            ["market", "blend", "model"],
+            index=0, key="mb_au_pmode",
+            help="market = market-implied (Apr backtest winner). "
+                 "blend = 50/50 model+market. "
+                 "model = v4.4 win_prob (calibration TODO).",
         )
     with c3:
         spu = st.selectbox("$ per unit", [1, 2, 5, 10], index=0,
                             key="mb_au_spu",
-                            help="HKJC minimum is $1/unit.")
-    n_legs_target, sizes = SHAPE_PRESETS[shape_label]
+                            help="HKJC minimum is $1.")
+    with c4:
+        bankroll = st.number_input("Bankroll $", min_value=100,
+                                     value=2000, step=100,
+                                     key="mb_au_bk",
+                                     help="Used by Kelly stake suggestion.")
 
-    # ── Auto-suggest legs by edge (descending) ─────────────────
-    @st.cache_data(ttl=120, show_spinner=False)
-    def _auto_legs(date_compact: str, venue_code: str,
-                    n_target: int, mode: str, race_keys: tuple) -> dict:
-        from market_loader import compute_edge_table
-        out = {}
-        for rn in race_keys:
-            race = next((r for r in races if int(r.get("race_number") or 0) == rn), None)
-            if not race:
-                continue
-            picks = race.get("picks") or []
-            try:
-                rows = compute_edge_table(date_compact, venue_code,
-                                            int(rn), picks).get("rows") or []
-            except Exception:
-                rows = []
-            pair = blended_pair(picks, rows, mode=mode)
-            edges = {int(r["horse_no"]): float(r.get("edge", 0) or 0)
-                     for r in rows if r.get("horse_no") is not None}
-            score = max([edges.get(pair[0], 0), edges.get(pair[1], 0)]) if pair else -99
-            out[rn] = {"pair": pair, "score": score}
-        return out
+    pools_to_build = (["WIN", "PLACE"] if pool_label == "WIN + PLACE"
+                       else ["QIN", "QPL"] if pool_label == "QIN + QPL"
+                       else [pool_label])
+    primary_pool = pools_to_build[0]
+    is_pair_pool = primary_pool in PAIR_POOLS
 
-    race_keys = tuple(int(r.get("race_number") or 0) for r in races)
-    auto = _auto_legs(date_compact, venue_code, n_legs_target,
-                       pair_mode, race_keys)
-
-    # Default leg picks: top-N by score that have a valid pair
-    ranked = sorted(((v["score"], rn) for rn, v in auto.items() if v["pair"]),
-                     reverse=True)
-    default_leg_races = [rn for _, rn in ranked[:n_legs_target]]
-
-    # ── Leg editor ─────────────────────────────────────────────
-    st.markdown("##### Legs")
-    leg_options = {f"R{rn}": rn for rn in race_keys}
+    # ── Race selection ─────────────────────────────────────────
+    st.markdown("##### 1. Pick races (legs)")
+    race_options = {f"R{rn}": rn for rn in races_by_no.keys()}
     chosen_labels = st.multiselect(
-        f"Pick exactly {n_legs_target} races (auto-selected by edge)",
-        list(leg_options.keys()),
-        default=[f"R{rn}" for rn in default_leg_races
-                  if rn in race_keys][:n_legs_target],
-        key="mb_au_legs",
+        "Legs (2–6 races)", list(race_options.keys()),
+        default=list(race_options.keys())[:3], key="mb_au_legs",
     )
-    chosen_races = [leg_options[lbl] for lbl in chosen_labels]
-    if len(chosen_races) != n_legs_target:
-        st.warning(f"Shape **{shape_label}** requires exactly "
-                   f"**{n_legs_target}** legs (you picked {len(chosen_races)}).")
+    chosen_races = [race_options[lbl] for lbl in chosen_labels]
+    if not (2 <= len(chosen_races) <= 6):
+        st.warning("Pick between 2 and 6 races.")
+        return
+    n_legs = len(chosen_races)
+
+    # ── Auto-recommend selections by edge ──────────────────────
+    edges_by_race = {rn: edges_of(rn) for rn in chosen_races}
+    rec = recommend_legs(
+        races_by_no={rn: races_by_no[rn] for rn in chosen_races},
+        edges_by_race=edges_by_race, pool=primary_pool,
+        n_legs=n_legs, mode=prob_mode, sel_per_leg=2 if is_pair_pool else 1,
+    )
+    rec_by_race = {r["race_no"]: r["selections"] for r in rec}
+
+    # ── Per-leg selection editor with horse names ─────────────
+    st.markdown("##### 2. Selections per leg")
+    if is_pair_pool:
+        st.caption("For QIN / QPL each selection is a pair. Pick a banker "
+                    "and the partners ‘with’ it; or define free pairs.")
+    else:
+        st.caption("Pick one or more horses per leg (multiple selections "
+                    "multiply the unit count).")
+
+    leg_specs: list[dict] = []
+    for rn in chosen_races:
+        race = races_by_no[rn]
+        picks = race.get("picks") or []
+        edges = edges_by_race[rn]
+        edge_lookup = {int(r["horse_no"]): r for r in edges
+                        if r.get("horse_no") is not None}
+        pick_lookup = {int(p["horse_no"]): p for p in picks
+                        if p.get("horse_no") is not None}
+        ranked = rank_horses(picks, edges, prob_mode)
+        # Build "label -> horse_no" mapping with names
+        horse_label = {}
+        for h, p_h in ranked:
+            pk = pick_lookup.get(h, {})
+            er = edge_lookup.get(h, {})
+            name = pk.get("horse_name", f"#{h}")
+            odds = er.get("win_odds")
+            odds_str = f" · ${float(odds):.1f}" if odds else ""
+            horse_label[f"#{h} {name} ({p_h*100:.1f}%{odds_str})"] = h
+
+        race_name = race.get("race_name") or ""
+        race_dist = race.get("distance") or ""
+        st.markdown(f"**R{rn}** · {race_name} · {race_dist}")
+
+        if is_pair_pool:
+            mode_q = st.radio(
+                f"R{rn} structure", ["Banker × partners", "Free pairs"],
+                index=0, horizontal=True, key=f"mb_au_qmode_{rn}",
+            )
+            default_pairs = rec_by_race.get(rn, [])
+            if mode_q == "Banker × partners":
+                # default banker = top horse
+                default_banker = (default_pairs[0][0]
+                                    if default_pairs else
+                                    next(iter(horse_label.values()), None))
+                banker_label_default = next(
+                    (lbl for lbl, h in horse_label.items()
+                      if h == default_banker), list(horse_label.keys())[0]
+                )
+                banker_label = st.selectbox(
+                    f"R{rn} banker", list(horse_label.keys()),
+                    index=list(horse_label.keys()).index(banker_label_default),
+                    key=f"mb_au_bnk_{rn}",
+                )
+                banker = horse_label[banker_label]
+                partner_options = {lbl: h for lbl, h in horse_label.items()
+                                     if h != banker}
+                default_partners = [
+                    lbl for lbl, h in partner_options.items()
+                    if any(h in p for p in default_pairs)
+                ][:3] or list(partner_options.keys())[:2]
+                partner_labels = st.multiselect(
+                    f"R{rn} partners (≥1)", list(partner_options.keys()),
+                    default=default_partners, key=f"mb_au_prt_{rn}",
+                )
+                pairs = [(min(banker, partner_options[lbl]),
+                            max(banker, partner_options[lbl]))
+                          for lbl in partner_labels]
+            else:
+                # free pairs: pick any 2-of-N horses, all combinations
+                free_labels = st.multiselect(
+                    f"R{rn} pool of horses (≥2)", list(horse_label.keys()),
+                    default=list(horse_label.keys())[:3],
+                    key=f"mb_au_free_{rn}",
+                )
+                hs = [horse_label[lbl] for lbl in free_labels]
+                from itertools import combinations as _comb
+                pairs = [(min(a, b), max(a, b)) for a, b in _comb(hs, 2)]
+            if not pairs:
+                st.warning(f"R{rn}: at least 1 pair required.")
+                return
+            leg_specs.append({"race_no": rn, "selections": pairs})
+        else:
+            default_singles = (rec_by_race.get(rn) or
+                                [list(horse_label.values())[0]])
+            default_lbls = [lbl for lbl, h in horse_label.items()
+                              if h in default_singles]
+            sel_labels = st.multiselect(
+                f"R{rn} horses (≥1)", list(horse_label.keys()),
+                default=default_lbls or list(horse_label.keys())[:1],
+                key=f"mb_au_sel_{rn}",
+            )
+            sels = [horse_label[lbl] for lbl in sel_labels]
+            if not sels:
+                st.warning(f"R{rn}: at least 1 horse required.")
+                return
+            leg_specs.append({"race_no": rn, "selections": sels})
+
+    # ── Probability + payout lookups for evaluator ────────────
+    def prob_lookup(rn, sel):
+        edges = edges_by_race.get(rn, [])
+        picks = races_by_no[rn].get("picks") or []
+        return prob_for_pool(rn, sel, pool=primary_pool,
+                              pick_lookup={int(p["horse_no"]): p
+                                            for p in picks if p.get("horse_no")},
+                              edge_lookup={int(r["horse_no"]): r
+                                            for r in edges if r.get("horse_no")},
+                              mode=prob_mode)
+
+    def payout_lookup(rn, sel):
+        """Return $/$1 payout multiplier (so dividend/10) using market odds."""
+        edges = edges_by_race.get(rn, [])
+        edge_lookup = {int(r["horse_no"]): r for r in edges
+                        if r.get("horse_no") is not None}
+        if primary_pool == "WIN":
+            r = edge_lookup.get(int(sel))
+            if r and float(r.get("win_odds") or 0) > 1.0:
+                return float(r["win_odds"])
+            return 1.0
+        if primary_pool == "PLACE":
+            r = edge_lookup.get(int(sel))
+            if r and float(r.get("win_odds") or 0) > 1.0:
+                return float(r["win_odds"]) / 3.5
+            return 1.0
+        # QIN / QPL — proxy: 1/p_pair × takeout factor
+        a, b = int(sel[0]), int(sel[1])
+        picks = races_by_no[rn].get("picks") or []
+        pick_lookup = {int(p["horse_no"]): p for p in picks
+                        if p.get("horse_no") is not None}
+        pa = horse_prob(pick_lookup.get(a), edge_lookup.get(a), prob_mode)
+        pb = horse_prob(pick_lookup.get(b), edge_lookup.get(b), prob_mode)
+        pp = _pair_prob(pa, pb, pool=primary_pool)
+        if pp <= 0:
+            return 1.0
+        # HKJC takeout ≈ 17.5% on QIN, 17.5% on QPL
+        return max(1.0, (1 / pp) * 0.825)
+
+    # ── Shape comparison + best-shape pick ────────────────────
+    st.markdown("##### 3. Shape optimiser")
+    shape_rows = compare_shapes(legs=leg_specs, pool=primary_pool,
+                                 prob_lookup=prob_lookup,
+                                 payout_lookup=payout_lookup,
+                                 stake_per_unit=spu)
+    if not shape_rows:
+        st.warning("No applicable shapes for this leg count.")
+        return
+    cmp_table = pd.DataFrame([{
+        "Shape": r["shape"],
+        "Units": r["n_units"],
+        "Stake": f"${r['stake']:.0f}",
+        "EV": f"${r['ev']:+.1f}",
+        "ROI": f"{r['roi']*100:+.1f}%",
+        "P(full hit)": f"{r['p_full']*100:.2f}%",
+        "Sharpe": f"{r['sharpe']:.2f}",
+    } for r in shape_rows])
+    st.dataframe(cmp_table, hide_index=True, use_container_width=True)
+
+    best = shape_rows[0]
+    st.info(
+        f"🏆 **Best EV shape: `{best['shape']}`** — "
+        f"EV ${best['ev']:+.1f} on ${best['stake']:.0f} stake "
+        f"({best['roi']*100:+.1f}% expected ROI, "
+        f"P(full parlay) = {best['p_full']*100:.2f}%)."
+    )
+
+    # User picks shape
+    shape_keys = [r["shape"] for r in shape_rows]
+    shape_pick = st.selectbox(
+        "Shape", shape_keys, index=0, key="mb_au_shape",
+        help="Default = best EV. All shapes ranked above.",
+    )
+    sizes = SHAPE_PRESETS[shape_pick][1]
+
+    # ── Build tickets for every requested pool ────────────────
+    tickets = {}
+    for pool in pools_to_build:
+        t = build_all_up_ticket(legs=leg_specs, pool=pool, sizes=sizes,
+                                 stake_per_unit=spu)
+        if t.get("valid"):
+            tickets[pool] = t
+    if not tickets:
+        st.error("Couldn’t build any ticket — check selections.")
         return
 
-    # Per-leg pair display + override
-    leg_rows = []
-    final_legs: list[dict] = []
-    for rn in chosen_races:
-        race = next((r for r in races if int(r.get("race_number") or 0) == rn), None)
-        picks = race.get("picks") or []
-        runner_options = {f"#{p['horse_no']} (rk{p.get('rank','?')})":
-                           int(p["horse_no"])
-                           for p in sorted(picks, key=lambda x: int(x.get("rank") or 99))}
-        runner_to_label = {v: k for k, v in runner_options.items()}
-        suggested = auto.get(rn, {}).get("pair")
-        c_a, c_b = st.columns(2)
-        with c_a:
-            h1 = st.selectbox(
-                f"R{rn} · horse A", list(runner_options.keys()),
-                index=(list(runner_options.values()).index(suggested[0])
-                        if suggested and suggested[0] in runner_options.values() else 0),
-                key=f"mb_au_h1_{rn}",
-            )
-        with c_b:
-            opts = [k for k in runner_options.keys()
-                     if runner_options[k] != runner_options[h1]]
-            default_b = (runner_to_label.get(suggested[1])
-                          if suggested and suggested[1] in runner_options.values()
-                          else (opts[0] if opts else h1))
-            h2 = st.selectbox(
-                f"R{rn} · horse B", opts,
-                index=opts.index(default_b) if default_b in opts else 0,
-                key=f"mb_au_h2_{rn}",
-            )
-        ha, hb = runner_options[h1], runner_options[h2]
-        final_legs.append({"race_no": rn, "pair": (ha, hb)})
-        score = auto.get(rn, {}).get("score") or 0
-        leg_rows.append({"R#": rn, "Pair": f"{min(ha,hb)}-{max(ha,hb)}",
-                          "Edge max": f"{score*100:+.1f}pp"})
-
-    st.dataframe(pd.DataFrame(leg_rows), hide_index=True,
+    # ── Live evaluation ───────────────────────────────────────
+    st.markdown("##### 4. Live evaluation")
+    eval_rows = []
+    total_stake = 0.0
+    total_ev = 0.0
+    for pool, t in tickets.items():
+        # rebuild pool-specific lookups (single primary used here for both —
+        # fine as both pools use same selections shape if compound was W+P)
+        e = evaluate_ticket(t, prob_lookup=prob_lookup,
+                              payout_lookup=payout_lookup)
+        eval_rows.append({
+            "Pool": pool, "Units": t["n_units"],
+            "Stake": f"${t['total_stake']:.0f}",
+            "EV": f"${e['ev']:+.1f}",
+            "ROI": f"{e['roi']*100:+.1f}%",
+            "P(full)": f"{e['p_full_parlay']*100:.2f}%",
+            "Exp full payout": f"${e['expected_full_payout']:.0f}",
+        })
+        total_stake += t["total_stake"]
+        total_ev += e["ev"]
+    st.dataframe(pd.DataFrame(eval_rows), hide_index=True,
                  use_container_width=True)
 
-    # ── Build tickets ──────────────────────────────────────────
-    qin_t = build_all_up_ticket(legs=final_legs, pool="QIN",
-                                 sizes=sizes, stake_per_unit=spu)
-    qpl_t = build_all_up_ticket(legs=final_legs, pool="QPL",
-                                 sizes=sizes, stake_per_unit=spu)
-    if not (qin_t.get("valid") and qpl_t.get("valid")):
-        st.error("Invalid ticket configuration.")
-        return
+    # Per-leg breakdown
+    with st.expander("🔍 Per-leg probabilities & payouts", expanded=False):
+        primary_t = tickets[primary_pool]
+        eprim = evaluate_ticket(primary_t, prob_lookup=prob_lookup,
+                                  payout_lookup=payout_lookup)
+        leg_table = []
+        for i, lg in enumerate(primary_t["legs"]):
+            sels = lg["selections"]
+            sel_names = []
+            picks = races_by_no[lg["race_no"]].get("picks") or []
+            namebh = {int(p["horse_no"]): p.get("horse_name", "?")
+                       for p in picks if p.get("horse_no")}
+            for s in sels:
+                if isinstance(s, tuple):
+                    sel_names.append(f"{namebh.get(s[0],s[0])} + "
+                                     f"{namebh.get(s[1],s[1])}")
+                else:
+                    sel_names.append(f"{namebh.get(s, s)}")
+            leg_table.append({
+                "Leg": f"R{lg['race_no']}",
+                "Selections": " | ".join(sel_names),
+                "P(hit)": f"{eprim['leg_p'][i]*100:.1f}%",
+                "Avg payout/$1": f"${eprim['leg_payout'][i]:.1f}",
+            })
+        st.dataframe(pd.DataFrame(leg_table), hide_index=True,
+                     use_container_width=True)
 
-    # ── Summary metrics ────────────────────────────────────────
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Shape", qin_t["shape_label"])
-    m1.caption(f"{qin_t['n_legs']} legs · "
-               f"sizes parlayed: {','.join(str(s) for s in qin_t['sizes'])}")
-    m2.metric("Units / pool", f"{qin_t['n_units']}")
-    m2.caption(f"$ per unit: ${spu}")
-    total = qin_t["total_stake"] + qpl_t["total_stake"]
-    m3.metric("Total stake (QIN + QPL)", f"${total:.0f}")
-    m3.caption(f"Q: ${qin_t['total_stake']:.0f}  ·  "
-                f"QPL: ${qpl_t['total_stake']:.0f}")
-
-    # Joint hit estimate (rough, based on April-2026 priors)
-    if pair_mode == "market":
-        per_leg_qin = 0.397   # market fav top-2
-        per_leg_qpl = 0.564
-    elif pair_mode == "model":
-        per_leg_qin = 0.065   # model top-2 pair joint
-        per_leg_qpl = 0.143
+    # ── Kelly stake suggestion ────────────────────────────────
+    st.markdown("##### 5. Stake sizing (quarter-Kelly cap)")
+    primary_t = tickets[primary_pool]
+    eprim = evaluate_ticket(primary_t, prob_lookup=prob_lookup,
+                              payout_lookup=payout_lookup)
+    p_full = eprim["p_full_parlay"]
+    full_pay = eprim["expected_full_payout"]
+    f_kelly = kelly_fraction(p_full, max(0.0, full_pay - 1))
+    rec_stake = bankroll * f_kelly
+    rec_units = max(0, int(rec_stake // max(spu, 1)))
+    k1, k2, k3 = st.columns(3)
+    k1.metric("Kelly fraction", f"{f_kelly*100:.2f}%")
+    k1.caption("¼-Kelly cap applied")
+    k2.metric("Suggested stake", f"${rec_stake:.0f}")
+    k2.caption(f"On bankroll ${bankroll}")
+    k3.metric("Suggested units", f"{rec_units}")
+    k3.caption(f"@ ${spu}/unit · current ticket = {primary_t['n_units']} units")
+    if rec_stake < primary_t["total_stake"] * 0.5:
+        st.warning(
+            f"⚠️ Kelly suggests **${rec_stake:.0f}** but current shape "
+            f"requires ${primary_t['total_stake']:.0f}. Consider a "
+            f"smaller shape (e.g. {shape_keys[-1]}) or skip."
+        )
+    elif f_kelly == 0.0:
+        st.error("⛔ Kelly = 0 — this ticket has non-positive edge. Skip "
+                  "or change selections / pool.")
     else:
-        per_leg_qin = 0.230
-        per_leg_qpl = 0.354
-    full_p_qin = per_leg_qin ** n_legs_target
-    full_p_qpl = per_leg_qpl ** n_legs_target
-    st.caption(
-        f"_Rough joint probability (Apr-2026 priors): full {n_legs_target}-leg "
-        f"QIN parlay ≈ **{full_p_qin*100:.2f}%** · QPL ≈ **{full_p_qpl*100:.1f}%**. "
-        f"Lower-size combinations in shape {shape_label} hit more often._"
-    )
+        st.success(
+            f"✅ Edge present. {f_kelly*100:.1f}% of bankroll = "
+            f"${rec_stake:.0f}. Current ticket stake "
+            f"${primary_t['total_stake']:.0f} is "
+            f"{primary_t['total_stake']/max(rec_stake,1)*100:.0f}% of Kelly."
+        )
+
+    # ── Dynamic suggestions panel ─────────────────────────────
+    st.markdown("##### 6. Suggestions to improve this ticket")
+    suggestions: list[str] = []
+    # 1) Coverage thinness
+    leg_p = eprim["leg_p"]
+    weakest_idx = min(range(len(leg_p)), key=lambda i: leg_p[i])
+    weakest_leg = primary_t["legs"][weakest_idx]
+    if leg_p[weakest_idx] < 0.18 and primary_pool in PAIR_POOLS:
+        suggestions.append(
+            f"🔧 R{weakest_leg['race_no']} hit-prob is "
+            f"{leg_p[weakest_idx]*100:.1f}% — add 1 more partner to widen."
+        )
+    # 2) Over-coverage
+    over = [i for i, p in enumerate(leg_p) if p > 0.65]
+    if over and primary_pool in PAIR_POOLS:
+        i = over[0]
+        suggestions.append(
+            f"✂️ R{primary_t['legs'][i]['race_no']} hit-prob is already "
+            f"{leg_p[i]*100:.1f}% — drop the weakest partner to cut units."
+        )
+    # 3) Banker pool suggestion
+    if primary_pool in PAIR_POOLS and prob_mode == "model":
+        suggestions.append(
+            "📊 Apr-2026 backtest: market mode > model on QIN/QPL parlays. "
+            "Consider switching probability source to **market**."
+        )
+    # 4) Pool comparison: if PLACE EV > QIN EV at same stake
+    if primary_pool in PAIR_POOLS and total_stake > 50:
+        place_legs = [{"race_no": lg["race_no"],
+                        "selections": [s[0] for s in lg["selections"]]}
+                       for lg in leg_specs]
+        place_t = build_all_up_ticket(legs=place_legs, pool="PLACE",
+                                        sizes=sizes, stake_per_unit=spu)
+        if place_t.get("valid"):
+            ev_pl = evaluate_ticket(place_t, prob_lookup=lambda rn, s:
+                                       prob_for_pool(rn, s, pool="PLACE",
+                                          pick_lookup={int(p["horse_no"]): p for p in
+                                              races_by_no[rn].get("picks") or []
+                                              if p.get("horse_no")},
+                                          edge_lookup={int(r["horse_no"]): r for r in
+                                              edges_by_race.get(rn, []) if r.get("horse_no")},
+                                          mode=prob_mode),
+                                     payout_lookup=lambda rn, s:
+                                       (lambda er: float(er.get("win_odds", 0))/3.5
+                                          if er and float(er.get("win_odds") or 0) > 1
+                                          else 1.0)(
+                                           {int(r["horse_no"]): r for r in
+                                              edges_by_race.get(rn, [])}.get(int(s))))
+            if ev_pl["roi"] > eprim["roi"] + 0.05:
+                suggestions.append(
+                    f"💡 Same legs in PLACE all-up = "
+                    f"{ev_pl['roi']*100:+.1f}% ROI vs "
+                    f"{eprim['roi']*100:+.1f}% on {primary_pool} — "
+                    f"PLACE pool has stronger edge here."
+                )
+    # 5) Best alternative shape
+    if shape_pick != best["shape"]:
+        delta = best["ev"] - next(r["ev"] for r in shape_rows
+                                     if r["shape"] == shape_pick)
+        suggestions.append(
+            f"🎯 Switching shape `{shape_pick}` → `{best['shape']}` improves "
+            f"EV by ${delta:+.1f}."
+        )
+    # 6) Kelly under-/over-shoot
+    if rec_stake > 0 and primary_t["total_stake"] > rec_stake * 1.5:
+        suggestions.append(
+            f"⚠️ Stake ${primary_t['total_stake']:.0f} > 1.5× Kelly "
+            f"(${rec_stake:.0f}) — over-betting."
+        )
+    if not suggestions:
+        suggestions.append("✅ No improvements detected for current shape.")
+    for s in suggestions:
+        st.markdown(f"- {s}")
 
     # ── Submit + log ───────────────────────────────────────────
-    confirm = st.checkbox("Confirm — log to all_up_log.jsonl",
+    st.markdown("##### 7. Log tickets")
+    confirm = st.checkbox("Confirm — log all built tickets",
                            key="mb_au_confirm")
     notes = st.text_input("Notes (optional)", key="mb_au_notes")
-    if st.button("💸 Log All-Up tickets",
-                  type="primary", disabled=not confirm,
-                  use_container_width=False):
+    cols = st.columns([1, 3])
+    with cols[0]:
+        clicked = st.button("💸 Log", type="primary", disabled=not confirm)
+    if clicked:
         try:
-            qid = aul.submit_ticket(qin_t, meeting_date=date_compact,
-                                     venue=venue_code, pair_mode=pair_mode,
-                                     notes=notes)
-            pid = aul.submit_ticket(qpl_t, meeting_date=date_compact,
-                                     venue=venue_code, pair_mode=pair_mode,
-                                     notes=notes)
+            ids = []
+            for pool, t in tickets.items():
+                tid = aul.submit_ticket(
+                    t, meeting_date=date_compact, venue=venue_code,
+                    pair_mode=prob_mode, notes=notes,
+                )
+                ids.append(f"{pool}={tid}")
             try:
                 push_ok = _gh_push_user_bets()
             except Exception:
                 push_ok = False
-            msg = f"✅ Logged tickets {qid} (QIN) and {pid} (QPL)"
+            msg = "✅ Logged: " + ", ".join(ids)
             if push_ok:
-                msg += " · Pushed to GitHub"
+                msg += "  ·  Pushed to GitHub"
             st.success(msg)
         except Exception as e:
             st.error(f"Log failed: {e}")
@@ -12162,8 +12419,16 @@ reference / overlay plays.
         table = []
         for r in rows[:30]:
             t = r["ticket"]
-            legs_str = " → ".join(f"R{l['race_no']}({l['pair'][0]}-{l['pair'][1]})"
-                                    for l in t["legs"])
+            def _fmt_leg(lg):
+                sels = lg.get("selections") or [lg.get("pair")]
+                parts = []
+                for s in sels:
+                    if isinstance(s, (list, tuple)) and len(s) == 2:
+                        parts.append(f"{s[0]}-{s[1]}")
+                    else:
+                        parts.append(str(s))
+                return f"R{lg['race_no']}({'/'.join(parts)})"
+            legs_str = " → ".join(_fmt_leg(l) for l in t["legs"])
             table.append({
                 "Date": r["meeting_date"], "Pool": t["pool"],
                 "Shape": t["shape_label"], "Legs": legs_str,
