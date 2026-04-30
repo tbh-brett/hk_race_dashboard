@@ -1,0 +1,573 @@
+{
+  "date": "2026-04-29",
+  "race_number": 4,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "648",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ACE POWER",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 435,
+          "cy": 189,
+          "x_frac": 0.6048611111111111,
+          "conf": 0.988,
+          "match_score": 0.941,
+          "ocr_text": "AcePower",
+          "band_label": "800M",
+          "y_in_band": 0.389
+        },
+        {
+          "band_idx": 3,
+          "cx": 232,
+          "cy": 539,
+          "x_frac": 0.3229166666666667,
+          "conf": 0.922,
+          "match_score": 1.0,
+          "ocr_text": "Ace Power",
+          "band_label": "200M",
+          "y_in_band": 0.634
+        }
+      ],
+      "ocr_texts": [
+        "AcePower",
+        "Ace Power"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.512,
+      "avg_x_frac": 0.464,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "AWESOME TREASURE",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 607,
+          "cy": 250,
+          "x_frac": 0.8430555555555556,
+          "conf": 0.967,
+          "match_score": 1.0,
+          "ocr_text": "Awesome Treasure",
+          "band_label": "800M",
+          "y_in_band": 0.799
+        },
+        {
+          "band_idx": 2,
+          "cx": 582,
+          "cy": 422,
+          "x_frac": 0.8083333333333333,
+          "conf": 0.996,
+          "match_score": 0.968,
+          "ocr_text": "AwesomeTreasure",
+          "band_label": "400M",
+          "y_in_band": 0.947
+        },
+        {
+          "band_idx": 3,
+          "cx": 553,
+          "cy": 571,
+          "x_frac": 0.7680555555555556,
+          "conf": 0.965,
+          "match_score": 1.0,
+          "ocr_text": "Awesome Treasure",
+          "band_label": "200M",
+          "y_in_band": 0.82
+        }
+      ],
+      "ocr_texts": [
+        "Awesome Treasure",
+        "AwesomeTreasure",
+        "Awesome Treasure"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.855,
+      "avg_x_frac": 0.806,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "BRAVE WIN",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 331,
+          "cy": 108,
+          "x_frac": 0.46041666666666664,
+          "conf": 0.945,
+          "match_score": 1.0,
+          "ocr_text": "Brave Win",
+          "band_label": "648",
+          "y_in_band": 0.81
+        },
+        {
+          "band_idx": 1,
+          "cx": 425,
+          "cy": 267,
+          "x_frac": 0.5909722222222222,
+          "conf": 0.946,
+          "match_score": 1.0,
+          "ocr_text": "Brave Win",
+          "band_label": "800M",
+          "y_in_band": 0.913
+        },
+        {
+          "band_idx": 2,
+          "cx": 381,
+          "cy": 415,
+          "x_frac": 0.5298611111111111,
+          "conf": 0.956,
+          "match_score": 1.0,
+          "ocr_text": "Brave Win",
+          "band_label": "400M",
+          "y_in_band": 0.9
+        },
+        {
+          "band_idx": 3,
+          "cx": 300,
+          "cy": 557,
+          "x_frac": 0.4166666666666667,
+          "conf": 0.94,
+          "match_score": 1.0,
+          "ocr_text": "Brave Win",
+          "band_label": "200M",
+          "y_in_band": 0.738
+        }
+      ],
+      "ocr_texts": [
+        "Brave Win",
+        "Brave Win",
+        "Brave Win",
+        "Brave Win"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.84,
+      "avg_x_frac": 0.499,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "BRIGHT DAY",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 479,
+          "cy": 191,
+          "x_frac": 0.6652777777777777,
+          "conf": 0.929,
+          "match_score": 1.0,
+          "ocr_text": "Bright Day",
+          "band_label": "800M",
+          "y_in_band": 0.403
+        },
+        {
+          "band_idx": 2,
+          "cx": 335,
+          "cy": 403,
+          "x_frac": 0.46597222222222223,
+          "conf": 0.879,
+          "match_score": 0.9,
+          "ocr_text": "Bnight Day",
+          "band_label": "400M",
+          "y_in_band": 0.82
+        },
+        {
+          "band_idx": 3,
+          "cx": 204,
+          "cy": 563,
+          "x_frac": 0.2833333333333333,
+          "conf": 0.933,
+          "match_score": 1.0,
+          "ocr_text": "Bright Day",
+          "band_label": "200M",
+          "y_in_band": 0.773
+        }
+      ],
+      "ocr_texts": [
+        "Bright Day",
+        "Bnight Day",
+        "Bright Day"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.665,
+      "avg_x_frac": 0.472,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CROSSBORDERDUDE",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 278,
+          "cy": 256,
+          "x_frac": 0.3861111111111111,
+          "conf": 0.99,
+          "match_score": 1.0,
+          "ocr_text": "Crossborderdude",
+          "band_label": "800M",
+          "y_in_band": 0.839
+        },
+        {
+          "band_idx": 2,
+          "cx": 211,
+          "cy": 406,
+          "x_frac": 0.29375,
+          "conf": 0.994,
+          "match_score": 1.0,
+          "ocr_text": "Crossborderdude",
+          "band_label": "400M",
+          "y_in_band": 0.84
+        },
+        {
+          "band_idx": 3,
+          "cx": 140,
+          "cy": 564,
+          "x_frac": 0.19479166666666667,
+          "conf": 0.991,
+          "match_score": 1.0,
+          "ocr_text": "Crossborderdude",
+          "band_label": "200M",
+          "y_in_band": 0.779
+        }
+      ],
+      "ocr_texts": [
+        "Crossborderdude",
+        "Crossborderdude",
+        "Crossborderdude"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.819,
+      "avg_x_frac": 0.292,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FIND MY LOVE",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 347,
+          "cy": 190,
+          "x_frac": 0.4822916666666667,
+          "conf": 0.942,
+          "match_score": 0.957,
+          "ocr_text": "FindMy Love",
+          "band_label": "800M",
+          "y_in_band": 0.396
+        },
+        {
+          "band_idx": 2,
+          "cx": 279,
+          "cy": 410,
+          "x_frac": 0.38784722222222223,
+          "conf": 0.965,
+          "match_score": 0.957,
+          "ocr_text": "FindMy Love",
+          "band_label": "400M",
+          "y_in_band": 0.867
+        },
+        {
+          "band_idx": 3,
+          "cx": 123,
+          "cy": 584,
+          "x_frac": 0.171875,
+          "conf": 0.961,
+          "match_score": 0.957,
+          "ocr_text": "FindMy Love",
+          "band_label": "200M",
+          "y_in_band": 0.895
+        }
+      ],
+      "ocr_texts": [
+        "FindMy Love",
+        "FindMy Love",
+        "FindMy Love"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.719,
+      "avg_x_frac": 0.347,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FLASH STAR",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 526,
+          "cy": 259,
+          "x_frac": 0.73125,
+          "conf": 0.934,
+          "match_score": 1.0,
+          "ocr_text": "Flash Star",
+          "band_label": "800M",
+          "y_in_band": 0.859
+        }
+      ],
+      "ocr_texts": [
+        "Flash Star"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.859,
+      "avg_x_frac": 0.731,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HEROIC MASTER",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 165,
+          "cy": 256,
+          "x_frac": 0.22916666666666666,
+          "conf": 0.949,
+          "match_score": 0.96,
+          "ocr_text": "HeroicMaster",
+          "band_label": "800M",
+          "y_in_band": 0.839
+        },
+        {
+          "band_idx": 2,
+          "cx": 140,
+          "cy": 400,
+          "x_frac": 0.19444444444444445,
+          "conf": 0.964,
+          "match_score": 1.0,
+          "ocr_text": "Heroic Master",
+          "band_label": "400M",
+          "y_in_band": 0.8
+        },
+        {
+          "band_idx": 3,
+          "cx": 182,
+          "cy": 542,
+          "x_frac": 0.25277777777777777,
+          "conf": 0.958,
+          "match_score": 1.0,
+          "ocr_text": "Heroic Master",
+          "band_label": "200M",
+          "y_in_band": 0.651
+        }
+      ],
+      "ocr_texts": [
+        "HeroicMaster",
+        "Heroic Master",
+        "Heroic Master"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.763,
+      "avg_x_frac": 0.225,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "JOY CAPITAL",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 371,
+          "cy": 261,
+          "x_frac": 0.5152777777777777,
+          "conf": 0.95,
+          "match_score": 0.952,
+          "ocr_text": "Joy Capial",
+          "band_label": "800M",
+          "y_in_band": 0.872
+        },
+        {
+          "band_idx": 3,
+          "cx": 640,
+          "cy": 548,
+          "x_frac": 0.8888888888888888,
+          "conf": 0.956,
+          "match_score": 1.0,
+          "ocr_text": "Joy Capital",
+          "band_label": "200M",
+          "y_in_band": 0.686
+        }
+      ],
+      "ocr_texts": [
+        "Joy Capial",
+        "Joy Capital"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.779,
+      "avg_x_frac": 0.702,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LIGHTNING ACE",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 674,
+          "cy": 251,
+          "x_frac": 0.9368055555555556,
+          "conf": 0.958,
+          "match_score": 1.0,
+          "ocr_text": "Lightning Ace",
+          "band_label": "800M",
+          "y_in_band": 0.805
+        },
+        {
+          "band_idx": 2,
+          "cx": 643,
+          "cy": 412,
+          "x_frac": 0.89375,
+          "conf": 0.969,
+          "match_score": 1.0,
+          "ocr_text": "Lightning Ace",
+          "band_label": "400M",
+          "y_in_band": 0.88
+        }
+      ],
+      "ocr_texts": [
+        "Lightning Ace",
+        "Lightning Ace"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.843,
+      "avg_x_frac": 0.915,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "STARRY SHOW",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 257,
+          "cy": 191,
+          "x_frac": 0.3576388888888889,
+          "conf": 0.979,
+          "match_score": 0.952,
+          "ocr_text": "StarryShow",
+          "band_label": "800M",
+          "y_in_band": 0.403
+        }
+      ],
+      "ocr_texts": [
+        "StarryShow"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.403,
+      "avg_x_frac": 0.358,
+      "wide_frames": 0,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WINNING NOW",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 105,
+          "cy": 31,
+          "x_frac": 0.14652777777777778,
+          "conf": 0.922,
+          "match_score": 0.909,
+          "ocr_text": "Ninning Now",
+          "band_label": "648",
+          "y_in_band": 0.174
+        },
+        {
+          "band_idx": 1,
+          "cx": 102,
+          "cy": 188,
+          "x_frac": 0.1423611111111111,
+          "conf": 0.993,
+          "match_score": 0.952,
+          "ocr_text": "WinningNow",
+          "band_label": "800M",
+          "y_in_band": 0.383
+        }
+      ],
+      "ocr_texts": [
+        "Ninning Now",
+        "WinningNow"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.278,
+      "avg_x_frac": 0.144,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 68,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-04-30T04:51:08"
+  }
+}
