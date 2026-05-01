@@ -11929,6 +11929,103 @@ def _mb_render_per_race_tab():
                        f"${total_stake:.0f}")
 
 
+def _mb_leg_block(*, rn: int, race: dict, edges: list[dict],
+                   sarr_p_map: dict, rec_pairs,
+                   is_pair_pool: bool, primary_pool: str,
+                   prob_mode: str) -> dict | None:
+    """Render one leg's selection editor in a single column.
+
+    Returns the leg spec {race_no, selections} or None on validation error.
+    """
+    from all_up import horse_prob, rank_horses
+    picks = race.get("picks") or []
+    edge_lookup = {int(r["horse_no"]): r for r in edges
+                    if r.get("horse_no") is not None}
+    pick_lookup = {int(p["horse_no"]): p for p in picks
+                    if p.get("horse_no") is not None}
+    # Build ranked list using SARR-aware prob
+    horses = sorted(set(pick_lookup.keys()) | set(edge_lookup.keys()))
+    ranked = sorted(
+        ((h, horse_prob(pick_lookup.get(h), edge_lookup.get(h),
+                           prob_mode, sarr_p=sarr_p_map.get(h)))
+          for h in horses),
+        key=lambda kv: -kv[1],
+    )
+    horse_label = {}
+    for h, p_h in ranked:
+        pk = pick_lookup.get(h, {})
+        er = edge_lookup.get(h, {})
+        name = pk.get("horse_name", f"#{h}")
+        odds = er.get("win_odds")
+        odds_str = f" · ${float(odds):.1f}" if odds else ""
+        horse_label[f"#{h} {name} ({p_h*100:.1f}%{odds_str})"] = h
+
+    race_name = race.get("race_name") or ""
+    race_dist = race.get("distance") or ""
+    st.markdown(f"**R{rn}** · {race_name} · {race_dist}")
+
+    if is_pair_pool:
+        mode_q = st.radio(
+            f"R{rn} structure", ["Banker × partners", "Free pairs"],
+            index=0, horizontal=True, key=f"mb_au_qmode_{rn}",
+        )
+        default_pairs = rec_pairs or []
+        if mode_q == "Banker × partners":
+            default_banker = (default_pairs[0][0]
+                                if default_pairs else
+                                next(iter(horse_label.values()), None))
+            banker_label_default = next(
+                (lbl for lbl, h in horse_label.items()
+                  if h == default_banker), list(horse_label.keys())[0]
+            )
+            banker_label = st.selectbox(
+                f"R{rn} banker", list(horse_label.keys()),
+                index=list(horse_label.keys()).index(banker_label_default),
+                key=f"mb_au_bnk_{rn}",
+            )
+            banker = horse_label[banker_label]
+            partner_options = {lbl: h for lbl, h in horse_label.items()
+                                 if h != banker}
+            default_partners = [
+                lbl for lbl, h in partner_options.items()
+                if any(h in p for p in default_pairs)
+            ][:3] or list(partner_options.keys())[:2]
+            partner_labels = st.multiselect(
+                f"R{rn} partners (≥1)", list(partner_options.keys()),
+                default=default_partners, key=f"mb_au_prt_{rn}",
+            )
+            pairs = [(min(banker, partner_options[lbl]),
+                        max(banker, partner_options[lbl]))
+                      for lbl in partner_labels]
+        else:
+            free_labels = st.multiselect(
+                f"R{rn} pool of horses (≥2)", list(horse_label.keys()),
+                default=list(horse_label.keys())[:3],
+                key=f"mb_au_free_{rn}",
+            )
+            hs = [horse_label[lbl] for lbl in free_labels]
+            from itertools import combinations as _comb
+            pairs = [(min(a, b), max(a, b)) for a, b in _comb(hs, 2)]
+        if not pairs:
+            st.warning(f"R{rn}: at least 1 pair required.")
+            return None
+        return {"race_no": rn, "selections": pairs}
+    # singles
+    default_singles = (rec_pairs or [list(horse_label.values())[0]])
+    default_lbls = [lbl for lbl, h in horse_label.items()
+                      if h in default_singles]
+    sel_labels = st.multiselect(
+        f"R{rn} horses (≥1)", list(horse_label.keys()),
+        default=default_lbls or list(horse_label.keys())[:1],
+        key=f"mb_au_sel_{rn}",
+    )
+    sels = [horse_label[lbl] for lbl in sel_labels]
+    if not sels:
+        st.warning(f"R{rn}: at least 1 horse required.")
+        return None
+    return {"race_no": rn, "selections": sels}
+
+
 def _mb_render_allup_tab():
     """HKJC-spec All-Up cross-race parlay with EV / Kelly / shape optimiser."""
     from all_up import (build_all_up_ticket, settle_all_up_ticket,
@@ -12032,6 +12129,10 @@ def _mb_render_allup_tab():
 
     # ── Auto-recommend selections by edge ──────────────────────
     edges_by_race = {rn: edges_of(rn) for rn in chosen_races}
+    # Pre-compute SARR softmax probabilities per race (model source)
+    from all_up import sarr_probs as _sarr
+    sarr_by_race = {rn: _sarr(races_by_no[rn].get("picks") or [])
+                     for rn in chosen_races}
     rec = recommend_legs(
         races_by_no={rn: races_by_no[rn] for rn in chosen_races},
         edges_by_race=edges_by_race, pool=primary_pool,
@@ -12047,94 +12148,32 @@ def _mb_render_allup_tab():
     else:
         st.caption("Pick one or more horses per leg (multiple selections "
                     "multiply the unit count).")
+    st.caption(
+        "_The %% next to each horse is the **chosen probability source** — "
+        "**model** = SARR softmax (ESZ + projected sectional + speedmap "
+        "adjustments), **market** = market-implied from current odds, "
+        "**blend** = 50/50. PLACE prob is derived from win prob._"
+    )
 
     leg_specs: list[dict] = []
-    for rn in chosen_races:
-        race = races_by_no[rn]
-        picks = race.get("picks") or []
-        edges = edges_by_race[rn]
-        edge_lookup = {int(r["horse_no"]): r for r in edges
-                        if r.get("horse_no") is not None}
-        pick_lookup = {int(p["horse_no"]): p for p in picks
-                        if p.get("horse_no") is not None}
-        ranked = rank_horses(picks, edges, prob_mode)
-        # Build "label -> horse_no" mapping with names
-        horse_label = {}
-        for h, p_h in ranked:
-            pk = pick_lookup.get(h, {})
-            er = edge_lookup.get(h, {})
-            name = pk.get("horse_name", f"#{h}")
-            odds = er.get("win_odds")
-            odds_str = f" · ${float(odds):.1f}" if odds else ""
-            horse_label[f"#{h} {name} ({p_h*100:.1f}%{odds_str})"] = h
-
-        race_name = race.get("race_name") or ""
-        race_dist = race.get("distance") or ""
-        st.markdown(f"**R{rn}** · {race_name} · {race_dist}")
-
-        if is_pair_pool:
-            mode_q = st.radio(
-                f"R{rn} structure", ["Banker × partners", "Free pairs"],
-                index=0, horizontal=True, key=f"mb_au_qmode_{rn}",
-            )
-            default_pairs = rec_by_race.get(rn, [])
-            if mode_q == "Banker × partners":
-                # default banker = top horse
-                default_banker = (default_pairs[0][0]
-                                    if default_pairs else
-                                    next(iter(horse_label.values()), None))
-                banker_label_default = next(
-                    (lbl for lbl, h in horse_label.items()
-                      if h == default_banker), list(horse_label.keys())[0]
+    # Render legs in a 2-column grid (rows of two)
+    for row_start in range(0, len(chosen_races), 2):
+        row_races = chosen_races[row_start:row_start + 2]
+        cols = st.columns(len(row_races))
+        for col, rn in zip(cols, row_races):
+            with col:
+                spec = _mb_leg_block(
+                    rn=rn, race=races_by_no[rn],
+                    edges=edges_by_race[rn],
+                    sarr_p_map=sarr_by_race[rn],
+                    rec_pairs=rec_by_race.get(rn),
+                    is_pair_pool=is_pair_pool,
+                    primary_pool=primary_pool,
+                    prob_mode=prob_mode,
                 )
-                banker_label = st.selectbox(
-                    f"R{rn} banker", list(horse_label.keys()),
-                    index=list(horse_label.keys()).index(banker_label_default),
-                    key=f"mb_au_bnk_{rn}",
-                )
-                banker = horse_label[banker_label]
-                partner_options = {lbl: h for lbl, h in horse_label.items()
-                                     if h != banker}
-                default_partners = [
-                    lbl for lbl, h in partner_options.items()
-                    if any(h in p for p in default_pairs)
-                ][:3] or list(partner_options.keys())[:2]
-                partner_labels = st.multiselect(
-                    f"R{rn} partners (≥1)", list(partner_options.keys()),
-                    default=default_partners, key=f"mb_au_prt_{rn}",
-                )
-                pairs = [(min(banker, partner_options[lbl]),
-                            max(banker, partner_options[lbl]))
-                          for lbl in partner_labels]
-            else:
-                # free pairs: pick any 2-of-N horses, all combinations
-                free_labels = st.multiselect(
-                    f"R{rn} pool of horses (≥2)", list(horse_label.keys()),
-                    default=list(horse_label.keys())[:3],
-                    key=f"mb_au_free_{rn}",
-                )
-                hs = [horse_label[lbl] for lbl in free_labels]
-                from itertools import combinations as _comb
-                pairs = [(min(a, b), max(a, b)) for a, b in _comb(hs, 2)]
-            if not pairs:
-                st.warning(f"R{rn}: at least 1 pair required.")
-                return
-            leg_specs.append({"race_no": rn, "selections": pairs})
-        else:
-            default_singles = (rec_by_race.get(rn) or
-                                [list(horse_label.values())[0]])
-            default_lbls = [lbl for lbl, h in horse_label.items()
-                              if h in default_singles]
-            sel_labels = st.multiselect(
-                f"R{rn} horses (≥1)", list(horse_label.keys()),
-                default=default_lbls or list(horse_label.keys())[:1],
-                key=f"mb_au_sel_{rn}",
-            )
-            sels = [horse_label[lbl] for lbl in sel_labels]
-            if not sels:
-                st.warning(f"R{rn}: at least 1 horse required.")
-                return
-            leg_specs.append({"race_no": rn, "selections": sels})
+                if spec is None:
+                    return
+                leg_specs.append(spec)
 
     # ── Probability + payout lookups for evaluator ────────────
     def prob_lookup(rn, sel):
@@ -12145,7 +12184,8 @@ def _mb_render_allup_tab():
                                             for p in picks if p.get("horse_no")},
                               edge_lookup={int(r["horse_no"]): r
                                             for r in edges if r.get("horse_no")},
-                              mode=prob_mode)
+                              mode=prob_mode,
+                              sarr_lookup=sarr_by_race.get(rn))
 
     def payout_lookup(rn, sel):
         """Return $/$1 payout multiplier (so dividend/10) using market odds."""
@@ -12167,8 +12207,11 @@ def _mb_render_allup_tab():
         picks = races_by_no[rn].get("picks") or []
         pick_lookup = {int(p["horse_no"]): p for p in picks
                         if p.get("horse_no") is not None}
-        pa = horse_prob(pick_lookup.get(a), edge_lookup.get(a), prob_mode)
-        pb = horse_prob(pick_lookup.get(b), edge_lookup.get(b), prob_mode)
+        sl = sarr_by_race.get(rn, {})
+        pa = horse_prob(pick_lookup.get(a), edge_lookup.get(a), prob_mode,
+                          sarr_p=sl.get(a))
+        pb = horse_prob(pick_lookup.get(b), edge_lookup.get(b), prob_mode,
+                          sarr_p=sl.get(b))
         pp = _pair_prob(pa, pb, pool=primary_pool)
         if pp <= 0:
             return 1.0

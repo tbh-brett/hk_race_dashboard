@@ -231,25 +231,90 @@ def settle_all_up_ticket(ticket: dict, date_compact: str) -> dict:
 
 
 # ─────────────────────── probability helpers ─────────────────────────────
+def sarr_score(pick: dict, *, pt_z: float = 0.0) -> float:
+    """SARR composite score (higher = stronger).
+
+    pt_z is the z-scored projected_time within the race (caller computes).
+    Combines:
+      pt_z                 : speed (race-relative, primary signal)
+      +early_speed_z       : ESZ (ρ=0.516 with finish position)
+      −sec_total_adj       : sectional adjustment (s, lower better)
+      −smap_total_adj      : speedmap fit
+      −effective_resid     : negative residual = faster than expected
+    """
+    if not pick:
+        return -999.0
+    esz  = float(pick.get("early_speed_z") or 0)
+    sec  = float(pick.get("sec_total_adj") or 0)
+    smap = float(pick.get("smap_total_adj") or 0)
+    eres = float(pick.get("effective_resid") or 0)
+    return (1.2 * pt_z
+            + 0.8 * esz
+            - 1.0 * sec
+            - 0.6 * smap
+            - 0.7 * eres)
+
+
+def sarr_probs(picks: list[dict], *, temperature: float = 2.2) -> dict[int, float]:
+    """Softmax SARR scores → win-probabilities per horse for one race.
+
+    Projected_time is z-scored within race so the scoring scales correctly
+    across 1000–2400m distances.
+    """
+    if not picks:
+        return {}
+    pts = [float(p.get("projected_time") or p.get("proj_pre_pace") or 0)
+            for p in picks]
+    pts_valid = [t for t in pts if t > 0]
+    if pts_valid:
+        mean = sum(pts_valid) / len(pts_valid)
+        var = sum((t - mean) ** 2 for t in pts_valid) / len(pts_valid)
+        std = math.sqrt(var) or 1.0
+    else:
+        mean, std = 0.0, 1.0
+    scored = []
+    for p in picks:
+        if p.get("horse_no") is None:
+            continue
+        pt = float(p.get("projected_time") or p.get("proj_pre_pace") or 0)
+        pt_z = -(pt - mean) / std if pt > 0 else 0.0
+        scored.append((int(p["horse_no"]), sarr_score(p, pt_z=pt_z)))
+    if not scored:
+        return {}
+    smax = max(s for _, s in scored)
+    exps = [(h, math.exp((s - smax) / max(0.05, temperature)))
+             for h, s in scored]
+    z = sum(e for _, e in exps) or 1.0
+    return {h: e / z for h, e in exps}
+
+
 def horse_prob(pick: dict | None, edge_row: dict | None,
-                mode: str = "blend") -> float:
-    wp = 0.0
-    if pick is not None:
-        wp = float(pick.get("win_prob") or 0)
-        if wp > 1.0:
-            wp = wp / 100.0
+                mode: str = "blend",
+                sarr_p: float | None = None) -> float:
+    """Single-horse WIN probability in [0,1].
+
+    mode='market'  — market-implied probability (uses p_market)
+    mode='model'   — SARR-derived probability (caller passes sarr_p)
+    mode='blend'   — 50/50 SARR + market
+    """
     pm = 0.0
     if edge_row is not None:
         pm = float(edge_row.get("p_market") or 0)
+    sp = float(sarr_p) if sarr_p is not None else None
+    if sp is None and pick is not None:
+        # fallback: use stored win_prob (handle 0-100 vs 0-1 ambiguity)
+        wp = float(pick.get("win_prob") or 0)
+        sp = wp / 100.0 if wp > 1.0 else wp
+    sp = sp or 0.0
     if mode == "model":
-        return max(0.0, min(1.0, wp))
+        return max(0.0, min(1.0, sp))
     if mode == "market":
-        return max(0.0, min(1.0, pm or wp))
+        return max(0.0, min(1.0, pm or sp))
     if pm <= 0:
-        return wp
-    if wp <= 0:
+        return sp
+    if sp <= 0:
         return pm
-    return max(0.0, min(1.0, 0.5 * wp + 0.5 * pm))
+    return max(0.0, min(1.0, 0.5 * sp + 0.5 * pm))
 
 
 def _place_prob(p_win: float) -> float:
@@ -392,24 +457,32 @@ def rank_horses(picks: list[dict], edges: list[dict] | None,
              if p.get("horse_no") is not None}
     by_e = {int(r["horse_no"]): r for r in (edges or [])
              if r.get("horse_no") is not None}
+    sp_map = sarr_probs(picks)
     horses = set(by_p.keys()) | set(by_e.keys())
-    out = [(h, horse_prob(by_p.get(h), by_e.get(h), mode)) for h in horses]
+    out = [(h, horse_prob(by_p.get(h), by_e.get(h), mode,
+                            sarr_p=sp_map.get(h))) for h in horses]
     out.sort(key=lambda kv: -kv[1])
     return out
 
 
 def prob_for_pool(race_no: int, sel, *, pool: str,
                    pick_lookup: dict, edge_lookup: dict,
-                   mode: str = "blend") -> float:
+                   mode: str = "blend",
+                   sarr_lookup: dict | None = None) -> float:
+    sl = sarr_lookup or {}
     if pool == "WIN":
         return horse_prob(pick_lookup.get(int(sel)),
-                           edge_lookup.get(int(sel)), mode)
+                           edge_lookup.get(int(sel)), mode,
+                           sarr_p=sl.get(int(sel)))
     if pool == "PLACE":
         return _place_prob(horse_prob(pick_lookup.get(int(sel)),
-                                         edge_lookup.get(int(sel)), mode))
+                                         edge_lookup.get(int(sel)), mode,
+                                         sarr_p=sl.get(int(sel))))
     a, b = int(sel[0]), int(sel[1])
-    pa = horse_prob(pick_lookup.get(a), edge_lookup.get(a), mode)
-    pb = horse_prob(pick_lookup.get(b), edge_lookup.get(b), mode)
+    pa = horse_prob(pick_lookup.get(a), edge_lookup.get(a), mode,
+                     sarr_p=sl.get(a))
+    pb = horse_prob(pick_lookup.get(b), edge_lookup.get(b), mode,
+                     sarr_p=sl.get(b))
     return _pair_prob(pa, pb, pool=pool)
 
 
