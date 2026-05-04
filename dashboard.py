@@ -5192,22 +5192,268 @@ def _render_unified_trends(data: dict, prefix: str = ""):
     st.dataframe(fmt_df, use_container_width=True, hide_index=True)
 
 
+def _render_unified_consensus(data: dict, prefix: str = ""):
+    """Per-meeting ET-vs-SARR agreement audit: which races each model got
+    right, where they agreed, and pace-prediction accuracy."""
+    races = data.get("races") or []
+    if not races:
+        st.info("Consensus view only available on a single-meeting JSON. "
+                "Pick a meeting from the period selector.")
+        return
+
+    rows = []
+    n_agree = n_agree_win = n_agree_plc = 0
+    n_disagree = n_et_only = n_sa_only = n_neither = 0
+    n_pace_exact = n_pace_total = 0
+    for r in races:
+        et_top1 = r.get("et_top1")
+        sa_top1 = r.get("sa_top1")
+        winner = r.get("winner")
+        agreed = bool(r.get("agree_top1"))
+        et_m = r.get("et") or {}
+        sa_m = r.get("sa") or {}
+        et_win = bool(et_m.get("win"))
+        sa_win = bool(sa_m.get("win"))
+        et_plc = bool(et_m.get("plc"))
+        sa_plc = bool(sa_m.get("plc"))
+        pp = r.get("pace_predicted")
+        pa = r.get("pace_actual")
+        if pp and pa:
+            n_pace_total += 1
+            if pp == pa:
+                n_pace_exact += 1
+        if agreed:
+            n_agree += 1
+            if et_win:
+                n_agree_win += 1
+            if et_plc:
+                n_agree_plc += 1
+        else:
+            n_disagree += 1
+            if et_win and not sa_win:
+                n_et_only += 1
+            elif sa_win and not et_win:
+                n_sa_only += 1
+            elif not (et_win or sa_win):
+                n_neither += 1
+
+        verdict = (
+            "✓✓ both" if (et_win and sa_win) else
+            "✓ ET" if et_win else
+            "✓ SARR" if sa_win else
+            "✗ neither"
+        )
+        rows.append({
+            "R": r.get("race_number"),
+            "Dist": r.get("distance"),
+            "Cls": r.get("race_class"),
+            "ET #": f"{et_top1} {r.get('et_top1_name','') or ''}".strip(),
+            "ET odds": r.get("et_top1_odds"),
+            "SARR #": f"{sa_top1} {r.get('sa_top1_name','') or ''}".strip(),
+            "SARR odds": r.get("sa_top1_odds"),
+            "Agreed": "★" if agreed else "",
+            "Winner": f"{winner} {r.get('winner_name','') or ''}".strip(),
+            "Win odds": r.get("fav_odds") if winner == r.get("fav_horse_no") else None,
+            "ET hit": "W" if et_win else ("P" if et_plc else "—"),
+            "SARR hit": "W" if sa_win else ("P" if sa_plc else "—"),
+            "Verdict": verdict,
+            "Pace pred": pp or "—",
+            "Pace actual": pa or "—",
+            "Pace ✓": "✓" if (pp and pa and pp == pa) else ("✗" if (pp and pa) else "—"),
+        })
+
+    df = pd.DataFrame(rows)
+    st.markdown("##### Per-Race Consensus")
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    # Roll-up footer
+    st.markdown("---")
+    st.markdown("##### Day Roll-up")
+    c1, c2, c3, c4 = st.columns(4)
+    n = len(races)
+    with c1:
+        st.metric("Races", n)
+        st.metric("Models agreed (top-1)", f"{n_agree}/{n}",
+                  f"{(n_agree/n*100 if n else 0):.0f}%")
+    with c2:
+        st.metric("Agreed → won", f"{n_agree_win}/{n_agree}" if n_agree else "—",
+                  f"{(n_agree_win/n_agree*100 if n_agree else 0):.0f}%")
+        st.metric("Agreed → placed", f"{n_agree_plc}/{n_agree}" if n_agree else "—",
+                  f"{(n_agree_plc/n_agree*100 if n_agree else 0):.0f}%")
+    with c3:
+        st.metric("Disagreed: ET right", f"{n_et_only}/{n_disagree}" if n_disagree else "—")
+        st.metric("Disagreed: SARR right", f"{n_sa_only}/{n_disagree}" if n_disagree else "—")
+        st.metric("Disagreed: both wrong", f"{n_neither}/{n_disagree}" if n_disagree else "—")
+    with c4:
+        st.metric("Pace exact-match", f"{n_pace_exact}/{n_pace_total}" if n_pace_total else "—",
+                  f"{(n_pace_exact/n_pace_total*100 if n_pace_total else 0):.0f}%")
+
+
+def _aggregate_consensus_across_meetings(meeting_keys: list) -> dict:
+    """Load each per-meeting unified JSON and roll up agreement/pace metrics."""
+    out = {
+        "n_meetings": 0, "n_races": 0,
+        "n_agree": 0, "n_agree_win": 0, "n_agree_plc": 0,
+        "n_disagree": 0, "n_et_only": 0, "n_sa_only": 0, "n_neither": 0,
+        "n_pace_exact": 0, "n_pace_total": 0,
+        "et_top1_win": 0, "sa_top1_win": 0, "mk_top1_win": 0,
+        "per_meeting": [],
+    }
+    for k in meeting_keys:
+        d = _load_unified_backtest(k)
+        if not d:
+            continue
+        races = d.get("races") or []
+        if not races:
+            continue
+        out["n_meetings"] += 1
+        m_agree = m_win_et = m_win_sa = m_win_mk = m_pace_ok = m_pace_tot = 0
+        for r in races:
+            out["n_races"] += 1
+            et_m = r.get("et") or {}
+            sa_m = r.get("sa") or {}
+            mk_m = r.get("mk") or {}
+            et_win = bool(et_m.get("win"))
+            sa_win = bool(sa_m.get("win"))
+            mk_win = bool(mk_m.get("win"))
+            agreed = bool(r.get("agree_top1"))
+            if agreed:
+                out["n_agree"] += 1
+                m_agree += 1
+                if et_win:
+                    out["n_agree_win"] += 1
+                if bool(et_m.get("plc")):
+                    out["n_agree_plc"] += 1
+            else:
+                out["n_disagree"] += 1
+                if et_win and not sa_win:
+                    out["n_et_only"] += 1
+                elif sa_win and not et_win:
+                    out["n_sa_only"] += 1
+                elif not (et_win or sa_win):
+                    out["n_neither"] += 1
+            if et_win:
+                out["et_top1_win"] += 1; m_win_et += 1
+            if sa_win:
+                out["sa_top1_win"] += 1; m_win_sa += 1
+            if mk_win:
+                out["mk_top1_win"] += 1; m_win_mk += 1
+            pp, pa = r.get("pace_predicted"), r.get("pace_actual")
+            if pp and pa:
+                out["n_pace_total"] += 1; m_pace_tot += 1
+                if pp == pa:
+                    out["n_pace_exact"] += 1; m_pace_ok += 1
+        out["per_meeting"].append({
+            "date": d.get("date") or k,
+            "n": len(races),
+            "agree": m_agree,
+            "et_win": m_win_et,
+            "sa_win": m_win_sa,
+            "mk_win": m_win_mk,
+            "pace_exact": m_pace_ok,
+            "pace_total": m_pace_tot,
+        })
+    return out
+
+
+def _render_cross_day_compare(meeting_inv: dict, prefix: str = "xd_"):
+    """Multi-meeting selector → roll-up of agreement / pace / hit rates so the
+    user can spot recurring failure modes across selected race days."""
+    have = sorted(meeting_inv.keys(), reverse=True)
+    if not have:
+        st.info("No per-meeting backtests available yet.")
+        return
+    options = [(dc, f"{dc[:4]}-{dc[4:6]}-{dc[6:]}") for dc in have]
+    default_pick = [opt[0] for opt in options[:min(4, len(options))]]
+    sel = st.multiselect(
+        "Pick race days to compare:",
+        [o[0] for o in options],
+        default=default_pick,
+        format_func=lambda k: dict(options).get(k, k),
+        key=f"{prefix}sel",
+    )
+    if not sel:
+        st.caption("Select two or more meetings to roll up cross-day metrics.")
+        return
+
+    agg = _aggregate_consensus_across_meetings(sel)
+    if not agg["n_races"]:
+        st.warning("Selected meetings have no race-level data.")
+        return
+
+    n = agg["n_races"]
+    nagr = agg["n_agree"] or 0
+    ndis = agg["n_disagree"] or 0
+    nptot = agg["n_pace_total"] or 0
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.metric("Meetings", agg["n_meetings"])
+        st.metric("Races", n)
+    with c2:
+        st.metric("ET top-1 win",
+                  f"{agg['et_top1_win']}/{n}",
+                  f"{agg['et_top1_win']/n*100:.0f}%")
+        st.metric("SARR top-1 win",
+                  f"{agg['sa_top1_win']}/{n}",
+                  f"{agg['sa_top1_win']/n*100:.0f}%")
+        st.metric("Market fav win",
+                  f"{agg['mk_top1_win']}/{n}",
+                  f"{agg['mk_top1_win']/n*100:.0f}%")
+    with c3:
+        st.metric("Both agreed", f"{nagr}/{n}",
+                  f"{(nagr/n*100 if n else 0):.0f}%")
+        st.metric("Agreed → won",
+                  f"{agg['n_agree_win']}/{nagr}" if nagr else "—",
+                  f"{(agg['n_agree_win']/nagr*100 if nagr else 0):.0f}%")
+        st.metric("Agreed → placed",
+                  f"{agg['n_agree_plc']}/{nagr}" if nagr else "—",
+                  f"{(agg['n_agree_plc']/nagr*100 if nagr else 0):.0f}%")
+    with c4:
+        st.metric("Disagreed: ET right",
+                  f"{agg['n_et_only']}/{ndis}" if ndis else "—")
+        st.metric("Disagreed: SARR right",
+                  f"{agg['n_sa_only']}/{ndis}" if ndis else "—")
+        st.metric("Pace exact-match",
+                  f"{agg['n_pace_exact']}/{nptot}" if nptot else "—",
+                  f"{(agg['n_pace_exact']/nptot*100 if nptot else 0):.0f}%")
+
+    # Per-meeting breakdown table
+    pm_rows = []
+    for m in agg["per_meeting"]:
+        n_m = m["n"] or 1
+        pm_rows.append({
+            "Date": m["date"],
+            "Races": m["n"],
+            "Agreed": f"{m['agree']}/{m['n']}",
+            "ET win%": f"{m['et_win']/n_m*100:.0f}%",
+            "SARR win%": f"{m['sa_win']/n_m*100:.0f}%",
+            "Mkt win%": f"{m['mk_win']/n_m*100:.0f}%",
+            "Pace ✓": (f"{m['pace_exact']}/{m['pace_total']}"
+                       if m['pace_total'] else "—"),
+        })
+    if pm_rows:
+        st.markdown("##### Per-Meeting Breakdown")
+        st.dataframe(pd.DataFrame(pm_rows), use_container_width=True, hide_index=True)
+
+
 def _render_unified_backtest(data: dict, prefix: str = ""):
-    """Top-level renderer: 5 tabs over the unified backtest JSON."""
+    """Top-level renderer: 6 tabs over the unified backtest JSON."""
     if not data:
         st.info("No data loaded.")
         return
-    tabs = st.tabs(["Overview", "Per-Race", "Strategies",
+    tabs = st.tabs(["Overview", "Per-Race", "Consensus", "Strategies",
                     "Pace & Projection", "Trends"])
     with tabs[0]:
         _render_unified_overview(data, prefix)
     with tabs[1]:
         _render_unified_per_race(data, prefix)
     with tabs[2]:
-        _render_unified_strategies(data, prefix)
+        _render_unified_consensus(data, prefix)
     with tabs[3]:
-        _render_unified_pace_proj(data, prefix)
+        _render_unified_strategies(data, prefix)
     with tabs[4]:
+        _render_unified_pace_proj(data, prefix)
+    with tabs[5]:
         _render_unified_trends(data, prefix)
 
 
@@ -5355,6 +5601,13 @@ def page_backtest():
         return
 
     _render_unified_backtest(data, prefix=f"u_{sel_period}_")
+
+    # ── Cross-day compare ───────────────────────────────
+    st.markdown("---")
+    with st.expander("Compare across multiple race days "
+                     "(spot recurring vs one-off failure modes)",
+                     expanded=False):
+        _render_cross_day_compare(inventory["meeting"], prefix="xd_")
 
     # Footer: download
     st.markdown("---")
