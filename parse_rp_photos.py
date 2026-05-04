@@ -64,7 +64,15 @@ from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import cv2
+try:
+    import cv2
+except ImportError as e:
+    if "libGL.so.1" in str(e):
+        raise ImportError(
+            "OpenCV could not load libGL.so.1. On Streamlit Cloud, ensure "
+            "packages.txt includes libgl1 and libglib2.0-0, then reboot the app."
+        ) from e
+    raise
 import numpy as np
 
 BASE_DIR = Path(__file__).parent

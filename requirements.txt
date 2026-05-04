@@ -30,6 +30,7 @@ scikit-learn>=1.3       # GroupKFold for race-grouped CV
 playwright>=1.40
 
 # OCR for HKJC Running Position photos (parse_rp_photos.py)
-# Use the headless OpenCV build for Streamlit Cloud (no GUI deps).
-opencv-python-headless>=4.8
+# RapidOCR may still pull the regular opencv-python wheel; packages.txt
+# includes libGL/libglib so cv2 can import on Streamlit Cloud either way.
 rapidocr-onnxruntime>=1.3
+opencv-python-headless>=4.8

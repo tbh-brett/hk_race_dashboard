@@ -5498,6 +5498,59 @@ def _append_results_to_db(results_path: Path):
                f"(total: {len(combined)} rows)")
 
 
+def _rp_ocr_json_is_stub(path: Path) -> bool:
+    """True when RP OCR JSON is missing, invalid, or contains no useful lane data."""
+    if not path.exists():
+        return True
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return True
+    meta = data.get("meta", {}) or {}
+    return not data.get("horses") or (meta.get("field_size") or 0) == 0
+
+
+def _rp_ocr_needed(date_str: str, race_no: int | None = None) -> bool:
+    dc = date_str.replace("-", "")
+    rp_dir = BASE / "running_position_photos" / dc
+    if not rp_dir.exists():
+        return False
+    photos = sorted(rp_dir.glob("R*.jpg"))
+    if race_no is not None:
+        photos = [p for p in photos if p.name == f"R{int(race_no)}.jpg"]
+    return any(_rp_ocr_json_is_stub(p.with_suffix(".json")) for p in photos)
+
+
+def _run_rp_ocr_subprocess(date_str: str, *, race_no: int | None = None,
+                           force: bool = False, timeout: int = 600) -> subprocess.CompletedProcess:
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    cmd = [PYTHON, str(BASE / "parse_rp_photos.py"), "--date", date_str]
+    if race_no is not None:
+        cmd += ["--race", str(int(race_no))]
+    if force:
+        cmd.append("--force")
+    return subprocess.run(
+        cmd, env=env, cwd=str(BASE),
+        capture_output=True, text=True, encoding="utf-8", timeout=timeout,
+    )
+
+
+def _rebuild_form_guide_after_ocr(date_str: str) -> None:
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    subprocess.run(
+        [PYTHON, str(BASE / "build_form_guide.py"), date_str],
+        env=env, cwd=str(BASE),
+        capture_output=True, text=True, encoding="utf-8", timeout=600,
+    )
+
+
+def _ocr_failure_tail(result: subprocess.CompletedProcess) -> str:
+    txt = (result.stderr or result.stdout or "").strip()
+    return txt[-1200:] if txt else "(no OCR output)"
+
+
 def _run_results_scraper(date_str: str, *, full: bool = False):
     """Invoke results scraper from the dashboard.
 
@@ -5618,38 +5671,24 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
             # If running-position photos already exist but lack OCR (or were
             # stubbed before results existed), re-run OCR now so lane data
             # becomes available immediately.
-            rp_dir = BASE / "running_position_photos" / date_compact
-            if rp_dir.exists() and any(rp_dir.glob("R*.jpg")):
-                need_ocr = False
-                for jpg in rp_dir.glob("R*.jpg"):
-                    js = jpg.with_suffix(".json")
-                    if not js.exists():
-                        need_ocr = True; break
+            if _rp_ocr_needed(date_str):
+                with st.spinner("Re-OCR running-position photos against refreshed roster…"):
+                    _r = _run_rp_ocr_subprocess(date_str, force=True)
+                if _r.returncode == 0:
+                    st.info("Running-lane OCR refreshed.")
                     try:
-                        _j = json.loads(js.read_text(encoding="utf-8"))
-                        if (_j.get("meta", {}) or {}).get("field_size", 0) == 0:
-                            need_ocr = True; break
+                        _rebuild_form_guide_after_ocr(date_str)
                     except Exception:
-                        need_ocr = True; break
-                if need_ocr:
-                    with st.spinner("Re-OCR running-position photos against refreshed roster…"):
-                        _r = subprocess.run(
-                            [PYTHON, str(BASE / "parse_rp_photos.py"),
-                             "--date", date_str, "--force"],
-                            env=env, cwd=str(BASE),
-                            capture_output=True, text=True, encoding="utf-8", timeout=600,
-                        )
-                    if _r.returncode == 0:
-                        st.info("Running-lane OCR refreshed.")
-                        # rebuild form guide so Race Card shows updated lanes
+                        pass
+                    if _is_streamlit_cloud():
                         try:
-                            subprocess.run(
-                                [PYTHON, str(BASE / "build_form_guide.py"), date_str],
-                                env=env, cwd=str(BASE),
-                                capture_output=True, text=True, encoding="utf-8", timeout=600,
-                            )
+                            _gh_persist_postrace_outputs(date_str)
                         except Exception:
                             pass
+                else:
+                    st.error("Running-lane OCR failed after results scrape.")
+                    with st.expander("OCR error", expanded=True):
+                        st.code(_ocr_failure_tail(_r))
         else:
             st.error(f"Scraper failed (exit code {result.returncode})")
             with st.expander("Error"):
@@ -6966,19 +7005,22 @@ def page_results():
                     f"results were scraped). Click to regenerate."
                 )
                 if cols[1].button("🔄 Re-run OCR", key=f"reocr_{selected_dc}_{selected_rn}"):
-                    env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
                     with st.spinner(f"Re-OCR {selected_dc} R{selected_rn}…"):
-                        r = subprocess.run(
-                            [PYTHON, str(BASE / "parse_rp_photos.py"),
-                             "--date", f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}",
-                             "--race", str(selected_rn), "--force"],
-                            env=env, cwd=str(BASE),
-                            capture_output=True, text=True, encoding="utf-8", timeout=120,
-                        )
+                        date_iso = f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}"
+                        r = _run_rp_ocr_subprocess(
+                            date_iso, race_no=selected_rn, force=True, timeout=300)
                     if r.returncode == 0:
-                        st.success("OCR regenerated — reload page to see lanes.")
+                        try:
+                            _rebuild_form_guide_after_ocr(date_iso)
+                        except Exception:
+                            pass
+                        st.cache_data.clear()
+                        st.success("OCR regenerated — lane data is ready.")
+                        st.rerun()
                     else:
-                        st.error(f"OCR failed: {r.stderr[-500:] or r.stdout[-500:]}")
+                        st.error("OCR failed.")
+                        with st.expander("OCR error", expanded=True):
+                            st.code(_ocr_failure_tail(r))
             else:
                 st.caption(
                     "🛤️ Running-lane breakdown unavailable — OCR JSON parsed but "
@@ -6990,19 +7032,22 @@ def page_results():
                 f"🛤️ Photo exists but OCR not yet generated for R{selected_rn}."
             )
             if cols[1].button("📷 Run OCR now", key=f"ocrnow_{selected_dc}_{selected_rn}"):
-                env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
                 with st.spinner(f"OCR {selected_dc} R{selected_rn}…"):
-                    r = subprocess.run(
-                        [PYTHON, str(BASE / "parse_rp_photos.py"),
-                         "--date", f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}",
-                         "--race", str(selected_rn)],
-                        env=env, cwd=str(BASE),
-                        capture_output=True, text=True, encoding="utf-8", timeout=120,
-                    )
+                    date_iso = f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}"
+                    r = _run_rp_ocr_subprocess(
+                        date_iso, race_no=selected_rn, force=True, timeout=300)
                 if r.returncode == 0:
-                    st.success("OCR complete — reload page to see lanes.")
+                    try:
+                        _rebuild_form_guide_after_ocr(date_iso)
+                    except Exception:
+                        pass
+                    st.cache_data.clear()
+                    st.success("OCR complete — lane data is ready.")
+                    st.rerun()
                 else:
-                    st.error(f"OCR failed: {r.stderr[-500:] or r.stdout[-500:]}")
+                    st.error("OCR failed.")
+                    with st.expander("OCR error", expanded=True):
+                        st.code(_ocr_failure_tail(r))
         else:
             st.caption(
                 "🛤️ Running-lane breakdown unavailable — no running-position photo "
