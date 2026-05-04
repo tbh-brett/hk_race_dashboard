@@ -23,7 +23,10 @@ USER_BETS_PATH = REPORTS / "user_bets_log.jsonl"
 # Supported bet types (subset of HKJC pools we can auto-settle)
 BET_TYPES = [
     "WIN", "PLACE", "QIN", "QPL", "QIN_BANKER", "QPL_BANKER",
-    "F4_BOX", "TRIO", "QTT_BOX", "QTT_MB",
+    "F4_BOX", "TRIO",
+    "QTT_BOX", "QTT_MB",
+    # All-Up multi-race bets — settled from bookie statement credit
+    "ALLUP_WP", "ALLUP_QQP", "ALLUP_WIN", "ALLUP_PLACE", "ALLUP_OTHER",
 ]
 
 
@@ -75,20 +78,25 @@ def submit_bet(*, meeting_date: str, venue: str, race_number: int,
                 bet_type: str, selections: list[int],
                 banker: Optional[int], stake_hkd: float,
                 notes: str = "",
-                legs: Optional[list[list[int]]] = None) -> str:
+                legs: Optional[list] = None,
+                **extra) -> str:
     """Create a new bet record. Returns the bet_id.
 
     meeting_date: 'YYYYMMDD'
     selections: list of horse numbers (for QIN/QPL/TRIO/F4 this is the "legs")
     banker: banker horse number or None
-    legs: only for ``QTT_MB`` (Quartet Multi-Banker) — four lists of horse
-        numbers, one per finishing position. ``selections`` should still be
-        the union of all four lists for back-compat tooling.
+    legs: optional structured leg data — for QTT_MB this is a list of
+        per-finish-position selection lists; for ALLUP_* this is a list of
+        ``{race_number, banker, selections}`` dicts (one per leg).
+    **extra: any additional keys (e.g. ``_bookie_ref``,
+        ``_bookie_total_credit``, ``all_up_formula``) are stored verbatim
+        on the row so the settler can use them later.
     """
     bet_type = (bet_type or "").upper().strip()
     if bet_type not in BET_TYPES:
         raise ValueError(f"unsupported bet_type {bet_type!r}")
     if bet_type == "QTT_MB":
+        # QTT_MB carries one leg per finishing position (4 lists of ints).
         if not legs or len(legs) != 4 or any(not lg for lg in legs):
             raise ValueError("QTT_MB requires exactly 4 non-empty leg lists")
     bet_id = uuid.uuid4().hex[:10]
@@ -106,7 +114,15 @@ def submit_bet(*, meeting_date: str, venue: str, race_number: int,
         "status": "open",
     }
     if legs is not None:
-        row["legs"] = [[int(x) for x in lg] for lg in legs]
+        # QTT_MB legs are list[list[int]] — coerce to int.
+        # ALLUP_* legs are list[dict] — store as-is.
+        if legs and isinstance(legs[0], (list, tuple)):
+            row["legs"] = [[int(x) for x in lg] for lg in legs]
+        else:
+            row["legs"] = legs
+    for k, v in extra.items():
+        if v is not None:
+            row[k] = v
     rows = _load_all()
     rows.append(row)
     _save_all(rows)
@@ -235,6 +251,38 @@ def _race_dividends(pack: dict, race_number: int) -> dict:
 def _settle_one(bet: dict, pack: dict) -> Optional[dict]:
     """Compute return_hkd / pnl_hkd / hit for a single bet."""
     rn = bet["race_number"]
+
+    # ── All-Up bets: settle from bookie statement (truth) ──────────
+    # All-Up legs compound across multiple races and HKJC publishes only
+    # the per-leg WIN/PLACE/QIN/QPL dividends — reproducing the pool's
+    # exact roll-over arithmetic is brittle. The account statement,
+    # however, already records the realised credit, so we trust it.
+    if bet["bet_type"].startswith("ALLUP"):
+        credit = bet.get("_bookie_total_credit")
+        debit  = bet.get("_bookie_total_debit")
+        if credit is None or debit is None:
+            # No bookie figures available yet — leave as open.
+            return None
+        # Don't settle until every leg's results are in (avoids settling
+        # a still-open multi while later legs are pending).
+        legs = bet.get("legs") or []
+        for L in legs:
+            leg_rn = L.get("race_number")
+            if leg_rn is None:
+                continue
+            if not _race_finishers(pack, int(leg_rn)):
+                return None
+        ret = float(credit)
+        return {
+            "status": "settled",
+            "return_hkd": round(ret, 2),
+            "pnl_hkd":    round(ret - float(debit), 2),
+            "hit":        ret > 0,
+            "settled_at": datetime.now().isoformat(timespec="seconds"),
+            "finishers":  [],
+            "settle_method": "bookie_statement",
+        }
+
     finishers = _race_finishers(pack, rn)
     if not finishers:
         return None

@@ -3369,6 +3369,177 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
                "&nbsp; · &nbsp; Jump to full analysis on **Model Analysis** page.")
 
 
+def _compute_race_day_scorecard(data: dict, date_compact: str) -> dict | None:
+    """Compare model picks against actual finish for one meeting.
+
+    Returns ``None`` when the post-race results JSON is missing.
+    Otherwise returns ``{n_races, top1, top3, top5, mean_winner_rank, rows}``
+    where ``rows`` is a per-race breakdown for tabular display.
+    """
+    res = _load_results_json(date_compact)
+    if not res:
+        return None
+    actual_by_race: dict[int, dict] = {}
+    for r in res.get("races", []) or []:
+        try:
+            rn = int(r.get("race_number") or 0)
+        except (TypeError, ValueError):
+            continue
+        if rn <= 0:
+            continue
+        order: list[tuple[int, int, str]] = []
+        for ru in r.get("runners", []) or []:
+            try:
+                pl = int(ru.get("place"))
+                hn = int(ru.get("horse_no"))
+            except (TypeError, ValueError):
+                continue
+            order.append((pl, hn, str(ru.get("horse_name") or "")))
+        order.sort(key=lambda t: t[0])
+        if not order or order[0][0] != 1:
+            continue
+        top3 = [hn for _, hn, _ in order[:3]]
+        actual_by_race[rn] = {"top3": top3,
+                              "winner_no": order[0][1],
+                              "winner_name": order[0][2]}
+
+    rows: list[dict] = []
+    n_top1 = n_top3 = n_top5 = 0
+    n_settled = 0
+    rank_sum = 0
+    rank_n = 0
+    for race in (data.get("races") or []):
+        try:
+            rn = int(race.get("race_number") or 0)
+        except (TypeError, ValueError):
+            continue
+        actual = actual_by_race.get(rn)
+        if not actual:
+            continue
+        picks = race.get("picks") or []
+        rank_by_no: dict[int, int] = {}
+        for p in picks:
+            try:
+                no = int(p.get("horse_no"))
+                rk = int(p.get("rank") or 0)
+            except (TypeError, ValueError):
+                continue
+            if rk > 0 and no not in rank_by_no:
+                rank_by_no[no] = rk
+        winner_rank = rank_by_no.get(actual["winner_no"])
+        model_top3 = sorted(
+            (no for no, rk in rank_by_no.items() if rk <= 3),
+            key=lambda no: rank_by_no[no],
+        )
+        overlap = len(set(model_top3) & set(actual["top3"]))
+
+        n_settled += 1
+        if winner_rank is not None:
+            rank_sum += winner_rank
+            rank_n += 1
+            if winner_rank == 1:
+                n_top1 += 1
+            if winner_rank <= 3:
+                n_top3 += 1
+            if winner_rank <= 5:
+                n_top5 += 1
+
+        rows.append({
+            "race": rn,
+            "winner_no": actual["winner_no"],
+            "winner_name": actual["winner_name"],
+            "winner_rank": winner_rank,
+            "top3_overlap": overlap,
+            "model_top3": model_top3,
+        })
+
+    if n_settled == 0:
+        return None
+    return {
+        "n_races": n_settled,
+        "top1": n_top1 / n_settled,
+        "top3": n_top3 / n_settled,
+        "top5": n_top5 / n_settled,
+        "mean_winner_rank": (rank_sum / rank_n) if rank_n else None,
+        "rows": rows,
+    }
+
+
+def _render_race_day_scorecard(data: dict, date_compact: str) -> None:
+    """Compact post-race accuracy panel for the Race Day Insight page."""
+    sc = _compute_race_day_scorecard(data, date_compact)
+    if not sc:
+        return  # Pre-race or partial — silently skip.
+
+    n = sc["n_races"]
+    top1, top3, top5 = sc["top1"], sc["top3"], sc["top5"]
+    mr = sc["mean_winner_rank"]
+    n1 = sum(1 for r in sc["rows"] if r["winner_rank"] == 1)
+    n3 = sum(1 for r in sc["rows"] if (r["winner_rank"] or 99) <= 3)
+    n5 = sum(1 for r in sc["rows"] if (r["winner_rank"] or 99) <= 5)
+
+    def _col(rate: float) -> str:
+        if rate >= 0.40:
+            return "#22c55e"
+        if rate >= 0.20:
+            return "#f59e0b"
+        return "#ef4444"
+
+    head = (
+        f'<div style="margin:6px 0 8px 0;padding:10px 14px;'
+        f'background:linear-gradient(90deg,rgba(34,197,94,0.07),rgba(59,130,246,0.07));'
+        f'border:1px solid rgba(148,163,184,0.25);border-radius:8px">'
+        f'<div style="font-size:0.78em;font-weight:700;color:#94a3b8;'
+        f'letter-spacing:0.06em;margin-bottom:6px">'
+        f'📊 RACE-DAY SCORECARD · {n} settled race{"s" if n != 1 else ""}</div>'
+        f'<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:baseline">'
+        f'<div><span style="opacity:0.6;font-size:0.78em">Top-1 Win</span> '
+        f'<span style="color:{_col(top1)};font-size:1.3em;font-weight:700">'
+        f'{top1*100:.0f}%</span> <span style="opacity:0.55;font-size:0.78em">'
+        f'({n1}/{n})</span></div>'
+        f'<div><span style="opacity:0.6;font-size:0.78em">Top-3 Hit</span> '
+        f'<span style="color:{_col(top3)};font-size:1.3em;font-weight:700">'
+        f'{top3*100:.0f}%</span> <span style="opacity:0.55;font-size:0.78em">'
+        f'({n3}/{n})</span></div>'
+        f'<div><span style="opacity:0.6;font-size:0.78em">Top-5 Hit</span> '
+        f'<span style="color:{_col(top5)};font-size:1.3em;font-weight:700">'
+        f'{top5*100:.0f}%</span> <span style="opacity:0.55;font-size:0.78em">'
+        f'({n5}/{n})</span></div>'
+    )
+    if mr is not None:
+        head += (
+            f'<div><span style="opacity:0.6;font-size:0.78em">Avg Winner Rank</span> '
+            f'<span style="font-size:1.3em;font-weight:700">{mr:.1f}</span></div>'
+        )
+    head += '</div></div>'
+    st.markdown(head, unsafe_allow_html=True)
+
+    with st.expander(f"Per-race breakdown ({n} races)", expanded=False):
+        rows_disp = []
+        for r in sc["rows"]:
+            wr = r["winner_rank"]
+            if wr is None:
+                wr_disp, tag = "Not in picks", "⚠"
+            elif wr == 1:
+                wr_disp, tag = f"#{wr}", "✓"
+            elif wr <= 3:
+                wr_disp, tag = f"#{wr}", "≤3"
+            elif wr <= 5:
+                wr_disp, tag = f"#{wr}", "≤5"
+            else:
+                wr_disp, tag = f"#{wr}", "miss"
+            rows_disp.append({
+                "Race": f"R{r['race']}",
+                "Winner": f"{r['winner_no']} {r['winner_name']}",
+                "Model Rank": wr_disp,
+                "Result": tag,
+                "Top-3 ∩": f"{r['top3_overlap']}/3",
+                "Model Top-3 (#)": ", ".join(str(x) for x in r["model_top3"]) or "—",
+            })
+        st.dataframe(pd.DataFrame(rows_disp), use_container_width=True,
+                     hide_index=True)
+
+
 def page_overview():
 
     st.markdown('<div class="page-title">Race Day Insight</div>', unsafe_allow_html=True)
@@ -3400,6 +3571,11 @@ def page_overview():
     st.markdown(f"### {data.get('meeting_title', nice_date)}")
     if version:
         st.caption(f"Model {version}  ·  {len(races)} races")
+
+    # ── Race-Day Scorecard (post-race) ──────────────────────────────
+    # Surfaces what the model got right/wrong for this meeting once the
+    # results JSON is available. Hidden for upcoming meetings.
+    _render_race_day_scorecard(data, dstr)
 
     # ══════════════════════════════════════════════════════════════════
     # RACE-TIME COCKPIT — top-of-page, single-race focus
