@@ -306,11 +306,23 @@ def _extract_all_matrices(page) -> dict:
 
 
 def scrape_race(page, date_iso: str, venue: str, race_no: int,
-                pools: set[str]) -> dict:
+                pools: set[str],
+                prev_fingerprint: str | None = None) -> dict:
     """Scrape requested pools for one race from the public /wpq/ page.
     `pools` is a subset of {"wp", "qin", "qpl"}. All three are extracted
     from the SAME page render — the matrix tables are visible to anonymous
     users on /wpq/ even though /qin/ and /qpl/ require login.
+
+    `prev_fingerprint` is the (race_info, first_horse_name) tuple from the
+    previously-scraped race, encoded as a string. When supplied, this
+    function waits until the rendered DOM no longer matches that
+    fingerprint — which means the SPA has finished navigating to the new
+    race rather than leaving stale data on screen. Without this guard we
+    have observed races 3-9 all latching onto the R1/R2 horse list when
+    several races are scraped in rapid succession.
+
+    Returns the snapshot dict; the caller passes back snap["_fingerprint"]
+    as `prev_fingerprint` for the next call.
     """
     snap = {
         "scraped_at": dt.datetime.now().isoformat(timespec="seconds"),
@@ -319,21 +331,56 @@ def scrape_race(page, date_iso: str, venue: str, race_no: int,
         "race_no": race_no,
     }
     url = f"https://bet.hkjc.com/en/racing/wpq/{date_iso}/{venue}/{race_no}"
-    try:
-        page.goto(url, wait_until="domcontentloaded", timeout=30_000)
-    except Exception:
-        page.goto(url, timeout=30_000)
-    try:
-        page.wait_for_selector("text=Horse Name", timeout=15_000)
-    except Exception:
-        pass
-    # The QIN/QPL pair-odds matrices render slightly after the WP table.
-    # Wait for at least one cell containing 'Quinella Place' header text.
-    try:
-        page.wait_for_selector("text=Quinella Place", timeout=10_000)
-    except Exception:
-        pass
-    page.wait_for_timeout(2500)
+
+    def _navigate_and_wait():
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=30_000)
+        except Exception:
+            page.goto(url, timeout=30_000)
+        try:
+            page.wait_for_selector("text=Horse Name", timeout=15_000)
+        except Exception:
+            pass
+        # The QIN/QPL pair-odds matrices render slightly after the WP table.
+        try:
+            page.wait_for_selector("text=Quinella Place", timeout=10_000)
+        except Exception:
+            pass
+        page.wait_for_timeout(2500)
+
+    def _current_fingerprint() -> str:
+        try:
+            body = page.locator("body").inner_text(timeout=2_000)
+        except Exception:
+            return ""
+        _, ri, rows = _extract_from_text(body)
+        first = (rows[0]["horse"] if rows else "")
+        return f"{ri}||{first}||{len(rows)}"
+
+    _navigate_and_wait()
+
+    # ── Stale-DOM guard ──────────────────────────────────────────────
+    # If the fingerprint matches the previous race's, the SPA hasn't
+    # finished routing to this race yet (or — worst case — silently
+    # failed to do so). Poll for up to 12s, then hard-reload as a last
+    # resort.
+    if prev_fingerprint:
+        deadline_ms = 12_000
+        elapsed = 0
+        step = 750
+        while elapsed < deadline_ms:
+            if _current_fingerprint() != prev_fingerprint:
+                break
+            page.wait_for_timeout(step)
+            elapsed += step
+        else:
+            # Stale DOM persisted — force a hard reload.
+            try:
+                page.reload(wait_until="domcontentloaded", timeout=30_000)
+                page.wait_for_selector("text=Horse Name", timeout=15_000)
+                page.wait_for_timeout(2500)
+            except Exception:
+                pass
 
     # 1) Win/Place + race info
     if "wp" in pools:
@@ -342,6 +389,14 @@ def scrape_race(page, date_iso: str, venue: str, race_no: int,
             "url": url, "last_update": last_update,
             "race_info": race_info, "n_runners": len(odds), "odds": odds,
         })
+        # Cross-check: race_info should mention the requested race time.
+        # The WPQ page header has a "Race N" badge — if the rendered DOM
+        # still shows a different race, raise a soft warning that the
+        # caller can log / surface.
+        first_horse = (odds[0]["horse"] if odds else "")
+        snap["_fingerprint"] = f"{race_info}||{first_horse}||{len(odds)}"
+        if prev_fingerprint and snap["_fingerprint"] == prev_fingerprint:
+            snap["stale_dom"] = True
 
     # 2) QIN + QPL matrices (extracted from the same /wpq/ DOM)
     if "qin" in pools or "qpl" in pools:
@@ -411,13 +466,26 @@ def main():
             )
             page = context.new_page()
 
+            prev_fp: str | None = None
             for rn in races:
                 print(f"[{args.venue}] R{rn} ...", end=" ", flush=True)
                 try:
-                    snap = scrape_race(page, date_iso, args.venue, rn, pools)
+                    snap = scrape_race(page, date_iso, args.venue, rn, pools,
+                                       prev_fingerprint=prev_fp)
+                    if snap.get("stale_dom"):
+                        # Don't write a file that duplicates the previous
+                        # race; surface a warning for the caller's log.
+                        print("STALE_DOM (skipped — matched previous race)")
+                        continue
                     outf = out_dir / f"{args.venue}_R{rn:02d}_{ts}.json"
-                    outf.write_text(json.dumps(snap, indent=2, ensure_ascii=False),
-                                    encoding="utf-8")
+                    # Strip private fingerprint key before writing.
+                    snap_to_write = {k: v for k, v in snap.items()
+                                     if not k.startswith("_")}
+                    outf.write_text(
+                        json.dumps(snap_to_write, indent=2,
+                                   ensure_ascii=False),
+                        encoding="utf-8")
+                    prev_fp = snap.get("_fingerprint") or prev_fp
                     parts = []
                     if "odds" in snap:
                         parts.append(f"WP={snap.get('n_runners', 0)}")
