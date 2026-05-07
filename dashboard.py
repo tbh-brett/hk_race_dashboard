@@ -919,6 +919,12 @@ def _gh_emergency_sync_all() -> tuple[int, int, list[str]]:
     _add(BLACKBOOK_FILE, "blackbook.json")
     _add(REPORTS / "user_bets_log.jsonl", "reports/user_bets_log.jsonl")
 
+    # v4.8: master historical DB (xlsx + sqlite). Auto-updated when
+    # scrape_hkjc_results runs but only persists to GitHub if explicitly
+    # synced — every meeting since April was at risk of being lost.
+    _add(BASE / "hkjc_results_updated.xlsx", "hkjc_results_updated.xlsx")
+    _add(BASE / "hkjc.db", "hkjc.db")
+
     # reports/ JSONs we know we want to persist
     if REPORTS.exists():
         report_globs = (
@@ -1047,6 +1053,76 @@ def _render_persistence_sidebar() -> None:
         else:
             st.sidebar.error("Nothing pushed. Errors:\n"
                              + "\n".join(f"• {x}" for x in sample))
+
+
+def _render_db_backup_sidebar() -> None:
+    """Sidebar buttons to download the master historical DB for backup.
+
+    Renders both locally and on cloud — the local copy may be more or
+    less fresh than the cloud one depending on which environment last
+    scraped results, so users want the option from both sides.
+    """
+    xlsx_path = BASE / "hkjc_results_updated.xlsx"
+    db_path = BASE / "hkjc.db"
+    if not (xlsx_path.exists() or db_path.exists()):
+        return
+
+    st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="sb-nav-section">DB Backup</div>',
+                        unsafe_allow_html=True)
+
+    # Compute summary (rows + max date) once per render — read from sqlite
+    # for speed; falls back to xlsx mtime if sqlite missing.
+    summary = ""
+    try:
+        if db_path.exists():
+            import sqlite3 as _sql
+            con = _sql.connect(str(db_path))
+            try:
+                n = con.execute("SELECT COUNT(*) FROM results").fetchone()[0]
+                mx = con.execute("SELECT MAX(race_date) FROM results").fetchone()[0]
+                summary = f"{n:,} rows · latest {mx}"
+            finally:
+                con.close()
+        elif xlsx_path.exists():
+            from datetime import datetime as _dt
+            mt = _dt.fromtimestamp(xlsx_path.stat().st_mtime)
+            summary = f"xlsx · modified {mt:%Y-%m-%d %H:%M}"
+    except Exception as e:
+        summary = f"(summary unavailable: {e})"
+
+    if summary:
+        st.sidebar.caption(summary)
+
+    if xlsx_path.exists():
+        try:
+            st.sidebar.download_button(
+                "⬇ hkjc_results_updated.xlsx",
+                data=xlsx_path.read_bytes(),
+                file_name="hkjc_results_updated.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+                key="_db_dl_xlsx",
+                help="Full historical results (master xlsx). Open in Excel "
+                     "to verify integrity or keep as a backup.",
+            )
+        except Exception as e:
+            st.sidebar.warning(f"xlsx download unavailable: {e}")
+
+    if db_path.exists():
+        try:
+            st.sidebar.download_button(
+                "⬇ hkjc.db (SQLite)",
+                data=db_path.read_bytes(),
+                file_name="hkjc.db",
+                mime="application/octet-stream",
+                use_container_width=True,
+                key="_db_dl_sqlite",
+                help="SQLite mirror of the master xlsx — open in DB Browser "
+                     "for SQLite to query / verify.",
+            )
+        except Exception as e:
+            st.sidebar.warning(f"sqlite download unavailable: {e}")
 
 
 def _gh_get_path_sha(repo_path: str) -> str | None:
@@ -1210,6 +1286,12 @@ def _gh_persist_postrace_outputs(date_str: str) -> tuple[int, int, list[str]]:
         # Form guide cache often gets lane data added during step 6.
         (BASE / "cache" / f"form_guide_{date_str}.json",
          f"cache/form_guide_{date_str}.json"),
+        # v4.8: master historical DB. Auto-appended by scrape_hkjc_results.py
+        # via db_utils.append_results_to_db. Without this, every meeting's
+        # rows are lost on next container restart and the DB silently rolls
+        # back to whatever was last pushed manually.
+        (BASE / "hkjc_results_updated.xlsx",   "hkjc_results_updated.xlsx"),
+        (BASE / "hkjc.db",                     "hkjc.db"),
     ]
     rp_dir = BASE / "running_position_photos" / dc
     if rp_dir.exists():
@@ -15750,6 +15832,9 @@ def main():
     # on every page so the user always knows whether data is being synced
     # to GitHub (i.e. will survive a reboot).
     _render_persistence_sidebar()
+    # DB backup download buttons (xlsx + sqlite). Visible everywhere so
+    # the user can grab a snapshot at any time.
+    _render_db_backup_sidebar()
 
 
 def sidebar_race_day():
