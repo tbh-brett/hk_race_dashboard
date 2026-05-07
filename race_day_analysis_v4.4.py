@@ -959,11 +959,26 @@ def weight_band(w):
 
 
 def class_band(c):
+    # Safe coercion: historical DB rows can have non-numeric class labels
+    # (e.g. "Griffin Race", "Group", "Restricted") which used to crash int().
+    # v4.4.x: any value that fails int() is bucketed into "Group/Other".
+    try:
+        c = int(c)
+    except (TypeError, ValueError):
+        return "Group/Other"
     if c <= 0: return "Group/Other"
     if c <= 2: return "C1-C2"
     if c == 3: return "C3"
     if c == 4: return "C4"
     return "C5"
+
+
+def _safe_class_int(v):
+    """Return int(v) or None for non-numeric class labels like 'Griffin Race'."""
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1057,7 +1072,8 @@ def compute_horse_profile_runtime(horse_name, db, class_fine, fine, coarse, ultr
         wb_i = weight_band(int(wt_i)) if pd.notna(wt_i) and wt_i > 0 else "121-125"
         rc_i = run.get("race_course", "A")
         tt_i = run.get("track_type", "Turf")
-        cb_i = class_band(int(run.get("race_class", 0))) if pd.notna(run.get("race_class")) else "Group/Other"
+        # class_band itself handles non-numeric labels (e.g. 'Griffin Race').
+        cb_i = class_band(run.get("race_class", 0)) if pd.notna(run.get("race_class")) else "Group/Other"
         et_i, _, _, _ = lookup_expected_time(
             class_fine, fine, coarse, ultra, dist_i, going_i, wb_i, rc_i, tt_i, cb_i)
         if pd.notna(et_i) and et_i > 0:
@@ -1621,7 +1637,9 @@ def get_hkjc_standard(venue, distance, race_class, track_type="Turf"):
     else:
         vs = "ST_Turf"
 
-    cls_num = int(race_class) if race_class and race_class > 0 else 0
+    cls_num = _safe_class_int(race_class) or 0
+    if cls_num < 0:
+        cls_num = 0
 
     ref = HKJC_STANDARD_TIMES.get((vs, distance, cls_num))
     if ref is None:
@@ -1807,7 +1825,9 @@ def compute_win_probabilities(df, race_class=None):
     # v3.4.4: class-tier temperature scaling
     CLASS_T_MULT = {1: 1.0, 2: 1.0, 3: 1.0, 4: 1.30, 5: 1.50}
     if race_class is not None:
-        T *= CLASS_T_MULT.get(int(race_class), 1.0)
+        _rc_int = _safe_class_int(race_class)
+        if _rc_int is not None:
+            T *= CLASS_T_MULT.get(_rc_int, 1.0)
 
     logits = -(times - times.min()) / T
     exp_l  = np.exp(logits - logits.max())
@@ -1883,7 +1903,7 @@ def _get_race_pace_index(race_date, race_number, db, class_fine, fine, coarse, u
         rc_i = runner.get("race_course", "A")
         tt_i = runner.get("track_type", "Turf")
         rc_class_i = runner.get("race_class")
-        cb_i = class_band(int(rc_class_i)) if pd.notna(rc_class_i) else "Group/Other"
+        cb_i = class_band(rc_class_i) if pd.notna(rc_class_i) else "Group/Other"
 
         et_i, _, _, _ = lookup_expected_time(
             class_fine, fine, coarse, ultra, dist_i, going_i, wb_i, rc_i, tt_i, cb_i)
@@ -1954,7 +1974,8 @@ def compute_recency_residual(horse_name, db, class_fine, fine, coarse, ultra,
         venue = run.get("race_track", "ST")  # v3.4 (K): HV or ST
         rc_class = run.get("race_class")
         # v3.4.3: Fixed class_band mapping — class=0 (Group) was incorrectly falling to "C4"
-        cband = class_band(int(rc_class)) if pd.notna(rc_class) else "Group/Other"
+        # v4.4.x: class_band now safely coerces non-numeric labels (Griffin Race, etc.)
+        cband = class_band(rc_class) if pd.notna(rc_class) else "Group/Other"
 
         et, n_ref, _, _ = lookup_expected_time(
             class_fine, fine, coarse, ultra, dist, going_label, wband, rc, tt, cband)
@@ -2537,8 +2558,8 @@ def project_race(race, class_fine, fine, coarse, ultra, draw_off, db=None, sec_d
         #    3. Rating proximity (how close is horse's rating to new class boundary?)
         class_trans_pen = 0.0
         class_trans_label = ""
-        today_class = race.get("race_class")
-        if db is not None and today_class and today_class > 0 and n_valid_runs > 0:
+        today_class = _safe_class_int(race.get("race_class"))
+        if db is not None and today_class is not None and today_class > 0 and n_valid_runs > 0:
             horse_class_runs = db[db["horse_name"] == h["horse_name"]].copy()
             horse_class_runs = horse_class_runs[horse_class_runs["race_class"].notna()]
             if len(horse_class_runs) > 0:
@@ -2549,7 +2570,11 @@ def project_race(race, class_fine, fine, coarse, ultra, draw_off, db=None, sec_d
 
                 if not has_today_class_run:
                     class_counts = recent_classes["race_class"].value_counts()
-                    old_class = int(class_counts.index[0])
+                    # v4.4.x: skip transition logic if dominant prior class is a
+                    # non-numeric label (e.g. 'Griffin Race') — can't compare ordinally.
+                    old_class = _safe_class_int(class_counts.index[0])
+                    if old_class is None:
+                        old_class = today_class  # short-circuit: treat as same class
 
                     if old_class != today_class:
                         old_class_runs = horse_class_runs[horse_class_runs["race_class"] == old_class]
@@ -2569,7 +2594,7 @@ def project_race(race, class_fine, fine, coarse, ultra, draw_off, db=None, sec_d
                                 ocr_wband = weight_band(int(ocr_wt)) if pd.notna(ocr_wt) and ocr_wt > 0 else "121-125"
                                 ocr_rc = ocr.get("race_course", "A")
                                 ocr_tt = ocr.get("track_type", "Turf")
-                                ocr_cband = class_band(int(old_class))
+                                ocr_cband = class_band(old_class)
                                 ocr_et, _, _, _ = lookup_expected_time(
                                     class_fine, fine, coarse, ultra,
                                     ocr_dist, ocr_going, ocr_wband, ocr_rc, ocr_tt, ocr_cband)
