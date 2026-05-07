@@ -1876,7 +1876,7 @@ def _fmt_top5_html(top5: list[tuple], current_horse: str, top5_next: list | None
             tip = f"Next race {d_disp}: placed {np}" if d_disp else f"Next race: placed {np}"
             if np == 1:
                 badge = (
-                    f'<span class="t5-next t5-win" title="{tip}">&#127942;{np}</span>'
+                    f'<span class="t5-next t5-win" title="{tip}">{np}</span>'
                 )
             elif np in (2, 3):
                 badge = (
