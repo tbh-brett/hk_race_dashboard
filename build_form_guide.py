@@ -63,6 +63,66 @@ def _load_form_db() -> pd.DataFrame:
     return df
 
 
+def _build_next_run_index(form_db: pd.DataFrame) -> dict:
+    """Per-horse sorted (date, place) list for fast 'next race after D' lookup.
+
+    Returns ``{horse_name_upper: [(date, place_int_or_None), ...]}`` sorted
+    ascending by date. Used to highlight, on each historical run shown in
+    the form guide, what the top-5 co-runners did in their NEXT chronological
+    race.
+    """
+    out: dict = {}
+    sub = form_db[["horse_name_upper", "race_date", "place_num"]].copy()
+    sub = sub.sort_values("race_date")
+    for hname, grp in sub.groupby("horse_name_upper"):
+        seq = []
+        for _, r in grp.iterrows():
+            p = r["place_num"]
+            try:
+                p_int = int(p) if pd.notna(p) else None
+            except (ValueError, TypeError):
+                p_int = None
+            seq.append((r["race_date"], p_int))
+        out[hname] = seq
+    return out
+
+
+def _next_run_after(idx: dict, horse_upper: str, after_date) -> tuple | None:
+    """Return (next_date, next_place) — the immediately next race after
+    ``after_date`` for that horse, or ``None`` if there isn't one yet."""
+    seq = idx.get(horse_upper)
+    if not seq:
+        return None
+    for d, p in seq:
+        if d > after_date:
+            return (d, p)
+    return None
+
+
+def _top5_next_for_run(top5, current_horse: str, run_date, next_idx: dict) -> list:
+    """For each top-5 entry (excluding current horse), look up that horse's
+    immediate next race after ``run_date``. Returns a list aligned with
+    ``top5`` of dicts: ``{"date": iso|None, "place": int|None}`` or empty
+    dicts when no next run / entry is the current horse."""
+    out = []
+    cur_up = (current_horse or "").strip().upper()
+    for place, name in top5:
+        nm_up = str(name).strip().upper()
+        if nm_up == cur_up:
+            out.append({})
+            continue
+        nxt = _next_run_after(next_idx, nm_up, run_date)
+        if nxt is None:
+            out.append({})
+            continue
+        d, p = nxt
+        out.append({
+            "date": d.isoformat() if hasattr(d, "isoformat") else str(d),
+            "place": p,
+        })
+    return out
+
+
 def _build_race_index(form_db: pd.DataFrame) -> dict:
     idx = {}
     for key, grp in form_db.groupby(["race_date", "race_number"]):
@@ -264,6 +324,7 @@ def build(date_iso: str) -> None:
 
     race_idx = _build_race_index(form_db)
     pace_idx = _build_pace_index(form_db)
+    next_idx = _build_next_run_index(form_db)
     if pace_idx:
         print(f"  Pace index built for {len(pace_idx):,} historical races.")
 
@@ -319,6 +380,7 @@ def build(date_iso: str) -> None:
                     "pace_dev": pi.get("dev"),
                     "time": _fmt_time(row.get("finish_time_seconds")),
                     "top5": [(int(p), n) for p, n in ri.get("top5", [])],
+                    "top5_next": _top5_next_for_run(ri.get("top5", []), hname, rd, next_idx),
                     "margin_2nd": ri.get("margin_2nd", "-"),
                     **_lane_fields_for_run(rd, rnum, hname),
                 })

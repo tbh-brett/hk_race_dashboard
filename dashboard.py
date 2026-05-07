@@ -452,6 +452,14 @@ st.markdown("""
     .pl-45 { background: rgba(128,128,128,0.18); }
     .pl-x  { opacity: 0.6; }
     .t5-self { color: #e63946 !important; font-weight: 700 !important; }
+    /* Top-5 next-race outcome badges (immediately following race) */
+    .t5-next {
+        display: inline-block; margin-left: 4px;
+        font-size: 0.78em; font-weight: 700; line-height: 1;
+        padding: 1px 4px; border-radius: 3px; vertical-align: baseline;
+    }
+    .t5-win { background: #f59e0b; color: #1a0f00; }
+    .t5-plc { background: rgba(34,197,94,0.22); color: #16a34a; border: 1px solid rgba(34,197,94,0.4); }
 
     /* ══ SECTION DIVIDER ══ */
     .term-divider {
@@ -1842,19 +1850,46 @@ def _fmt_top5(top5: list[tuple], current_horse: str) -> str:
     return ", ".join(parts)
 
 
-def _fmt_top5_html(top5: list[tuple], current_horse: str) -> str:
-    """Top-5 finishers as HTML with bold horse names; current horse in amber."""
+def _fmt_top5_html(top5: list[tuple], current_horse: str, top5_next: list | None = None) -> str:
+    """Top-5 finishers as HTML with bold horse names; current horse in amber.
+
+    When ``top5_next`` is supplied it should be a list aligned with ``top5``
+    of dicts ``{"date": iso, "place": int}`` describing each co-runner's
+    IMMEDIATE next race after this run. Win (1) and place (2-3) outcomes
+    are appended as small badges.
+    """
     parts = []
     h_up = current_horse.strip().upper()
-    for place, name in top5:
+    nxt_list = top5_next or []
+    for i, (place, name) in enumerate(top5):
         name_str = str(name)
         is_self = name_str.strip().upper() == h_up
+        nxt = nxt_list[i] if i < len(nxt_list) else {}
+        badge = ""
+        if not is_self and isinstance(nxt, dict) and nxt.get("place") is not None:
+            np = nxt["place"]
+            nd = nxt.get("date", "")
+            try:
+                d_disp = date.fromisoformat(nd).strftime("%d/%m") if nd else ""
+            except (ValueError, TypeError):
+                d_disp = ""
+            tip = f"Next race {d_disp}: placed {np}" if d_disp else f"Next race: placed {np}"
+            if np == 1:
+                badge = (
+                    f'<span class="t5-next t5-win" title="{tip}">&#127942;{np}</span>'
+                )
+            elif np in (2, 3):
+                badge = (
+                    f'<span class="t5-next t5-plc" title="{tip}">{np}</span>'
+                )
         if is_self:
             parts.append(
                 f'<span class="t5-entry"><strong class="t5-self">{place}. {name_str}</strong></span>'
             )
         else:
-            parts.append(f'<span class="t5-entry">{place}. <strong>{name_str}</strong></span>')
+            parts.append(
+                f'<span class="t5-entry">{place}. <strong>{name_str}</strong>{badge}</span>'
+            )
     return " ".join(parts)
 
 
@@ -8690,6 +8725,7 @@ def page_form_guide():
                     date_disp = str(run.get("date", "?"))[:8]
                     date_dc   = ""
                 top5 = [(int(entry[0]), entry[1]) for entry in (run.get("top5") or [])]
+                top5_next = list(run.get("top5_next") or [])
                 display_runs.append({
                     "date_disp": date_disp,
                     "date_dc":   date_dc,
@@ -8710,6 +8746,7 @@ def page_form_guide():
                     "pace_dev": run.get("pace_dev"),
                     "ftime": str(run.get("time", "-")),
                     "top5": top5,
+                    "top5_next": top5_next,
                     "lane_avg": run.get("lane_avg"),
                     "lane_at":  run.get("lane_at") or {},
                     "ground_lost_m": run.get("ground_lost_m"),
@@ -8770,6 +8807,7 @@ def page_form_guide():
                     "pace_dev": None,
                     "ftime": ftime,
                     "top5": ri.get("top5", []),
+                    "top5_next": [],
                 })
 
         for dr in display_runs:
@@ -8788,11 +8826,12 @@ def page_form_guide():
             margin = dr["margin"]
             ftime = dr["ftime"]
             top5 = dr["top5"]
+            top5_next = dr.get("top5_next") or []
 
             pl_cell = _place_badge_html(place_val)
             margin_style = "color:#ef4444;font-weight:700;" if place_val == "1" else ""
             margin_cell = f'<span class="form-margin" style="{margin_style}">{_smart_frac_html(margin)}</span>'
-            t5_html = _fmt_top5_html(top5, hname) if top5 else "&mdash;"
+            t5_html = _fmt_top5_html(top5, hname, top5_next) if top5 else "&mdash;"
 
             # Pace cell — colour-code based on deviation from HKJC standard
             pace_label = str(dr.get("pace", "-")) or "-"
