@@ -588,8 +588,17 @@ code, pre, .stCode {
 # ══════════════════════════════════════════════════════════════════════════════
 
 @st.cache_data(ttl=30)
-def load_available_meetings() -> list[dict]:
-    """Scan reports/ for JSON result files and return sorted list."""
+def load_available_meetings(include_pending: bool = False) -> list[dict]:
+    """Scan reports/ for JSON result files and return sorted list.
+
+    When ``include_pending`` is True (used by the Race Day sidebar) the
+    list also includes meetings that have *only* a racecard scraped but
+    no model analysis JSON yet, so users can see and re-trigger the
+    pipeline for upcoming meetings even when step [2/3]/[3/3] of the
+    pipeline hasn't completed (e.g. on Streamlit Cloud where the heavy
+    ET model can time out). Such entries have ``file=None`` and
+    ``status="pending"``.
+    """
     meetings = []
     if not REPORTS.exists():
         return meetings
@@ -616,9 +625,52 @@ def load_available_meetings() -> list[dict]:
                     "n_races": len(data.get("races", [])),
                     "date_str": date_str,
                     "model_version": version,
+                    "status": "analysed",
                 })
             except (json.JSONDecodeError, KeyError):
                 continue
+
+    # Surface racecard-only meetings (analysis pending). Only when caller
+    # asks for it — other pages (Form Guide, Model Bets, PDF Builder, …)
+    # still see only fully-analysed meetings as before.
+    rc_dir = BASE / "racecards"
+    if include_pending and rc_dir.exists():
+        for f in rc_dir.glob("racecard_*.xlsx"):
+            m = re.search(r"racecard_(\d{8})\.xlsx$", f.name)
+            if not m:
+                continue
+            date_str = m.group(1)
+            if date_str in seen_dates:
+                continue
+            seen_dates.add(date_str)
+            iso = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+            venue = "?"
+            n_races = 0
+            cache_json = BASE / "cache" / f"racecard_{iso}.json"
+            if cache_json.exists():
+                try:
+                    with open(cache_json, "r", encoding="utf-8") as cf:
+                        cd = json.load(cf)
+                    venue = (cd.get("venue") or cd.get("meeting_venue") or "?") or "?"
+                    n_races = len(cd.get("races", []) or [])
+                except (json.JSONDecodeError, OSError):
+                    pass
+            try:
+                gen = datetime.fromtimestamp(
+                    f.stat().st_mtime).isoformat(timespec="minutes")
+            except OSError:
+                gen = ""
+            meetings.append({
+                "file": None,
+                "title": f"{iso} — {venue} (analysis pending)",
+                "generated_at": gen,
+                "venue": venue,
+                "n_races": n_races,
+                "date_str": date_str,
+                "model_version": "",
+                "status": "pending",
+            })
+
     meetings.sort(key=lambda m: m["date_str"], reverse=True)
     return meetings
 
@@ -2472,6 +2524,33 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                 with st.expander("Scrape output"):
                     st.code((res.stdout or "")[-2500:])
 
+            # Persist racecard immediately so a downstream [2/3]/[3/3]
+            # failure can't lose it on the next container restart.
+            # No-op locally (only runs on Streamlit Cloud with a token).
+            if _is_streamlit_cloud() and _gh_headers():
+                early_pushed: list[str] = []
+                rc_iso_json = BASE / "cache" / f"racecard_{date_str}.json"
+                for local, repo_path in [
+                    (racecard_xlsx, f"racecards/{racecard_xlsx.name}"),
+                    (rc_iso_json,   f"cache/{rc_iso_json.name}"),
+                ]:
+                    if local.exists():
+                        try:
+                            ok = _gh_push_file(
+                                repo_path, local.read_bytes(),
+                                f"pipeline: racecard {date_str} [skip ci]",
+                            )
+                            if ok:
+                                early_pushed.append(repo_path)
+                        except Exception as e:
+                            st.warning(f"⚠ early sync — {repo_path}: {e}")
+                if early_pushed:
+                    st.success(
+                        f"☁ Racecard synced to GitHub ({len(early_pushed)} "
+                        "file(s)) — survives a container restart even if the "
+                        "rest of the pipeline fails."
+                    )
+
         # ── [2/3] SARR model on the fresh card ─────────────────────
         if not sarr_script.exists():
             st.error(f"✗ [2/3] SARR script not found at {sarr_script}")
@@ -4104,6 +4183,36 @@ def page_race_day(selected):
     if selected is None:
         st.markdown('<div class="page-title">Model Analysis</div>', unsafe_allow_html=True)
         st.info("No meetings available. Use the sidebar to run your first analysis.")
+        return
+
+    # Racecard-only meeting (analysis pending) — selected['file'] is None.
+    # Show a clear placeholder instead of crashing on load_meeting_data().
+    if selected.get("status") == "pending" or not selected.get("file"):
+        st.markdown(
+            f'<div class="page-title">Model Analysis</div>'
+            f'<div class="page-subtitle">{selected.get("title", "")}</div>',
+            unsafe_allow_html=True,
+        )
+        ds = selected.get("date_str", "")
+        iso = f"{ds[:4]}-{ds[4:6]}-{ds[6:]}" if len(ds) == 8 else ds
+        st.warning(
+            f"⚠️ Racecard for **{iso}** is scraped but the ET (v4.4) model "
+            "analysis JSON has not been generated yet (or the last pipeline "
+            "run failed at step [2/3] SARR or [3/3] ET).\n\n"
+            "Click **[ RUN ANALYSIS ]** in the sidebar with this date selected "
+            "to (re)compute the model report. If the scrape succeeds but the "
+            "model step fails, expand the pipeline output to read the error."
+        )
+        rc_xlsx = BASE / "racecards" / f"racecard_{ds}.xlsx"
+        if rc_xlsx.exists():
+            try:
+                size_kb = rc_xlsx.stat().st_size / 1024
+                st.caption(
+                    f"Racecard file: `{rc_xlsx.name}` — "
+                    f"{size_kb:.0f} KB · {selected.get('n_races', 0)} races"
+                )
+            except OSError:
+                pass
         return
 
     data = load_meeting_data(selected["file"])
@@ -15699,7 +15808,10 @@ def sidebar_race_day():
 
     st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
     st.sidebar.markdown('<div class="sb-nav-section">Meetings</div>', unsafe_allow_html=True)
-    meetings = load_available_meetings()
+    # include_pending=True so meetings whose racecard is scraped but whose
+    # ET analysis JSON hasn't been produced yet (e.g. cloud pipeline failed
+    # at step 3/3) still appear here and can be re-selected for retry.
+    meetings = load_available_meetings(include_pending=True)
 
     if not meetings:
         st.sidebar.info("No analysed meetings found.\nRun your first analysis above!")
