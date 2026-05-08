@@ -18,6 +18,57 @@ BASE = Path(__file__).parent
 DB_FILE = BASE / "hkjc_results_updated.xlsx"
 SQLITE_FILE = BASE / "hkjc.db"
 SQLITE_TABLE = "results"
+RACECARD_DIR = BASE / "racecards"
+
+
+def _load_racecard_lookup(race_date: str) -> dict:
+    """Return {(race_number:int, normalized_name:str): {rating, gear, horse_id}}.
+
+    race_date is YYYY-MM-DD; racecard file is racecard_YYYYMMDD.xlsx.
+    Returns {} if the racecard is unavailable.
+    """
+    if not race_date:
+        return {}
+    try:
+        compact = race_date.replace("-", "")
+    except Exception:
+        return {}
+    path = RACECARD_DIR / f"racecard_{compact}.xlsx"
+    if not path.exists():
+        return {}
+    try:
+        df = pd.read_excel(path, sheet_name="All Races")
+    except Exception:
+        try:
+            df = pd.read_excel(path)
+        except Exception:
+            return {}
+    if df.empty:
+        return {}
+    out: dict = {}
+    for _, row in df.iterrows():
+        try:
+            rn = int(row.get("race_number"))
+        except Exception:
+            continue
+        name = str(row.get("horse_name") or "").strip().upper()
+        if not name:
+            continue
+        out[(rn, name)] = {
+            "rating": row.get("rating"),
+            "gear": row.get("gear"),
+            "horse_id": row.get("horse_id"),
+        }
+    return out
+
+
+def _iso_to_dc(date_iso: str) -> str:
+    """YYYY-MM-DD -> DD/MM/YYYY (HKJC URL format)."""
+    try:
+        y, m, d = date_iso.split("-")
+        return f"{d}/{m}/{y}"
+    except Exception:
+        return ""
 
 
 def safe_read_excel(path: Path) -> pd.DataFrame:
@@ -60,15 +111,72 @@ def append_results_to_db(results_path: Path,
     race_track = "ST" if venue in ("ST", "SHA TIN") else (
         "HV" if venue in ("HV", "HAPPY VALLEY") else venue)
 
+    # v4.8: enrich post-race results with racecard data (rating/gear/horse_id)
+    # so DB rows have the same columns populated as the legacy xlsx-scraped
+    # rows.  Falls back to None when the racecard is unavailable.
+    rc_lookup = _load_racecard_lookup(race_date)
+    date_dc = _iso_to_dc(race_date)
+    race_url_by_no: dict = {}
+    if date_dc:
+        for r in data.get("races", []):
+            try:
+                rn = int(r.get("race_number"))
+            except Exception:
+                continue
+            race_url_by_no[rn] = (
+                "https://racing.hkjc.com/en-us/local/information/"
+                f"displaysectionaltime?racedate={date_dc}&RaceNo={rn}"
+            )
+
     new_rows = []
     for race in data.get("races", []):
         is_awt = bool(race.get("is_awt"))
         track_type = "All Weather Track" if is_awt else "Turf"
+        try:
+            race_no_int = int(race.get("race_number"))
+        except Exception:
+            race_no_int = None
         for runner in race.get("runners", []):
             pos_list = runner.get("positions", []) or []
             running_positions = " ".join(p for p in pos_list if p)
             sec_list = runner.get("sectiontimes", []) or []
             sectiontimes_str = "; ".join(s for s in sec_list if s)
+
+            # Enrich from racecard
+            rc_row = {}
+            if race_no_int is not None:
+                rc_row = rc_lookup.get(
+                    (race_no_int,
+                     str(runner.get("horse_name", "") or "").strip().upper()),
+                    {},
+                )
+            horse_id_val = (
+                runner.get("horse_id")
+                or rc_row.get("horse_id")
+                or None
+            )
+            if isinstance(horse_id_val, str):
+                horse_id_val = horse_id_val.strip() or None
+            horse_url_val = (
+                runner.get("horse_url")
+                or (
+                    f"https://racing.hkjc.com/en-us/local/information/"
+                    f"horse?horseid={horse_id_val}"
+                    if horse_id_val
+                    else None
+                )
+            )
+            rating_val = runner.get("rating")
+            if rating_val in (None, "") and "rating" in rc_row:
+                rating_val = rc_row.get("rating")
+            if pd.isna(rating_val) if rating_val is not None else False:
+                rating_val = None
+            gear_val = runner.get("gear")
+            if gear_val in (None, "") and "gear" in rc_row:
+                gear_val = rc_row.get("gear")
+            if isinstance(gear_val, float) and pd.isna(gear_val):
+                gear_val = None
+
             new_rows.append({
                 "race_date": race_date,
                 "race_number": race.get("race_number"),
@@ -91,6 +199,12 @@ def append_results_to_db(results_path: Path,
                 "track_type": track_type,
                 "distance": race.get("distance"),
                 "sectiontimes": sectiontimes_str,
+                "rating": rating_val,
+                "gear": gear_val,
+                "horse_id": horse_id_val,
+                "horse_url": horse_url_val,
+                "race_url": race_url_by_no.get(race_no_int)
+                if race_no_int is not None else None,
             })
 
     if not new_rows:
@@ -109,7 +223,12 @@ def append_results_to_db(results_path: Path,
                 print(f"  [db] cannot read {db_file.name}: {e}; writing new only")
             existing = None
         if existing is not None and "race_date" in existing.columns:
-            existing = existing[existing["race_date"] != race_date]
+            # Robust dedup — compare on YYYY-MM-DD string regardless of
+            # whether existing race_date is stored as Timestamp or string.
+            ex_keys = pd.to_datetime(
+                existing["race_date"], errors="coerce"
+            ).dt.strftime("%Y-%m-%d")
+            existing = existing[ex_keys != race_date]
             combined = pd.concat([existing, new_df], ignore_index=True)
         else:
             combined = new_df

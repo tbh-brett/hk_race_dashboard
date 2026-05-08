@@ -42,11 +42,29 @@ BLACKBOOK_FILE = BASE / "blackbook.json"
 
 
 # ── Per-run commentary lookup (for Form Guide rows) ──────────────────────────
-def _hkjc_video_url(date_dc: str, race_no: int) -> str:
+def _hkjc_video_url(date_dc: str, race_no: int,
+                    track: str | None = None) -> str:
+    """Return a URL to the HKJC race replay page.
+
+    ``date_dc`` is ``YYYY/MM/DD``.  When ``track`` (``ST``/``HV``) is supplied
+    we point at the public English LocalResults page which embeds the
+    replay player and works when opened standalone in a new tab.  Otherwise
+    we fall back to the older iframe player URL.
+    """
+    rn = int(race_no)
+    if track:
+        tk = str(track).strip().upper()
+        rc = "ST" if tk in ("ST", "SHA TIN") else (
+            "HV" if tk in ("HV", "HAPPY VALLEY") else tk or "ST")
+        return (
+            "https://racing.hkjc.com/racing/information/English/Racing/"
+            f"LocalResults.aspx?RaceDate={date_dc}&Racecourse={rc}"
+            f"&RaceNo={rn:02d}"
+        )
     return (
         "https://racing.hkjc.com/contentAsset/videoplayer_v4/"
         "video-player-iframe_v4.html?type=replay-full"
-        f"&date={date_dc}&no={int(race_no):02d}&lang=eng"
+        f"&date={date_dc}&no={rn:02d}&lang=eng"
         "&noPTbar=false&noLeading=false&videoParam=PAD"
     )
 
@@ -16390,8 +16408,10 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
     with sub_results:
         disp = df.copy()
         disp["video"] = [
-            _hkjc_video_url(d.replace("-", "/"), int(rn))
-            for d, rn in zip(disp["race_date_str"], disp["race_number"])
+            _hkjc_video_url(d.replace("-", "/"), int(rn), tk)
+            for d, rn, tk in zip(disp["race_date_str"],
+                                  disp["race_number"],
+                                  disp.get("race_track", [""] * len(disp)))
         ]
         cols_order = [
             "race_date_str", "race_number", "race_track", "race_course",
@@ -16455,9 +16475,11 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
                 st.info("No history.")
             else:
                 hist = hist.assign(video=[
-                    _hkjc_video_url(d.replace("-", "/"), int(rn))
-                    for d, rn in zip(hist["race_date_str"],
-                                     hist["race_number"])
+                    _hkjc_video_url(d.replace("-", "/"), int(rn), tk)
+                    for d, rn, tk in zip(hist["race_date_str"],
+                                          hist["race_number"],
+                                          hist.get("race_track",
+                                                   [""] * len(hist)))
                 ])
                 show_cols = ["race_date_str", "race_number", "race_track",
                              "race_course", "race_class", "distance_n",
