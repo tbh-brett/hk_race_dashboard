@@ -15780,6 +15780,937 @@ def page_model_lab():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Race Lookup — multi-criteria search across the master DB
+# ══════════════════════════════════════════════════════════════════════════════
+
+RL_PRESETS_PATH = BASE / "cache" / "race_lookup_presets.json"
+
+# Filter session_state keys (used by clear-all + preset save/load).
+RL_FILTER_KEYS = [
+    "rl_date_mode", "rl_date_range", "rl_date_exact", "rl_date_month",
+    "rl_horse_name", "rl_track", "rl_course", "rl_class", "rl_distance",
+    "rl_gate_mode", "rl_gate_bands", "rl_gates",
+    "rl_rating_mode", "rl_rating_bands", "rl_rating_range",
+    "rl_jockey", "rl_trainer", "rl_style",
+    "rl_finish_mode", "rl_finish_specific",
+    "rl_pace",
+    "rl_time_mode", "rl_time_range", "rl_time_pct",
+    "rl_outliers_only", "rl_outlier_kind",
+]
+
+
+def _rl_load_presets() -> dict:
+    if not RL_PRESETS_PATH.exists():
+        return {}
+    try:
+        return json.loads(RL_PRESETS_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _rl_save_presets(d: dict) -> None:
+    RL_PRESETS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RL_PRESETS_PATH.write_text(json.dumps(d, indent=2, default=str),
+                               encoding="utf-8")
+
+
+def _rl_clear_all_filters():
+    """Pop every rl_* filter key so widgets snap back to defaults."""
+    for k in RL_FILTER_KEYS:
+        st.session_state.pop(k, None)
+
+
+def _rl_apply_preset(preset: dict):
+    """Push a saved preset back into session_state. Tuples (e.g. date
+    range) come back from JSON as lists, so we coerce where needed."""
+    _rl_clear_all_filters()
+    for k, v in (preset or {}).items():
+        if k == "rl_date_range" and isinstance(v, list) and len(v) == 2:
+            try:
+                from datetime import date as _date
+                v = tuple(_date.fromisoformat(str(x)[:10]) for x in v)
+            except Exception:
+                continue
+        elif k in ("rl_date_exact",) and v:
+            try:
+                from datetime import date as _date
+                v = _date.fromisoformat(str(v)[:10])
+            except Exception:
+                continue
+        elif k == "rl_rating_range" and isinstance(v, list):
+            v = tuple(v)
+        elif k == "rl_time_range" and isinstance(v, list):
+            v = tuple(v)
+        st.session_state[k] = v
+
+
+@st.cache_data(ttl=600, show_spinner="Loading master DB…")
+def _lookup_load_df(db_mtime: float, pace_mtime: float) -> pd.DataFrame:
+    """Load every row from hkjc.db once, enrich with derived fields, and
+    cache. Cache key includes the file mtimes so it auto-invalidates after
+    `append_results_to_db` rewrites the SQLite mirror or the pace index is
+    rebuilt. All filtering happens in-memory afterwards (instant)."""
+    from db_utils import read_sqlite
+
+    cols = (
+        "race_date, race_number, race_track, race_course, track_type, "
+        "race_class, distance, going, horse_id, horse_name, horsename_zh, "
+        "jockey, trainer, draw, place, lbw, finish_time_seconds, "
+        "running_positions, sectiontimes, win_odds, rating, current_rating, "
+        "actual_weight, declared_weight, gear, age, sex, sire, owner, "
+        "race_url, horse_url"
+    )
+    df = read_sqlite(f"SELECT {cols} FROM results")
+    if df.empty:
+        return df
+
+    # ── Date helpers ─────────────────────────────────────────────────────
+    df["race_date"] = pd.to_datetime(df["race_date"], errors="coerce")
+    df["race_date_str"] = df["race_date"].dt.strftime("%Y-%m-%d")
+    df["year"] = df["race_date"].dt.year
+    df["month"] = df["race_date"].dt.to_period("M").astype(str)
+
+    # ── Numeric coercions ────────────────────────────────────────────────
+    df["draw_n"] = pd.to_numeric(df["draw"], errors="coerce")
+    df["rating_n"] = pd.to_numeric(df["rating"], errors="coerce")
+    df["place_n"] = pd.to_numeric(df["place"], errors="coerce")
+    df["distance_n"] = pd.to_numeric(df["distance"], errors="coerce")
+    df["finish_time_seconds"] = pd.to_numeric(df["finish_time_seconds"], errors="coerce")
+    df["win_odds_n"] = pd.to_numeric(df["win_odds"], errors="coerce")
+
+    # ── Gate band ────────────────────────────────────────────────────────
+    def _gate_band(d):
+        if pd.isna(d): return ""
+        d = int(d)
+        if d <= 4:  return "Inside (1-4)"
+        if d <= 8:  return "Middle (5-8)"
+        return "Outside (9-14)"
+    df["gate_band"] = df["draw_n"].map(_gate_band)
+
+    # ── Rating class band (HKJC standard) ────────────────────────────────
+    def _rating_class(r):
+        if pd.isna(r): return ""
+        r = float(r)
+        if r >= 100: return "C1 (100+)"
+        if r >= 80:  return "C2 (80-99)"
+        if r >= 60:  return "C3 (60-79)"
+        if r >= 40:  return "C4 (40-59)"
+        if r >= 20:  return "C5 (20-39)"
+        return "C5- (<20)"
+    df["rating_band"] = df["rating_n"].map(_rating_class)
+
+    # ── Running style from running_positions ─────────────────────────────
+    def _style(rp):
+        if rp is None or (isinstance(rp, float) and pd.isna(rp)):
+            return ""
+        try:
+            parts = [int(p) for p in str(rp).split() if p.strip().lstrip("-").isdigit()]
+        except Exception:
+            return ""
+        if not parts:
+            return ""
+        f = parts[0]
+        if f <= 2: return "Leader"
+        if f <= 4: return "On-Pace"
+        if f <= 7: return "Midfield"
+        return "Closer"
+    df["run_style"] = df["running_positions"].map(_style)
+
+    # ── Place buckets ────────────────────────────────────────────────────
+    df["is_win"] = (df["place_n"] == 1)
+    df["is_place"] = df["place_n"].between(1, 3, inclusive="both")
+
+    # ── Field size per race (date, race_number) ──────────────────────────
+    fs = df.groupby(["race_date_str", "race_number"])["horse_name"].transform("count")
+    df["field_size"] = fs
+
+    # ── Surface flag ─────────────────────────────────────────────────────
+    rc_up = df["race_course"].astype(str).str.upper()
+    tt_up = df["track_type"].astype(str).str.upper()
+    df["surface"] = ["AWT" if ("AWT" in r or "ALL WEATHER" in t) else "Turf"
+                     for r, t in zip(rc_up, tt_up)]
+
+    # ── Pace label (per race) — merge from cache/race_pace_index.json ───
+    pidx_path = BASE / "cache" / "race_pace_index.json"
+    pace_map = {}
+    if pidx_path.exists():
+        try:
+            raw = json.loads(pidx_path.read_text(encoding="utf-8"))
+            for k, v in raw.items():
+                pace_map[k] = v.get("label") or ""
+        except Exception:
+            pace_map = {}
+    df["race_key"] = df["race_date_str"] + "_R" + df["race_number"].astype(str)
+    df["pace_label"] = df["race_key"].map(pace_map).fillna("")
+
+    # ── Speed figure: z-score within (course, distance, going) ──────────
+    # Negative = faster than bucket mean. Only for buckets with >=10 runs.
+    grp = df.groupby(["race_course", "distance_n", "going"], dropna=False)
+    bmean = grp["finish_time_seconds"].transform("mean")
+    bstd = grp["finish_time_seconds"].transform("std")
+    bcnt = grp["finish_time_seconds"].transform("count")
+    z = (df["finish_time_seconds"] - bmean) / bstd
+    z = z.where(bcnt >= 10)
+    df["speed_fig"] = z.round(2)
+
+    # ── Outlier flags (boilover / flop) ─────────────────────────────────
+    df["is_boilover"] = (df["place_n"] == 1) & (df["win_odds_n"] >= 20)
+    df["is_flop"] = (df["win_odds_n"] <= 3.0) & (df["place_n"] >= 6)
+
+    return df
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _lookup_baselines(db_mtime: float, pace_mtime: float) -> dict:
+    """Pre-compute baseline win rates on the *full* unfiltered DB so the
+    filtered slice can be compared (z-score / delta-vs-baseline)."""
+    df = _lookup_load_df(db_mtime, pace_mtime)
+    if df.empty:
+        return {}
+    base = {}
+    base["overall_win"] = float(df["is_win"].mean())
+    base["overall_place"] = float(df["is_place"].mean())
+    # Per-(course, distance, gate_band) baselines
+    g = df.groupby(["race_course", "distance_n", "gate_band"], dropna=False)
+    base["course_dist_gate"] = (g["is_win"].mean() * 100).round(2).to_dict()
+    base["course_dist_gate_n"] = g.size().to_dict()
+    # Per-(course, distance) baseline (for time z-score reference)
+    g2 = df.groupby(["race_course", "distance_n"], dropna=False)
+    base["course_dist_time_mean"] = g2["finish_time_seconds"].mean().to_dict()
+    base["course_dist_time_std"] = g2["finish_time_seconds"].std().to_dict()
+    base["course_dist_n"] = g2.size().to_dict()
+    # Per-jockey baseline win rate (across all his runs)
+    jb = df.groupby("jockey")["is_win"].agg(["mean", "size"])
+    base["jockey_win"] = jb["mean"].to_dict()
+    base["jockey_n"] = jb["size"].to_dict()
+    tb = df.groupby("trainer")["is_win"].agg(["mean", "size"])
+    base["trainer_win"] = tb["mean"].to_dict()
+    base["trainer_n"] = tb["size"].to_dict()
+    return base
+
+
+def _lookup_distinct(df: pd.DataFrame, col: str) -> list:
+    """Sorted list of non-empty unique values for a dropdown."""
+    if col not in df.columns or df.empty:
+        return []
+    s = df[col].dropna().astype(str).str.strip()
+    s = s[(s != "") & (s.str.lower() != "nan") & (s.str.lower() != "none")]
+    return sorted(s.unique().tolist())
+
+
+def page_race_lookup():
+    """Multi-criteria lookup against the master results DB. All data lives
+    in memory after a single cached load — filters are instant.
+
+    Includes the Horse Profile drilldown as a secondary tab (merged from
+    the previous standalone Horse Profile page).
+    """
+    import datetime as _dt
+    import subprocess as _sp
+
+    st.markdown('<div class="page-title">Race Lookup</div>',
+                unsafe_allow_html=True)
+    st.markdown('<div class="page-subtitle">Multi-criteria search across the '
+                'full results history. All filters apply in-memory; change '
+                'anything to re-query instantly.</div>',
+                unsafe_allow_html=True)
+
+    db_path = BASE / "hkjc.db"
+    pace_path = BASE / "cache" / "race_pace_index.json"
+    if not db_path.exists():
+        st.error("hkjc.db not found. Run `python db_utils.py --rebuild` first.")
+        return
+    db_mtime = db_path.stat().st_mtime
+    pace_mtime = pace_path.stat().st_mtime if pace_path.exists() else 0.0
+
+    df_all = _lookup_load_df(db_mtime, pace_mtime)
+    if df_all.empty:
+        st.warning("Master DB is empty.")
+        return
+    baselines = _lookup_baselines(db_mtime, pace_mtime)
+
+    min_d = df_all["race_date"].min().date()
+    max_d = df_all["race_date"].max().date()
+
+    # ── DB freshness caption + pace-coverage ─────────────────────────────
+    pace_keys = set(df_all.loc[df_all["pace_label"] != "", "race_key"])
+    all_keys = set(df_all["race_key"])
+    missing_pace = sorted(all_keys - pace_keys)
+    db_dt = _dt.datetime.fromtimestamp(db_mtime)
+    cap_l, cap_r = st.columns([3, 1])
+    with cap_l:
+        st.caption(
+            f"DB last updated **{db_dt:%Y-%m-%d %H:%M}** · "
+            f"{len(df_all):,} runs · {len(all_keys):,} races · "
+            f"pace-labelled {len(pace_keys):,}/{len(all_keys):,} "
+            f"({100 * len(pace_keys) / max(1, len(all_keys)):.0f}%)"
+        )
+    with cap_r:
+        if missing_pace and st.button(
+            f"⚙️ Build pace index ({len(missing_pace)} missing)",
+            key="rl_build_pace", use_container_width=True,
+            help="Run build_pace_index.py to populate `pace_label` for "
+                 "races that don't yet have a label."
+        ):
+            try:
+                with st.spinner("Running build_pace_index.py …"):
+                    r = _sp.run(
+                        [sys.executable, str(BASE / "build_pace_index.py")],
+                        capture_output=True, text=True, timeout=300,
+                        cwd=str(BASE),
+                    )
+                if r.returncode == 0:
+                    _lookup_load_df.clear()
+                    _lookup_baselines.clear()
+                    st.toast("Pace index rebuilt.", icon="⚙️")
+                    st.rerun()
+                else:
+                    st.error((r.stderr or r.stdout)[-1500:])
+            except (OSError, _sp.TimeoutExpired) as e:
+                st.error(str(e))
+
+    # ── Top tabs: Lookup vs merged Horse Profile ────────────────────────
+    tab_lookup, tab_horse = st.tabs(["🔎 Race Lookup", "🐴 Horse Profile"])
+
+    with tab_horse:
+        page_horse_profile()
+
+    with tab_lookup:
+        _rl_render_lookup(df_all, baselines, min_d, max_d)
+
+
+def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
+                      min_d, max_d):
+    """The actual lookup UI — pulled out so page_race_lookup can host it
+    as a tab next to Horse Profile."""
+
+    # ── Top action bar: clear-all + presets ──────────────────────────────
+    presets = _rl_load_presets()
+    a1, a2, a3, a4 = st.columns([0.9, 1.6, 1.4, 1.1])
+    with a1:
+        if st.button("✖️ Clear filters", key="rl_clear",
+                     use_container_width=True,
+                     help="Reset every filter to its default state."):
+            _rl_clear_all_filters()
+            st.rerun()
+    with a2:
+        preset_names = ["—"] + sorted(presets.keys())
+        chosen = st.selectbox("Load preset", preset_names,
+                              key="rl_preset_pick", index=0,
+                              label_visibility="collapsed")
+        if chosen != "—" and st.session_state.get("rl_preset_last") != chosen:
+            _rl_apply_preset(presets.get(chosen, {}))
+            st.session_state["rl_preset_last"] = chosen
+            st.toast(f"Loaded preset: {chosen}", icon="📥")
+            st.rerun()
+    with a3:
+        new_name = st.text_input("Save as", key="rl_preset_name",
+                                 placeholder="preset name…",
+                                 label_visibility="collapsed")
+    with a4:
+        if st.button("💾 Save preset", key="rl_preset_save",
+                     use_container_width=True,
+                     disabled=not new_name.strip()):
+            snap = {k: st.session_state.get(k) for k in RL_FILTER_KEYS
+                    if k in st.session_state}
+            presets[new_name.strip()] = snap
+            _rl_save_presets(presets)
+            st.toast(f"Saved preset: {new_name.strip()}", icon="💾")
+            st.rerun()
+    if presets:
+        with st.expander("Manage presets", expanded=False):
+            for nm in sorted(presets.keys()):
+                cc1, cc2 = st.columns([4, 1])
+                cc1.markdown(f"- **{nm}**")
+                if cc2.button("Delete", key=f"rl_pdel_{nm}",
+                              use_container_width=True):
+                    presets.pop(nm, None)
+                    _rl_save_presets(presets)
+                    st.rerun()
+
+    # ── Filter widgets ───────────────────────────────────────────────────
+    with st.expander("Filters", expanded=True):
+        # Row 1: dates
+        c1, c2, c3 = st.columns([1.1, 1.1, 1.1])
+        with c1:
+            date_mode = st.radio("Date mode",
+                                 ["Range", "Exact date", "Month", "All"],
+                                 horizontal=True, key="rl_date_mode")
+        with c2:
+            sel_start = sel_end = sel_exact = sel_month = None
+            if date_mode == "Range":
+                rng = st.date_input("Date range",
+                                    value=(max(min_d, max_d.replace(day=1)), max_d),
+                                    min_value=min_d, max_value=max_d,
+                                    key="rl_date_range")
+                if isinstance(rng, tuple) and len(rng) == 2:
+                    sel_start, sel_end = rng
+            elif date_mode == "Exact date":
+                sel_exact = st.date_input("Date", value=max_d,
+                                          min_value=min_d, max_value=max_d,
+                                          key="rl_date_exact")
+            elif date_mode == "Month":
+                months = sorted(df_all["month"].dropna().unique().tolist(), reverse=True)
+                sel_month = st.selectbox("Month (YYYY-MM)", months, key="rl_date_month")
+        with c3:
+            sel_horse_name = st.text_input("Horse name (substring)",
+                                           key="rl_horse_name").strip().upper()
+
+        # Row 2: track / surface / class / distance
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            sel_track = st.multiselect("Track",
+                                       _lookup_distinct(df_all, "race_track"),
+                                       key="rl_track")
+        with c2:
+            sel_course = st.multiselect("Course",
+                                        _lookup_distinct(df_all, "race_course"),
+                                        key="rl_course")
+        with c3:
+            sel_class = st.multiselect("Class",
+                                       _lookup_distinct(df_all, "race_class"),
+                                       key="rl_class")
+        with c4:
+            sel_dist = st.multiselect("Distance (m)",
+                                      sorted(df_all["distance_n"].dropna().astype(int).unique().tolist()),
+                                      key="rl_distance")
+
+        # Row 3: gate / rating
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            sel_gate_mode = st.radio("Gate mode",
+                                     ["Any", "Bands", "Specific"],
+                                     horizontal=True, key="rl_gate_mode")
+        with c2:
+            sel_gate_bands = sel_gates = []
+            if sel_gate_mode == "Bands":
+                sel_gate_bands = st.multiselect(
+                    "Gate band",
+                    ["Inside (1-4)", "Middle (5-8)", "Outside (9-14)"],
+                    key="rl_gate_bands")
+            elif sel_gate_mode == "Specific":
+                sel_gates = st.multiselect("Gate",
+                                           list(range(1, 15)),
+                                           key="rl_gates")
+        with c3:
+            sel_rating_mode = st.radio("Rating mode",
+                                       ["Any", "Bands", "Range"],
+                                       horizontal=True, key="rl_rating_mode")
+        with c4:
+            sel_rating_bands = []
+            sel_rating_min = sel_rating_max = None
+            if sel_rating_mode == "Bands":
+                sel_rating_bands = st.multiselect(
+                    "Rating band",
+                    ["C1 (100+)", "C2 (80-99)", "C3 (60-79)",
+                     "C4 (40-59)", "C5 (20-39)", "C5- (<20)"],
+                    key="rl_rating_bands")
+            elif sel_rating_mode == "Range":
+                rng = st.slider("Rating", 0, 130, (40, 100), key="rl_rating_range")
+                sel_rating_min, sel_rating_max = rng
+
+        # Row 4: jockey / trainer
+        c1, c2 = st.columns(2)
+        with c1:
+            sel_jockey = st.multiselect("Jockey",
+                                        _lookup_distinct(df_all, "jockey"),
+                                        key="rl_jockey")
+        with c2:
+            sel_trainer = st.multiselect("Trainer",
+                                         _lookup_distinct(df_all, "trainer"),
+                                         key="rl_trainer")
+
+        # Row 5: profile / finish / pace / time
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            sel_style = st.multiselect("Running style (profile)",
+                                       ["Leader", "On-Pace", "Midfield", "Closer"],
+                                       key="rl_style")
+        with c2:
+            sel_finish = st.radio("Finish",
+                                  ["Any", "Win (1)", "Place (1-3)",
+                                   "Top-5", "Specific"],
+                                  horizontal=True, key="rl_finish_mode")
+            sel_finish_specific = []
+            if sel_finish == "Specific":
+                sel_finish_specific = st.multiselect(
+                    "Position", list(range(1, 15)), key="rl_finish_specific")
+        with c3:
+            pace_opts = _lookup_distinct(df_all, "pace_label")
+            sel_pace = st.multiselect("Race pace",
+                                      pace_opts,
+                                      key="rl_pace") if pace_opts else []
+        with c4:
+            sel_time_mode = st.radio("Time filter",
+                                     ["Any", "Custom range",
+                                      "Top X% in (course, distance)",
+                                      "Speed fig ≤"],
+                                     horizontal=True, key="rl_time_mode")
+            sel_time_min = sel_time_max = None
+            sel_time_pct = None
+            sel_speed_fig = None
+            if sel_time_mode == "Custom range":
+                t_lo = float(df_all["finish_time_seconds"].min() or 50.0)
+                t_hi = float(df_all["finish_time_seconds"].max() or 200.0)
+                rng = st.slider("Finish time (s)",
+                                int(t_lo), int(t_hi) + 1,
+                                (int(t_lo), int(t_hi) + 1),
+                                key="rl_time_range")
+                sel_time_min, sel_time_max = rng
+            elif sel_time_mode == "Top X% in (course, distance)":
+                sel_time_pct = st.slider(
+                    "Top X% fastest finishers",
+                    1, 50, 10, key="rl_time_pct",
+                    help="For each (race_course, distance) bucket, keep "
+                         "rows whose finish_time is in the fastest X%.")
+            elif sel_time_mode == "Speed fig ≤":
+                sel_speed_fig = st.slider(
+                    "Speed fig threshold (z-score)",
+                    -3.0, 1.0, -1.0, 0.1, key="rl_speed_fig",
+                    help="Speed fig = (time − bucket mean) / bucket std, "
+                         "where bucket = (course, distance, going). "
+                         "Negative = faster than average. Threshold keeps "
+                         "rows with speed_fig ≤ value.")
+
+        # Row 6: outliers
+        c1, c2 = st.columns([1, 2])
+        with c1:
+            sel_outliers_only = st.checkbox(
+                "Outliers only", key="rl_outliers_only",
+                help="Only show boilovers (long-priced winners) or flops "
+                     "(short-priced losers). Useful for noise/edge audit.")
+        with c2:
+            sel_outlier_kind = []
+            if sel_outliers_only:
+                sel_outlier_kind = st.multiselect(
+                    "Outlier kind",
+                    ["Boilover (Pl=1, odds≥20)", "Flop (odds≤3, Pl≥6)"],
+                    default=["Boilover (Pl=1, odds≥20)",
+                             "Flop (odds≤3, Pl≥6)"],
+                    key="rl_outlier_kind")
+
+    # ── Apply filters ────────────────────────────────────────────────────
+    df = df_all.copy()
+
+    if date_mode == "Range" and sel_start and sel_end:
+        df = df[(df["race_date"].dt.date >= sel_start) &
+                (df["race_date"].dt.date <= sel_end)]
+    elif date_mode == "Exact date" and sel_exact:
+        df = df[df["race_date"].dt.date == sel_exact]
+    elif date_mode == "Month" and sel_month:
+        df = df[df["month"] == sel_month]
+
+    if sel_horse_name:
+        df = df[df["horse_name"].astype(str).str.upper().str.contains(
+            sel_horse_name, na=False)]
+
+    if sel_track:   df = df[df["race_track"].isin(sel_track)]
+    if sel_course:  df = df[df["race_course"].isin(sel_course)]
+    if sel_class:   df = df[df["race_class"].astype(str).isin([str(c) for c in sel_class])]
+    if sel_dist:    df = df[df["distance_n"].isin(sel_dist)]
+
+    if sel_gate_mode == "Bands" and sel_gate_bands:
+        df = df[df["gate_band"].isin(sel_gate_bands)]
+    elif sel_gate_mode == "Specific" and sel_gates:
+        df = df[df["draw_n"].isin(sel_gates)]
+
+    if sel_rating_mode == "Bands" and sel_rating_bands:
+        df = df[df["rating_band"].isin(sel_rating_bands)]
+    elif sel_rating_mode == "Range" and sel_rating_min is not None:
+        df = df[df["rating_n"].between(sel_rating_min, sel_rating_max)]
+
+    if sel_jockey:  df = df[df["jockey"].isin(sel_jockey)]
+    if sel_trainer: df = df[df["trainer"].isin(sel_trainer)]
+    if sel_style:   df = df[df["run_style"].isin(sel_style)]
+
+    if sel_finish == "Win (1)":
+        df = df[df["place_n"] == 1]
+    elif sel_finish == "Place (1-3)":
+        df = df[df["place_n"].between(1, 3)]
+    elif sel_finish == "Top-5":
+        df = df[df["place_n"].between(1, 5)]
+    elif sel_finish == "Specific" and sel_finish_specific:
+        df = df[df["place_n"].isin(sel_finish_specific)]
+
+    if sel_pace:
+        df = df[df["pace_label"].isin(sel_pace)]
+
+    if sel_time_mode == "Custom range" and sel_time_min is not None:
+        df = df[df["finish_time_seconds"].between(sel_time_min, sel_time_max)]
+    elif sel_time_mode == "Top X% in (course, distance)" and sel_time_pct:
+        rank = df.groupby(["race_course", "distance_n"])["finish_time_seconds"] \
+                 .rank(method="min", pct=True)
+        df = df[rank <= (sel_time_pct / 100.0)]
+    elif sel_time_mode == "Speed fig ≤" and sel_speed_fig is not None:
+        df = df[df["speed_fig"] <= sel_speed_fig]
+
+    if sel_outliers_only and sel_outlier_kind:
+        masks = []
+        if "Boilover (Pl=1, odds≥20)" in sel_outlier_kind:
+            masks.append(df["is_boilover"])
+        if "Flop (odds≤3, Pl≥6)" in sel_outlier_kind:
+            masks.append(df["is_flop"])
+        if masks:
+            m = masks[0]
+            for x in masks[1:]:
+                m = m | x
+            df = df[m]
+
+    df = df.sort_values(["race_date", "race_number", "place_n"],
+                        ascending=[False, True, True])
+
+    # ── Summary panel ───────────────────────────────────────────────────
+    n = len(df)
+    n_races = df.groupby(["race_date_str", "race_number"]).ngroups if n else 0
+    n_horses = df["horse_name"].nunique() if n else 0
+    win_pct = (df["is_win"].sum() / n * 100.0) if n else 0.0
+    plc_pct = (df["is_place"].sum() / n * 100.0) if n else 0.0
+
+    k1, k2, k3, k4, k5 = st.columns(5)
+    k1.metric("Rows", f"{n:,}")
+    k2.metric("Races", f"{n_races:,}")
+    k3.metric("Distinct horses", f"{n_horses:,}")
+    base_w = baselines.get("overall_win", 0) * 100
+    k4.metric("Win %", f"{win_pct:.1f}%",
+              delta=f"{win_pct - base_w:+.1f} vs baseline" if base_w else None)
+    base_p = baselines.get("overall_place", 0) * 100
+    k5.metric("Place %", f"{plc_pct:.1f}%",
+              delta=f"{plc_pct - base_p:+.1f} vs baseline" if base_p else None)
+
+    if n == 0:
+        st.info("No rows match the current filters.")
+        return
+
+    # ── Sub-tabs ────────────────────────────────────────────────────────
+    sub_results, sub_insights, sub_pivot, sub_outliers = st.tabs(
+        ["📋 Results", "📈 Insights", "🧮 Pivot designer", "🎲 Outliers"]
+    )
+
+    # ─────────────────────────── Results ─────────────────────────────────
+    with sub_results:
+        disp = df.copy()
+        disp["video"] = [
+            _hkjc_video_url(d.replace("-", "/"), int(rn))
+            for d, rn in zip(disp["race_date_str"], disp["race_number"])
+        ]
+        cols_order = [
+            "race_date_str", "race_number", "race_track", "race_course",
+            "surface", "race_class", "distance_n", "going", "pace_label",
+            "field_size",
+            "place", "horse_name", "draw", "rating", "actual_weight",
+            "jockey", "trainer", "run_style", "running_positions",
+            "finish_time_seconds", "speed_fig", "lbw", "win_odds", "gear",
+            "video", "horse_url",
+        ]
+        cols_order = [c for c in cols_order if c in disp.columns]
+        disp = disp[cols_order].rename(columns={
+            "race_date_str": "Date", "race_number": "R",
+            "race_track": "Track", "race_course": "Course",
+            "surface": "Surface", "race_class": "Class",
+            "distance_n": "Dist", "going": "Going",
+            "pace_label": "Pace", "field_size": "Fld",
+            "place": "Pl", "horse_name": "Horse",
+            "draw": "Gate", "rating": "RT",
+            "actual_weight": "Wt", "jockey": "Jockey",
+            "trainer": "Trainer", "run_style": "Style",
+            "running_positions": "Run pos.",
+            "finish_time_seconds": "Time(s)", "speed_fig": "SpdFig",
+            "lbw": "LBW", "win_odds": "Odds", "gear": "Gear",
+            "video": "▶ Replay", "horse_url": "🐴 HKJC",
+        })
+
+        st.dataframe(
+            disp, use_container_width=True, hide_index=True,
+            height=min(900, 120 + 35 * min(len(disp), 22)),
+            column_config={
+                "▶ Replay": st.column_config.LinkColumn(
+                    "▶ Replay", display_text="▶ Watch", width="small"),
+                "🐴 HKJC": st.column_config.LinkColumn(
+                    "🐴 HKJC", display_text="open", width="small"),
+                "Time(s)": st.column_config.NumberColumn(format="%.2f"),
+                "SpdFig":  st.column_config.NumberColumn(
+                    format="%+.2f",
+                    help="Speed figure z-score (negative = faster than "
+                         "course/distance/going bucket mean)."),
+            },
+        )
+
+        csv = disp.to_csv(index=False).encode("utf-8")
+        st.download_button("⬇️ Download CSV", data=csv,
+                           file_name="race_lookup.csv", mime="text/csv",
+                           use_container_width=False)
+
+        # ── Form-line drilldown: pick a horse from the slice ───────────
+        st.markdown("##### Drill into form line")
+        unique_horses = sorted(df["horse_name"].dropna().unique().tolist())
+        pick_horse = st.selectbox(
+            "Horse", ["—"] + unique_horses[:2000],
+            key="rl_drill_horse",
+            help="Picks any horse in the current slice; displays their "
+                 "last 6 runs from the *full* DB (not filtered).")
+        if pick_horse and pick_horse != "—":
+            hist = df_all[df_all["horse_name"] == pick_horse] \
+                       .sort_values("race_date", ascending=False).head(6)
+            if hist.empty:
+                st.info("No history.")
+            else:
+                hist = hist.assign(video=[
+                    _hkjc_video_url(d.replace("-", "/"), int(rn))
+                    for d, rn in zip(hist["race_date_str"],
+                                     hist["race_number"])
+                ])
+                show_cols = ["race_date_str", "race_number", "race_track",
+                             "race_course", "race_class", "distance_n",
+                             "going", "pace_label", "place", "draw",
+                             "jockey", "trainer", "run_style",
+                             "running_positions", "finish_time_seconds",
+                             "speed_fig", "lbw", "win_odds", "video"]
+                show_cols = [c for c in show_cols if c in hist.columns]
+                st.dataframe(
+                    hist[show_cols].rename(columns={
+                        "race_date_str": "Date", "race_number": "R",
+                        "race_track": "Trk", "race_course": "Crs",
+                        "race_class": "Cls", "distance_n": "Dist",
+                        "going": "Going", "pace_label": "Pace",
+                        "place": "Pl", "draw": "Gate", "jockey": "Jky",
+                        "trainer": "Trn", "run_style": "Style",
+                        "running_positions": "Run pos.",
+                        "finish_time_seconds": "Time(s)",
+                        "speed_fig": "SpdFig", "lbw": "LBW",
+                        "win_odds": "Odds", "video": "▶ Replay",
+                    }),
+                    use_container_width=True, hide_index=True,
+                    column_config={
+                        "▶ Replay": st.column_config.LinkColumn(
+                            "▶ Replay", display_text="▶", width="small"),
+                        "Time(s)": st.column_config.NumberColumn(format="%.2f"),
+                        "SpdFig": st.column_config.NumberColumn(format="%+.2f"),
+                    },
+                )
+
+    # ─────────────────────────── Insights ────────────────────────────────
+    with sub_insights:
+        def _agg(group_cols, top=20, baseline_map=None, baseline_n_map=None):
+            g = df.groupby(group_cols, dropna=False).agg(
+                runs=("horse_name", "size"),
+                wins=("is_win", "sum"),
+                places=("is_place", "sum"),
+                avg_finish=("place_n", "mean"),
+                avg_win_odds=("win_odds_n",
+                              lambda s: s[df.loc[s.index, "is_win"]].mean()),
+            ).reset_index()
+            g["win%"] = (g["wins"] / g["runs"] * 100).round(1)
+            g["plc%"] = (g["places"] / g["runs"] * 100).round(1)
+            g["avg_finish"] = g["avg_finish"].round(2)
+            g["avg_win_odds"] = g["avg_win_odds"].round(2)
+            if baseline_map and len(group_cols) == 1:
+                key = group_cols[0]
+                g["base_win%"] = g[key].map(
+                    lambda v: round((baseline_map.get(v) or 0) * 100, 1))
+                g["Δ vs base"] = (g["win%"] - g["base_win%"]).round(1)
+            g = g[g["runs"] >= 3].sort_values(["wins", "win%"],
+                                              ascending=[False, False]).head(top)
+            return g
+
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("**By gate band**")
+            st.dataframe(_agg(["gate_band"], 20),
+                         use_container_width=True, hide_index=True)
+            st.markdown("**By running style (profile)**")
+            st.dataframe(_agg(["run_style"], 20),
+                         use_container_width=True, hide_index=True)
+            st.markdown("**By rating band**")
+            st.dataframe(_agg(["rating_band"], 20),
+                         use_container_width=True, hide_index=True)
+            st.markdown("**By distance**")
+            st.dataframe(_agg(["distance_n"], 20),
+                         use_container_width=True, hide_index=True)
+        with c2:
+            st.markdown("**Top jockeys (vs their full-DB baseline)**")
+            st.dataframe(_agg(["jockey"], 20,
+                              baselines.get("jockey_win"),
+                              baselines.get("jockey_n")),
+                         use_container_width=True, hide_index=True)
+            st.markdown("**Top trainers (vs their full-DB baseline)**")
+            st.dataframe(_agg(["trainer"], 20,
+                              baselines.get("trainer_win"),
+                              baselines.get("trainer_n")),
+                         use_container_width=True, hide_index=True)
+            st.markdown("**Top jockey × trainer combos**")
+            st.dataframe(_agg(["jockey", "trainer"], 30),
+                         use_container_width=True, hide_index=True)
+            st.markdown("**By race pace**")
+            st.dataframe(_agg(["pace_label"], 20),
+                         use_container_width=True, hide_index=True)
+
+        # People combos
+        st.markdown("##### People × Horse combos (in slice)")
+        cc1, cc2 = st.columns(2)
+        with cc1:
+            st.markdown("**Top jockey × horse**")
+            st.dataframe(_agg(["jockey", "horse_name"], 30),
+                         use_container_width=True, hide_index=True)
+        with cc2:
+            st.markdown("**Top trainer × horse**")
+            st.dataframe(_agg(["trainer", "horse_name"], 30),
+                         use_container_width=True, hide_index=True)
+
+        st.markdown("**Course-specialist jockeys (jockey × race_course)**")
+        st.dataframe(_agg(["jockey", "race_course"], 30),
+                     use_container_width=True, hide_index=True)
+
+        # Bias matrices with baseline-deviation colouring
+        st.markdown("##### Bias matrix — win% by (gate band × distance)")
+        bias = (df.assign(_w=df["is_win"].astype(int))
+                  .pivot_table(index="gate_band", columns="distance_n",
+                               values="_w", aggfunc="mean") * 100).round(2)
+        # Build deviation matrix vs full-DB baseline for the same cell
+        cdg_base = baselines.get("course_dist_gate", {})
+        base_full = (df_all.assign(_w=df_all["is_win"].astype(int))
+                       .pivot_table(index="gate_band", columns="distance_n",
+                                    values="_w", aggfunc="mean") * 100).round(2)
+        try:
+            dev = (bias - base_full).round(2)
+            st.dataframe(
+                dev.style.format("{:+.1f}").background_gradient(
+                    cmap="RdYlGn", vmin=-15, vmax=15, axis=None),
+                use_container_width=True,
+            )
+            st.caption("Cells = (slice win%) − (full-DB win% for same "
+                       "gate-band × distance). Green = positive bias, "
+                       "red = negative. Empty = bucket not in slice.")
+        except Exception as e:
+            st.dataframe(bias.style.format("{:.1f}%"),
+                         use_container_width=True)
+            st.caption(f"Heatmap unavailable: {e}")
+
+        if df["pace_label"].astype(bool).any():
+            st.markdown("##### Bias matrix — win% by (running style × race pace)")
+            bias2 = (df.assign(_w=df["is_win"].astype(int))
+                       .pivot_table(index="run_style", columns="pace_label",
+                                    values="_w", aggfunc="mean") * 100).round(2)
+            try:
+                st.dataframe(
+                    bias2.style.format("{:.1f}%").background_gradient(
+                        cmap="RdYlGn", vmin=0, vmax=25, axis=None),
+                    use_container_width=True,
+                )
+            except Exception:
+                st.dataframe(bias2.style.format("{:.1f}%"),
+                             use_container_width=True)
+
+    # ───────────────────────── Pivot designer ────────────────────────────
+    with sub_pivot:
+        st.markdown("Build any 2-D win-rate matrix from the slice. "
+                    "Rows × Columns × Metric — pick any combination.")
+        groupable = ["race_track", "race_course", "surface", "race_class",
+                     "distance_n", "going", "pace_label", "gate_band",
+                     "rating_band", "run_style", "jockey", "trainer",
+                     "horse_name", "draw_n"]
+        groupable = [c for c in groupable if c in df.columns]
+        cc1, cc2, cc3, cc4 = st.columns(4)
+        with cc1:
+            piv_x = st.selectbox("Rows", groupable,
+                                 index=groupable.index("gate_band")
+                                 if "gate_band" in groupable else 0,
+                                 key="rl_piv_x")
+        with cc2:
+            piv_y = st.selectbox("Columns", groupable,
+                                 index=groupable.index("distance_n")
+                                 if "distance_n" in groupable else 0,
+                                 key="rl_piv_y")
+        with cc3:
+            piv_metric = st.selectbox(
+                "Metric",
+                ["win%", "place%", "runs", "avg_finish",
+                 "avg_win_odds", "avg_speed_fig"],
+                key="rl_piv_metric")
+        with cc4:
+            piv_minn = st.slider("Min runs / cell", 1, 50, 5,
+                                 key="rl_piv_minn")
+        if piv_x == piv_y:
+            st.info("Pick two different fields for rows and columns.")
+        else:
+            try:
+                if piv_metric == "win%":
+                    pv = (df.assign(_v=df["is_win"].astype(int))
+                            .pivot_table(index=piv_x, columns=piv_y,
+                                         values="_v", aggfunc="mean") * 100).round(2)
+                elif piv_metric == "place%":
+                    pv = (df.assign(_v=df["is_place"].astype(int))
+                            .pivot_table(index=piv_x, columns=piv_y,
+                                         values="_v", aggfunc="mean") * 100).round(2)
+                elif piv_metric == "runs":
+                    pv = df.pivot_table(index=piv_x, columns=piv_y,
+                                        values="horse_name", aggfunc="count")
+                elif piv_metric == "avg_finish":
+                    pv = df.pivot_table(index=piv_x, columns=piv_y,
+                                        values="place_n", aggfunc="mean").round(2)
+                elif piv_metric == "avg_win_odds":
+                    pv = df[df["is_win"]].pivot_table(
+                        index=piv_x, columns=piv_y,
+                        values="win_odds_n", aggfunc="mean").round(2)
+                else:  # avg_speed_fig
+                    pv = df.pivot_table(index=piv_x, columns=piv_y,
+                                        values="speed_fig",
+                                        aggfunc="mean").round(2)
+                # Mask cells with too few rows
+                cnt = df.pivot_table(index=piv_x, columns=piv_y,
+                                     values="horse_name", aggfunc="count")
+                pv = pv.where(cnt >= piv_minn)
+                fmt = ("{:.1f}%" if piv_metric in ("win%", "place%")
+                       else "{:+.2f}" if piv_metric == "avg_speed_fig"
+                       else "{:.2f}" if piv_metric in ("avg_finish",
+                                                      "avg_win_odds")
+                       else "{:.0f}")
+                cmap = ("RdYlGn" if piv_metric in
+                        ("win%", "place%") else "RdYlGn_r"
+                        if piv_metric in ("avg_finish",) else "viridis")
+                try:
+                    st.dataframe(
+                        pv.style.format(fmt, na_rep="—")
+                          .background_gradient(cmap=cmap, axis=None),
+                        use_container_width=True,
+                    )
+                except Exception:
+                    st.dataframe(pv.style.format(fmt, na_rep="—"),
+                                 use_container_width=True)
+            except Exception as e:
+                st.error(f"Pivot failed: {e}")
+
+    # ───────────────────────── Outliers ──────────────────────────────────
+    with sub_outliers:
+        st.markdown(
+            "Auto-flagged rows that may distort analytics — review for "
+            "noise vs genuine pattern."
+        )
+        boil = df[df["is_boilover"]].copy()
+        flop = df[df["is_flop"]].copy()
+        c1, c2 = st.columns(2)
+        c1.metric("Boilovers (Pl=1, odds≥20)", f"{len(boil):,}")
+        c2.metric("Flops (odds≤3, Pl≥6)", f"{len(flop):,}")
+
+        st.markdown(f"**Boilovers — {len(boil)} rows**")
+        cols = ["race_date_str", "race_number", "race_track", "race_course",
+                "race_class", "distance_n", "going", "horse_name",
+                "draw", "jockey", "trainer", "run_style", "win_odds",
+                "place"]
+        cols = [c for c in cols if c in boil.columns]
+        st.dataframe(boil[cols].head(200), use_container_width=True,
+                     hide_index=True)
+
+        st.markdown(f"**Flops — {len(flop)} rows**")
+        cols = ["race_date_str", "race_number", "race_track", "race_course",
+                "race_class", "distance_n", "going", "horse_name",
+                "draw", "jockey", "trainer", "run_style", "win_odds",
+                "place"]
+        cols = [c for c in cols if c in flop.columns]
+        st.dataframe(flop[cols].head(200), use_container_width=True,
+                     hide_index=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Entry point — page router
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -15802,7 +16733,7 @@ def main():
         ("Model Bets",     "🎯 Model Bets"),
         ("Multi Builder",  "🧮 Multi Builder"),
         ("Data Analysis",  "🔬 Data Analysis"),
-        ("Horse Profile",  "🐴 Horse Profile"),
+        ("Race Lookup",    "🔎 Race Lookup"),
         ("Results",        "🏆 Results"),
         ("Live Feed",      "📡 Live Feed"),
         ("Live Odds",      "💹 Live Odds"),
@@ -15841,7 +16772,10 @@ def main():
     elif page == "Data Analysis":
         page_data_analysis()
     elif page == "Horse Profile":
-        page_horse_profile()
+        # Horse Profile merged into Race Lookup as a tab — redirect.
+        page_race_lookup()
+    elif page == "Race Lookup":
+        page_race_lookup()
     elif page == "Live Feed":
         page_live_feed()
     elif page == "Live Odds":
