@@ -214,24 +214,40 @@ def append_results_to_db(results_path: Path,
 
     new_df = pd.DataFrame(new_rows)
 
-    # Merge with existing (de-duplicate on race_date)
+    # Merge with existing (de-duplicate on race_date).
+    # Safety net (v4.8.1): if the master xlsx is unreadable (e.g. zip
+    # corruption from a partial OneDrive sync) but the SQLite mirror exists,
+    # fall back to it — *never* write a fresh xlsx containing only the new
+    # rows, which would silently nuke the master DB.
+    existing = None
     if db_file.exists():
         try:
             existing = safe_read_excel(db_file)
         except Exception as e:
             if verbose:
-                print(f"  [db] cannot read {db_file.name}: {e}; writing new only")
+                print(f"  [db] cannot read {db_file.name}: {e}; "
+                      f"falling back to sqlite mirror")
+    if existing is None and SQLITE_FILE.exists():
+        try:
+            with sqlite3.connect(SQLITE_FILE) as conn:
+                existing = pd.read_sql_query(
+                    f"SELECT * FROM {SQLITE_TABLE}", conn)
+            if verbose:
+                print(f"  [db] loaded {len(existing)} rows from "
+                      f"sqlite mirror as fallback")
+        except Exception as e:
+            if verbose:
+                print(f"  [db] sqlite fallback failed: {e}")
             existing = None
-        if existing is not None and "race_date" in existing.columns:
-            # Robust dedup — compare on YYYY-MM-DD string regardless of
-            # whether existing race_date is stored as Timestamp or string.
-            ex_keys = pd.to_datetime(
-                existing["race_date"], errors="coerce"
-            ).dt.strftime("%Y-%m-%d")
-            existing = existing[ex_keys != race_date]
-            combined = pd.concat([existing, new_df], ignore_index=True)
-        else:
-            combined = new_df
+
+    if existing is not None and "race_date" in existing.columns:
+        # Robust dedup — compare on YYYY-MM-DD string regardless of
+        # whether existing race_date is stored as Timestamp or string.
+        ex_keys = pd.to_datetime(
+            existing["race_date"], errors="coerce"
+        ).dt.strftime("%Y-%m-%d")
+        existing = existing[ex_keys != race_date]
+        combined = pd.concat([existing, new_df], ignore_index=True)
     else:
         combined = new_df
 
