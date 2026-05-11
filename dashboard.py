@@ -3754,6 +3754,229 @@ def _render_race_day_scorecard(data: dict, date_compact: str) -> None:
                      hide_index=True)
 
 
+# ════════════════════════════════════════════════════════════════════════════
+# Framework Lab — run the 4 EDA-derived candidate frameworks against an
+# upcoming racecard. Wraps `frameworks/live_predict.py`.
+# ════════════════════════════════════════════════════════════════════════════
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _fwlab_available_racecards() -> list[str]:
+    """Return ISO dates for which a racecard cache exists, newest first."""
+    out: list[str] = []
+    rc_dir = BASE / "cache"
+    if not rc_dir.exists():
+        return out
+    for fp in rc_dir.glob("racecard_*.json"):
+        try:
+            iso = fp.stem.replace("racecard_", "")
+            # validate YYYY-MM-DD
+            datetime.strptime(iso, "%Y-%m-%d")
+            out.append(iso)
+        except ValueError:
+            continue
+    return sorted(out, reverse=True)
+
+
+@st.cache_resource(show_spinner=False)
+def _fwlab_load_dataset():
+    """Cache the cleaned dataset across reruns (heavy DB read + parsing)."""
+    from frameworks.live_predict import load_dataset as _ld
+    return _ld()
+
+
+def _fwlab_run_predictions(date_iso: str, fit_window_days: int,
+                           use_live_odds: bool):
+    """Cached prediction wrapper. Returns FrameworkPredictions."""
+    from frameworks.live_predict import predict_racecard, load_racecard
+    ds = _fwlab_load_dataset()
+    rc = load_racecard(date_iso)
+    return predict_racecard(date_iso, fit_window_days=fit_window_days,
+                            dataset=ds, racecard=rc,
+                            use_live_odds=use_live_odds)
+
+
+def page_framework_lab():
+    st.markdown('<div class="page-title">Framework Lab</div>',
+                unsafe_allow_html=True)
+    st.markdown(
+        '<div class="page-subtitle">'
+        'Four candidate ranking models from the May-2026 EDA, scored against '
+        'the next racecard. A: market-residual logistic · B: pace-tactics '
+        'simulator · C: form-quality (par-time + EWMA) · D: connections '
+        '(Beta-Bernoulli on jockey × trainer × horse).'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    racecards = _fwlab_available_racecards()
+    if not racecards:
+        st.info("No racecards in `cache/racecard_*.json`. "
+                "Scrape an upcoming meeting first (Race Day page → "
+                "**Pipeline → Scrape racecard**).")
+        return
+
+    # ── Sidebar controls ────────────────────────────────────────────────
+    st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="sb-nav-section">Framework Lab</div>',
+                        unsafe_allow_html=True)
+    date_iso = st.sidebar.selectbox("Racecard", racecards, index=0,
+                                    key="fwlab_date")
+    fit_window = st.sidebar.slider("Framework A fit window (days)",
+                                   min_value=60, max_value=540, value=180,
+                                   step=30, key="fwlab_fit_window")
+    use_live = st.sidebar.toggle(
+        "Use latest live odds for market prob",
+        value=True, key="fwlab_use_live",
+        help="If off, Framework A's market-anchor degrades to a uniform "
+             "prior. B/C/D are unaffected.")
+    run_btn = st.sidebar.button("Run frameworks", type="primary",
+                                use_container_width=True,
+                                key="fwlab_run_btn")
+
+    # Lazy-run: only on button press, cache result in session_state by
+    # (date, window, live) tuple so the user can flip between races without
+    # re-fitting.
+    cache_key = ("fwlab_pred", date_iso, fit_window, bool(use_live))
+    if run_btn or cache_key in st.session_state:
+        if run_btn or cache_key not in st.session_state:
+            with st.spinner(f"Loading history + fitting Framework A "
+                            f"({fit_window}d window)…"):
+                try:
+                    res = _fwlab_run_predictions(date_iso, fit_window, use_live)
+                except (FileNotFoundError, ValueError) as e:
+                    st.error(f"Could not score racecard: {e}")
+                    return
+                except Exception as e:  # noqa: BLE001
+                    st.error(f"Framework run failed: {type(e).__name__}: {e}")
+                    return
+            st.session_state[cache_key] = res
+        res = st.session_state[cache_key]
+    else:
+        st.info("Pick a meeting and press **Run frameworks** in the sidebar.")
+        return
+
+    runners: pd.DataFrame = res.runners
+    if runners.empty:
+        st.warning("No runners scored.")
+        return
+
+    # ── Header metrics ──────────────────────────────────────────────────
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Meeting", date_iso)
+    c2.metric("Races", res.n_races)
+    c3.metric("Runners", res.n_runners)
+    c4.metric("Live odds", "Yes" if res.used_live_odds else "No")
+
+    # ── Race tabs ───────────────────────────────────────────────────────
+    race_nums = sorted(runners["race_number"].unique())
+    tabs = st.tabs([f"R{int(rn)}" for rn in race_nums])
+    for tab, rn in zip(tabs, race_nums):
+        with tab:
+            sub = runners[runners["race_number"] == rn].copy()
+            meta_dist = int(sub["distance"].iloc[0]) if pd.notna(sub["distance"].iloc[0]) else 0
+            meta_track = sub["race_track"].iloc[0]
+            meta_going = sub["going"].iloc[0] or "—"
+            st.caption(f"Race {int(rn)} · {meta_track} {meta_dist}m · "
+                       f"going {meta_going} · field of {len(sub)}")
+
+            disp = sub[[
+                "horse_number", "horse_name", "draw_num", "jockey", "trainer",
+                "p_market", "p_A", "p_B", "p_C", "p_D", "p_ens",
+                "rank_p_market", "rank_p_ens",
+            ]].rename(columns={
+                "horse_number": "No",
+                "horse_name":   "Horse",
+                "draw_num":     "Gt",
+                "jockey":       "Jockey",
+                "trainer":      "Trainer",
+                "p_market":     "Mkt",
+                "p_A":          "A",
+                "p_B":          "B",
+                "p_C":          "C",
+                "p_D":          "D",
+                "p_ens":        "Ens",
+                "rank_p_market": "MktRk",
+                "rank_p_ens":    "EnsRk",
+            }).sort_values("Ens", ascending=False)
+
+            disp["No"] = disp["No"].astype("Int64")
+            disp["Gt"] = disp["Gt"].astype("Int64")
+            for col in ("Mkt", "A", "B", "C", "D", "Ens"):
+                disp[col] = (disp[col] * 100).round(1)
+
+            # quick highlights
+            top_ens = disp.iloc[0]
+            mkt_top = sub.loc[sub["rank_p_market"] == 1].iloc[0]
+            agree = top_ens["No"] == mkt_top["horse_number"]
+            cols = st.columns(3)
+            cols[0].metric("Ensemble top pick",
+                           f"#{int(top_ens['No'])} {top_ens['Horse']}",
+                           f"{top_ens['Ens']:.1f}%")
+            cols[1].metric("Market favourite",
+                           f"#{int(mkt_top['horse_number'])} "
+                           f"{mkt_top['horse_name']}",
+                           f"{mkt_top['p_market']*100:.1f}%")
+            cols[2].metric("Models vs market",
+                           "Agree" if agree else "Disagree",
+                           "—" if agree else
+                           f"value on #{int(top_ens['No'])}")
+
+            st.dataframe(
+                disp,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Mkt": st.column_config.NumberColumn("Mkt %", format="%.1f"),
+                    "A":   st.column_config.NumberColumn("A %",   format="%.1f",
+                            help="Market-residual logistic (market-anchored)"),
+                    "B":   st.column_config.NumberColumn("B %",   format="%.1f",
+                            help="Pace-tactics simulator (no market input)"),
+                    "C":   st.column_config.NumberColumn("C %",   format="%.1f",
+                            help="Form-quality (par-time + EWMA)"),
+                    "D":   st.column_config.NumberColumn("D %",   format="%.1f",
+                            help="Connections hierarchical Beta-Bernoulli"),
+                    "Ens": st.column_config.NumberColumn("Ens %", format="%.1f",
+                            help="Equal-weight ensemble of A/B/C/D"),
+                },
+            )
+
+    # ── Whole-card summary ──────────────────────────────────────────────
+    st.markdown("### Cross-race summary — ensemble top picks")
+    top_each = (runners.sort_values(["race_number", "p_ens"],
+                                    ascending=[True, False])
+                       .groupby("race_number")
+                       .head(1)
+                       [["race_number", "horse_number", "horse_name",
+                         "jockey", "draw_num", "p_market", "p_ens",
+                         "rank_p_market"]]
+                       .copy())
+    top_each["edge_vs_mkt"] = (top_each["p_ens"] - top_each["p_market"]) * 100
+    top_each = top_each.rename(columns={
+        "race_number": "R",
+        "horse_number": "No",
+        "horse_name": "Horse",
+        "jockey": "Jockey",
+        "draw_num": "Gt",
+        "p_market": "Mkt%",
+        "p_ens": "Ens%",
+        "rank_p_market": "MktRk",
+        "edge_vs_mkt": "Edge (pp)",
+    })
+    top_each["Mkt%"] = (top_each["Mkt%"] * 100).round(1)
+    top_each["Ens%"] = (top_each["Ens%"] * 100).round(1)
+    top_each["Edge (pp)"] = top_each["Edge (pp)"].round(1)
+    top_each["No"] = top_each["No"].astype("Int64")
+    top_each["Gt"] = top_each["Gt"].astype("Int64")
+    top_each["MktRk"] = top_each["MktRk"].astype("Int64")
+    st.dataframe(top_each, use_container_width=True, hide_index=True)
+
+    # CSV export
+    csv = runners.to_csv(index=False).encode("utf-8")
+    st.download_button("Download full prediction CSV", data=csv,
+                       file_name=f"framework_lab_{date_iso}.csv",
+                       mime="text/csv")
+
+
 def page_overview():
 
     st.markdown('<div class="page-title">Race Day Insight</div>', unsafe_allow_html=True)
@@ -16752,6 +16975,7 @@ def main():
         ("Race Day Insight", "🏁 Race Day Insight"),
         ("Form Guide",     "📖 Form Guide"),
         ("Model Analysis", "📊 Model Analysis"),
+        ("Framework Lab",  "🧪 Framework Lab"),
         ("Model Bets",     "🎯 Model Bets"),
         ("Multi Builder",  "🧮 Multi Builder"),
         ("Data Analysis",  "🔬 Data Analysis"),
@@ -16791,6 +17015,8 @@ def main():
     elif page == "Model Analysis":
         selected = sidebar_race_day()
         page_race_day(selected)
+    elif page == "Framework Lab":
+        page_framework_lab()
     elif page == "Data Analysis":
         page_data_analysis()
     elif page == "Horse Profile":
