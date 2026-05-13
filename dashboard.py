@@ -915,6 +915,91 @@ def _gh_token_check() -> tuple[bool, bool, str]:
         return (True, False, f"network error: {e}")
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Push notifications (ntfy.sh) — phone alerts via Chrome Web Push
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _ntfy_topic() -> str:
+    """Resolve NTFY_TOPIC from Streamlit secrets or env. Empty string if unset."""
+    try:
+        v = st.secrets.get("NTFY_TOPIC", "")
+    except Exception:
+        v = ""
+    return v or os.environ.get("NTFY_TOPIC", "") or ""
+
+
+def _push_notify(title: str, body: str, tags: str = "racing",
+                 priority: int = 3, click: str = "") -> bool:
+    """Send a push notification via ntfy.sh. No-op if NTFY_TOPIC not configured.
+
+    Topic is a private UUID string stored in Streamlit secrets (and GitHub
+    Actions secrets for the cron pre-race reminder). User subscribes once
+    in Chrome on their phone at ``https://ntfy.sh/<topic>`` and accepts
+    the Web Push permission prompt — no app install required.
+
+    Args:
+        title: short header (≤100 chars)
+        body: free text, supports newlines
+        tags: comma-separated ntfy tag aliases (renders as emoji prefix)
+        priority: 1 (min) .. 5 (urgent, bypasses DND on most phones)
+        click: optional URL the notification opens on tap
+    Returns True if delivered.
+    """
+    topic = _ntfy_topic()
+    if not topic:
+        return False
+    try:
+        import requests as _req
+        headers = {
+            "Title": title[:100],
+            "Tags": tags,
+            "Priority": str(int(priority)),
+        }
+        if click:
+            headers["Click"] = click
+        resp = _req.post(
+            f"https://ntfy.sh/{topic}",
+            data=body.encode("utf-8"),
+            headers=headers,
+            timeout=5,
+        )
+        return resp.status_code == 200
+    except Exception:
+        return False
+
+
+def _render_push_sidebar() -> None:
+    """Sidebar expander for push-notification setup/status."""
+    topic = _ntfy_topic()
+    with st.sidebar.expander("📲 Phone push", expanded=False):
+        if not topic:
+            st.caption(
+                "Add `NTFY_TOPIC = \"<your-uuid>\"` to Streamlit secrets, "
+                "then visit `https://ntfy.sh/<your-uuid>` in Chrome on your "
+                "phone and tap **Subscribe → Enable web notifications**."
+            )
+            st.markdown(
+                "Generate a private topic UUID: "
+                "`python -c \"import uuid;print(uuid.uuid4())\"`"
+            )
+        else:
+            mask = topic[:8] + "…" + topic[-4:] if len(topic) > 12 else topic
+            st.caption(f"Topic: `{mask}` · ready")
+            st.markdown(f"[Subscribe in Chrome →](https://ntfy.sh/{topic})")
+            if st.button("🔔 Send test", key="push_test_btn",
+                         use_container_width=True):
+                ok = _push_notify(
+                    "🔔 Dashboard test",
+                    f"Push notifications wired up · {date.today().isoformat()}",
+                    tags="white_check_mark",
+                    priority=3,
+                )
+                if ok:
+                    st.toast("Sent — check your phone")
+                else:
+                    st.toast("Failed — see logs")
+
+
 def _gh_emergency_sync_all() -> tuple[int, int, list[str]]:
     """Walk every persistence-relevant file on disk and push to GitHub.
 
@@ -2771,6 +2856,38 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                         "(none generated, or no GITHUB_TOKEN configured).")
         except Exception as e:
             st.warning(f"⚠ GitHub sync failed: {e}")
+
+    # ── Push notification: summary of aligned ET ∩ SARR signals ─────
+    try:
+        dc = date_str.replace("-", "")
+        _et_path = REPORTS / f"race_day_report_{dc}_{model}.json"
+        if _et_path.exists():
+            _ed = load_meeting_data(_et_path)
+            _sd = load_sarr_data(dc) or {}
+            _sarr_by_rn = {int(r.get("race_number", 0) or 0): r
+                           for r in _sd.get("races", [])}
+            _lines = []
+            for _r in _ed.get("races", []):
+                _rn = int(_r.get("race_number", 0) or 0)
+                _et4 = [(int(p["horse_no"]), p.get("horse_name", ""))
+                        for p in (_r.get("picks") or [])[:4]
+                        if p.get("horse_no") is not None]
+                _sr = _sarr_by_rn.get(_rn)
+                _s4 = {int(p["horse_no"]) for p in (_sr.get("picks") or [])[:4]
+                       if _sr and p.get("horse_no") is not None} if _sr else set()
+                _mutual = [(no, nm) for (no, nm) in _et4 if no in _s4]
+                if _mutual:
+                    _names = ", ".join(f"#{no} {nm[:14]}" for no, nm in _mutual[:3])
+                    _lines.append(f"R{_rn}: {_names}")
+            if _lines:
+                _push_notify(
+                    title=f"📊 Analysis ready · {date_str} · {len(_lines)} race(s) aligned",
+                    body="ET ∩ SARR mutual picks:\n" + "\n".join(_lines[:9]),
+                    tags="bar_chart",
+                    priority=3,
+                )
+    except Exception:
+        pass
 
     # ── Clear data caches so fresh JSONs are picked up immediately ──
     try:
@@ -12332,6 +12449,79 @@ def page_live_market():
                             st.caption(f"☁ Synced {_pushed} snapshot(s) to GitHub.")
                 except Exception:
                     pass
+
+                # Push notification: any model top-4 horse steaming ≥15%
+                try:
+                    _new_snaps = _load_live_odds_snapshots(_ymd, scr_venue)
+                    _by_r: dict[int, list[dict]] = defaultdict(list)
+                    for _s in _new_snaps:
+                        try:
+                            _by_r[int(_s["race_no"])].append(_s)
+                        except Exception:
+                            pass
+                    for _rn2 in _by_r:
+                        _by_r[_rn2].sort(key=lambda s: s.get("scraped_at", ""))
+                    # Build set of model top-4 horse numbers per race
+                    _top4_by_race: dict[int, set[int]] = {}
+                    try:
+                        _mi = _overview_find_today_meeting()
+                        if _mi and _mi.get("date_str") == _ymd:
+                            _md = load_meeting_data(_mi["file"])
+                            _sd = load_sarr_data(_ymd) or {}
+                            for _r in _md.get("races", []):
+                                _rk = int(_r.get("race_number", 0) or 0)
+                                if not _rk:
+                                    continue
+                                _s = set()
+                                for _p in (_r.get("picks") or [])[:4]:
+                                    try:
+                                        _s.add(int(_p.get("horse_no")))
+                                    except (TypeError, ValueError):
+                                        pass
+                                _top4_by_race[_rk] = _s
+                            for _r in _sd.get("races", []):
+                                _rk = int(_r.get("race_number", 0) or 0)
+                                if not _rk:
+                                    continue
+                                for _p in (_r.get("picks") or [])[:4]:
+                                    try:
+                                        _top4_by_race.setdefault(_rk, set()).add(int(_p.get("horse_no")))
+                                    except (TypeError, ValueError):
+                                        pass
+                    except Exception:
+                        pass
+
+                    _alerts = []
+                    for _rn2, _rws in sorted(_by_r.items()):
+                        if len(_rws) < 2:
+                            continue
+                        _first = {h["no"]: h for h in _rws[0].get("odds", [])}
+                        _last = _rws[-1]
+                        _top4 = _top4_by_race.get(_rn2, set())
+                        for _h in _last.get("odds", []):
+                            try:
+                                _no_n = int(_h["no"])
+                            except (TypeError, ValueError):
+                                continue
+                            _fw = _fnum(_first.get(_h["no"], {}).get("win"))
+                            _lw = _fnum(_h.get("win"))
+                            _d = _delta_pct(_fw, _lw)
+                            if _d is None or _d > -15:
+                                continue
+                            _mark = "✓ top4" if _no_n in _top4 else ""
+                            _alerts.append(
+                                f"R{_rn2} #{_no_n} {_h.get('horse','')[:18]} "
+                                f"${_fw:.1f}→${_lw:.1f} ({_d:+.0f}%) {_mark}".strip()
+                            )
+                    if _alerts:
+                        _push_notify(
+                            title=f"🟢 Steamers · {scr_venue} {scr_date.isoformat()}",
+                            body="\n".join(_alerts[:8]),
+                            tags="chart_with_downwards_trend",
+                            priority=4 if any("top4" in a for a in _alerts) else 3,
+                        )
+                except Exception:
+                    pass
             elif rc == 0:
                 st.warning(
                     "Scraper exited cleanly but **no new snapshot files** "
@@ -15224,6 +15414,12 @@ def page_model_bets():
                 log_clicked = st.button("💾 Save picks to log",
                                             key="mb_log_btn",
                                             use_container_width=True)
+                push_clicked = st.button("📲 Push to phone",
+                                            key="mb_push_tickets_btn",
+                                            use_container_width=True,
+                                            disabled=not _ntfy_topic(),
+                                            help="Send high/max confidence tickets "
+                                                 "as a phone notification via ntfy.sh")
             with col_a:
                 st.caption(
                     f"**{sel_title}** · {sel['n_races']} races · "
@@ -15236,6 +15432,35 @@ def page_model_bets():
             if log_clicked:
                 n = log_meeting_picks(date_str, sel.get("venue", ""), items)
                 st.success(f"Logged {n} tickets to reports/model_picks_log.jsonl")
+
+            if push_clicked and items:
+                _lines = []
+                _icon = {"WIN": "🟢", "QIN_BANKER": "🔵", "QPL_BANKER": "🟣",
+                         "PLACE": "🟡", "F4_BOX_TOP5": "⭐"}
+                for _it in items:
+                    _t = _it["ticket"]
+                    if _t.get("confidence") not in ("max", "high"):
+                        continue
+                    if _t.get("play") in ("SKIP", None, ""):
+                        continue
+                    _b = _t.get("banker") or {}
+                    _bs = (f"#{_b.get('horse_no')} {_b.get('horse_name','')[:14]}"
+                           if _b else "")
+                    _lines.append(
+                        f"{_icon.get(_t['play'],'•')} R{_it['race_number']} "
+                        f"{_t['play']} {_bs} "
+                        f"[{_t.get('confidence','').upper()}]".strip()
+                    )
+                if _lines:
+                    _ok = _push_notify(
+                        title=f"🎯 Model Bets · {sel_title}",
+                        body="\n".join(_lines[:12]),
+                        tags="moneybag",
+                        priority=4,
+                    )
+                    st.toast("📲 Sent" if _ok else "⚠ Push failed — check NTFY_TOPIC")
+                else:
+                    st.toast("No HIGH/MAX confidence tickets to push.")
 
             if not items:
                 st.warning("No ET report loaded for this meeting.")
@@ -17334,6 +17559,8 @@ def main():
     # DB backup download buttons (xlsx + sqlite). Visible everywhere so
     # the user can grab a snapshot at any time.
     _render_db_backup_sidebar()
+    # Push-notification setup + test button (ntfy.sh → Chrome on phone).
+    _render_push_sidebar()
 
 
 def sidebar_race_day():
