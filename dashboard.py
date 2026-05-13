@@ -977,6 +977,15 @@ def _gh_emergency_sync_all() -> tuple[int, int, list[str]]:
             for f in cache_dir.glob(pat):
                 _add(f, f"cache/{f.name}")
 
+    # cache/live_odds/<YYYYMMDD>/<VENUE>_R<n>.json snapshots
+    lo_root = BASE / "cache" / "live_odds"
+    if lo_root.exists():
+        for sub in lo_root.iterdir():
+            if not sub.is_dir():
+                continue
+            for f in sub.glob("*.json"):
+                _add(f, f"cache/live_odds/{sub.name}/{f.name}")
+
     # running-position photos (per-meeting subdirs)
     rp_root = BASE / "running_position_photos"
     if rp_root.exists():
@@ -1327,6 +1336,14 @@ def _gh_persist_postrace_outputs(date_str: str) -> tuple[int, int, list[str]]:
         # so re-OCR can run on a fresh container without re-scraping HKJC.
         for f in sorted(rp_dir.glob("R*.jpg")):
             candidates.append((f, f"running_position_photos/{dc}/{f.name}"))
+
+    # cache/live_odds/<YYYYMMDD>/*.json — drift snapshots captured pre-race.
+    # Crucial for post-race "what did the market know" review; without this
+    # the live odds page resets to empty on container restart.
+    lo_day = BASE / "cache" / "live_odds" / dc
+    if lo_day.exists():
+        for f in sorted(lo_day.glob("*.json")):
+            candidates.append((f, f"cache/live_odds/{dc}/{f.name}"))
 
     pushed = 0
     missing = 0
@@ -3433,8 +3450,8 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
             unsafe_allow_html=True,
         )
 
-    # ── 3 columns: quick meta / mutual top-3 / factor edges ─────────
-    c1, c2, c3 = st.columns([1.1, 1.4, 1.5])
+    # ── 4 columns: ET top4 / SARR top4 / mutual / factor edges ─────────
+    c1, c_sarr, c2, c3 = st.columns([1.05, 1.05, 1.25, 1.35])
 
     # Helpers
     bb_names = set(bb_active.keys())
@@ -3469,8 +3486,8 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
 
     # ── Col 1: meta / top ET picks (solo) ────────────────────────────
     with c1:
-        st.markdown("**ET top 3**", help="Top 3 from the v4.4 ET model for this race")
-        for pick in (race.get("picks") or [])[:3]:
+        st.markdown("**ET top 4**", help="Top 4 from the v4.4 ET model for this race")
+        for pick in (race.get("picks") or [])[:4]:
             hn_u = str(pick.get("horse_name", "")).upper().strip()
             flags = _flags(hn_u)
             st.markdown(
@@ -3484,6 +3501,27 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
                 f'</div>',
                 unsafe_allow_html=True,
             )
+
+    # ── Col SARR: SARR top 4 ─────────────────────────────────────────
+    with c_sarr:
+        st.markdown("**SARR top 4**", help="Top 4 from the SARR (speed-adjusted) model for this race")
+        if not sarr_race:
+            st.caption("SARR not available — run [2/3] to populate.")
+        else:
+            for pick in (sarr_race.get("picks") or [])[:4]:
+                hn_u = str(pick.get("horse_name", "")).upper().strip()
+                flags = _flags(hn_u)
+                st.markdown(
+                    f'<div style="padding:3px 0">'
+                    f'<span style="opacity:0.55">#{pick.get("rank","?")}</span> '
+                    f'<span style="font-weight:700">{pick.get("horse_name","")}</span>'
+                    f' <span style="opacity:0.6;font-size:0.85em">({pick.get("horse_no","?")})</span>'
+                    f' &nbsp; {flags}'
+                    f'<div style="font-size:0.82em;opacity:0.7">'
+                    f'Win {pick.get("win_prob",0):.1f}% · {pick.get("jockey","")}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
 
     # ── Col 2: Mutual ET ∩ SARR top-4 ──────────────────────────────
     with c2:
@@ -3808,6 +3846,48 @@ def page_framework_lab():
         unsafe_allow_html=True,
     )
 
+    # ── Legend / interpretation guide ───────────────────────────────────
+    with st.expander("Legend — how each framework is calculated", expanded=False):
+        st.markdown(
+            """
+**Mkt** — Implied win probability from the live HKJC win pool (or last
+snapshot in `cache/odds_history/`), de-vigged via normalisation across the
+field. This is the market's collective opinion.
+
+**A · Market-residual logistic** — Starts from market probability as a
+prior, then a logistic model trained on the last *N* days (slider in the
+sidebar) adjusts each runner using features the market is known to
+mis-price: draw × distance × surface, ESZ (early-speed z-score from the
+speedmap), pace-shape benefit, ratings drift, jockey/trainer hot-form,
+and going-fit. Output is `p_market × exp(adjustment)` then re-normalised.
+*Use when*: you trust the market broadly but want to amplify documented
+edges.
+
+**B · Pace-tactics simulator** — Monte-Carlo speedmap shootout. Each
+horse's running style + ESZ + draw produces a sectional trajectory; the
+sim resolves contested leads and ground-loss on the bend. *Does not use
+market input at all* — pure structural prediction. *Use when*: pace
+projection is strong (clear lone leader, or wall-to-wall speed); fade
+when the speedmap is uncertain.
+
+**C · Form-quality (par-time + EWMA)** — Each runner's last 6 starts are
+weighted exponentially (recency bias), normalised against the HKJC par
+time for that class/distance/going, and projected forward to today's
+conditions. *Use when*: the class/trip is stable and recent form is
+trustworthy.
+
+**D · Connections (hierarchical Beta-Bernoulli)** — Bayesian hit-rate
+model on jockey × trainer × horse triplets, with shrinkage toward the
+population mean when sample sizes are thin. Captures stable form, jockey
+booking signals, and horse-specific quirks. *Use when*: the field has
+clear J/T combinations with strong track records.
+
+**Ens** — Equal-weight mean of A/B/C/D. Smoother and less prone to a
+single-framework error. *EnsRk* shows the ensemble ranking; *MktRk*
+shows where the market has it.
+"""
+        )
+
     racecards = _fwlab_available_racecards()
     if not racecards:
         st.info("No racecards in `cache/racecard_*.json`. "
@@ -3867,78 +3947,93 @@ def page_framework_lab():
     c3.metric("Runners", res.n_runners)
     c4.metric("Live odds", "Yes" if res.used_live_odds else "No")
 
-    # ── Race tabs ───────────────────────────────────────────────────────
-    race_nums = sorted(runners["race_number"].unique())
-    tabs = st.tabs([f"R{int(rn)}" for rn in race_nums])
-    for tab, rn in zip(tabs, race_nums):
-        with tab:
-            sub = runners[runners["race_number"] == rn].copy()
-            meta_dist = int(sub["distance"].iloc[0]) if pd.notna(sub["distance"].iloc[0]) else 0
-            meta_track = sub["race_track"].iloc[0]
-            meta_going = sub["going"].iloc[0] or "—"
-            st.caption(f"Race {int(rn)} · {meta_track} {meta_dist}m · "
-                       f"going {meta_going} · field of {len(sub)}")
+    # ── Race button row (matches Race Day Insight) ─────────────────────
+    race_nums = sorted(int(rn) for rn in runners["race_number"].unique())
+    if race_nums:
+        state_key = f"fwlab_sel_race_{date_iso}"
+        if state_key not in st.session_state or st.session_state[state_key] not in race_nums:
+            st.session_state[state_key] = race_nums[0]
+        _btn_cols = st.columns(len(race_nums))
+        for _i, _rn in enumerate(race_nums):
+            with _btn_cols[_i]:
+                _is_active = (st.session_state[state_key] == _rn)
+                if st.button(
+                    f"R{_rn}",
+                    key=f"fwlab_tab_{date_iso}_{_rn}",
+                    use_container_width=True,
+                    type="primary" if _is_active else "secondary",
+                ):
+                    st.session_state[state_key] = _rn
+                    st.rerun()
+        sel_rn = st.session_state[state_key]
 
-            disp = sub[[
-                "horse_number", "horse_name", "draw_num", "jockey", "trainer",
-                "p_market", "p_A", "p_B", "p_C", "p_D", "p_ens",
-                "rank_p_market", "rank_p_ens",
-            ]].rename(columns={
-                "horse_number": "No",
-                "horse_name":   "Horse",
-                "draw_num":     "Gt",
-                "jockey":       "Jockey",
-                "trainer":      "Trainer",
-                "p_market":     "Mkt",
-                "p_A":          "A",
-                "p_B":          "B",
-                "p_C":          "C",
-                "p_D":          "D",
-                "p_ens":        "Ens",
-                "rank_p_market": "MktRk",
-                "rank_p_ens":    "EnsRk",
-            }).sort_values("Ens", ascending=False)
+        sub = runners[runners["race_number"] == sel_rn].copy()
+        meta_dist = int(sub["distance"].iloc[0]) if pd.notna(sub["distance"].iloc[0]) else 0
+        meta_track = sub["race_track"].iloc[0]
+        meta_going = sub["going"].iloc[0] or "—"
+        st.caption(f"Race {int(sel_rn)} · {meta_track} {meta_dist}m · "
+                   f"going {meta_going} · field of {len(sub)}")
 
-            disp["No"] = disp["No"].astype("Int64")
-            disp["Gt"] = disp["Gt"].astype("Int64")
-            for col in ("Mkt", "A", "B", "C", "D", "Ens"):
-                disp[col] = (disp[col] * 100).round(1)
+        disp = sub[[
+            "horse_number", "horse_name", "draw_num", "jockey", "trainer",
+            "p_market", "p_A", "p_B", "p_C", "p_D", "p_ens",
+            "rank_p_market", "rank_p_ens",
+        ]].rename(columns={
+            "horse_number": "No",
+            "horse_name":   "Horse",
+            "draw_num":     "Gt",
+            "jockey":       "Jockey",
+            "trainer":      "Trainer",
+            "p_market":     "Mkt",
+            "p_A":          "A",
+            "p_B":          "B",
+            "p_C":          "C",
+            "p_D":          "D",
+            "p_ens":        "Ens",
+            "rank_p_market": "MktRk",
+            "rank_p_ens":    "EnsRk",
+        }).sort_values("Ens", ascending=False)
 
-            # quick highlights
-            top_ens = disp.iloc[0]
-            mkt_top = sub.loc[sub["rank_p_market"] == 1].iloc[0]
-            agree = top_ens["No"] == mkt_top["horse_number"]
-            cols = st.columns(3)
-            cols[0].metric("Ensemble top pick",
-                           f"#{int(top_ens['No'])} {top_ens['Horse']}",
-                           f"{top_ens['Ens']:.1f}%")
-            cols[1].metric("Market favourite",
-                           f"#{int(mkt_top['horse_number'])} "
-                           f"{mkt_top['horse_name']}",
-                           f"{mkt_top['p_market']*100:.1f}%")
-            cols[2].metric("Models vs market",
-                           "Agree" if agree else "Disagree",
-                           "—" if agree else
-                           f"value on #{int(top_ens['No'])}")
+        disp["No"] = disp["No"].astype("Int64")
+        disp["Gt"] = disp["Gt"].astype("Int64")
+        for col in ("Mkt", "A", "B", "C", "D", "Ens"):
+            disp[col] = (disp[col] * 100).round(1)
 
-            st.dataframe(
-                disp,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Mkt": st.column_config.NumberColumn("Mkt %", format="%.1f"),
-                    "A":   st.column_config.NumberColumn("A %",   format="%.1f",
-                            help="Market-residual logistic (market-anchored)"),
-                    "B":   st.column_config.NumberColumn("B %",   format="%.1f",
-                            help="Pace-tactics simulator (no market input)"),
-                    "C":   st.column_config.NumberColumn("C %",   format="%.1f",
-                            help="Form-quality (par-time + EWMA)"),
-                    "D":   st.column_config.NumberColumn("D %",   format="%.1f",
-                            help="Connections hierarchical Beta-Bernoulli"),
-                    "Ens": st.column_config.NumberColumn("Ens %", format="%.1f",
-                            help="Equal-weight ensemble of A/B/C/D"),
-                },
-            )
+        # quick highlights
+        top_ens = disp.iloc[0]
+        mkt_top = sub.loc[sub["rank_p_market"] == 1].iloc[0]
+        agree = top_ens["No"] == mkt_top["horse_number"]
+        cols = st.columns(3)
+        cols[0].metric("Ensemble top pick",
+                       f"#{int(top_ens['No'])} {top_ens['Horse']}",
+                       f"{top_ens['Ens']:.1f}%")
+        cols[1].metric("Market favourite",
+                       f"#{int(mkt_top['horse_number'])} "
+                       f"{mkt_top['horse_name']}",
+                       f"{mkt_top['p_market']*100:.1f}%")
+        cols[2].metric("Models vs market",
+                       "Agree" if agree else "Disagree",
+                       "—" if agree else
+                       f"value on #{int(top_ens['No'])}")
+
+        st.dataframe(
+            disp,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Mkt": st.column_config.NumberColumn("Mkt %", format="%.1f"),
+                "A":   st.column_config.NumberColumn("A %",   format="%.1f",
+                        help="Market-residual logistic (market-anchored)"),
+                "B":   st.column_config.NumberColumn("B %",   format="%.1f",
+                        help="Pace-tactics simulator (no market input)"),
+                "C":   st.column_config.NumberColumn("C %",   format="%.1f",
+                        help="Form-quality (par-time + EWMA)"),
+                "D":   st.column_config.NumberColumn("D %",   format="%.1f",
+                        help="Connections hierarchical Beta-Bernoulli"),
+                "Ens": st.column_config.NumberColumn("Ens %", format="%.1f",
+                        help="Equal-weight ensemble of A/B/C/D"),
+            },
+        )
 
     # ── Whole-card summary ──────────────────────────────────────────────
     st.markdown("### Cross-race summary — ensemble top picks")
@@ -8863,6 +8958,30 @@ def page_form_guide():
         current_overweight = horse.get("overweight", "")
         last6 = horse.get("last_6_runs", "")
 
+        # ── Weight delta vs previous race ────────────────────────────────
+        weight_delta_html = ""
+        try:
+            cur_wt_int = int(float(str(current_weight).strip()))
+            prev_wt = None
+            if fg_cache and not is_debutant:
+                _runs = horse.get("runs", [])
+                if _runs:
+                    prev_wt = _runs[-1].get("actual_weight")
+            elif not fg_cache and not is_debutant:
+                _last = horse_hist.sort_values("race_date", ascending=False).iloc[0]
+                prev_wt = _last.get("actual_weight")
+            prev_wt_int = int(float(prev_wt)) if prev_wt not in (None, "", "?") else None
+            if prev_wt_int is not None and prev_wt_int != cur_wt_int:
+                delta = cur_wt_int - prev_wt_int
+                col = "#22c55e" if delta < 0 else "#ef4444"
+                sign = "+" if delta > 0 else ""
+                weight_delta_html = (
+                    f' <span style="color:{col};font-weight:700;font-size:0.85em" '
+                    f'title="Weight change vs last run ({prev_wt_int} LB)">{sign}{delta}</span>'
+                )
+        except (ValueError, TypeError):
+            pass
+
         # ── Detect trainer / stable change ────────────────────────────────
         trainer_changed = False
         prev_trainer = ""
@@ -8894,7 +9013,10 @@ def page_form_guide():
             f'<span class="h-l6-label">L6</span>{l6_badges}</span>'
         ) if last6 else ""
         bb_icon = " [BB]" if bb_entry else ""
-        ow_part = f" ({current_overweight})" if current_overweight else ""
+        ow_part = (
+            f' <span style="color:#f59e0b;font-weight:700;font-size:0.85em" '
+            f'title="Overweight (lbs above declared)">(+{current_overweight})</span>'
+        ) if str(current_overweight).strip() not in ("", "0") else ""
 
         # Horse header row
         hdr_col, bb_col = st.columns([20, 1]) if not bb_entry else (st.container(), None)
@@ -8906,9 +9028,9 @@ def page_form_guide():
             f'<span class="h-sep">·</span>'
             f'<span class="h-meta">RTG {current_rtg}</span>'
             f'<span class="h-sep">·</span>'
-            f'<span class="h-meta">{current_weight} LB</span>'
+            f'<span class="h-meta">{current_weight} LB{weight_delta_html}{ow_part}</span>'
             f'<span class="h-sep">·</span>'
-            f'<span class="h-meta">{current_jockey}{ow_part}</span>'
+            f'<span class="h-meta">{current_jockey}</span>'
             f'<span class="h-sep">·</span>'
             f'<span class="h-meta">{trainer_display}</span>'
             f'<span class="h-sep">·</span>'
@@ -12068,33 +12190,30 @@ def _run_live_odds_scraper(date_iso: str, venue: str, races: str,
         return 1, f"{type(e).__name__}: {e}"
 
 
-def page_live_odds():
-    """Live odds snapshots scraped from bet.hkjc.com.
+def page_live_market():
+    """Live market intelligence — merged Live Odds + Live Feed page.
 
-    Captures Win/Place + Quinella + Quinella-Place pair-odds matrices.
-    Each race may have N snapshots taken across the day (overnight, morning,
-    near-post). The page shows:
+    Captures Win/Place + Quinella + Quinella-Place pair-odds matrices
+    from bet.hkjc.com, plus surfaces post-race notes from the analysis
+    engine when results are available. Race navigation via button row
+    (matches Race Day Insight).
 
-    * Top market movers across the meeting (biggest Win-odds drops/rises)
-    * Per-race table with green/red highlighting on Δ Win %
-    * Win-odds time-slider to inspect any captured snapshot
-    * QIN and QPL matrices with the same colour-coded drift
-    * Meeting summary (favourite + steamer per race, no horse names)
+    Primary signal: **Market AGREES with model** — horses where odds
+    have shortened AND the horse appears in our ET top-4 or SARR top-4.
+    Drift against our top picks is also highlighted.
     """
     import json as _json
     import pandas as _pd
     import datetime as _dt
     from collections import defaultdict
 
-    st.markdown("## 💹 Live Odds")
+    st.markdown("## 💹 Live Market")
     st.info(
-        "Win / Place / Quinella / Quinella-Place odds scraped from "
-        "**bet.hkjc.com**. Each race may carry multiple snapshots. "
-        "**🟢 Odds dropped → money flowing in (market support).**  "
-        "**🔴 Odds drifted out → market losing confidence.**  "
-        "Use as a sanity-check on the model — the market is not always smart, "
-        "but persistent ≥20% drops on horses we *don't* rank are worth a look, "
-        "and ≥20% drifts on our top picks deserve a re-examination."
+        "Live HKJC odds (Win / Place / Quinella / Quinella-Place) plus "
+        "per-race model agreement panel. **🟢 Odds dropped → money flowing in.** "
+        "**🔴 Odds drifted out → market cooling.** "
+        "The most actionable signal is **shortening on a horse we already rate top-4** — "
+        "that's market-and-model agreement, not noise."
     )
 
     # ── Scraper controls ───────────────────────────────────────────────
@@ -12192,6 +12311,27 @@ def page_live_odds():
                 st.success(
                     f"✓ Scrape complete — **{n_new}** new snapshot(s) written."
                 )
+                # Push fresh snapshots to GitHub so Streamlit Cloud doesn't
+                # lose them on next container restart.
+                try:
+                    if _is_streamlit_cloud() and _gh_headers():
+                        _pushed = 0
+                        _msg = f"live-odds: auto-sync {scr_date.isoformat()} {scr_venue} [skip ci]"
+                        for _name in sorted(_after - _before):
+                            _fp = _snap_dir / _name
+                            try:
+                                if _gh_push_file(
+                                    f"cache/live_odds/{_ymd}/{_name}",
+                                    _fp.read_bytes(),
+                                    _msg,
+                                ):
+                                    _pushed += 1
+                            except Exception:
+                                pass
+                        if _pushed:
+                            st.caption(f"☁ Synced {_pushed} snapshot(s) to GitHub.")
+                except Exception:
+                    pass
             elif rc == 0:
                 st.warning(
                     "Scraper exited cleanly but **no new snapshot files** "
@@ -12415,111 +12555,246 @@ def page_live_odds():
                    f"green = Win odds dropped vs first snapshot, red = drifted.")
 
     # ════════════════════════════════════════════════════════════════
-    # 3) PER-RACE PANELS — WP table + QIN / QPL matrices, with drift
+    # 3) PER-RACE PANEL — single race selected via button row
     # ════════════════════════════════════════════════════════════════
-    st.markdown("### 🏇 Per-race panels")
-    for rn in races:
-        rows = by_race[rn]
-        latest = rows[-1]
-        earliest = rows[0]
-        first_by_no = {h["no"]: h for h in earliest.get("odds", [])}
+    st.markdown("### 🏇 Per-race panel")
 
-        hdr_bits = [f"**Race {rn}**"]
-        if latest.get("race_info"):
-            hdr_bits.append(latest["race_info"])
-        st.markdown("#### " + " · ".join(hdr_bits))
-        meta_bits = [f"{len(rows)} snapshot(s)"]
-        if latest.get("last_update"):
-            meta_bits.append(latest["last_update"])
-        st.caption(" · ".join(meta_bits))
+    # Race button row (matches Race Day Insight style)
+    state_key = f"livemarket_sel_race_{ymd}_{venue}"
+    if state_key not in st.session_state or st.session_state[state_key] not in races:
+        st.session_state[state_key] = races[0]
+    _btn_cols = st.columns(len(races))
+    for _i, _rn in enumerate(races):
+        with _btn_cols[_i]:
+            _is_active = (st.session_state[state_key] == _rn)
+            if st.button(
+                f"R{_rn}",
+                key=f"livemarket_tab_{ymd}_{venue}_{_rn}",
+                use_container_width=True,
+                type="primary" if _is_active else "secondary",
+            ):
+                st.session_state[state_key] = _rn
+                st.rerun()
+    rn = st.session_state[state_key]
 
-        # Per-snapshot picker (default: latest)
-        snap_idx = len(rows) - 1
-        if len(rows) >= 2:
-            snap_idx = st.select_slider(
-                f"Snapshot for R{rn}", options=list(range(len(rows))),
-                value=len(rows) - 1,
-                format_func=lambda i, _rs=rows: _rs[i].get("scraped_at", "?")[11:19],
-                key=f"liveodds_snap_r{rn}",
-            )
-        sel = rows[snap_idx]
+    # ── Load model top-4 (ET + SARR) for agreement signal ──────────
+    _et_top4: dict[int, str] = {}  # horse_no → horse_name
+    _sarr_top4: dict[int, str] = {}
+    try:
+        _mi = _overview_find_today_meeting()
+        if _mi and _mi.get("date_str") == ymd:
+            _data = load_meeting_data(_mi["file"])
+            _race = next((r for r in _data.get("races", [])
+                          if int(r.get("race_number", 0)) == rn), None)
+            if _race:
+                for _p in (_race.get("picks") or [])[:4]:
+                    try:
+                        _et_top4[int(_p.get("horse_no"))] = str(_p.get("horse_name", ""))
+                    except (TypeError, ValueError):
+                        pass
+            _sd = load_sarr_data(ymd)
+            if _sd:
+                _sr = next((r for r in _sd.get("races", [])
+                            if int(r.get("race_number", 0)) == rn), None)
+                if _sr:
+                    for _p in (_sr.get("picks") or [])[:4]:
+                        try:
+                            _sarr_top4[int(_p.get("horse_no"))] = str(_p.get("horse_name", ""))
+                        except (TypeError, ValueError):
+                            pass
+    except Exception:
+        pass
 
-        # ─ WP table ──────────────────────────────────────────────────
-        sel_by_no = {h["no"]: h for h in sel.get("odds", [])}
-        table = []
+    rows = by_race[rn]
+    latest = rows[-1]
+    earliest = rows[0]
+    first_by_no = {h["no"]: h for h in earliest.get("odds", [])}
+
+    hdr_bits = [f"**Race {rn}**"]
+    if latest.get("race_info"):
+        hdr_bits.append(latest["race_info"])
+    st.markdown("#### " + " · ".join(hdr_bits))
+    meta_bits = [f"{len(rows)} snapshot(s)"]
+    if latest.get("last_update"):
+        meta_bits.append(latest["last_update"])
+    st.caption(" · ".join(meta_bits))
+
+    # Per-snapshot picker (default: latest)
+    snap_idx = len(rows) - 1
+    if len(rows) >= 2:
+        snap_idx = st.select_slider(
+            f"Snapshot for R{rn}", options=list(range(len(rows))),
+            value=len(rows) - 1,
+            format_func=lambda i, _rs=rows: _rs[i].get("scraped_at", "?")[11:19],
+            key=f"livemarket_snap_r{rn}",
+        )
+    sel = rows[snap_idx]
+
+    # ── Agreement panel: model top-4 × market drift ─────────────
+    if _et_top4 or _sarr_top4:
+        agree_rows = []
+        disagree_rows = []
         for h in sel.get("odds", []):
-            no = h["no"]
-            try: no_n = int(no)
-            except (TypeError, ValueError): no_n = None
-            w_first = _fnum(first_by_no.get(no, {}).get("win"))
-            w_sel = _fnum(h.get("win"))
-            p_sel = _fnum(h.get("place"))
-            table.append({
-                "No": no_n, "Horse": h.get("horse", ""),
-                "Win (first)": w_first, "Win": w_sel, "Place": p_sel,
-                "Δ Win %": _delta_pct(w_first, w_sel),
-            })
-        if table:
-            df_wp = _pd.DataFrame(table).sort_values(
-                "Win", na_position="last", kind="mergesort").reset_index(drop=True)
-            sty_wp = (df_wp.style
-                      .map(_delta_color, subset=["Δ Win %"])
-                      .format({"Win (first)": "{:.1f}", "Win": "{:.1f}",
-                               "Place": "{:.1f}", "Δ Win %": "{:+.1f}%"},
-                              na_rep="—"))
-            st.dataframe(sty_wp, hide_index=True, use_container_width=True,
-                         height=min(420, 38 + 35 * len(df_wp)))
-
-        # ─ QIN / QPL matrices ────────────────────────────────────────
-        def _build_pair_matrix(pool_key: str):
-            """Render a triangular pair-odds matrix with drift highlighting."""
-            sel_pairs = sel.get(pool_key) or []
-            first_pairs = earliest.get(pool_key) or []
-            if not sel_pairs:
-                return None, None
-            sel_map = {(int(p["a"]), int(p["b"])): _fnum(p["odds"]) for p in sel_pairs}
-            first_map = {(int(p["a"]), int(p["b"])): _fnum(p["odds"]) for p in first_pairs}
-            nos = sorted({n for pair in sel_map for n in pair})
-            mat = _pd.DataFrame("", index=nos, columns=[str(n) for n in nos])
-            drift = _pd.DataFrame(None, index=nos, columns=[str(n) for n in nos],
-                                  dtype="float")
-            for (a, b), v in sel_map.items():
-                if v is None: continue
-                f = first_map.get((a, b))
-                d = _delta_pct(f, v)
-                # Place upper-triangle entries: row=lower, col=higher
-                mat.at[a, str(b)] = f"{v:.1f}" if v < 100 else f"{v:.0f}"
-                if d is not None:
-                    drift.at[a, str(b)] = d
-            mat.index.name = pool_key.upper()
-            return mat, drift
-
-        for pool_label, pool_key in [("Quinella (QIN)", "qin_odds"),
-                                     ("Quinella Place (QPL)", "qpl_odds")]:
-            mat, drift = _build_pair_matrix(pool_key)
-            if mat is None or mat.empty:
+            try:
+                no_n = int(h["no"])
+            except (TypeError, ValueError):
                 continue
-            with st.expander(f"📊 {pool_label} matrix ({len(sel.get(pool_key, []))} pairs)",
-                             expanded=False):
-                # Style cells using drift-coloring
-                def _style_pair(df):
-                    out = _pd.DataFrame("", index=df.index, columns=df.columns)
-                    for r in df.index:
-                        for c in df.columns:
-                            d = drift.at[r, c] if c in drift.columns and r in drift.index else None
-                            try:
-                                if _pd.notna(d): out.at[r, c] = _delta_color(float(d))
-                            except Exception:
-                                pass
-                    return out
-                sty = mat.style.apply(_style_pair, axis=None)
-                st.dataframe(sty, use_container_width=True)
-                st.caption(
-                    f"Cells coloured by Δ% vs earliest snapshot. "
-                    f"Pairs in the upper triangle (row #, col #). "
-                    f"Snapshot: {sel.get('scraped_at', '?')[11:19]}."
-                )
-        st.markdown("")
+            in_et = no_n in _et_top4
+            in_sarr = no_n in _sarr_top4
+            if not (in_et or in_sarr):
+                continue
+            f_win = _fnum(first_by_no.get(h["no"], {}).get("win"))
+            l_win = _fnum(h.get("win"))
+            d_pct = _delta_pct(f_win, l_win)
+            tags = []
+            if in_et: tags.append("ET top4")
+            if in_sarr: tags.append("SARR top4")
+            row = {
+                "No": no_n, "Horse": h.get("horse", ""),
+                "Model": " · ".join(tags),
+                "Win (first)": f_win, "Win": l_win,
+                "Δ Win %": d_pct,
+            }
+            if d_pct is not None and d_pct <= -5:
+                agree_rows.append(row)
+            elif d_pct is not None and d_pct >= 5:
+                disagree_rows.append(row)
+
+        ac1, ac2 = st.columns(2)
+        with ac1:
+            st.markdown("##### ✓ Market AGREES with model")
+            if agree_rows:
+                df_a = _pd.DataFrame(agree_rows).sort_values("Δ Win %")
+                sty_a = (df_a.style
+                         .map(_delta_color, subset=["Δ Win %"])
+                         .format({"Win (first)": "{:.1f}", "Win": "{:.1f}",
+                                  "Δ Win %": "{:+.1f}%"}, na_rep="—"))
+                st.dataframe(sty_a, hide_index=True, use_container_width=True,
+                             height=min(220, 38 + 35 * len(df_a)))
+            else:
+                st.caption("No top-4 horses are shortening yet.")
+        with ac2:
+            st.markdown("##### ⚠ Market DISAGREES with model")
+            if disagree_rows:
+                df_d = _pd.DataFrame(disagree_rows).sort_values("Δ Win %", ascending=False)
+                sty_d = (df_d.style
+                         .map(_delta_color, subset=["Δ Win %"])
+                         .format({"Win (first)": "{:.1f}", "Win": "{:.1f}",
+                                  "Δ Win %": "{:+.1f}%"}, na_rep="—"))
+                st.dataframe(sty_d, hide_index=True, use_container_width=True,
+                             height=min(220, 38 + 35 * len(df_d)))
+            else:
+                st.caption("No top-4 horses are drifting.")
+        st.caption(
+            "Agreement = model top-4 horse with Δ Win ≤ -5%. Disagreement = "
+            "top-4 horse with Δ Win ≥ +5%. Use as a confidence amplifier on "
+            "top picks; **do not chase longer-odds drifters outside top 4**."
+        )
+
+    # ─ WP table ──────────────────────────────────────────────────
+    sel_by_no = {h["no"]: h for h in sel.get("odds", [])}
+    table = []
+    for h in sel.get("odds", []):
+        no = h["no"]
+        try: no_n = int(no)
+        except (TypeError, ValueError): no_n = None
+        w_first = _fnum(first_by_no.get(no, {}).get("win"))
+        w_sel = _fnum(h.get("win"))
+        p_sel = _fnum(h.get("place"))
+        tags = []
+        if no_n in _et_top4: tags.append("ET")
+        if no_n in _sarr_top4: tags.append("SARR")
+        table.append({
+            "No": no_n, "Horse": h.get("horse", ""),
+            "Model": " · ".join(tags) if tags else "",
+            "Win (first)": w_first, "Win": w_sel, "Place": p_sel,
+            "Δ Win %": _delta_pct(w_first, w_sel),
+        })
+    if table:
+        df_wp = _pd.DataFrame(table).sort_values(
+            "Win", na_position="last", kind="mergesort").reset_index(drop=True)
+        sty_wp = (df_wp.style
+                  .map(_delta_color, subset=["Δ Win %"])
+                  .format({"Win (first)": "{:.1f}", "Win": "{:.1f}",
+                           "Place": "{:.1f}", "Δ Win %": "{:+.1f}%"},
+                          na_rep="—"))
+        st.dataframe(sty_wp, hide_index=True, use_container_width=True,
+                     height=min(520, 38 + 35 * len(df_wp)))
+
+    # ─ QIN / QPL matrices ────────────────────────────────────────
+    def _build_pair_matrix(pool_key: str):
+        """Render a triangular pair-odds matrix with drift highlighting."""
+        sel_pairs = sel.get(pool_key) or []
+        first_pairs = earliest.get(pool_key) or []
+        if not sel_pairs:
+            return None, None
+        sel_map = {(int(p["a"]), int(p["b"])): _fnum(p["odds"]) for p in sel_pairs}
+        first_map = {(int(p["a"]), int(p["b"])): _fnum(p["odds"]) for p in first_pairs}
+        nos = sorted({n for pair in sel_map for n in pair})
+        mat = _pd.DataFrame("", index=nos, columns=[str(n) for n in nos])
+        drift = _pd.DataFrame(None, index=nos, columns=[str(n) for n in nos],
+                              dtype="float")
+        for (a, b), v in sel_map.items():
+            if v is None: continue
+            f = first_map.get((a, b))
+            d = _delta_pct(f, v)
+            mat.at[a, str(b)] = f"{v:.1f}" if v < 100 else f"{v:.0f}"
+            if d is not None:
+                drift.at[a, str(b)] = d
+        mat.index.name = pool_key.upper()
+        return mat, drift
+
+    for pool_label, pool_key in [("Quinella (QIN)", "qin_odds"),
+                                 ("Quinella Place (QPL)", "qpl_odds")]:
+        mat, drift = _build_pair_matrix(pool_key)
+        if mat is None or mat.empty:
+            continue
+        with st.expander(f"📊 {pool_label} matrix ({len(sel.get(pool_key, []))} pairs)",
+                         expanded=False):
+            def _style_pair(df, _drift=drift):
+                out = _pd.DataFrame("", index=df.index, columns=df.columns)
+                for r in df.index:
+                    for c in df.columns:
+                        d = _drift.at[r, c] if c in _drift.columns and r in _drift.index else None
+                        try:
+                            if _pd.notna(d): out.at[r, c] = _delta_color(float(d))
+                        except Exception:
+                            pass
+                return out
+            sty = mat.style.apply(_style_pair, axis=None)
+            st.dataframe(sty, use_container_width=True)
+            st.caption(
+                f"Cells coloured by Δ% vs earliest snapshot. "
+                f"Pairs in the upper triangle (row #, col #). "
+                f"Snapshot: {sel.get('scraped_at', '?')[11:19]}."
+            )
+
+    # ── Post-race diagnostics (factual only) ─────────────────────
+    _post = _live_load_analysis(ymd) if (REPORTS / f"results_{ymd}.json").exists() else None
+    if _post:
+        _ra = next((a for a in _post.get("race_analyses", [])
+                    if int(a.get("race_number", 0)) == rn
+                    and a.get("status") == "analysed"), None)
+        if _ra:
+            with st.expander("🏁 Post-race notes (factual)", expanded=True):
+                _w = _ra.get("winner") or {}
+                _bits = []
+                if _w.get("horse_name"):
+                    _bits.append(f"Winner: **{_w['horse_name']}** "
+                                 f"(Dr{_w.get('draw','?')}, ${_w.get('win_odds','?')})")
+                if _w.get("et_rank"):
+                    _bits.append(f"ET Rk{_w['et_rank']}")
+                if _w.get("sarr_rank"):
+                    _bits.append(f"SARR Rk{_w['sarr_rank']}")
+                if _bits:
+                    st.markdown(" · ".join(_bits))
+                _pr = _ra.get("pace_read", {})
+                if _pr.get("shape") and _pr.get("shape") != "unknown":
+                    st.caption(f"Pace: {_pr.get('summary','?')}")
+                _do = _ra.get("draw_obs", {})
+                if _do.get("summary") and _do.get("bias") not in ("", "unknown", None):
+                    st.caption(f"Draw: {_do['summary']}")
+    st.markdown("")
 
     # ════════════════════════════════════════════════════════════════
     # 4) MARKET-MOVERS BOARD — biggest steamers / drifters across meeting
@@ -13944,7 +14219,7 @@ def page_my_bets():
                         delta=f"{s['open']} open" if s["open"] else None)
             m2.metric("Stake", f"${s['stake']:.0f}")
             m3.metric("Return", f"${s['return']:.2f}",
-                        delta=f"PnL {s['pnl']:+.2f}")
+                        delta=f"{s['pnl']:+.2f} PnL")
             m4.metric("ROI",
                         f"{s['roi']*100:+.1f}%" if s["stake"] else "—")
             m5.metric("Hit rate",
@@ -16981,8 +17256,7 @@ def main():
         ("Data Analysis",  "🔬 Data Analysis"),
         ("Race Lookup",    "🔎 Race Lookup"),
         ("Results",        "🏆 Results"),
-        ("Live Feed",      "📡 Live Feed"),
-        ("Live Odds",      "💹 Live Odds"),
+        ("Live Market",    "💹 Live Market"),
         ("My Bets",        "💰 My Bets"),
         ("Blackbook",      "📓 Blackbook"),
         ("Trials",         "🎽 Trials"),
@@ -16996,6 +17270,8 @@ def main():
         st.session_state["nav_page"] = "Model Analysis"
     if st.session_state["nav_page"] == "Overview":
         st.session_state["nav_page"] = "Race Day Insight"
+    if st.session_state["nav_page"] in ("Live Feed", "Live Odds"):
+        st.session_state["nav_page"] = "Live Market"
 
     for page_name, label in NAV_ITEMS:
         is_active = st.session_state["nav_page"] == page_name
@@ -17025,9 +17301,11 @@ def main():
     elif page == "Race Lookup":
         page_race_lookup()
     elif page == "Live Feed":
-        page_live_feed()
+        page_live_market()
     elif page == "Live Odds":
-        page_live_odds()
+        page_live_market()
+    elif page == "Live Market":
+        page_live_market()
     elif page == "Model Bets":
         page_model_bets()
     elif page == "Multi Builder":
