@@ -1,0 +1,373 @@
+{
+  "date": "2026-05-13",
+  "race_number": 5,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "689",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 485,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 457
+    },
+    {
+      "y_top": 485,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 543
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ACE WAR",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 379,
+          "cy": 34,
+          "x_frac": 0.5270833333333333,
+          "conf": 0.988,
+          "match_score": 0.923,
+          "ocr_text": "AceWar",
+          "band_label": "689",
+          "y_in_band": 0.198
+        },
+        {
+          "band_idx": 1,
+          "cx": 436,
+          "cy": 180,
+          "x_frac": 0.6055555555555555,
+          "conf": 0.924,
+          "match_score": 1.0,
+          "ocr_text": "Ace War",
+          "band_label": "800M",
+          "y_in_band": 0.329
+        },
+        {
+          "band_idx": 4,
+          "cx": 240,
+          "cy": 557,
+          "x_frac": 0.3333333333333333,
+          "conf": 0.92,
+          "match_score": 1.0,
+          "ocr_text": "Ace War",
+          "band_label": null,
+          "y_in_band": 0.615
+        }
+      ],
+      "ocr_texts": [
+        "AceWar",
+        "Ace War",
+        "Ace War"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.381,
+      "avg_x_frac": 0.489,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DRAGON ON SNOW",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 405,
+          "cy": 393,
+          "x_frac": 0.5625,
+          "conf": 0.984,
+          "match_score": 0.923,
+          "ocr_text": "DragonOnSnow",
+          "band_label": "400M",
+          "y_in_band": 0.753
+        },
+        {
+          "band_idx": 4,
+          "cx": 602,
+          "cy": 569,
+          "x_frac": 0.8364583333333333,
+          "conf": 0.984,
+          "match_score": 0.923,
+          "ocr_text": "DragonOnSnow",
+          "band_label": null,
+          "y_in_band": 0.718
+        }
+      ],
+      "ocr_texts": [
+        "DragonOnSnow",
+        "DragonOnSnow"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.736,
+      "avg_x_frac": 0.699,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FLYING LUCK",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 400,
+          "cy": 107,
+          "x_frac": 0.55625,
+          "conf": 0.947,
+          "match_score": 1.0,
+          "ocr_text": "Flying Luck",
+          "band_label": "689",
+          "y_in_band": 0.802
+        },
+        {
+          "band_idx": 1,
+          "cx": 522,
+          "cy": 183,
+          "x_frac": 0.725,
+          "conf": 0.994,
+          "match_score": 0.952,
+          "ocr_text": "FlyingLuck",
+          "band_label": "800M",
+          "y_in_band": 0.349
+        },
+        {
+          "band_idx": 2,
+          "cx": 463,
+          "cy": 392,
+          "x_frac": 0.6430555555555556,
+          "conf": 0.944,
+          "match_score": 1.0,
+          "ocr_text": "Flying Luck",
+          "band_label": "400M",
+          "y_in_band": 0.747
+        }
+      ],
+      "ocr_texts": [
+        "Flying Luck",
+        "FlyingLuck",
+        "Flying Luck"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.633,
+      "avg_x_frac": 0.641,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LE ZONDA",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 216,
+          "cy": 273,
+          "x_frac": 0.3,
+          "conf": 0.936,
+          "match_score": 1.0,
+          "ocr_text": "Le Zonda",
+          "band_label": "800M",
+          "y_in_band": 0.953
+        }
+      ],
+      "ocr_texts": [
+        "Le Zonda"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.953,
+      "avg_x_frac": 0.3,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LIVEANDLETLIVE",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 115,
+          "cy": 175,
+          "x_frac": 0.1597222222222222,
+          "conf": 0.966,
+          "match_score": 0.963,
+          "ocr_text": "Liveandletive",
+          "band_label": "800M",
+          "y_in_band": 0.295
+        },
+        {
+          "band_idx": 2,
+          "cx": 115,
+          "cy": 385,
+          "x_frac": 0.1597222222222222,
+          "conf": 0.935,
+          "match_score": 0.963,
+          "ocr_text": "Liveandletive",
+          "band_label": "400M",
+          "y_in_band": 0.7
+        },
+        {
+          "band_idx": 4,
+          "cx": 118,
+          "cy": 550,
+          "x_frac": 0.16458333333333333,
+          "conf": 0.952,
+          "match_score": 0.963,
+          "ocr_text": "Liveandletive",
+          "band_label": null,
+          "y_in_band": 0.556
+        }
+      ],
+      "ocr_texts": [
+        "Liveandletive",
+        "Liveandletive",
+        "Liveandletive"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.517,
+      "avg_x_frac": 0.161,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SO YOU WILL",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 284,
+          "cy": 180,
+          "x_frac": 0.3951388888888889,
+          "conf": 0.885,
+          "match_score": 0.842,
+          "ocr_text": "SoYouWil",
+          "band_label": "800M",
+          "y_in_band": 0.329
+        },
+        {
+          "band_idx": 4,
+          "cx": 416,
+          "cy": 570,
+          "x_frac": 0.5784722222222223,
+          "conf": 0.959,
+          "match_score": 0.842,
+          "ocr_text": "SoYouWil",
+          "band_label": null,
+          "y_in_band": 0.726
+        }
+      ],
+      "ocr_texts": [
+        "SoYouWil",
+        "SoYouWil"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.527,
+      "avg_x_frac": 0.487,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE AUSPICIOUS",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 309,
+          "cy": 32,
+          "x_frac": 0.42986111111111114,
+          "conf": 0.969,
+          "match_score": 1.0,
+          "ocr_text": "The Auspicious",
+          "band_label": "689",
+          "y_in_band": 0.182
+        },
+        {
+          "band_idx": 1,
+          "cx": 356,
+          "cy": 179,
+          "x_frac": 0.4954861111111111,
+          "conf": 0.96,
+          "match_score": 0.963,
+          "ocr_text": "TheAuspicious",
+          "band_label": "800M",
+          "y_in_band": 0.322
+        },
+        {
+          "band_idx": 2,
+          "cx": 340,
+          "cy": 403,
+          "x_frac": 0.4722222222222222,
+          "conf": 0.985,
+          "match_score": 1.0,
+          "ocr_text": "The Auspicious",
+          "band_label": "400M",
+          "y_in_band": 0.82
+        },
+        {
+          "band_idx": 4,
+          "cx": 184,
+          "cy": 565,
+          "x_frac": 0.2565972222222222,
+          "conf": 0.959,
+          "match_score": 1.0,
+          "ocr_text": "The Auspicious",
+          "band_label": null,
+          "y_in_band": 0.684
+        }
+      ],
+      "ocr_texts": [
+        "The Auspicious",
+        "TheAuspicious",
+        "The Auspicious",
+        "The Auspicious"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.502,
+      "avg_x_frac": 0.414,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 41,
+    "matched_horses": 7,
+    "field_size": 10,
+    "coverage": 0.7,
+    "parsed_at": "2026-05-14T02:04:58"
+  }
+}
