@@ -6083,6 +6083,55 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
             except Exception as e:
                 st.warning(f"Merge to main DB failed: {e}")
 
+        # v4.9: Belt-and-braces DB-append. Step 1 (scrape_hkjc_results.py)
+        # already calls db_utils.append_results_to_db, but if that step
+        # failed/timed-out the master DB would silently miss this date.
+        # Force-append from the results JSON if it landed on disk.
+        date_compact = date_str.replace("-", "")
+        results_json = REPORTS / f"results_{date_compact}.json"
+        if results_json.exists():
+            try:
+                from db_utils import append_results_to_db
+                n_db = append_results_to_db(results_json, verbose=False)
+                if n_db:
+                    st.info(f"DB safety-net: appended {n_db} rows from results_{date_compact}.json")
+            except Exception as e:
+                st.error(f"DB safety-net append failed for {date_str}: {e}")
+
+        # v4.9: Auto-rebuild form guides for any upcoming meeting (next 14 days)
+        # so freshly-ingested results show up on Race Card / Form Guide tabs
+        # without the user having to re-run pre-race pipeline.
+        try:
+            import datetime as _dt
+            today = _dt.date.fromisoformat(date_str)
+            rebuilt = []
+            for rc_path in sorted((BASE / "racecards").glob("racecard_*.xlsx")):
+                try:
+                    dc = rc_path.stem.split("_", 1)[1]
+                    mtg = _dt.date(int(dc[:4]), int(dc[4:6]), int(dc[6:8]))
+                except Exception:
+                    continue
+                if mtg <= today:
+                    continue
+                if (mtg - today).days > 14:
+                    continue
+                mtg_iso = mtg.isoformat()
+                _r = subprocess.run(
+                    [PYTHON, str(BASE / "build_form_guide.py"), mtg_iso],
+                    env=env, cwd=str(BASE),
+                    capture_output=True, text=True, encoding="utf-8", timeout=300,
+                )
+                if _r.returncode == 0:
+                    rebuilt.append(mtg_iso)
+            if rebuilt:
+                st.info(f"Form guides rebuilt for upcoming meetings: {', '.join(rebuilt)}")
+                try:
+                    _load_form_db.clear()
+                except Exception:
+                    pass
+        except Exception as e:
+            st.warning(f"Upcoming form-guide rebuild skipped: {e}")
+
         # Summary
         n_ok = sum(1 for _, rc, _ in outputs if rc == 0)
         if n_ok == len(steps):
