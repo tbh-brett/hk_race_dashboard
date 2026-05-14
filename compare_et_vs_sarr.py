@@ -113,6 +113,35 @@ def _race_metrics(picks: list[int], finishers: dict) -> dict:
     }
 
 
+def _mutual_metrics(et_picks: list[int], sarr_picks: list[int],
+                    finishers: dict) -> dict:
+    """Metrics for the intersection of ET top-3 and SARR top-3.
+
+    Returns keys:
+      mutual_size           -- |ET_top3 ∩ SARR_top3|, 0..3
+      mutual_horses         -- list[int] (the mutual set)
+      mutual_any_in_top3    -- 1 if any mutual horse finished 1st-3rd
+      mutual_count_in_top3  -- # of mutual horses inside actual top-3
+      mutual_2plus_in_top3  -- 1 if mutual_count_in_top3 >= 2
+      mutual_3_in_top3      -- 1 if mutual_count_in_top3 == 3 (clean sweep)
+      mutual_winner_hit     -- 1 if any mutual horse finished 1st
+    """
+    et3 = set(et_picks[:3])
+    sa3 = set(sarr_picks[:3])
+    mutual = et3 & sa3
+    in_top3 = sum(1 for h in mutual if finishers.get(h) in (1, 2, 3))
+    has_winner = any(finishers.get(h) == 1 for h in mutual)
+    return {
+        "mutual_size":          len(mutual),
+        "mutual_horses":        sorted(mutual),
+        "mutual_any_in_top3":   1 if in_top3 >= 1 else 0,
+        "mutual_count_in_top3": in_top3,
+        "mutual_2plus_in_top3": 1 if in_top3 >= 2 else 0,
+        "mutual_3_in_top3":     1 if in_top3 == 3 else 0,
+        "mutual_winner_hit":    1 if has_winner else 0,
+    }
+
+
 def _actual_top3(res_race: dict) -> list[int]:
     finishers = []
     for r in res_race.get("runners", []):
@@ -153,6 +182,7 @@ def analyze(dates: list[str]) -> dict:
             sarr_picks = _picks_top_n(sr, 5)
             et_m = _race_metrics(et_picks, finishers)
             sarr_m = _race_metrics(sarr_picks, finishers)
+            mut_m = _mutual_metrics(et_picks, sarr_picks, finishers)
             actual_top3 = _actual_top3(res_race)
 
             rows.append({
@@ -161,6 +191,9 @@ def analyze(dates: list[str]) -> dict:
                 "race": rn,
                 "distance": res_race.get("distance"),
                 "dist_bucket": _dist_bucket(res_race.get("distance")),
+                "going": res_race.get("going") or res_race.get("actual_going"),
+                "race_class": (res_race.get("race_class") or "").strip() or None,
+                "surface": "AWT" if res_race.get("is_awt") else "Turf",
                 "pace": er.get("pace"),
                 "et_top1": et_picks[0] if et_picks else None,
                 "sarr_top1": sarr_picks[0] if sarr_picks else None,
@@ -169,6 +202,7 @@ def analyze(dates: list[str]) -> dict:
                                     and et_picks[0] == sarr_picks[0]) else 0,
                 **{f"et_{k}": v for k, v in et_m.items()},
                 **{f"sarr_{k}": v for k, v in sarr_m.items()},
+                **mut_m,
             })
 
     def _agg(rs: list[dict], keys: list[str]) -> list[dict]:
@@ -186,6 +220,25 @@ def analyze(dates: list[str]) -> dict:
                             if v.get(f"{model}_{mk}") is not None]
                     row[f"{model}_{mk}_mean"] = (
                         round(mean(vals), 3) if vals else None)
+            # Mutual metrics
+            for mk in ["mutual_size", "mutual_count_in_top3",
+                       "mutual_any_in_top3", "mutual_2plus_in_top3",
+                       "mutual_3_in_top3", "mutual_winner_hit"]:
+                vals = [v[mk] for v in vs if v.get(mk) is not None]
+                row[f"{mk}_mean"] = (
+                    round(mean(vals), 3) if vals else None)
+            # Conditional: when mutual_size >= 1
+            with_mut = [v for v in vs if v.get("mutual_size", 0) >= 1]
+            if with_mut:
+                row["cond_mut_any_in_top3"] = round(
+                    mean(v["mutual_any_in_top3"] for v in with_mut), 3)
+                row["cond_mut_winner_hit"] = round(
+                    mean(v["mutual_winner_hit"] for v in with_mut), 3)
+                row["n_with_mutual"] = len(with_mut)
+            else:
+                row["cond_mut_any_in_top3"] = None
+                row["cond_mut_winner_hit"] = None
+                row["n_with_mutual"] = 0
             row["agree_top1_pct"] = round(
                 100 * mean([v["agree_top1"] for v in vs]), 1) if vs else None
             out.append(row)
@@ -200,6 +253,10 @@ def analyze(dates: list[str]) -> dict:
         "by_dist_bucket": _agg(rows, ["dist_bucket"]),
         "by_venue_dist": _agg(rows, ["venue", "dist_bucket"]),
         "by_pace": _agg(rows, ["pace"]),
+        "by_going": _agg(rows, ["going"]),
+        "by_class": _agg(rows, ["race_class"]),
+        "by_surface": _agg(rows, ["surface"]),
+        "by_mutual_size": _agg(rows, ["mutual_size"]),
         "per_race": rows,
         "generated_at": datetime.now().isoformat(timespec="seconds"),
     }
@@ -236,6 +293,38 @@ def _print_summary(result: dict):
     print(f"  Top-3 in top-4       ET {o['et_top3_in_top4_mean']:.2f}   "
           f"SARR {o['sarr_top3_in_top4_mean']:.2f}   "
           f"Δ {(o['sarr_top3_in_top4_mean']-o['et_top3_in_top4_mean']):+.2f}")
+
+    # ── Mutual ET ∩ SARR picks ──────────────────────────────────────
+    print(f"\n  --- Mutual ET ∩ SARR top-3 picks ---")
+    print(f"  avg mutual set size   {o['mutual_size_mean']:.2f} / 3")
+    print(f"  avg mutual in actual top-3   {o['mutual_count_in_top3_mean']:.2f}")
+    print(f"  P(any mutual horse in top-3, unconditional) "
+          f"{o['mutual_any_in_top3_mean']*100:.1f}%")
+    print(f"  P(any mutual horse wins,    unconditional) "
+          f"{o['mutual_winner_hit_mean']*100:.1f}%")
+    print(f"  P(2+ mutual in top-3, unconditional) "
+          f"{o['mutual_2plus_in_top3_mean']*100:.1f}%")
+    print(f"  P(3  mutual in top-3, unconditional) "
+          f"{o['mutual_3_in_top3_mean']*100:.1f}%")
+    if o.get("n_with_mutual"):
+        print(f"  Conditional on \u2265 1 mutual pick "
+              f"(n={o['n_with_mutual']}):")
+        print(f"     P(mutual in top-3) {o['cond_mut_any_in_top3']*100:.1f}%   "
+              f"P(mutual wins) {o['cond_mut_winner_hit']*100:.1f}%")
+
+    print(f"\n  --- By mutual_size ---")
+    for row in result["by_mutual_size"]:
+        ms = row.get("mutual_size")
+        n = row["n"]
+        pct = 100 * n / result["n_races"] if result["n_races"] else 0
+        p_t3 = row.get("mutual_any_in_top3_mean")
+        p_w = row.get("mutual_winner_hit_mean")
+        p_2p = row.get("mutual_2plus_in_top3_mean")
+        def _pct(v): return f"{v*100:>5.1f}%" if v is not None else "  —  "
+        print(f"    size={ms}  n={n:>3} ({pct:>4.1f}%)  "
+              f"any-in-top-3 {_pct(p_t3)}   "
+              f"winner {_pct(p_w)}   "
+              f"\u22652-in-top-3 {_pct(p_2p)}")
 
     for title, key in (("By venue", "by_venue"),
                        ("By distance bucket", "by_dist_bucket"),

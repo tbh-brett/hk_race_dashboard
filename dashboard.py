@@ -42,29 +42,11 @@ BLACKBOOK_FILE = BASE / "blackbook.json"
 
 
 # ── Per-run commentary lookup (for Form Guide rows) ──────────────────────────
-def _hkjc_video_url(date_dc: str, race_no: int,
-                    track: str | None = None) -> str:
-    """Return a URL to the HKJC race replay page.
-
-    ``date_dc`` is ``YYYY/MM/DD``.  When ``track`` (``ST``/``HV``) is supplied
-    we point at the public English LocalResults page which embeds the
-    replay player and works when opened standalone in a new tab.  Otherwise
-    we fall back to the older iframe player URL.
-    """
-    rn = int(race_no)
-    if track:
-        tk = str(track).strip().upper()
-        rc = "ST" if tk in ("ST", "SHA TIN") else (
-            "HV" if tk in ("HV", "HAPPY VALLEY") else tk or "ST")
-        return (
-            "https://racing.hkjc.com/racing/information/English/Racing/"
-            f"LocalResults.aspx?RaceDate={date_dc}&Racecourse={rc}"
-            f"&RaceNo={rn:02d}"
-        )
+def _hkjc_video_url(date_dc: str, race_no: int) -> str:
     return (
         "https://racing.hkjc.com/contentAsset/videoplayer_v4/"
         "video-player-iframe_v4.html?type=replay-full"
-        f"&date={date_dc}&no={rn:02d}&lang=eng"
+        f"&date={date_dc}&no={int(race_no):02d}&lang=eng"
         "&noPTbar=false&noLeading=false&videoParam=PAD"
     )
 
@@ -470,14 +452,6 @@ st.markdown("""
     .pl-45 { background: rgba(128,128,128,0.18); }
     .pl-x  { opacity: 0.6; }
     .t5-self { color: #e63946 !important; font-weight: 700 !important; }
-    /* Top-5 next-race outcome badges (immediately following race) */
-    .t5-next {
-        display: inline-block; margin-left: 4px;
-        font-size: 0.78em; font-weight: 700; line-height: 1;
-        padding: 1px 4px; border-radius: 3px; vertical-align: baseline;
-    }
-    .t5-win { background: #f59e0b; color: #1a0f00; }
-    .t5-plc { background: rgba(34,197,94,0.22); color: #16a34a; border: 1px solid rgba(34,197,94,0.4); }
 
     /* ══ SECTION DIVIDER ══ */
     .term-divider {
@@ -614,17 +588,8 @@ code, pre, .stCode {
 # ══════════════════════════════════════════════════════════════════════════════
 
 @st.cache_data(ttl=30)
-def load_available_meetings(include_pending: bool = False) -> list[dict]:
-    """Scan reports/ for JSON result files and return sorted list.
-
-    When ``include_pending`` is True (used by the Race Day sidebar) the
-    list also includes meetings that have *only* a racecard scraped but
-    no model analysis JSON yet, so users can see and re-trigger the
-    pipeline for upcoming meetings even when step [2/3]/[3/3] of the
-    pipeline hasn't completed (e.g. on Streamlit Cloud where the heavy
-    ET model can time out). Such entries have ``file=None`` and
-    ``status="pending"``.
-    """
+def load_available_meetings() -> list[dict]:
+    """Scan reports/ for JSON result files and return sorted list."""
     meetings = []
     if not REPORTS.exists():
         return meetings
@@ -651,52 +616,9 @@ def load_available_meetings(include_pending: bool = False) -> list[dict]:
                     "n_races": len(data.get("races", [])),
                     "date_str": date_str,
                     "model_version": version,
-                    "status": "analysed",
                 })
             except (json.JSONDecodeError, KeyError):
                 continue
-
-    # Surface racecard-only meetings (analysis pending). Only when caller
-    # asks for it — other pages (Form Guide, Model Bets, PDF Builder, …)
-    # still see only fully-analysed meetings as before.
-    rc_dir = BASE / "racecards"
-    if include_pending and rc_dir.exists():
-        for f in rc_dir.glob("racecard_*.xlsx"):
-            m = re.search(r"racecard_(\d{8})\.xlsx$", f.name)
-            if not m:
-                continue
-            date_str = m.group(1)
-            if date_str in seen_dates:
-                continue
-            seen_dates.add(date_str)
-            iso = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
-            venue = "?"
-            n_races = 0
-            cache_json = BASE / "cache" / f"racecard_{iso}.json"
-            if cache_json.exists():
-                try:
-                    with open(cache_json, "r", encoding="utf-8") as cf:
-                        cd = json.load(cf)
-                    venue = (cd.get("venue") or cd.get("meeting_venue") or "?") or "?"
-                    n_races = len(cd.get("races", []) or [])
-                except (json.JSONDecodeError, OSError):
-                    pass
-            try:
-                gen = datetime.fromtimestamp(
-                    f.stat().st_mtime).isoformat(timespec="minutes")
-            except OSError:
-                gen = ""
-            meetings.append({
-                "file": None,
-                "title": f"{iso} — {venue} (analysis pending)",
-                "generated_at": gen,
-                "venue": venue,
-                "n_races": n_races,
-                "date_str": date_str,
-                "model_version": "",
-                "status": "pending",
-            })
-
     meetings.sort(key=lambda m: m["date_str"], reverse=True)
     return meetings
 
@@ -915,91 +837,6 @@ def _gh_token_check() -> tuple[bool, bool, str]:
         return (True, False, f"network error: {e}")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Push notifications (ntfy.sh) — phone alerts via Chrome Web Push
-# ══════════════════════════════════════════════════════════════════════════════
-
-def _ntfy_topic() -> str:
-    """Resolve NTFY_TOPIC from Streamlit secrets or env. Empty string if unset."""
-    try:
-        v = st.secrets.get("NTFY_TOPIC", "")
-    except Exception:
-        v = ""
-    return v or os.environ.get("NTFY_TOPIC", "") or ""
-
-
-def _push_notify(title: str, body: str, tags: str = "racing",
-                 priority: int = 3, click: str = "") -> bool:
-    """Send a push notification via ntfy.sh. No-op if NTFY_TOPIC not configured.
-
-    Topic is a private UUID string stored in Streamlit secrets (and GitHub
-    Actions secrets for the cron pre-race reminder). User subscribes once
-    in Chrome on their phone at ``https://ntfy.sh/<topic>`` and accepts
-    the Web Push permission prompt — no app install required.
-
-    Args:
-        title: short header (≤100 chars)
-        body: free text, supports newlines
-        tags: comma-separated ntfy tag aliases (renders as emoji prefix)
-        priority: 1 (min) .. 5 (urgent, bypasses DND on most phones)
-        click: optional URL the notification opens on tap
-    Returns True if delivered.
-    """
-    topic = _ntfy_topic()
-    if not topic:
-        return False
-    try:
-        import requests as _req
-        headers = {
-            "Title": title[:100],
-            "Tags": tags,
-            "Priority": str(int(priority)),
-        }
-        if click:
-            headers["Click"] = click
-        resp = _req.post(
-            f"https://ntfy.sh/{topic}",
-            data=body.encode("utf-8"),
-            headers=headers,
-            timeout=5,
-        )
-        return resp.status_code == 200
-    except Exception:
-        return False
-
-
-def _render_push_sidebar() -> None:
-    """Sidebar expander for push-notification setup/status."""
-    topic = _ntfy_topic()
-    with st.sidebar.expander("📲 Phone push", expanded=False):
-        if not topic:
-            st.caption(
-                "Add `NTFY_TOPIC = \"<your-uuid>\"` to Streamlit secrets, "
-                "then visit `https://ntfy.sh/<your-uuid>` in Chrome on your "
-                "phone and tap **Subscribe → Enable web notifications**."
-            )
-            st.markdown(
-                "Generate a private topic UUID: "
-                "`python -c \"import uuid;print(uuid.uuid4())\"`"
-            )
-        else:
-            mask = topic[:8] + "…" + topic[-4:] if len(topic) > 12 else topic
-            st.caption(f"Topic: `{mask}` · ready")
-            st.markdown(f"[Subscribe in Chrome →](https://ntfy.sh/{topic})")
-            if st.button("🔔 Send test", key="push_test_btn",
-                         use_container_width=True):
-                ok = _push_notify(
-                    "🔔 Dashboard test",
-                    f"Push notifications wired up · {date.today().isoformat()}",
-                    tags="white_check_mark",
-                    priority=3,
-                )
-                if ok:
-                    st.toast("Sent — check your phone")
-                else:
-                    st.toast("Failed — see logs")
-
-
 def _gh_emergency_sync_all() -> tuple[int, int, list[str]]:
     """Walk every persistence-relevant file on disk and push to GitHub.
 
@@ -1030,12 +867,6 @@ def _gh_emergency_sync_all() -> tuple[int, int, list[str]]:
     _add(BLACKBOOK_FILE, "blackbook.json")
     _add(REPORTS / "user_bets_log.jsonl", "reports/user_bets_log.jsonl")
 
-    # v4.8: master historical DB (xlsx + sqlite). Auto-updated when
-    # scrape_hkjc_results runs but only persists to GitHub if explicitly
-    # synced — every meeting since April was at risk of being lost.
-    _add(BASE / "hkjc_results_updated.xlsx", "hkjc_results_updated.xlsx")
-    _add(BASE / "hkjc.db", "hkjc.db")
-
     # reports/ JSONs we know we want to persist
     if REPORTS.exists():
         report_globs = (
@@ -1061,15 +892,6 @@ def _gh_emergency_sync_all() -> tuple[int, int, list[str]]:
         for pat in ("racecard_*.json", "form_guide_*.json"):
             for f in cache_dir.glob(pat):
                 _add(f, f"cache/{f.name}")
-
-    # cache/live_odds/<YYYYMMDD>/<VENUE>_R<n>.json snapshots
-    lo_root = BASE / "cache" / "live_odds"
-    if lo_root.exists():
-        for sub in lo_root.iterdir():
-            if not sub.is_dir():
-                continue
-            for f in sub.glob("*.json"):
-                _add(f, f"cache/live_odds/{sub.name}/{f.name}")
 
     # running-position photos (per-meeting subdirs)
     rp_root = BASE / "running_position_photos"
@@ -1173,76 +995,6 @@ def _render_persistence_sidebar() -> None:
         else:
             st.sidebar.error("Nothing pushed. Errors:\n"
                              + "\n".join(f"• {x}" for x in sample))
-
-
-def _render_db_backup_sidebar() -> None:
-    """Sidebar buttons to download the master historical DB for backup.
-
-    Renders both locally and on cloud — the local copy may be more or
-    less fresh than the cloud one depending on which environment last
-    scraped results, so users want the option from both sides.
-    """
-    xlsx_path = BASE / "hkjc_results_updated.xlsx"
-    db_path = BASE / "hkjc.db"
-    if not (xlsx_path.exists() or db_path.exists()):
-        return
-
-    st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
-    st.sidebar.markdown('<div class="sb-nav-section">DB Backup</div>',
-                        unsafe_allow_html=True)
-
-    # Compute summary (rows + max date) once per render — read from sqlite
-    # for speed; falls back to xlsx mtime if sqlite missing.
-    summary = ""
-    try:
-        if db_path.exists():
-            import sqlite3 as _sql
-            con = _sql.connect(str(db_path))
-            try:
-                n = con.execute("SELECT COUNT(*) FROM results").fetchone()[0]
-                mx = con.execute("SELECT MAX(race_date) FROM results").fetchone()[0]
-                summary = f"{n:,} rows · latest {mx}"
-            finally:
-                con.close()
-        elif xlsx_path.exists():
-            from datetime import datetime as _dt
-            mt = _dt.fromtimestamp(xlsx_path.stat().st_mtime)
-            summary = f"xlsx · modified {mt:%Y-%m-%d %H:%M}"
-    except Exception as e:
-        summary = f"(summary unavailable: {e})"
-
-    if summary:
-        st.sidebar.caption(summary)
-
-    if xlsx_path.exists():
-        try:
-            st.sidebar.download_button(
-                "⬇ hkjc_results_updated.xlsx",
-                data=xlsx_path.read_bytes(),
-                file_name="hkjc_results_updated.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-                key="_db_dl_xlsx",
-                help="Full historical results (master xlsx). Open in Excel "
-                     "to verify integrity or keep as a backup.",
-            )
-        except Exception as e:
-            st.sidebar.warning(f"xlsx download unavailable: {e}")
-
-    if db_path.exists():
-        try:
-            st.sidebar.download_button(
-                "⬇ hkjc.db (SQLite)",
-                data=db_path.read_bytes(),
-                file_name="hkjc.db",
-                mime="application/octet-stream",
-                use_container_width=True,
-                key="_db_dl_sqlite",
-                help="SQLite mirror of the master xlsx — open in DB Browser "
-                     "for SQLite to query / verify.",
-            )
-        except Exception as e:
-            st.sidebar.warning(f"sqlite download unavailable: {e}")
 
 
 def _gh_get_path_sha(repo_path: str) -> str | None:
@@ -1406,12 +1158,6 @@ def _gh_persist_postrace_outputs(date_str: str) -> tuple[int, int, list[str]]:
         # Form guide cache often gets lane data added during step 6.
         (BASE / "cache" / f"form_guide_{date_str}.json",
          f"cache/form_guide_{date_str}.json"),
-        # v4.8: master historical DB. Auto-appended by scrape_hkjc_results.py
-        # via db_utils.append_results_to_db. Without this, every meeting's
-        # rows are lost on next container restart and the DB silently rolls
-        # back to whatever was last pushed manually.
-        (BASE / "hkjc_results_updated.xlsx",   "hkjc_results_updated.xlsx"),
-        (BASE / "hkjc.db",                     "hkjc.db"),
     ]
     rp_dir = BASE / "running_position_photos" / dc
     if rp_dir.exists():
@@ -1421,14 +1167,6 @@ def _gh_persist_postrace_outputs(date_str: str) -> tuple[int, int, list[str]]:
         # so re-OCR can run on a fresh container without re-scraping HKJC.
         for f in sorted(rp_dir.glob("R*.jpg")):
             candidates.append((f, f"running_position_photos/{dc}/{f.name}"))
-
-    # cache/live_odds/<YYYYMMDD>/*.json — drift snapshots captured pre-race.
-    # Crucial for post-race "what did the market know" review; without this
-    # the live odds page resets to empty on container restart.
-    lo_day = BASE / "cache" / "live_odds" / dc
-    if lo_day.exists():
-        for f in sorted(lo_day.glob("*.json")):
-            candidates.append((f, f"cache/live_odds/{dc}/{f.name}"))
 
     pushed = 0
     missing = 0
@@ -1970,46 +1708,19 @@ def _fmt_top5(top5: list[tuple], current_horse: str) -> str:
     return ", ".join(parts)
 
 
-def _fmt_top5_html(top5: list[tuple], current_horse: str, top5_next: list | None = None) -> str:
-    """Top-5 finishers as HTML with bold horse names; current horse in amber.
-
-    When ``top5_next`` is supplied it should be a list aligned with ``top5``
-    of dicts ``{"date": iso, "place": int}`` describing each co-runner's
-    IMMEDIATE next race after this run. Win (1) and place (2-3) outcomes
-    are appended as small badges.
-    """
+def _fmt_top5_html(top5: list[tuple], current_horse: str) -> str:
+    """Top-5 finishers as HTML with bold horse names; current horse in amber."""
     parts = []
     h_up = current_horse.strip().upper()
-    nxt_list = top5_next or []
-    for i, (place, name) in enumerate(top5):
+    for place, name in top5:
         name_str = str(name)
         is_self = name_str.strip().upper() == h_up
-        nxt = nxt_list[i] if i < len(nxt_list) else {}
-        badge = ""
-        if not is_self and isinstance(nxt, dict) and nxt.get("place") is not None:
-            np = nxt["place"]
-            nd = nxt.get("date", "")
-            try:
-                d_disp = date.fromisoformat(nd).strftime("%d/%m") if nd else ""
-            except (ValueError, TypeError):
-                d_disp = ""
-            tip = f"Next race {d_disp}: placed {np}" if d_disp else f"Next race: placed {np}"
-            if np == 1:
-                badge = (
-                    f'<span class="t5-next t5-win" title="{tip}">{np}</span>'
-                )
-            elif np in (2, 3):
-                badge = (
-                    f'<span class="t5-next t5-plc" title="{tip}">{np}</span>'
-                )
         if is_self:
             parts.append(
                 f'<span class="t5-entry"><strong class="t5-self">{place}. {name_str}</strong></span>'
             )
         else:
-            parts.append(
-                f'<span class="t5-entry">{place}. <strong>{name_str}</strong>{badge}</span>'
-            )
+            parts.append(f'<span class="t5-entry">{place}. <strong>{name_str}</strong></span>')
     return " ".join(parts)
 
 
@@ -2761,33 +2472,6 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                 with st.expander("Scrape output"):
                     st.code((res.stdout or "")[-2500:])
 
-            # Persist racecard immediately so a downstream [2/3]/[3/3]
-            # failure can't lose it on the next container restart.
-            # No-op locally (only runs on Streamlit Cloud with a token).
-            if _is_streamlit_cloud() and _gh_headers():
-                early_pushed: list[str] = []
-                rc_iso_json = BASE / "cache" / f"racecard_{date_str}.json"
-                for local, repo_path in [
-                    (racecard_xlsx, f"racecards/{racecard_xlsx.name}"),
-                    (rc_iso_json,   f"cache/{rc_iso_json.name}"),
-                ]:
-                    if local.exists():
-                        try:
-                            ok = _gh_push_file(
-                                repo_path, local.read_bytes(),
-                                f"pipeline: racecard {date_str} [skip ci]",
-                            )
-                            if ok:
-                                early_pushed.append(repo_path)
-                        except Exception as e:
-                            st.warning(f"⚠ early sync — {repo_path}: {e}")
-                if early_pushed:
-                    st.success(
-                        f"☁ Racecard synced to GitHub ({len(early_pushed)} "
-                        "file(s)) — survives a container restart even if the "
-                        "rest of the pipeline fails."
-                    )
-
         # ── [2/3] SARR model on the fresh card ─────────────────────
         if not sarr_script.exists():
             st.error(f"✗ [2/3] SARR script not found at {sarr_script}")
@@ -2856,38 +2540,6 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                         "(none generated, or no GITHUB_TOKEN configured).")
         except Exception as e:
             st.warning(f"⚠ GitHub sync failed: {e}")
-
-    # ── Push notification: summary of aligned ET ∩ SARR signals ─────
-    try:
-        dc = date_str.replace("-", "")
-        _et_path = REPORTS / f"race_day_report_{dc}_{model}.json"
-        if _et_path.exists():
-            _ed = load_meeting_data(_et_path)
-            _sd = load_sarr_data(dc) or {}
-            _sarr_by_rn = {int(r.get("race_number", 0) or 0): r
-                           for r in _sd.get("races", [])}
-            _lines = []
-            for _r in _ed.get("races", []):
-                _rn = int(_r.get("race_number", 0) or 0)
-                _et4 = [(int(p["horse_no"]), p.get("horse_name", ""))
-                        for p in (_r.get("picks") or [])[:4]
-                        if p.get("horse_no") is not None]
-                _sr = _sarr_by_rn.get(_rn)
-                _s4 = {int(p["horse_no"]) for p in (_sr.get("picks") or [])[:4]
-                       if _sr and p.get("horse_no") is not None} if _sr else set()
-                _mutual = [(no, nm) for (no, nm) in _et4 if no in _s4]
-                if _mutual:
-                    _names = ", ".join(f"#{no} {nm[:14]}" for no, nm in _mutual[:3])
-                    _lines.append(f"R{_rn}: {_names}")
-            if _lines:
-                _push_notify(
-                    title=f"📊 Analysis ready · {date_str} · {len(_lines)} race(s) aligned",
-                    body="ET ∩ SARR mutual picks:\n" + "\n".join(_lines[:9]),
-                    tags="bar_chart",
-                    priority=3,
-                )
-    except Exception:
-        pass
 
     # ── Clear data caches so fresh JSONs are picked up immediately ──
     try:
@@ -3567,8 +3219,8 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
             unsafe_allow_html=True,
         )
 
-    # ── 4 columns: ET top4 / SARR top4 / mutual / factor edges ─────────
-    c1, c_sarr, c2, c3 = st.columns([1.05, 1.05, 1.25, 1.35])
+    # ── 3 columns: quick meta / mutual top-3 / factor edges ─────────
+    c1, c2, c3 = st.columns([1.1, 1.4, 1.5])
 
     # Helpers
     bb_names = set(bb_active.keys())
@@ -3603,8 +3255,8 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
 
     # ── Col 1: meta / top ET picks (solo) ────────────────────────────
     with c1:
-        st.markdown("**ET top 4**", help="Top 4 from the v4.4 ET model for this race")
-        for pick in (race.get("picks") or [])[:4]:
+        st.markdown("**ET top 3**", help="Top 3 from the v4.4 ET model for this race")
+        for pick in (race.get("picks") or [])[:3]:
             hn_u = str(pick.get("horse_name", "")).upper().strip()
             flags = _flags(hn_u)
             st.markdown(
@@ -3618,27 +3270,6 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
                 f'</div>',
                 unsafe_allow_html=True,
             )
-
-    # ── Col SARR: SARR top 4 ─────────────────────────────────────────
-    with c_sarr:
-        st.markdown("**SARR top 4**", help="Top 4 from the SARR (speed-adjusted) model for this race")
-        if not sarr_race:
-            st.caption("SARR not available — run [2/3] to populate.")
-        else:
-            for pick in (sarr_race.get("picks") or [])[:4]:
-                hn_u = str(pick.get("horse_name", "")).upper().strip()
-                flags = _flags(hn_u)
-                st.markdown(
-                    f'<div style="padding:3px 0">'
-                    f'<span style="opacity:0.55">#{pick.get("rank","?")}</span> '
-                    f'<span style="font-weight:700">{pick.get("horse_name","")}</span>'
-                    f' <span style="opacity:0.6;font-size:0.85em">({pick.get("horse_no","?")})</span>'
-                    f' &nbsp; {flags}'
-                    f'<div style="font-size:0.82em;opacity:0.7">'
-                    f'Win {pick.get("win_prob",0):.1f}% · {pick.get("jockey","")}</div>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
 
     # ── Col 2: Mutual ET ∩ SARR top-4 ──────────────────────────────
     with c2:
@@ -3738,457 +3369,6 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
                "&nbsp; · &nbsp; Jump to full analysis on **Model Analysis** page.")
 
 
-def _compute_race_day_scorecard(data: dict, date_compact: str) -> dict | None:
-    """Compare model picks against actual finish for one meeting.
-
-    Returns ``None`` when the post-race results JSON is missing.
-    Otherwise returns ``{n_races, top1, top3, top5, mean_winner_rank, rows}``
-    where ``rows`` is a per-race breakdown for tabular display.
-    """
-    res = _load_results_json(date_compact)
-    if not res:
-        return None
-    actual_by_race: dict[int, dict] = {}
-    for r in res.get("races", []) or []:
-        try:
-            rn = int(r.get("race_number") or 0)
-        except (TypeError, ValueError):
-            continue
-        if rn <= 0:
-            continue
-        order: list[tuple[int, int, str]] = []
-        for ru in r.get("runners", []) or []:
-            try:
-                pl = int(ru.get("place"))
-                hn = int(ru.get("horse_no"))
-            except (TypeError, ValueError):
-                continue
-            order.append((pl, hn, str(ru.get("horse_name") or "")))
-        order.sort(key=lambda t: t[0])
-        if not order or order[0][0] != 1:
-            continue
-        top3 = [hn for _, hn, _ in order[:3]]
-        actual_by_race[rn] = {"top3": top3,
-                              "winner_no": order[0][1],
-                              "winner_name": order[0][2]}
-
-    rows: list[dict] = []
-    n_top1 = n_top3 = n_top5 = 0
-    n_settled = 0
-    rank_sum = 0
-    rank_n = 0
-    for race in (data.get("races") or []):
-        try:
-            rn = int(race.get("race_number") or 0)
-        except (TypeError, ValueError):
-            continue
-        actual = actual_by_race.get(rn)
-        if not actual:
-            continue
-        picks = race.get("picks") or []
-        rank_by_no: dict[int, int] = {}
-        for p in picks:
-            try:
-                no = int(p.get("horse_no"))
-                rk = int(p.get("rank") or 0)
-            except (TypeError, ValueError):
-                continue
-            if rk > 0 and no not in rank_by_no:
-                rank_by_no[no] = rk
-        winner_rank = rank_by_no.get(actual["winner_no"])
-        model_top3 = sorted(
-            (no for no, rk in rank_by_no.items() if rk <= 3),
-            key=lambda no: rank_by_no[no],
-        )
-        overlap = len(set(model_top3) & set(actual["top3"]))
-
-        n_settled += 1
-        if winner_rank is not None:
-            rank_sum += winner_rank
-            rank_n += 1
-            if winner_rank == 1:
-                n_top1 += 1
-            if winner_rank <= 3:
-                n_top3 += 1
-            if winner_rank <= 5:
-                n_top5 += 1
-
-        rows.append({
-            "race": rn,
-            "winner_no": actual["winner_no"],
-            "winner_name": actual["winner_name"],
-            "winner_rank": winner_rank,
-            "top3_overlap": overlap,
-            "model_top3": model_top3,
-        })
-
-    if n_settled == 0:
-        return None
-    return {
-        "n_races": n_settled,
-        "top1": n_top1 / n_settled,
-        "top3": n_top3 / n_settled,
-        "top5": n_top5 / n_settled,
-        "mean_winner_rank": (rank_sum / rank_n) if rank_n else None,
-        "rows": rows,
-    }
-
-
-def _render_race_day_scorecard(data: dict, date_compact: str) -> None:
-    """Compact post-race accuracy panel for the Race Day Insight page."""
-    sc = _compute_race_day_scorecard(data, date_compact)
-    if not sc:
-        return  # Pre-race or partial — silently skip.
-
-    n = sc["n_races"]
-    top1, top3, top5 = sc["top1"], sc["top3"], sc["top5"]
-    mr = sc["mean_winner_rank"]
-    n1 = sum(1 for r in sc["rows"] if r["winner_rank"] == 1)
-    n3 = sum(1 for r in sc["rows"] if (r["winner_rank"] or 99) <= 3)
-    n5 = sum(1 for r in sc["rows"] if (r["winner_rank"] or 99) <= 5)
-
-    def _col(rate: float) -> str:
-        if rate >= 0.40:
-            return "#22c55e"
-        if rate >= 0.20:
-            return "#f59e0b"
-        return "#ef4444"
-
-    head = (
-        f'<div style="margin:6px 0 8px 0;padding:10px 14px;'
-        f'background:linear-gradient(90deg,rgba(34,197,94,0.07),rgba(59,130,246,0.07));'
-        f'border:1px solid rgba(148,163,184,0.25);border-radius:8px">'
-        f'<div style="font-size:0.78em;font-weight:700;color:#94a3b8;'
-        f'letter-spacing:0.06em;margin-bottom:6px">'
-        f'📊 RACE-DAY SCORECARD · {n} settled race{"s" if n != 1 else ""}</div>'
-        f'<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:baseline">'
-        f'<div><span style="opacity:0.6;font-size:0.78em">Top-1 Win</span> '
-        f'<span style="color:{_col(top1)};font-size:1.3em;font-weight:700">'
-        f'{top1*100:.0f}%</span> <span style="opacity:0.55;font-size:0.78em">'
-        f'({n1}/{n})</span></div>'
-        f'<div><span style="opacity:0.6;font-size:0.78em">Top-3 Hit</span> '
-        f'<span style="color:{_col(top3)};font-size:1.3em;font-weight:700">'
-        f'{top3*100:.0f}%</span> <span style="opacity:0.55;font-size:0.78em">'
-        f'({n3}/{n})</span></div>'
-        f'<div><span style="opacity:0.6;font-size:0.78em">Top-5 Hit</span> '
-        f'<span style="color:{_col(top5)};font-size:1.3em;font-weight:700">'
-        f'{top5*100:.0f}%</span> <span style="opacity:0.55;font-size:0.78em">'
-        f'({n5}/{n})</span></div>'
-    )
-    if mr is not None:
-        head += (
-            f'<div><span style="opacity:0.6;font-size:0.78em">Avg Winner Rank</span> '
-            f'<span style="font-size:1.3em;font-weight:700">{mr:.1f}</span></div>'
-        )
-    head += '</div></div>'
-    st.markdown(head, unsafe_allow_html=True)
-
-    with st.expander(f"Per-race breakdown ({n} races)", expanded=False):
-        rows_disp = []
-        for r in sc["rows"]:
-            wr = r["winner_rank"]
-            if wr is None:
-                wr_disp, tag = "Not in picks", "⚠"
-            elif wr == 1:
-                wr_disp, tag = f"#{wr}", "✓"
-            elif wr <= 3:
-                wr_disp, tag = f"#{wr}", "≤3"
-            elif wr <= 5:
-                wr_disp, tag = f"#{wr}", "≤5"
-            else:
-                wr_disp, tag = f"#{wr}", "miss"
-            rows_disp.append({
-                "Race": f"R{r['race']}",
-                "Winner": f"{r['winner_no']} {r['winner_name']}",
-                "Model Rank": wr_disp,
-                "Result": tag,
-                "Top-3 ∩": f"{r['top3_overlap']}/3",
-                "Model Top-3 (#)": ", ".join(str(x) for x in r["model_top3"]) or "—",
-            })
-        st.dataframe(pd.DataFrame(rows_disp), use_container_width=True,
-                     hide_index=True)
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# Framework Lab — run the 4 EDA-derived candidate frameworks against an
-# upcoming racecard. Wraps `frameworks/live_predict.py`.
-# ════════════════════════════════════════════════════════════════════════════
-
-@st.cache_data(ttl=300, show_spinner=False)
-def _fwlab_available_racecards() -> list[str]:
-    """Return ISO dates for which a racecard cache exists, newest first."""
-    out: list[str] = []
-    rc_dir = BASE / "cache"
-    if not rc_dir.exists():
-        return out
-    for fp in rc_dir.glob("racecard_*.json"):
-        try:
-            iso = fp.stem.replace("racecard_", "")
-            # validate YYYY-MM-DD
-            datetime.strptime(iso, "%Y-%m-%d")
-            out.append(iso)
-        except ValueError:
-            continue
-    return sorted(out, reverse=True)
-
-
-@st.cache_resource(show_spinner=False)
-def _fwlab_load_dataset():
-    """Cache the cleaned dataset across reruns (heavy DB read + parsing)."""
-    from frameworks.live_predict import load_dataset as _ld
-    return _ld()
-
-
-def _fwlab_run_predictions(date_iso: str, fit_window_days: int,
-                           use_live_odds: bool):
-    """Cached prediction wrapper. Returns FrameworkPredictions."""
-    from frameworks.live_predict import predict_racecard, load_racecard
-    ds = _fwlab_load_dataset()
-    rc = load_racecard(date_iso)
-    return predict_racecard(date_iso, fit_window_days=fit_window_days,
-                            dataset=ds, racecard=rc,
-                            use_live_odds=use_live_odds)
-
-
-def page_framework_lab():
-    st.markdown('<div class="page-title">Framework Lab</div>',
-                unsafe_allow_html=True)
-    st.markdown(
-        '<div class="page-subtitle">'
-        'Four candidate ranking models from the May-2026 EDA, scored against '
-        'the next racecard. A: market-residual logistic · B: pace-tactics '
-        'simulator · C: form-quality (par-time + EWMA) · D: connections '
-        '(Beta-Bernoulli on jockey × trainer × horse).'
-        '</div>',
-        unsafe_allow_html=True,
-    )
-
-    # ── Legend / interpretation guide ───────────────────────────────────
-    with st.expander("Legend — how each framework is calculated", expanded=False):
-        st.markdown(
-            """
-**Mkt** — Implied win probability from the live HKJC win pool (or last
-snapshot in `cache/odds_history/`), de-vigged via normalisation across the
-field. This is the market's collective opinion.
-
-**A · Market-residual logistic** — Starts from market probability as a
-prior, then a logistic model trained on the last *N* days (slider in the
-sidebar) adjusts each runner using features the market is known to
-mis-price: draw × distance × surface, ESZ (early-speed z-score from the
-speedmap), pace-shape benefit, ratings drift, jockey/trainer hot-form,
-and going-fit. Output is `p_market × exp(adjustment)` then re-normalised.
-*Use when*: you trust the market broadly but want to amplify documented
-edges.
-
-**B · Pace-tactics simulator** — Monte-Carlo speedmap shootout. Each
-horse's running style + ESZ + draw produces a sectional trajectory; the
-sim resolves contested leads and ground-loss on the bend. *Does not use
-market input at all* — pure structural prediction. *Use when*: pace
-projection is strong (clear lone leader, or wall-to-wall speed); fade
-when the speedmap is uncertain.
-
-**C · Form-quality (par-time + EWMA)** — Each runner's last 6 starts are
-weighted exponentially (recency bias), normalised against the HKJC par
-time for that class/distance/going, and projected forward to today's
-conditions. *Use when*: the class/trip is stable and recent form is
-trustworthy.
-
-**D · Connections (hierarchical Beta-Bernoulli)** — Bayesian hit-rate
-model on jockey × trainer × horse triplets, with shrinkage toward the
-population mean when sample sizes are thin. Captures stable form, jockey
-booking signals, and horse-specific quirks. *Use when*: the field has
-clear J/T combinations with strong track records.
-
-**Ens** — Equal-weight mean of A/B/C/D. Smoother and less prone to a
-single-framework error. *EnsRk* shows the ensemble ranking; *MktRk*
-shows where the market has it.
-"""
-        )
-
-    racecards = _fwlab_available_racecards()
-    if not racecards:
-        st.info("No racecards in `cache/racecard_*.json`. "
-                "Scrape an upcoming meeting first (Race Day page → "
-                "**Pipeline → Scrape racecard**).")
-        return
-
-    # ── Sidebar controls ────────────────────────────────────────────────
-    st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
-    st.sidebar.markdown('<div class="sb-nav-section">Framework Lab</div>',
-                        unsafe_allow_html=True)
-    date_iso = st.sidebar.selectbox("Racecard", racecards, index=0,
-                                    key="fwlab_date")
-    fit_window = st.sidebar.slider("Framework A fit window (days)",
-                                   min_value=60, max_value=540, value=180,
-                                   step=30, key="fwlab_fit_window")
-    use_live = st.sidebar.toggle(
-        "Use latest live odds for market prob",
-        value=True, key="fwlab_use_live",
-        help="If off, Framework A's market-anchor degrades to a uniform "
-             "prior. B/C/D are unaffected.")
-    run_btn = st.sidebar.button("Run frameworks", type="primary",
-                                use_container_width=True,
-                                key="fwlab_run_btn")
-
-    # Lazy-run: only on button press, cache result in session_state by
-    # (date, window, live) tuple so the user can flip between races without
-    # re-fitting.
-    cache_key = ("fwlab_pred", date_iso, fit_window, bool(use_live))
-    if run_btn or cache_key in st.session_state:
-        if run_btn or cache_key not in st.session_state:
-            with st.spinner(f"Loading history + fitting Framework A "
-                            f"({fit_window}d window)…"):
-                try:
-                    res = _fwlab_run_predictions(date_iso, fit_window, use_live)
-                except (FileNotFoundError, ValueError) as e:
-                    st.error(f"Could not score racecard: {e}")
-                    return
-                except Exception as e:  # noqa: BLE001
-                    st.error(f"Framework run failed: {type(e).__name__}: {e}")
-                    return
-            st.session_state[cache_key] = res
-        res = st.session_state[cache_key]
-    else:
-        st.info("Pick a meeting and press **Run frameworks** in the sidebar.")
-        return
-
-    runners: pd.DataFrame = res.runners
-    if runners.empty:
-        st.warning("No runners scored.")
-        return
-
-    # ── Header metrics ──────────────────────────────────────────────────
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Meeting", date_iso)
-    c2.metric("Races", res.n_races)
-    c3.metric("Runners", res.n_runners)
-    c4.metric("Live odds", "Yes" if res.used_live_odds else "No")
-
-    # ── Race button row (matches Race Day Insight) ─────────────────────
-    race_nums = sorted(int(rn) for rn in runners["race_number"].unique())
-    if race_nums:
-        state_key = f"fwlab_sel_race_{date_iso}"
-        if state_key not in st.session_state or st.session_state[state_key] not in race_nums:
-            st.session_state[state_key] = race_nums[0]
-        _btn_cols = st.columns(len(race_nums))
-        for _i, _rn in enumerate(race_nums):
-            with _btn_cols[_i]:
-                _is_active = (st.session_state[state_key] == _rn)
-                if st.button(
-                    f"R{_rn}",
-                    key=f"fwlab_tab_{date_iso}_{_rn}",
-                    use_container_width=True,
-                    type="primary" if _is_active else "secondary",
-                ):
-                    st.session_state[state_key] = _rn
-                    st.rerun()
-        sel_rn = st.session_state[state_key]
-
-        sub = runners[runners["race_number"] == sel_rn].copy()
-        meta_dist = int(sub["distance"].iloc[0]) if pd.notna(sub["distance"].iloc[0]) else 0
-        meta_track = sub["race_track"].iloc[0]
-        meta_going = sub["going"].iloc[0] or "—"
-        st.caption(f"Race {int(sel_rn)} · {meta_track} {meta_dist}m · "
-                   f"going {meta_going} · field of {len(sub)}")
-
-        disp = sub[[
-            "horse_number", "horse_name", "draw_num", "jockey", "trainer",
-            "p_market", "p_A", "p_B", "p_C", "p_D", "p_ens",
-            "rank_p_market", "rank_p_ens",
-        ]].rename(columns={
-            "horse_number": "No",
-            "horse_name":   "Horse",
-            "draw_num":     "Gt",
-            "jockey":       "Jockey",
-            "trainer":      "Trainer",
-            "p_market":     "Mkt",
-            "p_A":          "A",
-            "p_B":          "B",
-            "p_C":          "C",
-            "p_D":          "D",
-            "p_ens":        "Ens",
-            "rank_p_market": "MktRk",
-            "rank_p_ens":    "EnsRk",
-        }).sort_values("Ens", ascending=False)
-
-        disp["No"] = disp["No"].astype("Int64")
-        disp["Gt"] = disp["Gt"].astype("Int64")
-        for col in ("Mkt", "A", "B", "C", "D", "Ens"):
-            disp[col] = (disp[col] * 100).round(1)
-
-        # quick highlights
-        top_ens = disp.iloc[0]
-        mkt_top = sub.loc[sub["rank_p_market"] == 1].iloc[0]
-        agree = top_ens["No"] == mkt_top["horse_number"]
-        cols = st.columns(3)
-        cols[0].metric("Ensemble top pick",
-                       f"#{int(top_ens['No'])} {top_ens['Horse']}",
-                       f"{top_ens['Ens']:.1f}%")
-        cols[1].metric("Market favourite",
-                       f"#{int(mkt_top['horse_number'])} "
-                       f"{mkt_top['horse_name']}",
-                       f"{mkt_top['p_market']*100:.1f}%")
-        cols[2].metric("Models vs market",
-                       "Agree" if agree else "Disagree",
-                       "—" if agree else
-                       f"value on #{int(top_ens['No'])}")
-
-        st.dataframe(
-            disp,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "Mkt": st.column_config.NumberColumn("Mkt %", format="%.1f"),
-                "A":   st.column_config.NumberColumn("A %",   format="%.1f",
-                        help="Market-residual logistic (market-anchored)"),
-                "B":   st.column_config.NumberColumn("B %",   format="%.1f",
-                        help="Pace-tactics simulator (no market input)"),
-                "C":   st.column_config.NumberColumn("C %",   format="%.1f",
-                        help="Form-quality (par-time + EWMA)"),
-                "D":   st.column_config.NumberColumn("D %",   format="%.1f",
-                        help="Connections hierarchical Beta-Bernoulli"),
-                "Ens": st.column_config.NumberColumn("Ens %", format="%.1f",
-                        help="Equal-weight ensemble of A/B/C/D"),
-            },
-        )
-
-    # ── Whole-card summary ──────────────────────────────────────────────
-    st.markdown("### Cross-race summary — ensemble top picks")
-    top_each = (runners.sort_values(["race_number", "p_ens"],
-                                    ascending=[True, False])
-                       .groupby("race_number")
-                       .head(1)
-                       [["race_number", "horse_number", "horse_name",
-                         "jockey", "draw_num", "p_market", "p_ens",
-                         "rank_p_market"]]
-                       .copy())
-    top_each["edge_vs_mkt"] = (top_each["p_ens"] - top_each["p_market"]) * 100
-    top_each = top_each.rename(columns={
-        "race_number": "R",
-        "horse_number": "No",
-        "horse_name": "Horse",
-        "jockey": "Jockey",
-        "draw_num": "Gt",
-        "p_market": "Mkt%",
-        "p_ens": "Ens%",
-        "rank_p_market": "MktRk",
-        "edge_vs_mkt": "Edge (pp)",
-    })
-    top_each["Mkt%"] = (top_each["Mkt%"] * 100).round(1)
-    top_each["Ens%"] = (top_each["Ens%"] * 100).round(1)
-    top_each["Edge (pp)"] = top_each["Edge (pp)"].round(1)
-    top_each["No"] = top_each["No"].astype("Int64")
-    top_each["Gt"] = top_each["Gt"].astype("Int64")
-    top_each["MktRk"] = top_each["MktRk"].astype("Int64")
-    st.dataframe(top_each, use_container_width=True, hide_index=True)
-
-    # CSV export
-    csv = runners.to_csv(index=False).encode("utf-8")
-    st.download_button("Download full prediction CSV", data=csv,
-                       file_name=f"framework_lab_{date_iso}.csv",
-                       mime="text/csv")
-
-
 def page_overview():
 
     st.markdown('<div class="page-title">Race Day Insight</div>', unsafe_allow_html=True)
@@ -4220,11 +3400,6 @@ def page_overview():
     st.markdown(f"### {data.get('meeting_title', nice_date)}")
     if version:
         st.caption(f"Model {version}  ·  {len(races)} races")
-
-    # ── Race-Day Scorecard (post-race) ──────────────────────────────
-    # Surfaces what the model got right/wrong for this meeting once the
-    # results JSON is available. Hidden for upcoming meetings.
-    _render_race_day_scorecard(data, dstr)
 
     # ══════════════════════════════════════════════════════════════════
     # RACE-TIME COCKPIT — top-of-page, single-race focus
@@ -4753,36 +3928,6 @@ def page_race_day(selected):
     if selected is None:
         st.markdown('<div class="page-title">Model Analysis</div>', unsafe_allow_html=True)
         st.info("No meetings available. Use the sidebar to run your first analysis.")
-        return
-
-    # Racecard-only meeting (analysis pending) — selected['file'] is None.
-    # Show a clear placeholder instead of crashing on load_meeting_data().
-    if selected.get("status") == "pending" or not selected.get("file"):
-        st.markdown(
-            f'<div class="page-title">Model Analysis</div>'
-            f'<div class="page-subtitle">{selected.get("title", "")}</div>',
-            unsafe_allow_html=True,
-        )
-        ds = selected.get("date_str", "")
-        iso = f"{ds[:4]}-{ds[4:6]}-{ds[6:]}" if len(ds) == 8 else ds
-        st.warning(
-            f"⚠️ Racecard for **{iso}** is scraped but the ET (v4.4) model "
-            "analysis JSON has not been generated yet (or the last pipeline "
-            "run failed at step [2/3] SARR or [3/3] ET).\n\n"
-            "Click **[ RUN ANALYSIS ]** in the sidebar with this date selected "
-            "to (re)compute the model report. If the scrape succeeds but the "
-            "model step fails, expand the pipeline output to read the error."
-        )
-        rc_xlsx = BASE / "racecards" / f"racecard_{ds}.xlsx"
-        if rc_xlsx.exists():
-            try:
-                size_kb = rc_xlsx.stat().st_size / 1024
-                st.caption(
-                    f"Racecard file: `{rc_xlsx.name}` — "
-                    f"{size_kb:.0f} KB · {selected.get('n_races', 0)} races"
-                )
-            except OSError:
-                pass
         return
 
     data = load_meeting_data(selected["file"])
@@ -5871,269 +5016,475 @@ def _render_unified_trends(data: dict, prefix: str = ""):
     st.dataframe(fmt_df, use_container_width=True, hide_index=True)
 
 
-def _render_unified_consensus(data: dict, prefix: str = ""):
-    """Per-meeting ET-vs-SARR agreement audit: which races each model got
-    right, where they agreed, and pace-prediction accuracy."""
-    races = data.get("races") or []
-    if not races:
-        st.info("Consensus view only available on a single-meeting JSON. "
-                "Pick a meeting from the period selector.")
-        return
-
-    rows = []
-    n_agree = n_agree_win = n_agree_plc = 0
-    n_disagree = n_et_only = n_sa_only = n_neither = 0
-    n_pace_exact = n_pace_total = 0
-    for r in races:
-        et_top1 = r.get("et_top1")
-        sa_top1 = r.get("sa_top1")
-        winner = r.get("winner")
-        agreed = bool(r.get("agree_top1"))
-        et_m = r.get("et") or {}
-        sa_m = r.get("sa") or {}
-        et_win = bool(et_m.get("win"))
-        sa_win = bool(sa_m.get("win"))
-        et_plc = bool(et_m.get("plc"))
-        sa_plc = bool(sa_m.get("plc"))
-        pp = r.get("pace_predicted")
-        pa = r.get("pace_actual")
-        if pp and pa:
-            n_pace_total += 1
-            if pp == pa:
-                n_pace_exact += 1
-        if agreed:
-            n_agree += 1
-            if et_win:
-                n_agree_win += 1
-            if et_plc:
-                n_agree_plc += 1
-        else:
-            n_disagree += 1
-            if et_win and not sa_win:
-                n_et_only += 1
-            elif sa_win and not et_win:
-                n_sa_only += 1
-            elif not (et_win or sa_win):
-                n_neither += 1
-
-        verdict = (
-            "✓✓ both" if (et_win and sa_win) else
-            "✓ ET" if et_win else
-            "✓ SARR" if sa_win else
-            "✗ neither"
-        )
-        rows.append({
-            "R": r.get("race_number"),
-            "Dist": r.get("distance"),
-            "Cls": r.get("race_class"),
-            "ET #": f"{et_top1} {r.get('et_top1_name','') or ''}".strip(),
-            "ET odds": r.get("et_top1_odds"),
-            "SARR #": f"{sa_top1} {r.get('sa_top1_name','') or ''}".strip(),
-            "SARR odds": r.get("sa_top1_odds"),
-            "Agreed": "★" if agreed else "",
-            "Winner": f"{winner} {r.get('winner_name','') or ''}".strip(),
-            "Win odds": r.get("fav_odds") if winner == r.get("fav_horse_no") else None,
-            "ET hit": "W" if et_win else ("P" if et_plc else "—"),
-            "SARR hit": "W" if sa_win else ("P" if sa_plc else "—"),
-            "Verdict": verdict,
-            "Pace pred": pp or "—",
-            "Pace actual": pa or "—",
-            "Pace ✓": "✓" if (pp and pa and pp == pa) else ("✗" if (pp and pa) else "—"),
-        })
-
-    df = pd.DataFrame(rows)
-    st.markdown("##### Per-Race Consensus")
-    st.dataframe(df, use_container_width=True, hide_index=True)
-
-    # Roll-up footer
-    st.markdown("---")
-    st.markdown("##### Day Roll-up")
-    c1, c2, c3, c4 = st.columns(4)
-    n = len(races)
-    with c1:
-        st.metric("Races", n)
-        st.metric("Models agreed (top-1)", f"{n_agree}/{n}",
-                  f"{(n_agree/n*100 if n else 0):.0f}%")
-    with c2:
-        st.metric("Agreed → won", f"{n_agree_win}/{n_agree}" if n_agree else "—",
-                  f"{(n_agree_win/n_agree*100 if n_agree else 0):.0f}%")
-        st.metric("Agreed → placed", f"{n_agree_plc}/{n_agree}" if n_agree else "—",
-                  f"{(n_agree_plc/n_agree*100 if n_agree else 0):.0f}%")
-    with c3:
-        st.metric("Disagreed: ET right", f"{n_et_only}/{n_disagree}" if n_disagree else "—")
-        st.metric("Disagreed: SARR right", f"{n_sa_only}/{n_disagree}" if n_disagree else "—")
-        st.metric("Disagreed: both wrong", f"{n_neither}/{n_disagree}" if n_disagree else "—")
-    with c4:
-        st.metric("Pace exact-match", f"{n_pace_exact}/{n_pace_total}" if n_pace_total else "—",
-                  f"{(n_pace_exact/n_pace_total*100 if n_pace_total else 0):.0f}%")
-
-
-def _aggregate_consensus_across_meetings(meeting_keys: list) -> dict:
-    """Load each per-meeting unified JSON and roll up agreement/pace metrics."""
-    out = {
-        "n_meetings": 0, "n_races": 0,
-        "n_agree": 0, "n_agree_win": 0, "n_agree_plc": 0,
-        "n_disagree": 0, "n_et_only": 0, "n_sa_only": 0, "n_neither": 0,
-        "n_pace_exact": 0, "n_pace_total": 0,
-        "et_top1_win": 0, "sa_top1_win": 0, "mk_top1_win": 0,
-        "per_meeting": [],
-    }
-    for k in meeting_keys:
-        d = _load_unified_backtest(k)
-        if not d:
-            continue
-        races = d.get("races") or []
-        if not races:
-            continue
-        out["n_meetings"] += 1
-        m_agree = m_win_et = m_win_sa = m_win_mk = m_pace_ok = m_pace_tot = 0
-        for r in races:
-            out["n_races"] += 1
-            et_m = r.get("et") or {}
-            sa_m = r.get("sa") or {}
-            mk_m = r.get("mk") or {}
-            et_win = bool(et_m.get("win"))
-            sa_win = bool(sa_m.get("win"))
-            mk_win = bool(mk_m.get("win"))
-            agreed = bool(r.get("agree_top1"))
-            if agreed:
-                out["n_agree"] += 1
-                m_agree += 1
-                if et_win:
-                    out["n_agree_win"] += 1
-                if bool(et_m.get("plc")):
-                    out["n_agree_plc"] += 1
-            else:
-                out["n_disagree"] += 1
-                if et_win and not sa_win:
-                    out["n_et_only"] += 1
-                elif sa_win and not et_win:
-                    out["n_sa_only"] += 1
-                elif not (et_win or sa_win):
-                    out["n_neither"] += 1
-            if et_win:
-                out["et_top1_win"] += 1; m_win_et += 1
-            if sa_win:
-                out["sa_top1_win"] += 1; m_win_sa += 1
-            if mk_win:
-                out["mk_top1_win"] += 1; m_win_mk += 1
-            pp, pa = r.get("pace_predicted"), r.get("pace_actual")
-            if pp and pa:
-                out["n_pace_total"] += 1; m_pace_tot += 1
-                if pp == pa:
-                    out["n_pace_exact"] += 1; m_pace_ok += 1
-        out["per_meeting"].append({
-            "date": d.get("date") or k,
-            "n": len(races),
-            "agree": m_agree,
-            "et_win": m_win_et,
-            "sa_win": m_win_sa,
-            "mk_win": m_win_mk,
-            "pace_exact": m_pace_ok,
-            "pace_total": m_pace_tot,
-        })
-    return out
-
-
-def _render_cross_day_compare(meeting_inv: dict, prefix: str = "xd_"):
-    """Multi-meeting selector → roll-up of agreement / pace / hit rates so the
-    user can spot recurring failure modes across selected race days."""
-    have = sorted(meeting_inv.keys(), reverse=True)
-    if not have:
-        st.info("No per-meeting backtests available yet.")
-        return
-    options = [(dc, f"{dc[:4]}-{dc[4:6]}-{dc[6:]}") for dc in have]
-    default_pick = [opt[0] for opt in options[:min(4, len(options))]]
-    sel = st.multiselect(
-        "Pick race days to compare:",
-        [o[0] for o in options],
-        default=default_pick,
-        format_func=lambda k: dict(options).get(k, k),
-        key=f"{prefix}sel",
-    )
-    if not sel:
-        st.caption("Select two or more meetings to roll up cross-day metrics.")
-        return
-
-    agg = _aggregate_consensus_across_meetings(sel)
-    if not agg["n_races"]:
-        st.warning("Selected meetings have no race-level data.")
-        return
-
-    n = agg["n_races"]
-    nagr = agg["n_agree"] or 0
-    ndis = agg["n_disagree"] or 0
-    nptot = agg["n_pace_total"] or 0
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.metric("Meetings", agg["n_meetings"])
-        st.metric("Races", n)
-    with c2:
-        st.metric("ET top-1 win",
-                  f"{agg['et_top1_win']}/{n}",
-                  f"{agg['et_top1_win']/n*100:.0f}%")
-        st.metric("SARR top-1 win",
-                  f"{agg['sa_top1_win']}/{n}",
-                  f"{agg['sa_top1_win']/n*100:.0f}%")
-        st.metric("Market fav win",
-                  f"{agg['mk_top1_win']}/{n}",
-                  f"{agg['mk_top1_win']/n*100:.0f}%")
-    with c3:
-        st.metric("Both agreed", f"{nagr}/{n}",
-                  f"{(nagr/n*100 if n else 0):.0f}%")
-        st.metric("Agreed → won",
-                  f"{agg['n_agree_win']}/{nagr}" if nagr else "—",
-                  f"{(agg['n_agree_win']/nagr*100 if nagr else 0):.0f}%")
-        st.metric("Agreed → placed",
-                  f"{agg['n_agree_plc']}/{nagr}" if nagr else "—",
-                  f"{(agg['n_agree_plc']/nagr*100 if nagr else 0):.0f}%")
-    with c4:
-        st.metric("Disagreed: ET right",
-                  f"{agg['n_et_only']}/{ndis}" if ndis else "—")
-        st.metric("Disagreed: SARR right",
-                  f"{agg['n_sa_only']}/{ndis}" if ndis else "—")
-        st.metric("Pace exact-match",
-                  f"{agg['n_pace_exact']}/{nptot}" if nptot else "—",
-                  f"{(agg['n_pace_exact']/nptot*100 if nptot else 0):.0f}%")
-
-    # Per-meeting breakdown table
-    pm_rows = []
-    for m in agg["per_meeting"]:
-        n_m = m["n"] or 1
-        pm_rows.append({
-            "Date": m["date"],
-            "Races": m["n"],
-            "Agreed": f"{m['agree']}/{m['n']}",
-            "ET win%": f"{m['et_win']/n_m*100:.0f}%",
-            "SARR win%": f"{m['sa_win']/n_m*100:.0f}%",
-            "Mkt win%": f"{m['mk_win']/n_m*100:.0f}%",
-            "Pace ✓": (f"{m['pace_exact']}/{m['pace_total']}"
-                       if m['pace_total'] else "—"),
-        })
-    if pm_rows:
-        st.markdown("##### Per-Meeting Breakdown")
-        st.dataframe(pd.DataFrame(pm_rows), use_container_width=True, hide_index=True)
-
-
 def _render_unified_backtest(data: dict, prefix: str = ""):
-    """Top-level renderer: 6 tabs over the unified backtest JSON."""
+    """Top-level renderer: 5 tabs over the unified backtest JSON."""
     if not data:
         st.info("No data loaded.")
         return
-    tabs = st.tabs(["Overview", "Per-Race", "Consensus", "Strategies",
+    tabs = st.tabs(["Overview", "Per-Race", "Strategies",
                     "Pace & Projection", "Trends"])
     with tabs[0]:
         _render_unified_overview(data, prefix)
     with tabs[1]:
         _render_unified_per_race(data, prefix)
     with tabs[2]:
-        _render_unified_consensus(data, prefix)
-    with tabs[3]:
         _render_unified_strategies(data, prefix)
-    with tabs[4]:
+    with tabs[3]:
         _render_unified_pace_proj(data, prefix)
-    with tabs[5]:
+    with tabs[4]:
         _render_unified_trends(data, prefix)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Model Comparison — ET vs SARR + mutual picks tracker
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_model_comparison():
+    """ET vs SARR head-to-head + mutual (ET ∩ SARR) picks performance.
+
+    Reads ``cache/et_vs_sarr.json`` which is produced by
+    ``compare_et_vs_sarr.py``. Provides a regenerate button so users can
+    refresh after a new meeting publishes results.
+    """
+    import json as _json
+    import subprocess as _sp
+    import sys as _sys
+    from pathlib import Path as _P
+
+    st.markdown('<div class="page-title">⚖️ Model Comparison</div>',
+                unsafe_allow_html=True)
+    st.markdown('<div class="page-subtitle">ET vs SARR head-to-head, and '
+                'how often their <b>mutual top-3 picks</b> land on the '
+                'podium.</div>', unsafe_allow_html=True)
+
+    cache_path = _P("cache") / "et_vs_sarr.json"
+
+    c1, c2 = st.columns([3, 1])
+    with c2:
+        if st.button("🔄 Recompute", use_container_width=True,
+                     help="Re-runs compare_et_vs_sarr.py across all "
+                          "meetings with ET + SARR + results."):
+            with st.spinner("Comparing ET vs SARR across all meetings…"):
+                try:
+                    proc = _sp.run(
+                        [_sys.executable, "compare_et_vs_sarr.py"],
+                        capture_output=True, text=True, timeout=180,
+                        cwd=str(_P.cwd()),
+                    )
+                    if proc.returncode == 0:
+                        st.success("Refresh complete.")
+                    else:
+                        st.error(f"Exit {proc.returncode}: "
+                                 f"{proc.stderr[-400:] or proc.stdout[-400:]}")
+                except Exception as e:
+                    st.error(f"Recompute failed: {e}")
+            st.rerun()
+
+    if not cache_path.exists():
+        st.info("No comparison data yet — click **Recompute** to build it.")
+        return
+
+    try:
+        data = _json.loads(cache_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        st.error(f"Failed to read {cache_path}: {e}")
+        return
+
+    n_meetings = data.get("n_meetings", 0)
+    n_races = data.get("n_races", 0)
+    gen_at = data.get("generated_at", "")
+    with c1:
+        st.caption(f"📅 **{n_meetings} meetings · {n_races} races** · "
+                   f"last refreshed {gen_at[:16]}")
+
+    o = data.get("overall")
+    if not o:
+        st.warning("Empty overall summary.")
+        return
+
+    # ── Tabs inside the page ────────────────────────────────────────
+    t_overall, t_mutual, t_breakdown, t_strength, t_today = st.tabs([
+        "📊 Overall", "🤝 Mutual picks", "🗺️ Breakdown",
+        "🔥 Strength heatmap", "📅 Today",
+    ])
+
+    # ============================================================
+    # TAB 1 — Overall ET vs SARR
+    # ============================================================
+    with t_overall:
+        st.markdown("### ET vs SARR — head-to-head")
+        cols = st.columns(5)
+        def _pct(v):
+            return f"{v*100:.1f}%" if v is not None else "—"
+        with cols[0]:
+            st.metric("Top-1 win", _pct(o["et_top_pick_win_mean"]),
+                      delta=f"{(o['sarr_top_pick_win_mean']-o['et_top_pick_win_mean'])*100:+.1f}pp SARR")
+            st.caption(f"SARR: {_pct(o['sarr_top_pick_win_mean'])}")
+        with cols[1]:
+            st.metric("Top-1 place", _pct(o["et_top_pick_place_mean"]),
+                      delta=f"{(o['sarr_top_pick_place_mean']-o['et_top_pick_place_mean'])*100:+.1f}pp SARR")
+            st.caption(f"SARR: {_pct(o['sarr_top_pick_place_mean'])}")
+        with cols[2]:
+            st.metric("Top-3 has winner", _pct(o["et_top3_any_1st_mean"]),
+                      delta=f"{(o['sarr_top3_any_1st_mean']-o['et_top3_any_1st_mean'])*100:+.1f}pp SARR")
+            st.caption(f"SARR: {_pct(o['sarr_top3_any_1st_mean'])}")
+        with cols[3]:
+            st.metric("Top-3 = trifecta", _pct(o["et_top3_trifecta_mean"]),
+                      delta=f"{(o['sarr_top3_trifecta_mean']-o['et_top3_trifecta_mean'])*100:+.1f}pp SARR")
+            st.caption(f"SARR: {_pct(o['sarr_top3_trifecta_mean'])}")
+        with cols[4]:
+            st.metric("Top-1 agreement", f"{o['agree_top1_pct']:.1f}%",
+                      help="Share of races where both models pick the "
+                           "same rank-1 horse.")
+
+        st.divider()
+
+        # By-venue and by-distance tables
+        import pandas as _pd
+        st.markdown("#### By venue")
+        df_v = _pd.DataFrame(data.get("by_venue", []))
+        if not df_v.empty:
+            df_v = df_v[["venue", "n",
+                         "et_top_pick_win_mean", "sarr_top_pick_win_mean",
+                         "et_top_pick_place_mean", "sarr_top_pick_place_mean",
+                         "agree_top1_pct"]]
+            df_v.columns = ["Venue", "N", "ET win%", "SARR win%",
+                            "ET place%", "SARR place%", "Agree top-1 %"]
+            for c in ["ET win%", "SARR win%", "ET place%", "SARR place%"]:
+                df_v[c] = (df_v[c] * 100).round(1)
+            st.dataframe(df_v, use_container_width=True, hide_index=True)
+
+        st.markdown("#### By distance bucket")
+        df_d = _pd.DataFrame(data.get("by_dist_bucket", []))
+        if not df_d.empty:
+            df_d = df_d[["dist_bucket", "n",
+                         "et_top_pick_win_mean", "sarr_top_pick_win_mean",
+                         "et_top_pick_place_mean", "sarr_top_pick_place_mean"]]
+            df_d.columns = ["Distance", "N", "ET win%", "SARR win%",
+                            "ET place%", "SARR place%"]
+            for c in ["ET win%", "SARR win%", "ET place%", "SARR place%"]:
+                df_d[c] = (df_d[c] * 100).round(1)
+            st.dataframe(df_d, use_container_width=True, hide_index=True)
+
+    # ============================================================
+    # TAB 2 — Mutual picks (ET ∩ SARR)
+    # ============================================================
+    with t_mutual:
+        st.markdown("### Mutual picks — ET top-3 ∩ SARR top-3")
+        st.caption("A *mutual pick* is any horse that appears in BOTH ET's "
+                   "top-3 AND SARR's top-3 for the same race. Below: how "
+                   "often these mutual horses actually land on the "
+                   "podium.")
+
+        cols = st.columns(4)
+        with cols[0]:
+            st.metric("Avg mutual set size",
+                      f"{o['mutual_size_mean']:.2f} / 3")
+            st.caption("Out of 3 possible")
+        with cols[1]:
+            st.metric("P(mutual horse in top-3)",
+                      f"{o['mutual_any_in_top3_mean']*100:.1f}%",
+                      help="Unconditional. Includes races where no "
+                           "mutual pick exists.")
+            cond_t3 = o.get("cond_mut_any_in_top3")
+            if cond_t3 is not None:
+                st.caption(f"When ≥1 mutual exists: "
+                           f"**{cond_t3*100:.1f}%**")
+        with cols[2]:
+            st.metric("P(mutual horse wins)",
+                      f"{o['mutual_winner_hit_mean']*100:.1f}%",
+                      help="Unconditional.")
+            cond_w = o.get("cond_mut_winner_hit")
+            if cond_w is not None:
+                st.caption(f"When ≥1 mutual exists: "
+                           f"**{cond_w*100:.1f}%**")
+        with cols[3]:
+            st.metric("P(2+ mutual in top-3)",
+                      f"{o['mutual_2plus_in_top3_mean']*100:.1f}%")
+            st.caption(f"P(all 3 in top-3): "
+                       f"**{o['mutual_3_in_top3_mean']*100:.1f}%**")
+
+        st.divider()
+        st.markdown("#### Hit rates by mutual set size")
+        st.caption("The bigger the mutual set, the stronger the signal. "
+                   "Size=3 races (≈13% of slate) are the highest-confidence "
+                   "trio/trifecta plays.")
+        import pandas as _pd
+        df_m = _pd.DataFrame(data.get("by_mutual_size", []))
+        if not df_m.empty:
+            df_m["share"] = (df_m["n"] / df_m["n"].sum() * 100).round(1)
+            df_m = df_m[[
+                "mutual_size", "n", "share",
+                "mutual_any_in_top3_mean",
+                "mutual_winner_hit_mean",
+                "mutual_2plus_in_top3_mean",
+                "mutual_3_in_top3_mean",
+            ]]
+            df_m.columns = ["Size", "N races", "Share %",
+                            "P(any in top-3)",
+                            "P(any wins)",
+                            "P(2+ in top-3)",
+                            "P(all 3 in top-3)"]
+            for c in df_m.columns[3:]:
+                df_m[c] = (df_m[c].fillna(0) * 100).round(1)
+            st.dataframe(df_m, use_container_width=True, hide_index=True)
+
+        # Practical takeaway
+        if len(data.get("by_mutual_size", [])) >= 2:
+            size_lookup = {r["mutual_size"]: r
+                           for r in data["by_mutual_size"]}
+            s3 = size_lookup.get(3) or {}
+            s2 = size_lookup.get(2) or {}
+            insight_parts = []
+            if s3.get("n", 0) > 0:
+                insight_parts.append(
+                    f"**Size-3 mutual sets** (all three picks shared, "
+                    f"{s3['n']} races): "
+                    f"{s3['mutual_winner_hit_mean']*100:.0f}% winner hit, "
+                    f"{s3['mutual_any_in_top3_mean']*100:.0f}% in-top-3.")
+            if s2.get("n", 0) > 0:
+                insight_parts.append(
+                    f"**Size-2 mutual sets** ({s2['n']} races): "
+                    f"{s2['mutual_winner_hit_mean']*100:.0f}% winner hit, "
+                    f"{s2['mutual_any_in_top3_mean']*100:.0f}% in-top-3.")
+            if insight_parts:
+                st.info("💡 " + "  \n".join(insight_parts))
+
+    # ============================================================
+    # TAB 3 — Breakdown (venue × dist, pace, etc.)
+    # ============================================================
+    with t_breakdown:
+        import pandas as _pd
+        st.markdown("### Venue × Distance — model strengths")
+        df_vd = _pd.DataFrame(data.get("by_venue_dist", []))
+        if not df_vd.empty:
+            df_vd = df_vd[[
+                "venue", "dist_bucket", "n",
+                "et_top_pick_win_mean", "sarr_top_pick_win_mean",
+                "et_top_pick_place_mean", "sarr_top_pick_place_mean",
+                "mutual_any_in_top3_mean",
+            ]]
+            df_vd.columns = ["Venue", "Distance", "N",
+                             "ET win%", "SARR win%",
+                             "ET place%", "SARR place%",
+                             "Mutual in top-3 %"]
+            for c in df_vd.columns[3:]:
+                df_vd[c] = (df_vd[c].fillna(0) * 100).round(1)
+            st.dataframe(df_vd, use_container_width=True, hide_index=True)
+
+        st.markdown("### By pace projection")
+        df_p = _pd.DataFrame(data.get("by_pace", []))
+        if not df_p.empty:
+            df_p = df_p[[
+                "pace", "n",
+                "et_top_pick_win_mean", "sarr_top_pick_win_mean",
+                "et_top_pick_place_mean", "sarr_top_pick_place_mean",
+                "mutual_any_in_top3_mean",
+            ]]
+            df_p.columns = ["Pace", "N",
+                            "ET win%", "SARR win%",
+                            "ET place%", "SARR place%",
+                            "Mutual in top-3 %"]
+            for c in df_p.columns[2:]:
+                df_p[c] = (df_p[c].fillna(0) * 100).round(1)
+            st.dataframe(df_p, use_container_width=True, hide_index=True)
+
+    # ============================================================
+    # TAB 4 — Strength heatmap (which model wins where?)
+    # ============================================================
+    with t_strength:
+        import pandas as _pd
+        st.markdown("### Which model is best where?")
+        st.caption("For every dimension cell, shows the **better model** (ET "
+                   "vs SARR) at the chosen metric. Green = SARR wins, "
+                   "Blue = ET wins, Grey = tied. Cell value is the Δ "
+                   "(SARR − ET) in percentage points; absolute value "
+                   "indicates strength of edge.")
+
+        metric_choice = st.radio(
+            "Metric",
+            ["WIN", "PLACE", "Top-3 has winner", "Top-3 = trifecta"],
+            horizontal=True, key="mc_strength_metric",
+        )
+        metric_map = {
+            "WIN": ("et_top_pick_win_mean", "sarr_top_pick_win_mean"),
+            "PLACE": ("et_top_pick_place_mean", "sarr_top_pick_place_mean"),
+            "Top-3 has winner": ("et_top3_any_1st_mean", "sarr_top3_any_1st_mean"),
+            "Top-3 = trifecta": ("et_top3_trifecta_mean", "sarr_top3_trifecta_mean"),
+        }
+        ek, sk = metric_map[metric_choice]
+        min_n = st.slider("Min sample (N races per cell)", 3, 30, 5,
+                          key="mc_strength_minn")
+
+        def _make_heat(rows, group_label):
+            df = _pd.DataFrame(rows)
+            if df.empty:
+                st.caption(f"_(no data for {group_label})_")
+                return
+            df = df[df["n"] >= min_n].copy()
+            if df.empty:
+                st.caption(f"_(no cells with N ≥ {min_n})_")
+                return
+            df["ET %"] = (df[ek].fillna(0) * 100).round(1)
+            df["SARR %"] = (df[sk].fillna(0) * 100).round(1)
+            df["Δ (SARR-ET) pp"] = (df["SARR %"] - df["ET %"]).round(1)
+            df["Winner"] = df["Δ (SARR-ET) pp"].apply(
+                lambda v: "SARR" if v > 1 else ("ET" if v < -1 else "tie"))
+            # Mutual conviction
+            if "mutual_any_in_top3_mean" in df.columns:
+                df["Mutual top-3 %"] = (
+                    df["mutual_any_in_top3_mean"].fillna(0) * 100).round(1)
+            return df
+
+        # Build display tables per dimension
+        dims = [
+            ("Venue",            "by_venue",       ["venue"]),
+            ("Distance",         "by_dist_bucket", ["dist_bucket"]),
+            ("Venue × Distance", "by_venue_dist",  ["venue", "dist_bucket"]),
+            ("Going",            "by_going",       ["going"]),
+            ("Class",            "by_class",       ["race_class"]),
+            ("Surface",          "by_surface",     ["surface"]),
+            ("Projected pace",   "by_pace",        ["pace"]),
+        ]
+
+        for label, key, group_cols in dims:
+            st.markdown(f"#### {label}")
+            df = _make_heat(data.get(key, []), label)
+            if df is None or df.empty:
+                continue
+            keep = group_cols + ["n", "ET %", "SARR %", "Δ (SARR-ET) pp",
+                                 "Winner"]
+            if "Mutual top-3 %" in df.columns:
+                keep.append("Mutual top-3 %")
+            df_show = df[keep].sort_values("n", ascending=False)
+            def _style(row):
+                d = row["Δ (SARR-ET) pp"]
+                bg = ("background-color: #2d5a2d; color:white" if d > 1
+                      else "background-color: #1f4060; color:white" if d < -1
+                      else "")
+                return [bg] * len(row)
+            st.dataframe(df_show.style.apply(_style, axis=1),
+                         use_container_width=True, hide_index=True)
+
+        # ── Auto-recommendation ─────────────────────────────────────
+        st.divider()
+        st.markdown("#### 🧭 Auto-recommendation per cell")
+        st.caption("For each venue × distance cell with N ≥ 10, this "
+                   "table shows which model to trust for **place pool**, "
+                   "and how strong the mutual ET ∩ SARR signal is.")
+        df_vd = _make_heat(data.get("by_venue_dist", []), "Venue × Distance")
+        if df_vd is not None and not df_vd.empty:
+            rec_df = df_vd[df_vd["n"] >= 10].copy()
+            ek2 = "et_top_pick_place_mean"
+            sk2 = "sarr_top_pick_place_mean"
+            rec_df["ET place %"] = (rec_df[ek2].fillna(0) * 100).round(1)
+            rec_df["SARR place %"] = (rec_df[sk2].fillna(0) * 100).round(1)
+            rec_df["Recommended"] = rec_df.apply(
+                lambda r: ("SARR" if r["SARR place %"] - r["ET place %"] > 5
+                           else "ET" if r["ET place %"] - r["SARR place %"] > 5
+                           else "Either / use mutual"), axis=1)
+            cols_rec = ["venue", "dist_bucket", "n",
+                        "ET place %", "SARR place %",
+                        "Mutual top-3 %", "Recommended"]
+            rec_df = rec_df[[c for c in cols_rec if c in rec_df.columns]]
+            st.dataframe(rec_df.sort_values("n", ascending=False),
+                         use_container_width=True, hide_index=True)
+
+    # ============================================================
+    # TAB 5 — Today's mutual picks
+    # ============================================================
+    with t_today:
+        st.markdown("### Today's mutual picks (live)")
+        st.caption("Reads today's race_day_report (ET v4.4 + SARR) and "
+                   "shows the ET top-3 ∩ SARR top-3 set per race. Use "
+                   "these as your highest-confidence shortlist.")
+
+        import datetime as _dt
+        today_dc = _dt.date.today().strftime("%Y%m%d")
+        d_input = st.text_input("Meeting date (YYYYMMDD)", value=today_dc,
+                                key="mc_today_date")
+        if not d_input or len(d_input) != 8 or not d_input.isdigit():
+            st.warning("Enter a valid YYYYMMDD date.")
+            return
+
+        reports_dir = _P("reports")
+        et_p = None
+        for tag in ("v4.4", "v3.4.8"):
+            cand = reports_dir / f"race_day_report_{d_input}_{tag}.json"
+            if cand.exists():
+                et_p = cand
+                break
+        sarr_p = reports_dir / f"race_day_report_{d_input}_SARR.json"
+
+        if not et_p or not et_p.exists():
+            st.info(f"No ET report for {d_input}.")
+            return
+        if not sarr_p.exists():
+            st.info(f"No SARR report for {d_input}.")
+            return
+
+        et_d = _json.loads(et_p.read_text(encoding="utf-8"))
+        sarr_d = _json.loads(sarr_p.read_text(encoding="utf-8"))
+        et_by = {r["race_number"]: r for r in et_d.get("races", [])}
+        sa_by = {r["race_number"]: r for r in sarr_d.get("races", [])}
+        all_rn = sorted(set(et_by) | set(sa_by))
+
+        import pandas as _pd
+        rows_out = []
+        for rn in all_rn:
+            er = et_by.get(rn) or {}
+            sr = sa_by.get(rn) or {}
+            et_top3 = []
+            for p in (er.get("picks") or [])[:3]:
+                try:
+                    et_top3.append(int(p.get("horse_no")))
+                except (TypeError, ValueError):
+                    pass
+            sa_top3 = []
+            for p in (sr.get("picks") or [])[:3]:
+                try:
+                    sa_top3.append(int(p.get("horse_no")))
+                except (TypeError, ValueError):
+                    pass
+            mut = sorted(set(et_top3) & set(sa_top3))
+            # Build name lookup from ET race
+            name_map = {}
+            for p in (er.get("picks") or []) + (er.get("runners") or []):
+                try:
+                    name_map[int(p.get("horse_no"))] = p.get("horse_name") \
+                                                       or p.get("name") or ""
+                except (TypeError, ValueError):
+                    pass
+            mut_disp = ", ".join(
+                f"{h} {name_map.get(h, '')}".strip() for h in mut
+            ) if mut else "—"
+            rows_out.append({
+                "Race": rn,
+                "Dist": er.get("distance") or sr.get("distance"),
+                "Pace": er.get("pace"),
+                "ET top-3": ", ".join(str(x) for x in et_top3),
+                "SARR top-3": ", ".join(str(x) for x in sa_top3),
+                "Mutual size": len(mut),
+                "Mutual picks": mut_disp,
+            })
+
+        if rows_out:
+            df_t = _pd.DataFrame(rows_out)
+            # Highlight size-2/3 rows
+            def _style(row):
+                size = row["Mutual size"]
+                if size >= 3:
+                    return ["background-color: #2d5a2d; color: white"] * len(row)
+                if size == 2:
+                    return ["background-color: #4a4a1f; color: #f0f0a0"] * len(row)
+                return [""] * len(row)
+            st.dataframe(df_t.style.apply(_style, axis=1),
+                         use_container_width=True, hide_index=True)
+            n_high = sum(1 for r in rows_out if r["Mutual size"] >= 2)
+            st.caption(f"📌 **{n_high}** high-conviction races today "
+                       f"(mutual size ≥ 2).")
+        else:
+            st.info("No races found in reports.")
 
 
 def page_backtest():
@@ -6281,13 +5632,6 @@ def page_backtest():
 
     _render_unified_backtest(data, prefix=f"u_{sel_period}_")
 
-    # ── Cross-day compare ───────────────────────────────
-    st.markdown("---")
-    with st.expander("Compare across multiple race days "
-                     "(spot recurring vs one-off failure modes)",
-                     expanded=False):
-        _render_cross_day_compare(inventory["meeting"], prefix="xd_")
-
     # Footer: download
     st.markdown("---")
     json_blob = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
@@ -6430,59 +5774,6 @@ def _append_results_to_db(results_path: Path):
                f"(total: {len(combined)} rows)")
 
 
-def _rp_ocr_json_is_stub(path: Path) -> bool:
-    """True when RP OCR JSON is missing, invalid, or contains no useful lane data."""
-    if not path.exists():
-        return True
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return True
-    meta = data.get("meta", {}) or {}
-    return not data.get("horses") or (meta.get("field_size") or 0) == 0
-
-
-def _rp_ocr_needed(date_str: str, race_no: int | None = None) -> bool:
-    dc = date_str.replace("-", "")
-    rp_dir = BASE / "running_position_photos" / dc
-    if not rp_dir.exists():
-        return False
-    photos = sorted(rp_dir.glob("R*.jpg"))
-    if race_no is not None:
-        photos = [p for p in photos if p.name == f"R{int(race_no)}.jpg"]
-    return any(_rp_ocr_json_is_stub(p.with_suffix(".json")) for p in photos)
-
-
-def _run_rp_ocr_subprocess(date_str: str, *, race_no: int | None = None,
-                           force: bool = False, timeout: int = 600) -> subprocess.CompletedProcess:
-    env = os.environ.copy()
-    env["PYTHONIOENCODING"] = "utf-8"
-    cmd = [PYTHON, str(BASE / "parse_rp_photos.py"), "--date", date_str]
-    if race_no is not None:
-        cmd += ["--race", str(int(race_no))]
-    if force:
-        cmd.append("--force")
-    return subprocess.run(
-        cmd, env=env, cwd=str(BASE),
-        capture_output=True, text=True, encoding="utf-8", timeout=timeout,
-    )
-
-
-def _rebuild_form_guide_after_ocr(date_str: str) -> None:
-    env = os.environ.copy()
-    env["PYTHONIOENCODING"] = "utf-8"
-    subprocess.run(
-        [PYTHON, str(BASE / "build_form_guide.py"), date_str],
-        env=env, cwd=str(BASE),
-        capture_output=True, text=True, encoding="utf-8", timeout=600,
-    )
-
-
-def _ocr_failure_tail(result: subprocess.CompletedProcess) -> str:
-    txt = (result.stderr or result.stdout or "").strip()
-    return txt[-1200:] if txt else "(no OCR output)"
-
-
 def _run_results_scraper(date_str: str, *, full: bool = False):
     """Invoke results scraper from the dashboard.
 
@@ -6603,24 +5894,38 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
             # If running-position photos already exist but lack OCR (or were
             # stubbed before results existed), re-run OCR now so lane data
             # becomes available immediately.
-            if _rp_ocr_needed(date_str):
-                with st.spinner("Re-OCR running-position photos against refreshed roster…"):
-                    _r = _run_rp_ocr_subprocess(date_str, force=True)
-                if _r.returncode == 0:
-                    st.info("Running-lane OCR refreshed.")
+            rp_dir = BASE / "running_position_photos" / date_compact
+            if rp_dir.exists() and any(rp_dir.glob("R*.jpg")):
+                need_ocr = False
+                for jpg in rp_dir.glob("R*.jpg"):
+                    js = jpg.with_suffix(".json")
+                    if not js.exists():
+                        need_ocr = True; break
                     try:
-                        _rebuild_form_guide_after_ocr(date_str)
+                        _j = json.loads(js.read_text(encoding="utf-8"))
+                        if (_j.get("meta", {}) or {}).get("field_size", 0) == 0:
+                            need_ocr = True; break
                     except Exception:
-                        pass
-                    if _is_streamlit_cloud():
+                        need_ocr = True; break
+                if need_ocr:
+                    with st.spinner("Re-OCR running-position photos against refreshed roster…"):
+                        _r = subprocess.run(
+                            [PYTHON, str(BASE / "parse_rp_photos.py"),
+                             "--date", date_str, "--force"],
+                            env=env, cwd=str(BASE),
+                            capture_output=True, text=True, encoding="utf-8", timeout=600,
+                        )
+                    if _r.returncode == 0:
+                        st.info("Running-lane OCR refreshed.")
+                        # rebuild form guide so Race Card shows updated lanes
                         try:
-                            _gh_persist_postrace_outputs(date_str)
+                            subprocess.run(
+                                [PYTHON, str(BASE / "build_form_guide.py"), date_str],
+                                env=env, cwd=str(BASE),
+                                capture_output=True, text=True, encoding="utf-8", timeout=600,
+                            )
                         except Exception:
                             pass
-                else:
-                    st.error("Running-lane OCR failed after results scrape.")
-                    with st.expander("OCR error", expanded=True):
-                        st.code(_ocr_failure_tail(_r))
         else:
             st.error(f"Scraper failed (exit code {result.returncode})")
             with st.expander("Error"):
@@ -7937,22 +7242,19 @@ def page_results():
                     f"results were scraped). Click to regenerate."
                 )
                 if cols[1].button("🔄 Re-run OCR", key=f"reocr_{selected_dc}_{selected_rn}"):
+                    env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
                     with st.spinner(f"Re-OCR {selected_dc} R{selected_rn}…"):
-                        date_iso = f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}"
-                        r = _run_rp_ocr_subprocess(
-                            date_iso, race_no=selected_rn, force=True, timeout=300)
+                        r = subprocess.run(
+                            [PYTHON, str(BASE / "parse_rp_photos.py"),
+                             "--date", f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}",
+                             "--race", str(selected_rn), "--force"],
+                            env=env, cwd=str(BASE),
+                            capture_output=True, text=True, encoding="utf-8", timeout=120,
+                        )
                     if r.returncode == 0:
-                        try:
-                            _rebuild_form_guide_after_ocr(date_iso)
-                        except Exception:
-                            pass
-                        st.cache_data.clear()
-                        st.success("OCR regenerated — lane data is ready.")
-                        st.rerun()
+                        st.success("OCR regenerated — reload page to see lanes.")
                     else:
-                        st.error("OCR failed.")
-                        with st.expander("OCR error", expanded=True):
-                            st.code(_ocr_failure_tail(r))
+                        st.error(f"OCR failed: {r.stderr[-500:] or r.stdout[-500:]}")
             else:
                 st.caption(
                     "🛤️ Running-lane breakdown unavailable — OCR JSON parsed but "
@@ -7964,22 +7266,19 @@ def page_results():
                 f"🛤️ Photo exists but OCR not yet generated for R{selected_rn}."
             )
             if cols[1].button("📷 Run OCR now", key=f"ocrnow_{selected_dc}_{selected_rn}"):
+                env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
                 with st.spinner(f"OCR {selected_dc} R{selected_rn}…"):
-                    date_iso = f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}"
-                    r = _run_rp_ocr_subprocess(
-                        date_iso, race_no=selected_rn, force=True, timeout=300)
+                    r = subprocess.run(
+                        [PYTHON, str(BASE / "parse_rp_photos.py"),
+                         "--date", f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}",
+                         "--race", str(selected_rn)],
+                        env=env, cwd=str(BASE),
+                        capture_output=True, text=True, encoding="utf-8", timeout=120,
+                    )
                 if r.returncode == 0:
-                    try:
-                        _rebuild_form_guide_after_ocr(date_iso)
-                    except Exception:
-                        pass
-                    st.cache_data.clear()
-                    st.success("OCR complete — lane data is ready.")
-                    st.rerun()
+                    st.success("OCR complete — reload page to see lanes.")
                 else:
-                    st.error("OCR failed.")
-                    with st.expander("OCR error", expanded=True):
-                        st.code(_ocr_failure_tail(r))
+                    st.error(f"OCR failed: {r.stderr[-500:] or r.stdout[-500:]}")
         else:
             st.caption(
                 "🛤️ Running-lane breakdown unavailable — no running-position photo "
@@ -9075,30 +8374,6 @@ def page_form_guide():
         current_overweight = horse.get("overweight", "")
         last6 = horse.get("last_6_runs", "")
 
-        # ── Weight delta vs previous race ────────────────────────────────
-        weight_delta_html = ""
-        try:
-            cur_wt_int = int(float(str(current_weight).strip()))
-            prev_wt = None
-            if fg_cache and not is_debutant:
-                _runs = horse.get("runs", [])
-                if _runs:
-                    prev_wt = _runs[-1].get("actual_weight")
-            elif not fg_cache and not is_debutant:
-                _last = horse_hist.sort_values("race_date", ascending=False).iloc[0]
-                prev_wt = _last.get("actual_weight")
-            prev_wt_int = int(float(prev_wt)) if prev_wt not in (None, "", "?") else None
-            if prev_wt_int is not None and prev_wt_int != cur_wt_int:
-                delta = cur_wt_int - prev_wt_int
-                col = "#22c55e" if delta < 0 else "#ef4444"
-                sign = "+" if delta > 0 else ""
-                weight_delta_html = (
-                    f' <span style="color:{col};font-weight:700;font-size:0.85em" '
-                    f'title="Weight change vs last run ({prev_wt_int} LB)">{sign}{delta}</span>'
-                )
-        except (ValueError, TypeError):
-            pass
-
         # ── Detect trainer / stable change ────────────────────────────────
         trainer_changed = False
         prev_trainer = ""
@@ -9130,10 +8405,7 @@ def page_form_guide():
             f'<span class="h-l6-label">L6</span>{l6_badges}</span>'
         ) if last6 else ""
         bb_icon = " [BB]" if bb_entry else ""
-        ow_part = (
-            f' <span style="color:#f59e0b;font-weight:700;font-size:0.85em" '
-            f'title="Overweight (lbs above declared)">(+{current_overweight})</span>'
-        ) if str(current_overweight).strip() not in ("", "0") else ""
+        ow_part = f" ({current_overweight})" if current_overweight else ""
 
         # Horse header row
         hdr_col, bb_col = st.columns([20, 1]) if not bb_entry else (st.container(), None)
@@ -9145,9 +8417,9 @@ def page_form_guide():
             f'<span class="h-sep">·</span>'
             f'<span class="h-meta">RTG {current_rtg}</span>'
             f'<span class="h-sep">·</span>'
-            f'<span class="h-meta">{current_weight} LB{weight_delta_html}{ow_part}</span>'
+            f'<span class="h-meta">{current_weight} LB</span>'
             f'<span class="h-sep">·</span>'
-            f'<span class="h-meta">{current_jockey}</span>'
+            f'<span class="h-meta">{current_jockey}{ow_part}</span>'
             f'<span class="h-sep">·</span>'
             f'<span class="h-meta">{trainer_display}</span>'
             f'<span class="h-sep">·</span>'
@@ -9205,7 +8477,6 @@ def page_form_guide():
                     date_disp = str(run.get("date", "?"))[:8]
                     date_dc   = ""
                 top5 = [(int(entry[0]), entry[1]) for entry in (run.get("top5") or [])]
-                top5_next = list(run.get("top5_next") or [])
                 display_runs.append({
                     "date_disp": date_disp,
                     "date_dc":   date_dc,
@@ -9226,7 +8497,6 @@ def page_form_guide():
                     "pace_dev": run.get("pace_dev"),
                     "ftime": str(run.get("time", "-")),
                     "top5": top5,
-                    "top5_next": top5_next,
                     "lane_avg": run.get("lane_avg"),
                     "lane_at":  run.get("lane_at") or {},
                     "ground_lost_m": run.get("ground_lost_m"),
@@ -9287,7 +8557,6 @@ def page_form_guide():
                     "pace_dev": None,
                     "ftime": ftime,
                     "top5": ri.get("top5", []),
-                    "top5_next": [],
                 })
 
         for dr in display_runs:
@@ -9306,12 +8575,11 @@ def page_form_guide():
             margin = dr["margin"]
             ftime = dr["ftime"]
             top5 = dr["top5"]
-            top5_next = dr.get("top5_next") or []
 
             pl_cell = _place_badge_html(place_val)
             margin_style = "color:#ef4444;font-weight:700;" if place_val == "1" else ""
             margin_cell = f'<span class="form-margin" style="{margin_style}">{_smart_frac_html(margin)}</span>'
-            t5_html = _fmt_top5_html(top5, hname, top5_next) if top5 else "&mdash;"
+            t5_html = _fmt_top5_html(top5, hname) if top5 else "&mdash;"
 
             # Pace cell — colour-code based on deviation from HKJC standard
             pace_label = str(dr.get("pace", "-")) or "-"
@@ -10191,6 +9459,132 @@ def _render_trial_standouts():
                 st.caption(f"**{s['horse']}** ({s['date']}) — {cmt}")
 
 
+# ════════════════════════════════════════════════════════════════════════
+# Trial Blackbook: auto-suggest from scraped trials, user confirms.
+# Entries are written via _bb_add_entry() with tag 'trial' and a very
+# distant expiry so they never auto-expire — user manages removal in
+# the Blackbook page.
+# ════════════════════════════════════════════════════════════════════════
+def _render_trial_blackbook_tab(trials_index: list[dict]):
+    """Surface high-scoring trial runners, let user add to blackbook."""
+    try:
+        from trial_blackbook import (
+            suggest_for_date, already_in_blackbook, build_reasoning,
+        )
+    except ImportError as e:
+        st.error(f"trial_blackbook module unavailable: {e}")
+        return
+
+    st.markdown("### 👀 Trial Blackbook — Auto-suggest")
+    st.caption(
+        "Eye-catchers from the most recent scraped trial card. Tick the "
+        "horses you want to follow and click **Add selected**. Entries "
+        "are tagged `trial` and never auto-expire — remove them manually "
+        "from the Blackbook page when no longer relevant."
+    )
+
+    # Date picker — default to most recent trial date
+    options = {t["date_display"]: t for t in trials_index}
+    sel_label = st.selectbox(
+        "Trial date", list(options.keys()), index=0,
+        key="trial_bb_date_select",
+    )
+    sel = options[sel_label]
+    min_score = st.slider(
+        "Minimum eye-catcher score", 1.0, 6.0, 2.0, 0.5,
+        key="trial_bb_min_score",
+        help="Higher = stricter. 2.0 surfaces ~15-20 horses per card; "
+             "3.0 is winners + clear closers only.",
+    )
+
+    rows = suggest_for_date(sel["file"], min_score=min_score)
+    if not rows:
+        st.info("No horses meet the threshold on this card.")
+        return
+
+    bb = _load_blackbook()
+    existing_lookup = {
+        (e.get("horse_name") or "").strip().upper(): e
+        for e in bb.get("entries", [])
+        if e.get("status") == "active"
+    }
+
+    st.caption(f"**{len(rows)} suggestions** from {sel['date_display']}. "
+               "Already-blackbooked horses are marked ✓ and pre-disabled.")
+
+    # Form with per-row checkbox + optional inline edit
+    with st.form("trial_bb_add_form"):
+        chosen: list[dict] = []
+        for r in rows:
+            hn = r["horse_name"]
+            in_bb = hn in existing_lookup
+            cols = st.columns([0.5, 2.4, 0.6, 0.6, 1.2, 3.0, 0.8])
+            with cols[0]:
+                pick = st.checkbox(
+                    "✓", value=False, key=f"trial_bb_pick_{hn}_{r['batch_number']}",
+                    label_visibility="collapsed",
+                    disabled=in_bb,
+                )
+            with cols[1]:
+                badge = " ✓ already in BB" if in_bb else ""
+                st.markdown(f"**{hn}**{badge}")
+                st.caption(f"{r.get('trainer','')} · {r.get('jockey','')}")
+            with cols[2]:
+                st.markdown(f"`{r['score']:.1f}`")
+            with cols[3]:
+                fp = r.get("final_pos")
+                st.markdown(f"pos {fp}" if fp else "—")
+            with cols[4]:
+                st.caption(f"{r['distance_m']}m · {r['course']}")
+                st.caption(f"draw {r.get('draw','-')} · {r.get('lbw','-')}")
+            with cols[5]:
+                st.caption((r.get("comment") or "")[:120])
+                if r["reasons"]:
+                    st.caption("• " + " · ".join(r["reasons"][:3]))
+            with cols[6]:
+                conf = st.selectbox(
+                    "conf", ["high", "medium", "low"],
+                    index=1, key=f"trial_bb_conf_{hn}_{r['batch_number']}",
+                    label_visibility="collapsed",
+                    disabled=in_bb,
+                )
+            if pick and not in_bb:
+                chosen.append({**r, "confidence": conf})
+
+        submitted = st.form_submit_button(
+            f"[ Add selected to Blackbook ]", type="primary",
+        )
+
+    if submitted:
+        if not chosen:
+            st.warning("No new horses selected.")
+            return
+        added = 0
+        # Use a very distant expiry (~10 yrs) since user wants manual-only
+        # expiry. _bb_add_entry() supports expiry_days override.
+        for c in chosen:
+            try:
+                dist = int(c.get("distance_m")) if c.get("distance_m") else None
+            except (TypeError, ValueError):
+                dist = None
+            surface = "Turf"  # All HK barrier trials are Turf on the main tracks
+            _bb_add_entry(
+                bb,
+                horse_name=c["horse_name"],
+                reasoning=build_reasoning(c),
+                tags=["trial"],
+                confidence=c.get("confidence", "medium"),
+                source_race=f"Trial {c['trial_date']} B{c['batch_number']}",
+                preferred_distance=[dist] if dist else [],
+                preferred_surface=surface,
+                expiry_days=3650,
+                category="Pre-Race",
+            )
+            added += 1
+        st.toast(f"✓ Added {added} horse(s) to Blackbook", icon="⭐")
+        st.rerun()
+
+
 def page_trials():
     """Barrier Trials results page."""
     st.markdown('<div class="page-title">Barrier Trials</div>', unsafe_allow_html=True)
@@ -10202,9 +9596,10 @@ def page_trials():
         st.info("No trial data available. Use the sidebar to scrape trial results.")
         return
 
-    # ── Tabs: Browse by Date | Horse Lookup | Standouts ─────────────────
-    tab_browse, tab_lookup, tab_standouts = st.tabs(
-        ["Browse by Date", "Horse Lookup", "★ Standouts"])
+    # ── Tabs: Browse | Lookup | Standouts | Trial Blackbook ─────────────
+    tab_browse, tab_lookup, tab_standouts, tab_watch = st.tabs(
+        ["Browse by Date", "Horse Lookup", "★ Standouts",
+         "👀 Trial Blackbook"])
 
     # ── TAB 1: Browse by Date ─────────────────────────────────────────────
     with tab_browse:
@@ -10284,6 +9679,10 @@ def page_trials():
             "multi-trial improvement, and gear changes."
         )
         _render_trial_standouts()
+
+    # ── TAB 4: Trial Blackbook (auto-suggest + manual confirm) ──────────
+    with tab_watch:
+        _render_trial_blackbook_tab(trials)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -12307,30 +11706,33 @@ def _run_live_odds_scraper(date_iso: str, venue: str, races: str,
         return 1, f"{type(e).__name__}: {e}"
 
 
-def page_live_market():
-    """Live market intelligence — merged Live Odds + Live Feed page.
+def page_live_odds():
+    """Live odds snapshots scraped from bet.hkjc.com.
 
-    Captures Win/Place + Quinella + Quinella-Place pair-odds matrices
-    from bet.hkjc.com, plus surfaces post-race notes from the analysis
-    engine when results are available. Race navigation via button row
-    (matches Race Day Insight).
+    Captures Win/Place + Quinella + Quinella-Place pair-odds matrices.
+    Each race may have N snapshots taken across the day (overnight, morning,
+    near-post). The page shows:
 
-    Primary signal: **Market AGREES with model** — horses where odds
-    have shortened AND the horse appears in our ET top-4 or SARR top-4.
-    Drift against our top picks is also highlighted.
+    * Top market movers across the meeting (biggest Win-odds drops/rises)
+    * Per-race table with green/red highlighting on Δ Win %
+    * Win-odds time-slider to inspect any captured snapshot
+    * QIN and QPL matrices with the same colour-coded drift
+    * Meeting summary (favourite + steamer per race, no horse names)
     """
     import json as _json
     import pandas as _pd
     import datetime as _dt
     from collections import defaultdict
 
-    st.markdown("## 💹 Live Market")
+    st.markdown("## 💹 Live Odds")
     st.info(
-        "Live HKJC odds (Win / Place / Quinella / Quinella-Place) plus "
-        "per-race model agreement panel. **🟢 Odds dropped → money flowing in.** "
-        "**🔴 Odds drifted out → market cooling.** "
-        "The most actionable signal is **shortening on a horse we already rate top-4** — "
-        "that's market-and-model agreement, not noise."
+        "Win / Place / Quinella / Quinella-Place odds scraped from "
+        "**bet.hkjc.com**. Each race may carry multiple snapshots. "
+        "**🟢 Odds dropped → money flowing in (market support).**  "
+        "**🔴 Odds drifted out → market losing confidence.**  "
+        "Use as a sanity-check on the model — the market is not always smart, "
+        "but persistent ≥20% drops on horses we *don't* rank are worth a look, "
+        "and ≥20% drifts on our top picks deserve a re-examination."
     )
 
     # ── Scraper controls ───────────────────────────────────────────────
@@ -12428,100 +11830,6 @@ def page_live_market():
                 st.success(
                     f"✓ Scrape complete — **{n_new}** new snapshot(s) written."
                 )
-                # Push fresh snapshots to GitHub so Streamlit Cloud doesn't
-                # lose them on next container restart.
-                try:
-                    if _is_streamlit_cloud() and _gh_headers():
-                        _pushed = 0
-                        _msg = f"live-odds: auto-sync {scr_date.isoformat()} {scr_venue} [skip ci]"
-                        for _name in sorted(_after - _before):
-                            _fp = _snap_dir / _name
-                            try:
-                                if _gh_push_file(
-                                    f"cache/live_odds/{_ymd}/{_name}",
-                                    _fp.read_bytes(),
-                                    _msg,
-                                ):
-                                    _pushed += 1
-                            except Exception:
-                                pass
-                        if _pushed:
-                            st.caption(f"☁ Synced {_pushed} snapshot(s) to GitHub.")
-                except Exception:
-                    pass
-
-                # Push notification: any model top-4 horse steaming ≥15%
-                try:
-                    _new_snaps = _load_live_odds_snapshots(_ymd, scr_venue)
-                    _by_r: dict[int, list[dict]] = defaultdict(list)
-                    for _s in _new_snaps:
-                        try:
-                            _by_r[int(_s["race_no"])].append(_s)
-                        except Exception:
-                            pass
-                    for _rn2 in _by_r:
-                        _by_r[_rn2].sort(key=lambda s: s.get("scraped_at", ""))
-                    # Build set of model top-4 horse numbers per race
-                    _top4_by_race: dict[int, set[int]] = {}
-                    try:
-                        _mi = _overview_find_today_meeting()
-                        if _mi and _mi.get("date_str") == _ymd:
-                            _md = load_meeting_data(_mi["file"])
-                            _sd = load_sarr_data(_ymd) or {}
-                            for _r in _md.get("races", []):
-                                _rk = int(_r.get("race_number", 0) or 0)
-                                if not _rk:
-                                    continue
-                                _s = set()
-                                for _p in (_r.get("picks") or [])[:4]:
-                                    try:
-                                        _s.add(int(_p.get("horse_no")))
-                                    except (TypeError, ValueError):
-                                        pass
-                                _top4_by_race[_rk] = _s
-                            for _r in _sd.get("races", []):
-                                _rk = int(_r.get("race_number", 0) or 0)
-                                if not _rk:
-                                    continue
-                                for _p in (_r.get("picks") or [])[:4]:
-                                    try:
-                                        _top4_by_race.setdefault(_rk, set()).add(int(_p.get("horse_no")))
-                                    except (TypeError, ValueError):
-                                        pass
-                    except Exception:
-                        pass
-
-                    _alerts = []
-                    for _rn2, _rws in sorted(_by_r.items()):
-                        if len(_rws) < 2:
-                            continue
-                        _first = {h["no"]: h for h in _rws[0].get("odds", [])}
-                        _last = _rws[-1]
-                        _top4 = _top4_by_race.get(_rn2, set())
-                        for _h in _last.get("odds", []):
-                            try:
-                                _no_n = int(_h["no"])
-                            except (TypeError, ValueError):
-                                continue
-                            _fw = _fnum(_first.get(_h["no"], {}).get("win"))
-                            _lw = _fnum(_h.get("win"))
-                            _d = _delta_pct(_fw, _lw)
-                            if _d is None or _d > -15:
-                                continue
-                            _mark = "✓ top4" if _no_n in _top4 else ""
-                            _alerts.append(
-                                f"R{_rn2} #{_no_n} {_h.get('horse','')[:18]} "
-                                f"${_fw:.1f}→${_lw:.1f} ({_d:+.0f}%) {_mark}".strip()
-                            )
-                    if _alerts:
-                        _push_notify(
-                            title=f"🟢 Steamers · {scr_venue} {scr_date.isoformat()}",
-                            body="\n".join(_alerts[:8]),
-                            tags="chart_with_downwards_trend",
-                            priority=4 if any("top4" in a for a in _alerts) else 3,
-                        )
-                except Exception:
-                    pass
             elif rc == 0:
                 st.warning(
                     "Scraper exited cleanly but **no new snapshot files** "
@@ -12745,246 +12053,111 @@ def page_live_market():
                    f"green = Win odds dropped vs first snapshot, red = drifted.")
 
     # ════════════════════════════════════════════════════════════════
-    # 3) PER-RACE PANEL — single race selected via button row
+    # 3) PER-RACE PANELS — WP table + QIN / QPL matrices, with drift
     # ════════════════════════════════════════════════════════════════
-    st.markdown("### 🏇 Per-race panel")
+    st.markdown("### 🏇 Per-race panels")
+    for rn in races:
+        rows = by_race[rn]
+        latest = rows[-1]
+        earliest = rows[0]
+        first_by_no = {h["no"]: h for h in earliest.get("odds", [])}
 
-    # Race button row (matches Race Day Insight style)
-    state_key = f"livemarket_sel_race_{ymd}_{venue}"
-    if state_key not in st.session_state or st.session_state[state_key] not in races:
-        st.session_state[state_key] = races[0]
-    _btn_cols = st.columns(len(races))
-    for _i, _rn in enumerate(races):
-        with _btn_cols[_i]:
-            _is_active = (st.session_state[state_key] == _rn)
-            if st.button(
-                f"R{_rn}",
-                key=f"livemarket_tab_{ymd}_{venue}_{_rn}",
-                use_container_width=True,
-                type="primary" if _is_active else "secondary",
-            ):
-                st.session_state[state_key] = _rn
-                st.rerun()
-    rn = st.session_state[state_key]
+        hdr_bits = [f"**Race {rn}**"]
+        if latest.get("race_info"):
+            hdr_bits.append(latest["race_info"])
+        st.markdown("#### " + " · ".join(hdr_bits))
+        meta_bits = [f"{len(rows)} snapshot(s)"]
+        if latest.get("last_update"):
+            meta_bits.append(latest["last_update"])
+        st.caption(" · ".join(meta_bits))
 
-    # ── Load model top-4 (ET + SARR) for agreement signal ──────────
-    _et_top4: dict[int, str] = {}  # horse_no → horse_name
-    _sarr_top4: dict[int, str] = {}
-    try:
-        _mi = _overview_find_today_meeting()
-        if _mi and _mi.get("date_str") == ymd:
-            _data = load_meeting_data(_mi["file"])
-            _race = next((r for r in _data.get("races", [])
-                          if int(r.get("race_number", 0)) == rn), None)
-            if _race:
-                for _p in (_race.get("picks") or [])[:4]:
-                    try:
-                        _et_top4[int(_p.get("horse_no"))] = str(_p.get("horse_name", ""))
-                    except (TypeError, ValueError):
-                        pass
-            _sd = load_sarr_data(ymd)
-            if _sd:
-                _sr = next((r for r in _sd.get("races", [])
-                            if int(r.get("race_number", 0)) == rn), None)
-                if _sr:
-                    for _p in (_sr.get("picks") or [])[:4]:
-                        try:
-                            _sarr_top4[int(_p.get("horse_no"))] = str(_p.get("horse_name", ""))
-                        except (TypeError, ValueError):
-                            pass
-    except Exception:
-        pass
-
-    rows = by_race[rn]
-    latest = rows[-1]
-    earliest = rows[0]
-    first_by_no = {h["no"]: h for h in earliest.get("odds", [])}
-
-    hdr_bits = [f"**Race {rn}**"]
-    if latest.get("race_info"):
-        hdr_bits.append(latest["race_info"])
-    st.markdown("#### " + " · ".join(hdr_bits))
-    meta_bits = [f"{len(rows)} snapshot(s)"]
-    if latest.get("last_update"):
-        meta_bits.append(latest["last_update"])
-    st.caption(" · ".join(meta_bits))
-
-    # Per-snapshot picker (default: latest)
-    snap_idx = len(rows) - 1
-    if len(rows) >= 2:
-        snap_idx = st.select_slider(
-            f"Snapshot for R{rn}", options=list(range(len(rows))),
-            value=len(rows) - 1,
-            format_func=lambda i, _rs=rows: _rs[i].get("scraped_at", "?")[11:19],
-            key=f"livemarket_snap_r{rn}",
-        )
-    sel = rows[snap_idx]
-
-    # ── Agreement panel: model top-4 × market drift ─────────────
-    if _et_top4 or _sarr_top4:
-        agree_rows = []
-        disagree_rows = []
-        for h in sel.get("odds", []):
-            try:
-                no_n = int(h["no"])
-            except (TypeError, ValueError):
-                continue
-            in_et = no_n in _et_top4
-            in_sarr = no_n in _sarr_top4
-            if not (in_et or in_sarr):
-                continue
-            f_win = _fnum(first_by_no.get(h["no"], {}).get("win"))
-            l_win = _fnum(h.get("win"))
-            d_pct = _delta_pct(f_win, l_win)
-            tags = []
-            if in_et: tags.append("ET top4")
-            if in_sarr: tags.append("SARR top4")
-            row = {
-                "No": no_n, "Horse": h.get("horse", ""),
-                "Model": " · ".join(tags),
-                "Win (first)": f_win, "Win": l_win,
-                "Δ Win %": d_pct,
-            }
-            if d_pct is not None and d_pct <= -5:
-                agree_rows.append(row)
-            elif d_pct is not None and d_pct >= 5:
-                disagree_rows.append(row)
-
-        ac1, ac2 = st.columns(2)
-        with ac1:
-            st.markdown("##### ✓ Market AGREES with model")
-            if agree_rows:
-                df_a = _pd.DataFrame(agree_rows).sort_values("Δ Win %")
-                sty_a = (df_a.style
-                         .map(_delta_color, subset=["Δ Win %"])
-                         .format({"Win (first)": "{:.1f}", "Win": "{:.1f}",
-                                  "Δ Win %": "{:+.1f}%"}, na_rep="—"))
-                st.dataframe(sty_a, hide_index=True, use_container_width=True,
-                             height=min(220, 38 + 35 * len(df_a)))
-            else:
-                st.caption("No top-4 horses are shortening yet.")
-        with ac2:
-            st.markdown("##### ⚠ Market DISAGREES with model")
-            if disagree_rows:
-                df_d = _pd.DataFrame(disagree_rows).sort_values("Δ Win %", ascending=False)
-                sty_d = (df_d.style
-                         .map(_delta_color, subset=["Δ Win %"])
-                         .format({"Win (first)": "{:.1f}", "Win": "{:.1f}",
-                                  "Δ Win %": "{:+.1f}%"}, na_rep="—"))
-                st.dataframe(sty_d, hide_index=True, use_container_width=True,
-                             height=min(220, 38 + 35 * len(df_d)))
-            else:
-                st.caption("No top-4 horses are drifting.")
-        st.caption(
-            "Agreement = model top-4 horse with Δ Win ≤ -5%. Disagreement = "
-            "top-4 horse with Δ Win ≥ +5%. Use as a confidence amplifier on "
-            "top picks; **do not chase longer-odds drifters outside top 4**."
-        )
-
-    # ─ WP table ──────────────────────────────────────────────────
-    sel_by_no = {h["no"]: h for h in sel.get("odds", [])}
-    table = []
-    for h in sel.get("odds", []):
-        no = h["no"]
-        try: no_n = int(no)
-        except (TypeError, ValueError): no_n = None
-        w_first = _fnum(first_by_no.get(no, {}).get("win"))
-        w_sel = _fnum(h.get("win"))
-        p_sel = _fnum(h.get("place"))
-        tags = []
-        if no_n in _et_top4: tags.append("ET")
-        if no_n in _sarr_top4: tags.append("SARR")
-        table.append({
-            "No": no_n, "Horse": h.get("horse", ""),
-            "Model": " · ".join(tags) if tags else "",
-            "Win (first)": w_first, "Win": w_sel, "Place": p_sel,
-            "Δ Win %": _delta_pct(w_first, w_sel),
-        })
-    if table:
-        df_wp = _pd.DataFrame(table).sort_values(
-            "Win", na_position="last", kind="mergesort").reset_index(drop=True)
-        sty_wp = (df_wp.style
-                  .map(_delta_color, subset=["Δ Win %"])
-                  .format({"Win (first)": "{:.1f}", "Win": "{:.1f}",
-                           "Place": "{:.1f}", "Δ Win %": "{:+.1f}%"},
-                          na_rep="—"))
-        st.dataframe(sty_wp, hide_index=True, use_container_width=True,
-                     height=min(520, 38 + 35 * len(df_wp)))
-
-    # ─ QIN / QPL matrices ────────────────────────────────────────
-    def _build_pair_matrix(pool_key: str):
-        """Render a triangular pair-odds matrix with drift highlighting."""
-        sel_pairs = sel.get(pool_key) or []
-        first_pairs = earliest.get(pool_key) or []
-        if not sel_pairs:
-            return None, None
-        sel_map = {(int(p["a"]), int(p["b"])): _fnum(p["odds"]) for p in sel_pairs}
-        first_map = {(int(p["a"]), int(p["b"])): _fnum(p["odds"]) for p in first_pairs}
-        nos = sorted({n for pair in sel_map for n in pair})
-        mat = _pd.DataFrame("", index=nos, columns=[str(n) for n in nos])
-        drift = _pd.DataFrame(None, index=nos, columns=[str(n) for n in nos],
-                              dtype="float")
-        for (a, b), v in sel_map.items():
-            if v is None: continue
-            f = first_map.get((a, b))
-            d = _delta_pct(f, v)
-            mat.at[a, str(b)] = f"{v:.1f}" if v < 100 else f"{v:.0f}"
-            if d is not None:
-                drift.at[a, str(b)] = d
-        mat.index.name = pool_key.upper()
-        return mat, drift
-
-    for pool_label, pool_key in [("Quinella (QIN)", "qin_odds"),
-                                 ("Quinella Place (QPL)", "qpl_odds")]:
-        mat, drift = _build_pair_matrix(pool_key)
-        if mat is None or mat.empty:
-            continue
-        with st.expander(f"📊 {pool_label} matrix ({len(sel.get(pool_key, []))} pairs)",
-                         expanded=False):
-            def _style_pair(df, _drift=drift):
-                out = _pd.DataFrame("", index=df.index, columns=df.columns)
-                for r in df.index:
-                    for c in df.columns:
-                        d = _drift.at[r, c] if c in _drift.columns and r in _drift.index else None
-                        try:
-                            if _pd.notna(d): out.at[r, c] = _delta_color(float(d))
-                        except Exception:
-                            pass
-                return out
-            sty = mat.style.apply(_style_pair, axis=None)
-            st.dataframe(sty, use_container_width=True)
-            st.caption(
-                f"Cells coloured by Δ% vs earliest snapshot. "
-                f"Pairs in the upper triangle (row #, col #). "
-                f"Snapshot: {sel.get('scraped_at', '?')[11:19]}."
+        # Per-snapshot picker (default: latest)
+        snap_idx = len(rows) - 1
+        if len(rows) >= 2:
+            snap_idx = st.select_slider(
+                f"Snapshot for R{rn}", options=list(range(len(rows))),
+                value=len(rows) - 1,
+                format_func=lambda i, _rs=rows: _rs[i].get("scraped_at", "?")[11:19],
+                key=f"liveodds_snap_r{rn}",
             )
+        sel = rows[snap_idx]
 
-    # ── Post-race diagnostics (factual only) ─────────────────────
-    _post = _live_load_analysis(ymd) if (REPORTS / f"results_{ymd}.json").exists() else None
-    if _post:
-        _ra = next((a for a in _post.get("race_analyses", [])
-                    if int(a.get("race_number", 0)) == rn
-                    and a.get("status") == "analysed"), None)
-        if _ra:
-            with st.expander("🏁 Post-race notes (factual)", expanded=True):
-                _w = _ra.get("winner") or {}
-                _bits = []
-                if _w.get("horse_name"):
-                    _bits.append(f"Winner: **{_w['horse_name']}** "
-                                 f"(Dr{_w.get('draw','?')}, ${_w.get('win_odds','?')})")
-                if _w.get("et_rank"):
-                    _bits.append(f"ET Rk{_w['et_rank']}")
-                if _w.get("sarr_rank"):
-                    _bits.append(f"SARR Rk{_w['sarr_rank']}")
-                if _bits:
-                    st.markdown(" · ".join(_bits))
-                _pr = _ra.get("pace_read", {})
-                if _pr.get("shape") and _pr.get("shape") != "unknown":
-                    st.caption(f"Pace: {_pr.get('summary','?')}")
-                _do = _ra.get("draw_obs", {})
-                if _do.get("summary") and _do.get("bias") not in ("", "unknown", None):
-                    st.caption(f"Draw: {_do['summary']}")
-    st.markdown("")
+        # ─ WP table ──────────────────────────────────────────────────
+        sel_by_no = {h["no"]: h for h in sel.get("odds", [])}
+        table = []
+        for h in sel.get("odds", []):
+            no = h["no"]
+            try: no_n = int(no)
+            except (TypeError, ValueError): no_n = None
+            w_first = _fnum(first_by_no.get(no, {}).get("win"))
+            w_sel = _fnum(h.get("win"))
+            p_sel = _fnum(h.get("place"))
+            table.append({
+                "No": no_n, "Horse": h.get("horse", ""),
+                "Win (first)": w_first, "Win": w_sel, "Place": p_sel,
+                "Δ Win %": _delta_pct(w_first, w_sel),
+            })
+        if table:
+            df_wp = _pd.DataFrame(table).sort_values(
+                "Win", na_position="last", kind="mergesort").reset_index(drop=True)
+            sty_wp = (df_wp.style
+                      .map(_delta_color, subset=["Δ Win %"])
+                      .format({"Win (first)": "{:.1f}", "Win": "{:.1f}",
+                               "Place": "{:.1f}", "Δ Win %": "{:+.1f}%"},
+                              na_rep="—"))
+            st.dataframe(sty_wp, hide_index=True, use_container_width=True,
+                         height=min(420, 38 + 35 * len(df_wp)))
+
+        # ─ QIN / QPL matrices ────────────────────────────────────────
+        def _build_pair_matrix(pool_key: str):
+            """Render a triangular pair-odds matrix with drift highlighting."""
+            sel_pairs = sel.get(pool_key) or []
+            first_pairs = earliest.get(pool_key) or []
+            if not sel_pairs:
+                return None, None
+            sel_map = {(int(p["a"]), int(p["b"])): _fnum(p["odds"]) for p in sel_pairs}
+            first_map = {(int(p["a"]), int(p["b"])): _fnum(p["odds"]) for p in first_pairs}
+            nos = sorted({n for pair in sel_map for n in pair})
+            mat = _pd.DataFrame("", index=nos, columns=[str(n) for n in nos])
+            drift = _pd.DataFrame(None, index=nos, columns=[str(n) for n in nos],
+                                  dtype="float")
+            for (a, b), v in sel_map.items():
+                if v is None: continue
+                f = first_map.get((a, b))
+                d = _delta_pct(f, v)
+                # Place upper-triangle entries: row=lower, col=higher
+                mat.at[a, str(b)] = f"{v:.1f}" if v < 100 else f"{v:.0f}"
+                if d is not None:
+                    drift.at[a, str(b)] = d
+            mat.index.name = pool_key.upper()
+            return mat, drift
+
+        for pool_label, pool_key in [("Quinella (QIN)", "qin_odds"),
+                                     ("Quinella Place (QPL)", "qpl_odds")]:
+            mat, drift = _build_pair_matrix(pool_key)
+            if mat is None or mat.empty:
+                continue
+            with st.expander(f"📊 {pool_label} matrix ({len(sel.get(pool_key, []))} pairs)",
+                             expanded=False):
+                # Style cells using drift-coloring
+                def _style_pair(df):
+                    out = _pd.DataFrame("", index=df.index, columns=df.columns)
+                    for r in df.index:
+                        for c in df.columns:
+                            d = drift.at[r, c] if c in drift.columns and r in drift.index else None
+                            try:
+                                if _pd.notna(d): out.at[r, c] = _delta_color(float(d))
+                            except Exception:
+                                pass
+                    return out
+                sty = mat.style.apply(_style_pair, axis=None)
+                st.dataframe(sty, use_container_width=True)
+                st.caption(
+                    f"Cells coloured by Δ% vs earliest snapshot. "
+                    f"Pairs in the upper triangle (row #, col #). "
+                    f"Snapshot: {sel.get('scraped_at', '?')[11:19]}."
+                )
+        st.markdown("")
 
     # ════════════════════════════════════════════════════════════════
     # 4) MARKET-MOVERS BOARD — biggest steamers / drifters across meeting
@@ -14070,6 +13243,8 @@ def page_my_bets():
             "QIN_BANKER": "Quinella Banker — 1 banker × N legs",
             "QPL_BANKER": "Quinella Place Banker — 1 banker × N legs",
             "TRIO":       "Trio — box across selections (C(n,3) combos)",
+            "TCE":         "Tierce — exact-order 1st-2nd-3rd (single permutation)",
+            "TCE_BOX":     "Tierce Box — box across selections (n×(n-1)×(n-2) perms)",
             "F4_BOX":     "First 4 Box — box across selections (C(n,4) combos)",
             "QTT_BOX":    "Quartet Box — box across selections (top-4 in EXACT order)",
             "QTT_MB":     "Quartet Multi-Banker — 4 leg-lists, one per finishing position",
@@ -14097,6 +13272,14 @@ def page_my_bets():
                           "separately here if you want per-pool PnL.",
             "TRIO":       "Enter 3+ horse numbers in *Selections*. "
                           "Wins if any triple matches top-3 in any order.",
+            "TCE":        "Enter exactly 3 horse numbers in *Selections* "
+                          "in the ORDER you expect them to finish "
+                          "(1st, 2nd, 3rd). Wins only if the finish is "
+                          "exactly that order.",
+            "TCE_BOX":    "Enter 3+ horse numbers in *Selections*. Wins "
+                          "ONLY if the actual top-3 in EXACT order is one "
+                          "of the permutations covered by your box. Stake "
+                          "is split across n×(n-1)×(n-2) permutations.",
             "F4_BOX":     "Enter 4+ horse numbers in *Selections*. "
                           "Wins if any 4 of them are the top-4 finishers "
                           "in any order.",
@@ -14206,6 +13389,15 @@ def page_my_bets():
                     elif bet_type == "TRIO":
                         if len(sels) < 3:
                             st.error("TRIO box requires 3+ selections.")
+                            st.stop()
+                    elif bet_type == "TCE":
+                        if len(sels) != 3:
+                            st.error("TCE requires exactly 3 selections "
+                                     "in finishing order (1st, 2nd, 3rd).")
+                            st.stop()
+                    elif bet_type == "TCE_BOX":
+                        if len(sels) < 3:
+                            st.error("TCE_BOX requires 3+ selections.")
                             st.stop()
                     elif bet_type == "F4_BOX":
                         if len(sels) < 4:
@@ -14409,7 +13601,7 @@ def page_my_bets():
                         delta=f"{s['open']} open" if s["open"] else None)
             m2.metric("Stake", f"${s['stake']:.0f}")
             m3.metric("Return", f"${s['return']:.2f}",
-                        delta=f"{s['pnl']:+.2f} PnL")
+                        delta=f"PnL {s['pnl']:+.2f}")
             m4.metric("ROI",
                         f"{s['roi']*100:+.1f}%" if s["stake"] else "—")
             m5.metric("Hit rate",
@@ -15414,12 +14606,6 @@ def page_model_bets():
                 log_clicked = st.button("💾 Save picks to log",
                                             key="mb_log_btn",
                                             use_container_width=True)
-                push_clicked = st.button("📲 Push to phone",
-                                            key="mb_push_tickets_btn",
-                                            use_container_width=True,
-                                            disabled=not _ntfy_topic(),
-                                            help="Send high/max confidence tickets "
-                                                 "as a phone notification via ntfy.sh")
             with col_a:
                 st.caption(
                     f"**{sel_title}** · {sel['n_races']} races · "
@@ -15432,35 +14618,6 @@ def page_model_bets():
             if log_clicked:
                 n = log_meeting_picks(date_str, sel.get("venue", ""), items)
                 st.success(f"Logged {n} tickets to reports/model_picks_log.jsonl")
-
-            if push_clicked and items:
-                _lines = []
-                _icon = {"WIN": "🟢", "QIN_BANKER": "🔵", "QPL_BANKER": "🟣",
-                         "PLACE": "🟡", "F4_BOX_TOP5": "⭐"}
-                for _it in items:
-                    _t = _it["ticket"]
-                    if _t.get("confidence") not in ("max", "high"):
-                        continue
-                    if _t.get("play") in ("SKIP", None, ""):
-                        continue
-                    _b = _t.get("banker") or {}
-                    _bs = (f"#{_b.get('horse_no')} {_b.get('horse_name','')[:14]}"
-                           if _b else "")
-                    _lines.append(
-                        f"{_icon.get(_t['play'],'•')} R{_it['race_number']} "
-                        f"{_t['play']} {_bs} "
-                        f"[{_t.get('confidence','').upper()}]".strip()
-                    )
-                if _lines:
-                    _ok = _push_notify(
-                        title=f"🎯 Model Bets · {sel_title}",
-                        body="\n".join(_lines[:12]),
-                        tags="moneybag",
-                        priority=4,
-                    )
-                    st.toast("📲 Sent" if _ok else "⚠ Push failed — check NTFY_TOPIC")
-                else:
-                    st.toast("No HIGH/MAX confidence tickets to push.")
 
             if not items:
                 st.warning("No ET report loaded for this meeting.")
@@ -16521,941 +15678,6 @@ def page_model_lab():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Race Lookup — multi-criteria search across the master DB
-# ══════════════════════════════════════════════════════════════════════════════
-
-RL_PRESETS_PATH = BASE / "cache" / "race_lookup_presets.json"
-
-# Filter session_state keys (used by clear-all + preset save/load).
-RL_FILTER_KEYS = [
-    "rl_date_mode", "rl_date_range", "rl_date_exact", "rl_date_month",
-    "rl_horse_name", "rl_track", "rl_course", "rl_class", "rl_distance",
-    "rl_gate_mode", "rl_gate_bands", "rl_gates",
-    "rl_rating_mode", "rl_rating_bands", "rl_rating_range",
-    "rl_jockey", "rl_trainer", "rl_style",
-    "rl_finish_mode", "rl_finish_specific",
-    "rl_pace",
-    "rl_time_mode", "rl_time_range", "rl_time_pct",
-    "rl_outliers_only", "rl_outlier_kind",
-]
-
-
-def _rl_load_presets() -> dict:
-    if not RL_PRESETS_PATH.exists():
-        return {}
-    try:
-        return json.loads(RL_PRESETS_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-
-
-def _rl_save_presets(d: dict) -> None:
-    RL_PRESETS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    RL_PRESETS_PATH.write_text(json.dumps(d, indent=2, default=str),
-                               encoding="utf-8")
-
-
-def _rl_clear_all_filters():
-    """Pop every rl_* filter key so widgets snap back to defaults."""
-    for k in RL_FILTER_KEYS:
-        st.session_state.pop(k, None)
-
-
-def _rl_apply_preset(preset: dict):
-    """Push a saved preset back into session_state. Tuples (e.g. date
-    range) come back from JSON as lists, so we coerce where needed."""
-    _rl_clear_all_filters()
-    for k, v in (preset or {}).items():
-        if k == "rl_date_range" and isinstance(v, list) and len(v) == 2:
-            try:
-                from datetime import date as _date
-                v = tuple(_date.fromisoformat(str(x)[:10]) for x in v)
-            except Exception:
-                continue
-        elif k in ("rl_date_exact",) and v:
-            try:
-                from datetime import date as _date
-                v = _date.fromisoformat(str(v)[:10])
-            except Exception:
-                continue
-        elif k == "rl_rating_range" and isinstance(v, list):
-            v = tuple(v)
-        elif k == "rl_time_range" and isinstance(v, list):
-            v = tuple(v)
-        st.session_state[k] = v
-
-
-@st.cache_data(ttl=600, show_spinner="Loading master DB…")
-def _lookup_load_df(db_mtime: float, pace_mtime: float) -> pd.DataFrame:
-    """Load every row from hkjc.db once, enrich with derived fields, and
-    cache. Cache key includes the file mtimes so it auto-invalidates after
-    `append_results_to_db` rewrites the SQLite mirror or the pace index is
-    rebuilt. All filtering happens in-memory afterwards (instant)."""
-    from db_utils import read_sqlite
-
-    cols = (
-        "race_date, race_number, race_track, race_course, track_type, "
-        "race_class, distance, going, horse_id, horse_name, horsename_zh, "
-        "jockey, trainer, draw, place, lbw, finish_time_seconds, "
-        "running_positions, sectiontimes, win_odds, rating, current_rating, "
-        "actual_weight, declared_weight, gear, age, sex, sire, owner, "
-        "race_url, horse_url"
-    )
-    df = read_sqlite(f"SELECT {cols} FROM results")
-    if df.empty:
-        return df
-
-    # ── Date helpers ─────────────────────────────────────────────────────
-    df["race_date"] = pd.to_datetime(df["race_date"], errors="coerce")
-    df["race_date_str"] = df["race_date"].dt.strftime("%Y-%m-%d")
-    df["year"] = df["race_date"].dt.year
-    df["month"] = df["race_date"].dt.to_period("M").astype(str)
-
-    # ── Numeric coercions ────────────────────────────────────────────────
-    df["draw_n"] = pd.to_numeric(df["draw"], errors="coerce")
-    df["rating_n"] = pd.to_numeric(df["rating"], errors="coerce")
-    df["place_n"] = pd.to_numeric(df["place"], errors="coerce")
-    df["distance_n"] = pd.to_numeric(df["distance"], errors="coerce")
-    df["finish_time_seconds"] = pd.to_numeric(df["finish_time_seconds"], errors="coerce")
-    df["win_odds_n"] = pd.to_numeric(df["win_odds"], errors="coerce")
-
-    # ── Gate band ────────────────────────────────────────────────────────
-    def _gate_band(d):
-        if pd.isna(d): return ""
-        d = int(d)
-        if d <= 4:  return "Inside (1-4)"
-        if d <= 8:  return "Middle (5-8)"
-        return "Outside (9-14)"
-    df["gate_band"] = df["draw_n"].map(_gate_band)
-
-    # ── Rating class band (HKJC standard) ────────────────────────────────
-    def _rating_class(r):
-        if pd.isna(r): return ""
-        r = float(r)
-        if r >= 100: return "C1 (100+)"
-        if r >= 80:  return "C2 (80-99)"
-        if r >= 60:  return "C3 (60-79)"
-        if r >= 40:  return "C4 (40-59)"
-        if r >= 20:  return "C5 (20-39)"
-        return "C5- (<20)"
-    df["rating_band"] = df["rating_n"].map(_rating_class)
-
-    # ── Running style from running_positions ─────────────────────────────
-    def _style(rp):
-        if rp is None or (isinstance(rp, float) and pd.isna(rp)):
-            return ""
-        try:
-            parts = [int(p) for p in str(rp).split() if p.strip().lstrip("-").isdigit()]
-        except Exception:
-            return ""
-        if not parts:
-            return ""
-        f = parts[0]
-        if f <= 2: return "Leader"
-        if f <= 4: return "On-Pace"
-        if f <= 7: return "Midfield"
-        return "Closer"
-    df["run_style"] = df["running_positions"].map(_style)
-
-    # ── Place buckets ────────────────────────────────────────────────────
-    df["is_win"] = (df["place_n"] == 1)
-    df["is_place"] = df["place_n"].between(1, 3, inclusive="both")
-
-    # ── Field size per race (date, race_number) ──────────────────────────
-    fs = df.groupby(["race_date_str", "race_number"])["horse_name"].transform("count")
-    df["field_size"] = fs
-
-    # ── Surface flag ─────────────────────────────────────────────────────
-    rc_up = df["race_course"].astype(str).str.upper()
-    tt_up = df["track_type"].astype(str).str.upper()
-    df["surface"] = ["AWT" if ("AWT" in r or "ALL WEATHER" in t) else "Turf"
-                     for r, t in zip(rc_up, tt_up)]
-
-    # ── Pace label (per race) — merge from cache/race_pace_index.json ───
-    pidx_path = BASE / "cache" / "race_pace_index.json"
-    pace_map = {}
-    if pidx_path.exists():
-        try:
-            raw = json.loads(pidx_path.read_text(encoding="utf-8"))
-            for k, v in raw.items():
-                pace_map[k] = v.get("label") or ""
-        except Exception:
-            pace_map = {}
-    df["race_key"] = df["race_date_str"] + "_R" + df["race_number"].astype(str)
-    df["pace_label"] = df["race_key"].map(pace_map).fillna("")
-
-    # ── Speed figure: z-score within (course, distance, going) ──────────
-    # Negative = faster than bucket mean. Only for buckets with >=10 runs.
-    grp = df.groupby(["race_course", "distance_n", "going"], dropna=False)
-    bmean = grp["finish_time_seconds"].transform("mean")
-    bstd = grp["finish_time_seconds"].transform("std")
-    bcnt = grp["finish_time_seconds"].transform("count")
-    z = (df["finish_time_seconds"] - bmean) / bstd
-    z = z.where(bcnt >= 10)
-    df["speed_fig"] = z.round(2)
-
-    # ── Outlier flags (boilover / flop) ─────────────────────────────────
-    df["is_boilover"] = (df["place_n"] == 1) & (df["win_odds_n"] >= 20)
-    df["is_flop"] = (df["win_odds_n"] <= 3.0) & (df["place_n"] >= 6)
-
-    return df
-
-
-@st.cache_data(ttl=600, show_spinner=False)
-def _lookup_baselines(db_mtime: float, pace_mtime: float) -> dict:
-    """Pre-compute baseline win rates on the *full* unfiltered DB so the
-    filtered slice can be compared (z-score / delta-vs-baseline)."""
-    df = _lookup_load_df(db_mtime, pace_mtime)
-    if df.empty:
-        return {}
-    base = {}
-    base["overall_win"] = float(df["is_win"].mean())
-    base["overall_place"] = float(df["is_place"].mean())
-    # Per-(course, distance, gate_band) baselines
-    g = df.groupby(["race_course", "distance_n", "gate_band"], dropna=False)
-    base["course_dist_gate"] = (g["is_win"].mean() * 100).round(2).to_dict()
-    base["course_dist_gate_n"] = g.size().to_dict()
-    # Per-(course, distance) baseline (for time z-score reference)
-    g2 = df.groupby(["race_course", "distance_n"], dropna=False)
-    base["course_dist_time_mean"] = g2["finish_time_seconds"].mean().to_dict()
-    base["course_dist_time_std"] = g2["finish_time_seconds"].std().to_dict()
-    base["course_dist_n"] = g2.size().to_dict()
-    # Per-jockey baseline win rate (across all his runs)
-    jb = df.groupby("jockey")["is_win"].agg(["mean", "size"])
-    base["jockey_win"] = jb["mean"].to_dict()
-    base["jockey_n"] = jb["size"].to_dict()
-    tb = df.groupby("trainer")["is_win"].agg(["mean", "size"])
-    base["trainer_win"] = tb["mean"].to_dict()
-    base["trainer_n"] = tb["size"].to_dict()
-    return base
-
-
-def _lookup_distinct(df: pd.DataFrame, col: str) -> list:
-    """Sorted list of non-empty unique values for a dropdown."""
-    if col not in df.columns or df.empty:
-        return []
-    s = df[col].dropna().astype(str).str.strip()
-    s = s[(s != "") & (s.str.lower() != "nan") & (s.str.lower() != "none")]
-    return sorted(s.unique().tolist())
-
-
-def page_race_lookup():
-    """Multi-criteria lookup against the master results DB. All data lives
-    in memory after a single cached load — filters are instant.
-
-    Includes the Horse Profile drilldown as a secondary tab (merged from
-    the previous standalone Horse Profile page).
-    """
-    import datetime as _dt
-    import subprocess as _sp
-
-    st.markdown('<div class="page-title">Race Lookup</div>',
-                unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Multi-criteria search across the '
-                'full results history. All filters apply in-memory; change '
-                'anything to re-query instantly.</div>',
-                unsafe_allow_html=True)
-
-    db_path = BASE / "hkjc.db"
-    pace_path = BASE / "cache" / "race_pace_index.json"
-    if not db_path.exists():
-        st.error("hkjc.db not found. Run `python db_utils.py --rebuild` first.")
-        return
-    db_mtime = db_path.stat().st_mtime
-    pace_mtime = pace_path.stat().st_mtime if pace_path.exists() else 0.0
-
-    df_all = _lookup_load_df(db_mtime, pace_mtime)
-    if df_all.empty:
-        st.warning("Master DB is empty.")
-        return
-    baselines = _lookup_baselines(db_mtime, pace_mtime)
-
-    min_d = df_all["race_date"].min().date()
-    max_d = df_all["race_date"].max().date()
-
-    # ── DB freshness caption + pace-coverage ─────────────────────────────
-    pace_keys = set(df_all.loc[df_all["pace_label"] != "", "race_key"])
-    all_keys = set(df_all["race_key"])
-    missing_pace = sorted(all_keys - pace_keys)
-    db_dt = _dt.datetime.fromtimestamp(db_mtime)
-    cap_l, cap_r = st.columns([3, 1])
-    with cap_l:
-        st.caption(
-            f"DB last updated **{db_dt:%Y-%m-%d %H:%M}** · "
-            f"{len(df_all):,} runs · {len(all_keys):,} races · "
-            f"pace-labelled {len(pace_keys):,}/{len(all_keys):,} "
-            f"({100 * len(pace_keys) / max(1, len(all_keys)):.0f}%)"
-        )
-    with cap_r:
-        if missing_pace and st.button(
-            f"⚙️ Build pace index ({len(missing_pace)} missing)",
-            key="rl_build_pace", use_container_width=True,
-            help="Run build_pace_index.py to populate `pace_label` for "
-                 "races that don't yet have a label."
-        ):
-            try:
-                with st.spinner("Running build_pace_index.py …"):
-                    r = _sp.run(
-                        [sys.executable, str(BASE / "build_pace_index.py")],
-                        capture_output=True, text=True, timeout=300,
-                        cwd=str(BASE),
-                    )
-                if r.returncode == 0:
-                    _lookup_load_df.clear()
-                    _lookup_baselines.clear()
-                    st.toast("Pace index rebuilt.", icon="⚙️")
-                    st.rerun()
-                else:
-                    st.error((r.stderr or r.stdout)[-1500:])
-            except (OSError, _sp.TimeoutExpired) as e:
-                st.error(str(e))
-
-    # ── Top tabs: Lookup vs merged Horse Profile ────────────────────────
-    tab_lookup, tab_horse = st.tabs(["🔎 Race Lookup", "🐴 Horse Profile"])
-
-    with tab_horse:
-        page_horse_profile()
-
-    with tab_lookup:
-        _rl_render_lookup(df_all, baselines, min_d, max_d)
-
-
-def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
-                      min_d, max_d):
-    """The actual lookup UI — pulled out so page_race_lookup can host it
-    as a tab next to Horse Profile."""
-
-    # ── Top action bar: clear-all + presets ──────────────────────────────
-    presets = _rl_load_presets()
-    a1, a2, a3, a4 = st.columns([0.9, 1.6, 1.4, 1.1])
-    with a1:
-        if st.button("✖️ Clear filters", key="rl_clear",
-                     use_container_width=True,
-                     help="Reset every filter to its default state."):
-            _rl_clear_all_filters()
-            st.rerun()
-    with a2:
-        preset_names = ["—"] + sorted(presets.keys())
-        chosen = st.selectbox("Load preset", preset_names,
-                              key="rl_preset_pick", index=0,
-                              label_visibility="collapsed")
-        if chosen != "—" and st.session_state.get("rl_preset_last") != chosen:
-            _rl_apply_preset(presets.get(chosen, {}))
-            st.session_state["rl_preset_last"] = chosen
-            st.toast(f"Loaded preset: {chosen}", icon="📥")
-            st.rerun()
-    with a3:
-        new_name = st.text_input("Save as", key="rl_preset_name",
-                                 placeholder="preset name…",
-                                 label_visibility="collapsed")
-    with a4:
-        if st.button("💾 Save preset", key="rl_preset_save",
-                     use_container_width=True,
-                     disabled=not new_name.strip()):
-            snap = {k: st.session_state.get(k) for k in RL_FILTER_KEYS
-                    if k in st.session_state}
-            presets[new_name.strip()] = snap
-            _rl_save_presets(presets)
-            st.toast(f"Saved preset: {new_name.strip()}", icon="💾")
-            st.rerun()
-    if presets:
-        with st.expander("Manage presets", expanded=False):
-            for nm in sorted(presets.keys()):
-                cc1, cc2 = st.columns([4, 1])
-                cc1.markdown(f"- **{nm}**")
-                if cc2.button("Delete", key=f"rl_pdel_{nm}",
-                              use_container_width=True):
-                    presets.pop(nm, None)
-                    _rl_save_presets(presets)
-                    st.rerun()
-
-    # ── Filter widgets ───────────────────────────────────────────────────
-    with st.expander("Filters", expanded=True):
-        # Row 1: dates
-        c1, c2, c3 = st.columns([1.1, 1.1, 1.1])
-        with c1:
-            date_mode = st.radio("Date mode",
-                                 ["Range", "Exact date", "Month", "All"],
-                                 horizontal=True, key="rl_date_mode")
-        with c2:
-            sel_start = sel_end = sel_exact = sel_month = None
-            if date_mode == "Range":
-                rng = st.date_input("Date range",
-                                    value=(max(min_d, max_d.replace(day=1)), max_d),
-                                    min_value=min_d, max_value=max_d,
-                                    key="rl_date_range")
-                if isinstance(rng, tuple) and len(rng) == 2:
-                    sel_start, sel_end = rng
-            elif date_mode == "Exact date":
-                sel_exact = st.date_input("Date", value=max_d,
-                                          min_value=min_d, max_value=max_d,
-                                          key="rl_date_exact")
-            elif date_mode == "Month":
-                months = sorted(df_all["month"].dropna().unique().tolist(), reverse=True)
-                sel_month = st.selectbox("Month (YYYY-MM)", months, key="rl_date_month")
-        with c3:
-            sel_horse_name = st.text_input("Horse name (substring)",
-                                           key="rl_horse_name").strip().upper()
-
-        # Row 2: track / surface / class / distance
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            sel_track = st.multiselect("Track",
-                                       _lookup_distinct(df_all, "race_track"),
-                                       key="rl_track")
-        with c2:
-            sel_course = st.multiselect("Course",
-                                        _lookup_distinct(df_all, "race_course"),
-                                        key="rl_course")
-        with c3:
-            sel_class = st.multiselect("Class",
-                                       _lookup_distinct(df_all, "race_class"),
-                                       key="rl_class")
-        with c4:
-            sel_dist = st.multiselect("Distance (m)",
-                                      sorted(df_all["distance_n"].dropna().astype(int).unique().tolist()),
-                                      key="rl_distance")
-
-        # Row 3: gate / rating
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            sel_gate_mode = st.radio("Gate mode",
-                                     ["Any", "Bands", "Specific"],
-                                     horizontal=True, key="rl_gate_mode")
-        with c2:
-            sel_gate_bands = sel_gates = []
-            if sel_gate_mode == "Bands":
-                sel_gate_bands = st.multiselect(
-                    "Gate band",
-                    ["Inside (1-4)", "Middle (5-8)", "Outside (9-14)"],
-                    key="rl_gate_bands")
-            elif sel_gate_mode == "Specific":
-                sel_gates = st.multiselect("Gate",
-                                           list(range(1, 15)),
-                                           key="rl_gates")
-        with c3:
-            sel_rating_mode = st.radio("Rating mode",
-                                       ["Any", "Bands", "Range"],
-                                       horizontal=True, key="rl_rating_mode")
-        with c4:
-            sel_rating_bands = []
-            sel_rating_min = sel_rating_max = None
-            if sel_rating_mode == "Bands":
-                sel_rating_bands = st.multiselect(
-                    "Rating band",
-                    ["C1 (100+)", "C2 (80-99)", "C3 (60-79)",
-                     "C4 (40-59)", "C5 (20-39)", "C5- (<20)"],
-                    key="rl_rating_bands")
-            elif sel_rating_mode == "Range":
-                rng = st.slider("Rating", 0, 130, (40, 100), key="rl_rating_range")
-                sel_rating_min, sel_rating_max = rng
-
-        # Row 4: jockey / trainer
-        c1, c2 = st.columns(2)
-        with c1:
-            sel_jockey = st.multiselect("Jockey",
-                                        _lookup_distinct(df_all, "jockey"),
-                                        key="rl_jockey")
-        with c2:
-            sel_trainer = st.multiselect("Trainer",
-                                         _lookup_distinct(df_all, "trainer"),
-                                         key="rl_trainer")
-
-        # Row 5: profile / finish / pace / time
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            sel_style = st.multiselect("Running style (profile)",
-                                       ["Leader", "On-Pace", "Midfield", "Closer"],
-                                       key="rl_style")
-        with c2:
-            sel_finish = st.radio("Finish",
-                                  ["Any", "Win (1)", "Place (1-3)",
-                                   "Top-5", "Specific"],
-                                  horizontal=True, key="rl_finish_mode")
-            sel_finish_specific = []
-            if sel_finish == "Specific":
-                sel_finish_specific = st.multiselect(
-                    "Position", list(range(1, 15)), key="rl_finish_specific")
-        with c3:
-            pace_opts = _lookup_distinct(df_all, "pace_label")
-            sel_pace = st.multiselect("Race pace",
-                                      pace_opts,
-                                      key="rl_pace") if pace_opts else []
-        with c4:
-            sel_time_mode = st.radio("Time filter",
-                                     ["Any", "Custom range",
-                                      "Top X% in (course, distance)",
-                                      "Speed fig ≤"],
-                                     horizontal=True, key="rl_time_mode")
-            sel_time_min = sel_time_max = None
-            sel_time_pct = None
-            sel_speed_fig = None
-            if sel_time_mode == "Custom range":
-                t_lo = float(df_all["finish_time_seconds"].min() or 50.0)
-                t_hi = float(df_all["finish_time_seconds"].max() or 200.0)
-                rng = st.slider("Finish time (s)",
-                                int(t_lo), int(t_hi) + 1,
-                                (int(t_lo), int(t_hi) + 1),
-                                key="rl_time_range")
-                sel_time_min, sel_time_max = rng
-            elif sel_time_mode == "Top X% in (course, distance)":
-                sel_time_pct = st.slider(
-                    "Top X% fastest finishers",
-                    1, 50, 10, key="rl_time_pct",
-                    help="For each (race_course, distance) bucket, keep "
-                         "rows whose finish_time is in the fastest X%.")
-            elif sel_time_mode == "Speed fig ≤":
-                sel_speed_fig = st.slider(
-                    "Speed fig threshold (z-score)",
-                    -3.0, 1.0, -1.0, 0.1, key="rl_speed_fig",
-                    help="Speed fig = (time − bucket mean) / bucket std, "
-                         "where bucket = (course, distance, going). "
-                         "Negative = faster than average. Threshold keeps "
-                         "rows with speed_fig ≤ value.")
-
-        # Row 6: outliers
-        c1, c2 = st.columns([1, 2])
-        with c1:
-            sel_outliers_only = st.checkbox(
-                "Outliers only", key="rl_outliers_only",
-                help="Only show boilovers (long-priced winners) or flops "
-                     "(short-priced losers). Useful for noise/edge audit.")
-        with c2:
-            sel_outlier_kind = []
-            if sel_outliers_only:
-                sel_outlier_kind = st.multiselect(
-                    "Outlier kind",
-                    ["Boilover (Pl=1, odds≥20)", "Flop (odds≤3, Pl≥6)"],
-                    default=["Boilover (Pl=1, odds≥20)",
-                             "Flop (odds≤3, Pl≥6)"],
-                    key="rl_outlier_kind")
-
-    # ── Apply filters ────────────────────────────────────────────────────
-    df = df_all.copy()
-
-    if date_mode == "Range" and sel_start and sel_end:
-        df = df[(df["race_date"].dt.date >= sel_start) &
-                (df["race_date"].dt.date <= sel_end)]
-    elif date_mode == "Exact date" and sel_exact:
-        df = df[df["race_date"].dt.date == sel_exact]
-    elif date_mode == "Month" and sel_month:
-        df = df[df["month"] == sel_month]
-
-    if sel_horse_name:
-        df = df[df["horse_name"].astype(str).str.upper().str.contains(
-            sel_horse_name, na=False)]
-
-    if sel_track:   df = df[df["race_track"].isin(sel_track)]
-    if sel_course:  df = df[df["race_course"].isin(sel_course)]
-    if sel_class:   df = df[df["race_class"].astype(str).isin([str(c) for c in sel_class])]
-    if sel_dist:    df = df[df["distance_n"].isin(sel_dist)]
-
-    if sel_gate_mode == "Bands" and sel_gate_bands:
-        df = df[df["gate_band"].isin(sel_gate_bands)]
-    elif sel_gate_mode == "Specific" and sel_gates:
-        df = df[df["draw_n"].isin(sel_gates)]
-
-    if sel_rating_mode == "Bands" and sel_rating_bands:
-        df = df[df["rating_band"].isin(sel_rating_bands)]
-    elif sel_rating_mode == "Range" and sel_rating_min is not None:
-        df = df[df["rating_n"].between(sel_rating_min, sel_rating_max)]
-
-    if sel_jockey:  df = df[df["jockey"].isin(sel_jockey)]
-    if sel_trainer: df = df[df["trainer"].isin(sel_trainer)]
-    if sel_style:   df = df[df["run_style"].isin(sel_style)]
-
-    if sel_finish == "Win (1)":
-        df = df[df["place_n"] == 1]
-    elif sel_finish == "Place (1-3)":
-        df = df[df["place_n"].between(1, 3)]
-    elif sel_finish == "Top-5":
-        df = df[df["place_n"].between(1, 5)]
-    elif sel_finish == "Specific" and sel_finish_specific:
-        df = df[df["place_n"].isin(sel_finish_specific)]
-
-    if sel_pace:
-        df = df[df["pace_label"].isin(sel_pace)]
-
-    if sel_time_mode == "Custom range" and sel_time_min is not None:
-        df = df[df["finish_time_seconds"].between(sel_time_min, sel_time_max)]
-    elif sel_time_mode == "Top X% in (course, distance)" and sel_time_pct:
-        rank = df.groupby(["race_course", "distance_n"])["finish_time_seconds"] \
-                 .rank(method="min", pct=True)
-        df = df[rank <= (sel_time_pct / 100.0)]
-    elif sel_time_mode == "Speed fig ≤" and sel_speed_fig is not None:
-        df = df[df["speed_fig"] <= sel_speed_fig]
-
-    if sel_outliers_only and sel_outlier_kind:
-        masks = []
-        if "Boilover (Pl=1, odds≥20)" in sel_outlier_kind:
-            masks.append(df["is_boilover"])
-        if "Flop (odds≤3, Pl≥6)" in sel_outlier_kind:
-            masks.append(df["is_flop"])
-        if masks:
-            m = masks[0]
-            for x in masks[1:]:
-                m = m | x
-            df = df[m]
-
-    df = df.sort_values(["race_date", "race_number", "place_n"],
-                        ascending=[False, True, True])
-
-    # ── Summary panel ───────────────────────────────────────────────────
-    n = len(df)
-    n_races = df.groupby(["race_date_str", "race_number"]).ngroups if n else 0
-    n_horses = df["horse_name"].nunique() if n else 0
-    win_pct = (df["is_win"].sum() / n * 100.0) if n else 0.0
-    plc_pct = (df["is_place"].sum() / n * 100.0) if n else 0.0
-
-    k1, k2, k3, k4, k5 = st.columns(5)
-    k1.metric("Rows", f"{n:,}")
-    k2.metric("Races", f"{n_races:,}")
-    k3.metric("Distinct horses", f"{n_horses:,}")
-    base_w = baselines.get("overall_win", 0) * 100
-    k4.metric("Win %", f"{win_pct:.1f}%",
-              delta=f"{win_pct - base_w:+.1f} vs baseline" if base_w else None)
-    base_p = baselines.get("overall_place", 0) * 100
-    k5.metric("Place %", f"{plc_pct:.1f}%",
-              delta=f"{plc_pct - base_p:+.1f} vs baseline" if base_p else None)
-
-    if n == 0:
-        st.info("No rows match the current filters.")
-        return
-
-    # ── Sub-tabs ────────────────────────────────────────────────────────
-    sub_results, sub_insights, sub_pivot, sub_outliers = st.tabs(
-        ["📋 Results", "📈 Insights", "🧮 Pivot designer", "🎲 Outliers"]
-    )
-
-    # ─────────────────────────── Results ─────────────────────────────────
-    with sub_results:
-        disp = df.copy()
-        disp["video"] = [
-            _hkjc_video_url(d.replace("-", "/"), int(rn), tk)
-            for d, rn, tk in zip(disp["race_date_str"],
-                                  disp["race_number"],
-                                  disp.get("race_track", [""] * len(disp)))
-        ]
-        cols_order = [
-            "race_date_str", "race_number", "race_track", "race_course",
-            "surface", "race_class", "distance_n", "going", "pace_label",
-            "field_size",
-            "place", "horse_name", "draw", "rating", "actual_weight",
-            "jockey", "trainer", "run_style", "running_positions",
-            "finish_time_seconds", "speed_fig", "lbw", "win_odds", "gear",
-            "video", "horse_url",
-        ]
-        cols_order = [c for c in cols_order if c in disp.columns]
-        disp = disp[cols_order].rename(columns={
-            "race_date_str": "Date", "race_number": "R",
-            "race_track": "Track", "race_course": "Course",
-            "surface": "Surface", "race_class": "Class",
-            "distance_n": "Dist", "going": "Going",
-            "pace_label": "Pace", "field_size": "Fld",
-            "place": "Pl", "horse_name": "Horse",
-            "draw": "Gate", "rating": "RT",
-            "actual_weight": "Wt", "jockey": "Jockey",
-            "trainer": "Trainer", "run_style": "Style",
-            "running_positions": "Run pos.",
-            "finish_time_seconds": "Time(s)", "speed_fig": "SpdFig",
-            "lbw": "LBW", "win_odds": "Odds", "gear": "Gear",
-            "video": "▶ Replay", "horse_url": "🐴 HKJC",
-        })
-
-        st.dataframe(
-            disp, use_container_width=True, hide_index=True,
-            height=min(900, 120 + 35 * min(len(disp), 22)),
-            column_config={
-                "▶ Replay": st.column_config.LinkColumn(
-                    "▶ Replay", display_text="▶ Watch", width="small"),
-                "🐴 HKJC": st.column_config.LinkColumn(
-                    "🐴 HKJC", display_text="open", width="small"),
-                "Time(s)": st.column_config.NumberColumn(format="%.2f"),
-                "SpdFig":  st.column_config.NumberColumn(
-                    format="%+.2f",
-                    help="Speed figure z-score (negative = faster than "
-                         "course/distance/going bucket mean)."),
-            },
-        )
-
-        csv = disp.to_csv(index=False).encode("utf-8")
-        st.download_button("⬇️ Download CSV", data=csv,
-                           file_name="race_lookup.csv", mime="text/csv",
-                           use_container_width=False)
-
-        # ── Form-line drilldown: pick a horse from the slice ───────────
-        st.markdown("##### Drill into form line")
-        unique_horses = sorted(df["horse_name"].dropna().unique().tolist())
-        pick_horse = st.selectbox(
-            "Horse", ["—"] + unique_horses[:2000],
-            key="rl_drill_horse",
-            help="Picks any horse in the current slice; displays their "
-                 "last 6 runs from the *full* DB (not filtered).")
-        if pick_horse and pick_horse != "—":
-            hist = df_all[df_all["horse_name"] == pick_horse] \
-                       .sort_values("race_date", ascending=False).head(6)
-            if hist.empty:
-                st.info("No history.")
-            else:
-                hist = hist.assign(video=[
-                    _hkjc_video_url(d.replace("-", "/"), int(rn), tk)
-                    for d, rn, tk in zip(hist["race_date_str"],
-                                          hist["race_number"],
-                                          hist.get("race_track",
-                                                   [""] * len(hist)))
-                ])
-                show_cols = ["race_date_str", "race_number", "race_track",
-                             "race_course", "race_class", "distance_n",
-                             "going", "pace_label", "place", "draw",
-                             "jockey", "trainer", "run_style",
-                             "running_positions", "finish_time_seconds",
-                             "speed_fig", "lbw", "win_odds", "video"]
-                show_cols = [c for c in show_cols if c in hist.columns]
-                st.dataframe(
-                    hist[show_cols].rename(columns={
-                        "race_date_str": "Date", "race_number": "R",
-                        "race_track": "Trk", "race_course": "Crs",
-                        "race_class": "Cls", "distance_n": "Dist",
-                        "going": "Going", "pace_label": "Pace",
-                        "place": "Pl", "draw": "Gate", "jockey": "Jky",
-                        "trainer": "Trn", "run_style": "Style",
-                        "running_positions": "Run pos.",
-                        "finish_time_seconds": "Time(s)",
-                        "speed_fig": "SpdFig", "lbw": "LBW",
-                        "win_odds": "Odds", "video": "▶ Replay",
-                    }),
-                    use_container_width=True, hide_index=True,
-                    column_config={
-                        "▶ Replay": st.column_config.LinkColumn(
-                            "▶ Replay", display_text="▶", width="small"),
-                        "Time(s)": st.column_config.NumberColumn(format="%.2f"),
-                        "SpdFig": st.column_config.NumberColumn(format="%+.2f"),
-                    },
-                )
-
-    # ─────────────────────────── Insights ────────────────────────────────
-    with sub_insights:
-        def _agg(group_cols, top=20, baseline_map=None, baseline_n_map=None):
-            g = df.groupby(group_cols, dropna=False).agg(
-                runs=("horse_name", "size"),
-                wins=("is_win", "sum"),
-                places=("is_place", "sum"),
-                avg_finish=("place_n", "mean"),
-                avg_win_odds=("win_odds_n",
-                              lambda s: s[df.loc[s.index, "is_win"]].mean()),
-            ).reset_index()
-            g["win%"] = (g["wins"] / g["runs"] * 100).round(1)
-            g["plc%"] = (g["places"] / g["runs"] * 100).round(1)
-            g["avg_finish"] = g["avg_finish"].round(2)
-            g["avg_win_odds"] = g["avg_win_odds"].round(2)
-            if baseline_map and len(group_cols) == 1:
-                key = group_cols[0]
-                g["base_win%"] = g[key].map(
-                    lambda v: round((baseline_map.get(v) or 0) * 100, 1))
-                g["Δ vs base"] = (g["win%"] - g["base_win%"]).round(1)
-            g = g[g["runs"] >= 3].sort_values(["wins", "win%"],
-                                              ascending=[False, False]).head(top)
-            return g
-
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown("**By gate band**")
-            st.dataframe(_agg(["gate_band"], 20),
-                         use_container_width=True, hide_index=True)
-            st.markdown("**By running style (profile)**")
-            st.dataframe(_agg(["run_style"], 20),
-                         use_container_width=True, hide_index=True)
-            st.markdown("**By rating band**")
-            st.dataframe(_agg(["rating_band"], 20),
-                         use_container_width=True, hide_index=True)
-            st.markdown("**By distance**")
-            st.dataframe(_agg(["distance_n"], 20),
-                         use_container_width=True, hide_index=True)
-        with c2:
-            st.markdown("**Top jockeys (vs their full-DB baseline)**")
-            st.dataframe(_agg(["jockey"], 20,
-                              baselines.get("jockey_win"),
-                              baselines.get("jockey_n")),
-                         use_container_width=True, hide_index=True)
-            st.markdown("**Top trainers (vs their full-DB baseline)**")
-            st.dataframe(_agg(["trainer"], 20,
-                              baselines.get("trainer_win"),
-                              baselines.get("trainer_n")),
-                         use_container_width=True, hide_index=True)
-            st.markdown("**Top jockey × trainer combos**")
-            st.dataframe(_agg(["jockey", "trainer"], 30),
-                         use_container_width=True, hide_index=True)
-            st.markdown("**By race pace**")
-            st.dataframe(_agg(["pace_label"], 20),
-                         use_container_width=True, hide_index=True)
-
-        # People combos
-        st.markdown("##### People × Horse combos (in slice)")
-        cc1, cc2 = st.columns(2)
-        with cc1:
-            st.markdown("**Top jockey × horse**")
-            st.dataframe(_agg(["jockey", "horse_name"], 30),
-                         use_container_width=True, hide_index=True)
-        with cc2:
-            st.markdown("**Top trainer × horse**")
-            st.dataframe(_agg(["trainer", "horse_name"], 30),
-                         use_container_width=True, hide_index=True)
-
-        st.markdown("**Course-specialist jockeys (jockey × race_course)**")
-        st.dataframe(_agg(["jockey", "race_course"], 30),
-                     use_container_width=True, hide_index=True)
-
-        # Bias matrices with baseline-deviation colouring
-        st.markdown("##### Bias matrix — win% by (gate band × distance)")
-        bias = (df.assign(_w=df["is_win"].astype(int))
-                  .pivot_table(index="gate_band", columns="distance_n",
-                               values="_w", aggfunc="mean") * 100).round(2)
-        # Build deviation matrix vs full-DB baseline for the same cell
-        cdg_base = baselines.get("course_dist_gate", {})
-        base_full = (df_all.assign(_w=df_all["is_win"].astype(int))
-                       .pivot_table(index="gate_band", columns="distance_n",
-                                    values="_w", aggfunc="mean") * 100).round(2)
-        try:
-            dev = (bias - base_full).round(2)
-            st.dataframe(
-                dev.style.format("{:+.1f}").background_gradient(
-                    cmap="RdYlGn", vmin=-15, vmax=15, axis=None),
-                use_container_width=True,
-            )
-            st.caption("Cells = (slice win%) − (full-DB win% for same "
-                       "gate-band × distance). Green = positive bias, "
-                       "red = negative. Empty = bucket not in slice.")
-        except Exception as e:
-            st.dataframe(bias.style.format("{:.1f}%"),
-                         use_container_width=True)
-            st.caption(f"Heatmap unavailable: {e}")
-
-        if df["pace_label"].astype(bool).any():
-            st.markdown("##### Bias matrix — win% by (running style × race pace)")
-            bias2 = (df.assign(_w=df["is_win"].astype(int))
-                       .pivot_table(index="run_style", columns="pace_label",
-                                    values="_w", aggfunc="mean") * 100).round(2)
-            try:
-                st.dataframe(
-                    bias2.style.format("{:.1f}%").background_gradient(
-                        cmap="RdYlGn", vmin=0, vmax=25, axis=None),
-                    use_container_width=True,
-                )
-            except Exception:
-                st.dataframe(bias2.style.format("{:.1f}%"),
-                             use_container_width=True)
-
-    # ───────────────────────── Pivot designer ────────────────────────────
-    with sub_pivot:
-        st.markdown("Build any 2-D win-rate matrix from the slice. "
-                    "Rows × Columns × Metric — pick any combination.")
-        groupable = ["race_track", "race_course", "surface", "race_class",
-                     "distance_n", "going", "pace_label", "gate_band",
-                     "rating_band", "run_style", "jockey", "trainer",
-                     "horse_name", "draw_n"]
-        groupable = [c for c in groupable if c in df.columns]
-        cc1, cc2, cc3, cc4 = st.columns(4)
-        with cc1:
-            piv_x = st.selectbox("Rows", groupable,
-                                 index=groupable.index("gate_band")
-                                 if "gate_band" in groupable else 0,
-                                 key="rl_piv_x")
-        with cc2:
-            piv_y = st.selectbox("Columns", groupable,
-                                 index=groupable.index("distance_n")
-                                 if "distance_n" in groupable else 0,
-                                 key="rl_piv_y")
-        with cc3:
-            piv_metric = st.selectbox(
-                "Metric",
-                ["win%", "place%", "runs", "avg_finish",
-                 "avg_win_odds", "avg_speed_fig"],
-                key="rl_piv_metric")
-        with cc4:
-            piv_minn = st.slider("Min runs / cell", 1, 50, 5,
-                                 key="rl_piv_minn")
-        if piv_x == piv_y:
-            st.info("Pick two different fields for rows and columns.")
-        else:
-            try:
-                if piv_metric == "win%":
-                    pv = (df.assign(_v=df["is_win"].astype(int))
-                            .pivot_table(index=piv_x, columns=piv_y,
-                                         values="_v", aggfunc="mean") * 100).round(2)
-                elif piv_metric == "place%":
-                    pv = (df.assign(_v=df["is_place"].astype(int))
-                            .pivot_table(index=piv_x, columns=piv_y,
-                                         values="_v", aggfunc="mean") * 100).round(2)
-                elif piv_metric == "runs":
-                    pv = df.pivot_table(index=piv_x, columns=piv_y,
-                                        values="horse_name", aggfunc="count")
-                elif piv_metric == "avg_finish":
-                    pv = df.pivot_table(index=piv_x, columns=piv_y,
-                                        values="place_n", aggfunc="mean").round(2)
-                elif piv_metric == "avg_win_odds":
-                    pv = df[df["is_win"]].pivot_table(
-                        index=piv_x, columns=piv_y,
-                        values="win_odds_n", aggfunc="mean").round(2)
-                else:  # avg_speed_fig
-                    pv = df.pivot_table(index=piv_x, columns=piv_y,
-                                        values="speed_fig",
-                                        aggfunc="mean").round(2)
-                # Mask cells with too few rows
-                cnt = df.pivot_table(index=piv_x, columns=piv_y,
-                                     values="horse_name", aggfunc="count")
-                pv = pv.where(cnt >= piv_minn)
-                fmt = ("{:.1f}%" if piv_metric in ("win%", "place%")
-                       else "{:+.2f}" if piv_metric == "avg_speed_fig"
-                       else "{:.2f}" if piv_metric in ("avg_finish",
-                                                      "avg_win_odds")
-                       else "{:.0f}")
-                cmap = ("RdYlGn" if piv_metric in
-                        ("win%", "place%") else "RdYlGn_r"
-                        if piv_metric in ("avg_finish",) else "viridis")
-                try:
-                    st.dataframe(
-                        pv.style.format(fmt, na_rep="—")
-                          .background_gradient(cmap=cmap, axis=None),
-                        use_container_width=True,
-                    )
-                except Exception:
-                    st.dataframe(pv.style.format(fmt, na_rep="—"),
-                                 use_container_width=True)
-            except Exception as e:
-                st.error(f"Pivot failed: {e}")
-
-    # ───────────────────────── Outliers ──────────────────────────────────
-    with sub_outliers:
-        st.markdown(
-            "Auto-flagged rows that may distort analytics — review for "
-            "noise vs genuine pattern."
-        )
-        boil = df[df["is_boilover"]].copy()
-        flop = df[df["is_flop"]].copy()
-        c1, c2 = st.columns(2)
-        c1.metric("Boilovers (Pl=1, odds≥20)", f"{len(boil):,}")
-        c2.metric("Flops (odds≤3, Pl≥6)", f"{len(flop):,}")
-
-        st.markdown(f"**Boilovers — {len(boil)} rows**")
-        cols = ["race_date_str", "race_number", "race_track", "race_course",
-                "race_class", "distance_n", "going", "horse_name",
-                "draw", "jockey", "trainer", "run_style", "win_odds",
-                "place"]
-        cols = [c for c in cols if c in boil.columns]
-        st.dataframe(boil[cols].head(200), use_container_width=True,
-                     hide_index=True)
-
-        st.markdown(f"**Flops — {len(flop)} rows**")
-        cols = ["race_date_str", "race_number", "race_track", "race_course",
-                "race_class", "distance_n", "going", "horse_name",
-                "draw", "jockey", "trainer", "run_style", "win_odds",
-                "place"]
-        cols = [c for c in cols if c in flop.columns]
-        st.dataframe(flop[cols].head(200), use_container_width=True,
-                     hide_index=True)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
 # Entry point — page router
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -17475,13 +15697,13 @@ def main():
         ("Race Day Insight", "🏁 Race Day Insight"),
         ("Form Guide",     "📖 Form Guide"),
         ("Model Analysis", "📊 Model Analysis"),
-        ("Framework Lab",  "🧪 Framework Lab"),
         ("Model Bets",     "🎯 Model Bets"),
         ("Multi Builder",  "🧮 Multi Builder"),
         ("Data Analysis",  "🔬 Data Analysis"),
-        ("Race Lookup",    "🔎 Race Lookup"),
+        ("Horse Profile",  "🐴 Horse Profile"),
         ("Results",        "🏆 Results"),
-        ("Live Market",    "💹 Live Market"),
+        ("Live Feed",      "📡 Live Feed"),
+        ("Live Odds",      "💹 Live Odds"),
         ("My Bets",        "💰 My Bets"),
         ("Blackbook",      "📓 Blackbook"),
         ("Trials",         "🎽 Trials"),
@@ -17495,8 +15717,6 @@ def main():
         st.session_state["nav_page"] = "Model Analysis"
     if st.session_state["nav_page"] == "Overview":
         st.session_state["nav_page"] = "Race Day Insight"
-    if st.session_state["nav_page"] in ("Live Feed", "Live Odds"):
-        st.session_state["nav_page"] = "Live Market"
 
     for page_name, label in NAV_ITEMS:
         is_active = st.session_state["nav_page"] == page_name
@@ -17515,22 +15735,21 @@ def main():
         page_overview()
     elif page == "Model Analysis":
         selected = sidebar_race_day()
-        page_race_day(selected)
-    elif page == "Framework Lab":
-        page_framework_lab()
+        tab_race, tab_compare = st.tabs([
+            "🏁 Race Day Picks", "⚖️ Model Comparison",
+        ])
+        with tab_race:
+            page_race_day(selected)
+        with tab_compare:
+            page_model_comparison()
     elif page == "Data Analysis":
         page_data_analysis()
     elif page == "Horse Profile":
-        # Horse Profile merged into Race Lookup as a tab — redirect.
-        page_race_lookup()
-    elif page == "Race Lookup":
-        page_race_lookup()
+        page_horse_profile()
     elif page == "Live Feed":
-        page_live_market()
+        page_live_feed()
     elif page == "Live Odds":
-        page_live_market()
-    elif page == "Live Market":
-        page_live_market()
+        page_live_odds()
     elif page == "Model Bets":
         page_model_bets()
     elif page == "Multi Builder":
@@ -17556,11 +15775,6 @@ def main():
     # on every page so the user always knows whether data is being synced
     # to GitHub (i.e. will survive a reboot).
     _render_persistence_sidebar()
-    # DB backup download buttons (xlsx + sqlite). Visible everywhere so
-    # the user can grab a snapshot at any time.
-    _render_db_backup_sidebar()
-    # Push-notification setup + test button (ntfy.sh → Chrome on phone).
-    _render_push_sidebar()
 
 
 def sidebar_race_day():
@@ -17619,10 +15833,7 @@ def sidebar_race_day():
 
     st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
     st.sidebar.markdown('<div class="sb-nav-section">Meetings</div>', unsafe_allow_html=True)
-    # include_pending=True so meetings whose racecard is scraped but whose
-    # ET analysis JSON hasn't been produced yet (e.g. cloud pipeline failed
-    # at step 3/3) still appear here and can be re-selected for retry.
-    meetings = load_available_meetings(include_pending=True)
+    meetings = load_available_meetings()
 
     if not meetings:
         st.sidebar.info("No analysed meetings found.\nRun your first analysis above!")

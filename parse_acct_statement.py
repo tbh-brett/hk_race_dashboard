@@ -153,130 +153,6 @@ def _detect_bet_type_line(lines: list[str]) -> tuple[Optional[int], str, str]:
     return None, "", ""
 
 
-# All-Up formula line — e.g. "4X11", "3X4", "2x6", "1.1.1=1"
-ALLUP_FORMULA_RE = re.compile(r"^\d+(?:\.\d+)*\s*[xX×]\s*\d+$|^[\d.]+\s*=\s*\d+$")
-
-
-def _parse_all_up_block(
-    lines: list[str],
-    ref_no: str,
-    meeting_date: str,
-    placed_at: str,
-    venue: str,
-    bt_idx: int,
-    bet_type_line: str,
-) -> Optional[dict]:
-    """Parse an ``All Up …`` multi-leg block.
-
-    Captures one ``all_up_legs[i]`` per ``Race N`` section, each with its
-    own optional banker. Returns a dict that ``_expand_to_user_bet_records``
-    converts into a single ``ALLUP_*`` record.
-    """
-    # 1) Optional formula line directly after bet-type ("4X11", "3X4", ...)
-    formula = ""
-    j = bt_idx + 1
-    while j < len(lines) and not lines[j].strip():
-        j += 1
-    if j < len(lines) and ALLUP_FORMULA_RE.match(lines[j].strip()):
-        formula = lines[j].strip()
-        j += 1
-
-    # 2) Walk forward, splitting into legs on each ``Race N`` line.
-    legs_raw: list[dict] = []
-    cur: Optional[dict] = None
-    money_lines: list[str] = []
-    while j < len(lines):
-        s = lines[j].strip()
-        if not s:
-            j += 1
-            continue
-        rm = RACE_RE.match(s)
-        if rm:
-            if cur is not None:
-                legs_raw.append(cur)
-            cur = {
-                "race_number": int(rm.group(1)),
-                "_pre": [],   # (no, name) before any "Banker with"
-                "_post": [],  # (no, name) after "Banker with"
-                "_banker_seen": False,
-            }
-            j += 1
-            continue
-        if MONEY_RE.match(s):
-            money_lines.append(s)
-            j += 1
-            continue
-        if cur is None:
-            # Stray content before the first ``Race N``; ignore.
-            j += 1
-            continue
-        if s.lower().startswith("banker with"):
-            cur["_banker_seen"] = True
-            j += 1
-            continue
-        sm = SELECTION_RE.match(s)
-        if sm:
-            no, nm = int(sm.group(1)), sm.group(2).strip()
-            (cur["_post"] if cur["_banker_seen"] else cur["_pre"]).append((no, nm))
-        j += 1
-    if cur is not None:
-        legs_raw.append(cur)
-
-    if not legs_raw:
-        if DEBUG_PARSE:
-            print(f"[skip] all-up block had no legs; ref={ref_no!r}")
-        return None
-
-    # 3) Finalise legs (resolve banker structure per leg).
-    all_up_legs: list[dict] = []
-    for L in legs_raw:
-        if L["_banker_seen"] and L["_pre"] and L["_post"]:
-            all_up_legs.append({
-                "race_number": L["race_number"],
-                "banker": L["_pre"][-1][0],
-                "selections": [n for n, _ in L["_post"]],
-            })
-        else:
-            all_up_legs.append({
-                "race_number": L["race_number"],
-                "banker": None,
-                "selections": [n for n, _ in L["_pre"]],
-            })
-
-    # 4) Stakes (per-combo, total-debit, optional total-credit).
-    stakes: list[float] = []
-    for s in money_lines:
-        v = _parse_money(s)
-        if v is not None:
-            stakes.append(v)
-    if len(stakes) < 2:
-        if DEBUG_PARSE:
-            print(f"[skip] all-up: not enough $ amounts ({len(stakes)}); "
-                    f"ref={ref_no!r}")
-        return None
-    per_combo_stake = stakes[0]
-    total_debit     = stakes[1]
-    total_credit    = stakes[2] if len(stakes) >= 3 else 0.0
-
-    return {
-        "bookie_ref": ref_no,
-        "placed_at":  placed_at,
-        "meeting_date": meeting_date,
-        "venue": venue,
-        "race_number": all_up_legs[0]["race_number"],
-        "bet_type_text": bet_type_line,
-        "banker": None,
-        "selections": [],
-        "multi_legs": None,
-        "all_up": True,
-        "all_up_formula": formula,
-        "all_up_legs": all_up_legs,
-        "per_combo_stake": per_combo_stake,
-        "total_debit": total_debit,
-        "total_credit": total_credit,
-    }
-
-
 def _parse_bet_block(block: list[str]) -> Optional[dict]:
     """Parse a single bet block → dict or None if malformed.
 
@@ -340,16 +216,6 @@ def _parse_bet_block(block: list[str]) -> Optional[dict]:
             print(f"[skip] bet-type not detected; ref={ref_no!r} head="
                     f"{[l.strip() for l in lines[:8]]}")
         return None
-
-    # ── All-Up bet routing ──────────────────────────────────────────
-    # All-Up bets cover MULTIPLE races in one block (e.g.
-    # "All Up Win - Place 4X11", "All Up Quinella - Quinella Place 3X4").
-    # The standard single-race parser below would silently merge selections
-    # from every leg into Race 1, so route All-Ups to a dedicated parser.
-    if "all up" in bet_type_line.lower():
-        return _parse_all_up_block(lines, ref_no, meeting_date, placed_at,
-                                    venue, bt_idx, bet_type_line)
-
     is_multi_banker = bool(sub_type_line)
     if is_multi_banker:
         bet_type_line = f"{bet_type_line} {sub_type_line}".strip()
@@ -492,50 +358,6 @@ def _expand_to_user_bet_records(parsed: dict) -> list[dict]:
     banker = parsed.get("banker")
     records: list[dict] = []
 
-    # ── All-Up bets: single record carrying every leg ───────────────
-    if parsed.get("all_up"):
-        if "win" in bt_text and "place" in bt_text:
-            code = "ALLUP_WP"
-        elif "quinella" in bt_text:
-            code = "ALLUP_QQP"
-        elif "win" in bt_text:
-            code = "ALLUP_WIN"
-        elif "place" in bt_text:
-            code = "ALLUP_PLACE"
-        else:
-            code = "ALLUP_OTHER"
-        legs_for_dedup = [
-            {"race_number": L["race_number"],
-             "banker": L.get("banker"),
-             "selections": L["selections"]}
-            for L in parsed["all_up_legs"]
-        ]
-        records.append({
-            "meeting_date": parsed["meeting_date"],
-            "venue": parsed["venue"],
-            "race_number": parsed["race_number"],
-            "bet_type": code,
-            "selections": [],
-            "banker": None,
-            "legs": legs_for_dedup,
-            "stake_hkd": parsed["total_debit"],
-            "all_up_formula": parsed.get("all_up_formula", ""),
-            "notes": (
-                f"Imported from bookie statement (ref {parsed['bookie_ref']}). "
-                f"All-Up {parsed.get('all_up_formula','')} across "
-                f"{len(parsed['all_up_legs'])} legs. "
-                f"Per-combo ${parsed['per_combo_stake']}, "
-                f"debit ${parsed['total_debit']}, "
-                f"credit ${parsed['total_credit']}."
-            ),
-            "_bookie_ref": parsed["bookie_ref"],
-            "_bookie_bet_type_text": parsed["bet_type_text"],
-            "_bookie_total_debit": parsed["total_debit"],
-            "_bookie_total_credit": parsed["total_credit"],
-            "_bookie_placed_at": parsed["placed_at"],
-        })
-        return records
-
     # Determine emitted bet-type codes
     if "quinella - quinella place" in bt_text or "quinella-quinella place" in bt_text:
         codes = [
@@ -551,6 +373,12 @@ def _expand_to_user_bet_records(parsed: dict) -> list[dict]:
         per_code_stake = parsed["total_debit"]
     elif "trio" in bt_text:
         codes = ["TRIO"]
+        per_code_stake = parsed["total_debit"]
+    elif "tierce" in bt_text or "trifecta" in bt_text:
+        # HKJC "Tierce" = trifecta: first 3 in exact order.
+        # Bookie statement typically presents a box listing of 3+ horses.
+        # We emit a single TCE_BOX row; the settler computes stake/n_perms.
+        codes = ["TCE_BOX"]
         per_code_stake = parsed["total_debit"]
     elif "first 4" in bt_text or "first four" in bt_text:
         codes = ["F4_BOX"]
@@ -732,13 +560,6 @@ def import_statement(path: Path, *, debug: bool = False,
                 stake_hkd=rec["stake_hkd"],
                 notes=rec["notes"],
                 legs=rec.get("legs"),
-                # Bookie-statement metadata (used by ALLUP_* settler).
-                _bookie_ref=rec.get("_bookie_ref"),
-                _bookie_bet_type_text=rec.get("_bookie_bet_type_text"),
-                _bookie_total_debit=rec.get("_bookie_total_debit"),
-                _bookie_total_credit=rec.get("_bookie_total_credit"),
-                _bookie_placed_at=rec.get("_bookie_placed_at"),
-                all_up_formula=rec.get("all_up_formula"),
             )
             inserted += 1
             inserted_details.append({
@@ -804,23 +625,10 @@ def main():
         print(f"Parsed {len(parsed)} bet block(s) (preview only, --import to commit):\n")
         for pb in parsed:
             bk = f" banker={pb['banker']}" if pb['banker'] else ""
-            if pb.get("all_up"):
-                leg_str = " | ".join(
-                    f"R{L['race_number']}"
-                    + (f" b{L['banker']}" if L.get('banker') else "")
-                    + f" {L['selections']}"
-                    for L in pb.get("all_up_legs", [])
-                )
-                print(f"  {pb['bookie_ref']:>6}  {pb['meeting_date']} {pb['venue']} "
-                      f"R{pb['race_number']}+  {pb['bet_type_text']} "
-                      f"[{pb.get('all_up_formula','')}]  legs: {leg_str}  "
-                      f"combo=${pb['per_combo_stake']} debit=${pb['total_debit']} "
-                      f"credit=${pb['total_credit']}")
-            else:
-                print(f"  {pb['bookie_ref']:>6}  {pb['meeting_date']} {pb['venue']} "
-                      f"R{pb['race_number']}  {pb['bet_type_text']}{bk}  "
-                      f"legs={pb['selections']}  combo=${pb['per_combo_stake']} "
-                      f"debit=${pb['total_debit']} credit=${pb['total_credit']}")
+            print(f"  {pb['bookie_ref']:>6}  {pb['meeting_date']} {pb['venue']} "
+                  f"R{pb['race_number']}  {pb['bet_type_text']}{bk}  "
+                  f"legs={pb['selections']}  combo=${pb['per_combo_stake']} "
+                  f"debit=${pb['total_debit']} credit=${pb['total_credit']}")
     return 0
 
 

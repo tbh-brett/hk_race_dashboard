@@ -24,6 +24,7 @@ USER_BETS_PATH = REPORTS / "user_bets_log.jsonl"
 BET_TYPES = [
     "WIN", "PLACE", "QIN", "QPL", "QIN_BANKER", "QPL_BANKER",
     "F4_BOX", "TRIO",
+    "TCE", "TCE_BOX",
     "QTT_BOX", "QTT_MB",
     # All-Up multi-race bets — settled from bookie statement credit
     "ALLUP_WP", "ALLUP_QQP", "ALLUP_WIN", "ALLUP_PLACE", "ALLUP_OTHER",
@@ -448,6 +449,32 @@ def _settle_one(bet: dict, pack: dict) -> Optional[dict]:
                     ret += per_combo / 10.0 * _lookup(pool_code, list(c))
                     hit = True
                     break
+    elif bet_type in ("TCE", "TCE_BOX"):
+        # Tierce / Trifecta: first 3 in EXACT order. HKJC stores one
+        # dividend per race (the winning ordered triple) and we key the
+        # dividends-table by frozenset, so a box that contains the actual
+        # top-3 set will match. Stake is divided across all permutations
+        # the bet covers:
+        #   TCE      : 1 permutation (selections list interpreted as the
+        #              ordered 1st-2nd-3rd choice)
+        #   TCE_BOX  : n*(n-1)*(n-2) permutations
+        top3_set = set(finishers[:3]) if len(finishers) >= 3 else set()
+        top3_ordered = list(finishers[:3])
+        if top3_set:
+            uniq_sels = list(dict.fromkeys(int(x) for x in sels))
+            if bet_type == "TCE":
+                # exact-order match against selections list
+                if uniq_sels[:3] == top3_ordered:
+                    ret += stake / 10.0 * _lookup("TCE", top3_ordered)
+                    hit = ret > 0
+            else:  # TCE_BOX
+                n = len(uniq_sels)
+                if n >= 3:
+                    n_perms = n * (n - 1) * (n - 2)
+                    per_combo = stake / n_perms
+                    if top3_set <= set(uniq_sels):
+                        ret += per_combo / 10.0 * _lookup("TCE", top3_ordered)
+                        hit = ret > 0
 
     return {
         "status": "settled",
