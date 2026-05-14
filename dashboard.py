@@ -1211,6 +1211,8 @@ def _gh_persist_pipeline_outputs(date_str: str, model: str) -> tuple[int, int, l
         (REPORTS / f"race_day_analysis_{dc}_{model}.txt",       f"reports/race_day_analysis_{dc}_{model}.txt"),
         (REPORTS / f"race_day_report_{dc}_SARR.json",           f"reports/race_day_report_{dc}_SARR.json"),
         (REPORTS / f"vet_report_{dc}.json",                     f"reports/vet_report_{dc}.json"),
+        (REPORTS / f"mutual_{dc}.json",                         f"reports/mutual_{dc}.json"),
+        (REPORTS / f"pace_v2_{dc}.json",                        f"reports/pace_v2_{dc}.json"),
     ]
     pushed = 0
     missing = 0
@@ -2520,6 +2522,49 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                     st.code((res.stderr or res.stdout or "")[-3000:])
             with st.expander("ET pipeline output"):
                 st.code((res.stdout or "")[-4000:])
+
+    # ── Post-pipeline hooks: persist mutual picks + pace_v2 ─────────
+    # These derive canonical artifacts from the freshly-generated ET + SARR
+    # reports so the dashboard's read paths don't need to recompute live.
+    et_json_now = REPORTS / f"race_day_report_{dc}_{model}.json"
+    sarr_json_now = REPORTS / f"race_day_report_{dc}_SARR.json"
+    if et_json_now.exists() and sarr_json_now.exists():
+        # 1) Mutual picks (ET ∩ SARR top-3)
+        try:
+            res_mut = subprocess.run(
+                [PYTHON, str(BASE / "build_mutual_picks.py"),
+                 "--date", dc],
+                env=env, cwd=str(BASE),
+                capture_output=True, text=True, encoding="utf-8",
+                timeout=60,
+            )
+            if res_mut.returncode == 0:
+                st.success(f"✓ [post] Persisted mutual picks → mutual_{dc}.json")
+            else:
+                st.warning(f"⚠ [post] mutual picks build failed (exit "
+                           f"{res_mut.returncode})")
+        except Exception as _e:
+            st.warning(f"⚠ [post] mutual picks build failed: {_e}")
+
+        # 2) Pace v2 inference (uses cached model if present)
+        try:
+            res_p2 = subprocess.run(
+                [PYTHON, str(BASE / "pace_classifier_v2.py"),
+                 "infer", "--date", dc],
+                env=env, cwd=str(BASE),
+                capture_output=True, text=True, encoding="utf-8",
+                timeout=60,
+            )
+            if res_p2.returncode == 0 and (REPORTS / f"pace_v2_{dc}.json").exists():
+                st.success(f"✓ [post] Persisted pace v2 → pace_v2_{dc}.json")
+            elif "No trained model" in (res_p2.stdout or ""):
+                st.info("ℹ [post] No pace_v2 model trained yet — skip "
+                        "(run `python pace_classifier_v2.py train`).")
+            else:
+                st.warning(f"⚠ [post] pace_v2 inference failed (exit "
+                           f"{res_p2.returncode})")
+        except Exception as _e:
+            st.warning(f"⚠ [post] pace_v2 inference failed: {_e}")
 
     # ── Persist artifacts back to GitHub on Streamlit Cloud ─────────
     # Streamlit Cloud's filesystem is ephemeral — anything written by the
@@ -5103,9 +5148,9 @@ def page_model_comparison():
         return
 
     # ── Tabs inside the page ────────────────────────────────────────
-    t_overall, t_mutual, t_breakdown, t_strength, t_today = st.tabs([
+    t_overall, t_mutual, t_breakdown, t_strength, t_today, t_pace = st.tabs([
         "📊 Overall", "🤝 Mutual picks", "🗺️ Breakdown",
-        "🔥 Strength heatmap", "📅 Today",
+        "🔥 Strength heatmap", "📅 Today", "🏁 Pace v2",
     ])
 
     # ============================================================
@@ -5394,10 +5439,9 @@ def page_model_comparison():
     # TAB 5 — Today's mutual picks
     # ============================================================
     with t_today:
-        st.markdown("### Today's mutual picks (live)")
-        st.caption("Reads today's race_day_report (ET v4.4 + SARR) and "
-                   "shows the ET top-3 ∩ SARR top-3 set per race. Use "
-                   "these as your highest-confidence shortlist.")
+        st.markdown("### Today's mutual picks")
+        st.caption("Reads `reports/mutual_{DC}.json` (built post-pipeline). "
+                   "ET top-3 ∩ SARR top-3 per race — your highest-confidence shortlist.")
 
         import datetime as _dt
         today_dc = _dt.date.today().strftime("%Y%m%d")
@@ -5408,6 +5452,53 @@ def page_model_comparison():
             return
 
         reports_dir = _P("reports")
+        mut_p = reports_dir / f"mutual_{d_input}.json"
+
+        if mut_p.exists():
+            # Persistent path — preferred
+            mut_d = _json.loads(mut_p.read_text(encoding="utf-8"))
+            import pandas as _pd
+            rows_out = []
+            for r in mut_d.get("races", []):
+                disp = ", ".join(
+                    f"{m.get('horse_no')} {m.get('horse_name','')}".strip()
+                    for m in r.get("mutual_horses", [])
+                ) if r.get("mutual_horses") else "—"
+                rows_out.append({
+                    "Race": r.get("race_number"),
+                    "ET top-3": ", ".join(str(x) for x in r.get("et_picks", [])),
+                    "SARR top-3": ", ".join(str(x) for x in r.get("sarr_picks", [])),
+                    "Mutual size": r.get("mutual_size", 0),
+                    "Mutual picks": disp,
+                })
+            if rows_out:
+                df_t = _pd.DataFrame(rows_out)
+                def _style(row):
+                    size = row["Mutual size"]
+                    if size >= 3:
+                        return ["background-color: #2d5a2d; color: white"] * len(row)
+                    if size == 2:
+                        return ["background-color: #4a4a1f; color: #f0f0a0"] * len(row)
+                    return [""] * len(row)
+                st.dataframe(df_t.style.apply(_style, axis=1),
+                             use_container_width=True, hide_index=True)
+                n_high = sum(1 for r in rows_out if r["Mutual size"] >= 2)
+                st.caption(
+                    f"📌 **{n_high}** high-conviction races "
+                    f"(mutual size ≥ 2). Source: persisted `mutual_{d_input}.json` "
+                    f"({mut_d.get('n_mutual_total','?')} total mutual picks)."
+                )
+            else:
+                st.info("Persistent mutual file is empty.")
+            return
+
+        # ── Fallback: live recompute (legacy path) ────────────────
+        st.warning(
+            "No persistent `mutual_{DC}.json` for this date — falling back "
+            "to live recompute. Run `python build_mutual_picks.py "
+            f"--date {d_input}` to persist."
+        )
+
         et_p = None
         for tag in ("v4.4", "v3.4.8"):
             cand = reports_dir / f"race_day_report_{d_input}_{tag}.json"
@@ -5485,6 +5576,151 @@ def page_model_comparison():
                        f"(mutual size ≥ 2).")
         else:
             st.info("No races found in reports.")
+
+    # ============================================================
+    # TAB 6 — Pace v2 (rebuilt classifier + advantage)
+    # ============================================================
+    with t_pace:
+        st.markdown("### 🏁 Pace classifier v2 + advantage_v2")
+        st.caption(
+            "**Rebuild of broken pace pipeline.** Old classifier predicted "
+            "'Fast' 58/59 races (acc ≈ 14 %). New regression-on-actual_dev "
+            "model is gated for production use. Old advantage score had "
+            "ρ = −0.066 vs finishing position (noise); the new mechanical "
+            "score has ρ ≈ −0.10 over 1 038 horse-races."
+        )
+
+        import datetime as _dt
+        import pandas as _pd
+        from pathlib import Path as _Pp
+        pace_today_dc = _dt.date.today().strftime("%Y%m%d")
+        pd_input = st.text_input("Meeting date (YYYYMMDD)", value=pace_today_dc,
+                                  key="mc_pace_date")
+        if not pd_input or len(pd_input) != 8 or not pd_input.isdigit():
+            st.warning("Enter a valid YYYYMMDD date.")
+            return
+
+        # ── Model status block ────────────────────────────────
+        try:
+            import pickle
+            model_p = _Pp("models/pace_classifier_v2.pkl")
+            if model_p.exists():
+                with open(model_p, "rb") as _f:
+                    _art = pickle.load(_f)
+                cv = _art.get("cv", {}) or {}
+                ship = bool(_art.get("ship"))
+                badge = "✅ shipped" if ship else "⚠ experimental"
+                cols_st = st.columns(4)
+                cols_st[0].metric("Status", badge)
+                cols_st[1].metric("3-band CV acc",
+                                  f"{cv.get('acc_3band', 0)*100:.1f}%",
+                                  delta="vs 33% baseline")
+                cols_st[2].metric("5-class CV acc",
+                                  f"{cv.get('acc_5class', 0)*100:.1f}%",
+                                  delta="vs 20% baseline")
+                cols_st[3].metric("MAE (sec)",
+                                  f"{cv.get('mae', 0):.2f}")
+            else:
+                st.error("No trained model yet. Run "
+                         "`python pace_classifier_v2.py train`.")
+        except Exception as _e:
+            st.warning(f"Could not load model status: {_e}")
+
+        # ── Per-meeting pace v2 table ─────────────────────────
+        pv2_p = _Pp("reports") / f"pace_v2_{pd_input}.json"
+        et_p_p = None
+        for tag in ("v4.4", "v3.4.8"):
+            cand = _Pp("reports") / f"race_day_report_{pd_input}_{tag}.json"
+            if cand.exists():
+                et_p_p = cand
+                break
+
+        if not pv2_p.exists():
+            st.info(
+                f"No `pace_v2_{pd_input}.json` for this date. Run "
+                f"`python pace_classifier_v2.py infer --date {pd_input}`."
+            )
+        else:
+            pv2 = _json.loads(pv2_p.read_text(encoding="utf-8"))
+            conf = pv2.get("confidence", "experimental")
+            if conf != "ok":
+                st.warning(
+                    f"⚠ Model is **{conf}** — band-accuracy CV "
+                    f"{(pv2.get('cv_band_acc') or 0)*100:.1f}% < 50% gate. "
+                    "Treat as guide, not gospel."
+                )
+
+            rows_pv = []
+            for r in pv2.get("races", []):
+                rows_pv.append({
+                    "Race":          r.get("race_number"),
+                    "Distance":      r.get("distance"),
+                    "Legacy label":  r.get("legacy_label") or "—",
+                    "v2 label (5)":  r.get("label_5") or "—",
+                    "v2 band":       r.get("label_3") or "—",
+                    "v2 dev_pred":   f"{r.get('dev_pred', 0):+.2f}s",
+                })
+            df_pv = _pd.DataFrame(rows_pv)
+            def _hl(row):
+                lbl = row["v2 band"]
+                if lbl == "Fast":
+                    return ["background-color: #4a1f1f; color: #ffcccc"] * len(row)
+                if lbl == "Slow":
+                    return ["background-color: #1f3a4a; color: #ccddff"] * len(row)
+                return [""] * len(row)
+            st.dataframe(df_pv.style.apply(_hl, axis=1),
+                          use_container_width=True, hide_index=True)
+            from collections import Counter as _Cnt
+            cnt_old = _Cnt(r.get("legacy_label") for r in pv2.get("races", []))
+            cnt_new = _Cnt(r.get("label_3") for r in pv2.get("races", []))
+            st.caption(
+                f"**Legacy distribution:** {dict(cnt_old)}  ·  "
+                f"**v2 (3-band):** {dict(cnt_new)}"
+            )
+
+        # ── Per-race advantage_v2 inspector ───────────────────
+        if et_p_p:
+            st.markdown("---")
+            st.markdown("#### Advantage v2 inspector")
+            try:
+                from pace_advantage_v2 import compute_for_race as _adv_calc
+                et_d_p = _json.loads(et_p_p.read_text(encoding="utf-8"))
+                race_opts = [
+                    (r.get("race_number"), r.get("distance"))
+                    for r in et_d_p.get("races", [])
+                ]
+                race_pick = st.selectbox(
+                    "Race",
+                    options=race_opts,
+                    format_func=lambda x: f"R{x[0]} ({x[1]}m)",
+                    key="mc_adv_race",
+                )
+                if race_pick:
+                    target_r = next(
+                        (r for r in et_d_p.get("races", [])
+                         if r.get("race_number") == race_pick[0]),
+                        None,
+                    )
+                    if target_r:
+                        adv_rows = _adv_calc(target_r)
+                        # join with horse name
+                        adv_df = _pd.DataFrame(adv_rows)
+                        if not adv_df.empty:
+                            adv_df = adv_df.sort_values(
+                                "pace_advantage_v2", ascending=False
+                            )
+                            st.dataframe(
+                                adv_df, use_container_width=True,
+                                hide_index=True,
+                            )
+                            st.caption(
+                                "**adv_v2 = 0.50·own_ESZ_pct + "
+                                "0.50·(1−inside_handicap) + 0.10·style_match**. "
+                                "Validated ρ = −0.104 vs finishing position "
+                                "across 1 038 horse-races (old adv: −0.066)."
+                            )
+            except Exception as _e:
+                st.warning(f"Could not compute advantage: {_e}")
 
 
 def page_backtest():
