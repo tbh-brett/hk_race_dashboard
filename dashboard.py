@@ -2657,10 +2657,9 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                 sarr_mtime_after = sarr_json.stat().st_mtime if sarr_json.exists() else 0.0
                 sarr_updated = sarr_mtime_after > sarr_mtime_before
                 if res.returncode == 0 and sarr_json.exists():
-                    import datetime as _dt
-                    _mt = _dt.datetime.fromtimestamp(sarr_mtime_after)
+                    _mt = hkt_from_ts(sarr_mtime_after)
                     if sarr_updated:
-                        st.success(f"✓ [2/3] SARR generated: {sarr_json.name} ({_mt:%H:%M:%S})")
+                        st.success(f"✓ [2/3] SARR generated: {sarr_json.name} ({_mt:%H:%M:%S} HKT)")
                     else:
                         st.warning(
                             f"⚠ [2/3] SARR exited cleanly but did NOT write a new file "
@@ -4245,8 +4244,8 @@ def page_race_day(selected):
                                      int(date_str[6:]))
             _is_today = (_meeting_date == _today)
             if _rc_path.exists():
-                _rc_age_h = (_dt.datetime.now() -
-                             _dt.datetime.fromtimestamp(_rc_path.stat().st_mtime)
+                _rc_age_h = (hkt_now() -
+                             hkt_from_ts(_rc_path.stat().st_mtime)
                              ).total_seconds() / 3600.0
                 # Show banner ONLY when meeting is today AND card is stale.
                 # Past meetings keep the original card; future cards fresh.
@@ -11352,13 +11351,13 @@ def page_horse_profile():
     c_st1, c_st2, c_st3 = st.columns([3, 1, 1])
     with c_st1:
         if mtime:
-            mt = _dt.datetime.fromtimestamp(mtime)
+            mt = hkt_from_ts(mtime)
             total_runs = sum(
                 m.get("n_runs", 0) if isinstance(m, dict) else 0
                 for m in idx.values()
             )
             st.caption(
-                f"Index built **{mt:%Y-%m-%d %H:%M}** · "
+                f"Index built **{mt:%Y-%m-%d %H:%M} HKT** · "
                 f"**{len(idx):,}** horses · **{total_runs:,}** runs"
             )
         else:
@@ -11682,9 +11681,8 @@ def page_data_analysis():
     c1, c2, c3 = st.columns([2, 1, 1])
     with c1:
         if mtime > 0:
-            import datetime as _dt
-            mt = _dt.datetime.fromtimestamp(mtime)
-            st.caption(f"Last generated: **{mt:%Y-%m-%d %H:%M}** · source: "
+            mt = hkt_from_ts(mtime)
+            st.caption(f"Last generated: **{mt:%Y-%m-%d %H:%M} HKT** · source: "
                        f"`reports/factor_analysis_tables.json` · "
                        f"tables served from in-memory cache")
         else:
