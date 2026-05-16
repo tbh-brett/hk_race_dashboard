@@ -13084,7 +13084,24 @@ def page_live_odds():
     # 3) PER-RACE PANELS — WP table + QIN / QPL matrices, with drift
     # ════════════════════════════════════════════════════════════════
     st.markdown("### 🏇 Per-race panels")
-    for rn in races:
+
+    # Race button row — replaces infinite scroll with per-race selection
+    sel_key = f"liveodds_sel_race_{ymd}_{venue}"
+    if sel_key not in st.session_state or st.session_state[sel_key] not in races:
+        st.session_state[sel_key] = races[0]
+    btn_cols = st.columns(len(races))
+    for i, rn in enumerate(races):
+        is_active = st.session_state[sel_key] == rn
+        label = f"▶ R{rn}" if is_active else f"R{rn}"
+        if btn_cols[i].button(
+            label, key=f"liveodds_btn_r{rn}", use_container_width=True,
+            type="primary" if is_active else "secondary",
+        ):
+            st.session_state[sel_key] = rn
+            st.rerun()
+    sel_rn = st.session_state[sel_key]
+
+    for rn in [sel_rn]:
         rows = by_race[rn]
         latest = rows[-1]
         earliest = rows[0]
