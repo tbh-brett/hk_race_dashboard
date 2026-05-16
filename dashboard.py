@@ -12054,6 +12054,134 @@ def _compute_race_drift(date_compact: str, venue_code: str,
     }
 
 
+def _compute_pair_drift(date_compact: str, venue_code: str,
+                        race_no: int, pool: str = "qin") -> dict:
+    """Compute drift for Quinella (qin) or Quinella-Place (qpl) pair odds.
+
+    Args:
+        pool: 'qin' or 'qpl'.
+
+    Returns a dict mirroring _compute_race_drift but keyed by horse pairs::
+
+        {
+          "pool":      "qin" | "qpl",
+          "n_snaps":   int,
+          "first_ts":  str | "",
+          "last_ts":   str | "",
+          "pairs":     [{
+              "a": int, "b": int,
+              "odds_first": float|None,
+              "odds_last":  float|None,
+              "dpct":       float|None,
+          }, ...]  # sorted by dpct ascending (steamers first)
+        }
+    """
+    key = "qin_odds" if pool == "qin" else "qpl_odds"
+    snaps_all = _load_live_odds_snapshots(date_compact, venue_code)
+    rs = [s for s in snaps_all if str(s.get("race_no")) == str(race_no)
+          and isinstance(s.get(key), list) and s.get(key)]
+    rs.sort(key=lambda s: s.get("scraped_at", ""))
+    if not rs:
+        return {"pool": pool, "n_snaps": 0, "first_ts": "",
+                "last_ts": "", "pairs": []}
+    earliest, latest = rs[0], rs[-1]
+
+    def _flat(snap):
+        out = {}
+        for e in snap.get(key) or []:
+            try:
+                a, b = int(e.get("a")), int(e.get("b"))
+            except (TypeError, ValueError):
+                continue
+            try:
+                o = float(e.get("odds"))
+            except (TypeError, ValueError):
+                continue
+            out[(min(a, b), max(a, b))] = o
+        return out
+
+    f_map = _flat(earliest)
+    l_map = _flat(latest)
+    pairs = []
+    for ab, ol in l_map.items():
+        of = f_map.get(ab)
+        d = None
+        if of is not None and ol is not None and of > 0:
+            d = round((ol - of) / of * 100, 1)
+        pairs.append({
+            "a": ab[0], "b": ab[1],
+            "odds_first": of, "odds_last": ol, "dpct": d,
+        })
+    pairs.sort(key=lambda x: (float("inf") if x["dpct"] is None else x["dpct"]))
+    return {
+        "pool": pool, "n_snaps": len(rs),
+        "first_ts": earliest.get("scraped_at", ""),
+        "last_ts": latest.get("scraped_at", ""),
+        "pairs": pairs,
+    }
+
+
+def _render_pair_drift_block(date_compact: str, venue_code: str,
+                             race_no: int, top_pick_nos: set[int] | None = None,
+                             threshold: float = 25.0,
+                             max_each: int = 5) -> None:
+    """Compact UI block: side-by-side QIN & QPL steamer/drifter lists.
+    No-op when there isn't enough data."""
+    top_pick_nos = top_pick_nos or set()
+    cols = st.columns(2)
+    for col, pool, label in zip(cols, ("qin", "qpl"),
+                                ("Quinella", "Quinella Place")):
+        with col:
+            drift = _compute_pair_drift(date_compact, venue_code, int(race_no),
+                                        pool=pool)
+            st.markdown(f"**{label} pair moves**")
+            if drift["n_snaps"] < 2 or not any(p["dpct"] is not None
+                                               for p in drift["pairs"]):
+                st.caption(f"_Need \u22652 {label} snapshots._")
+                continue
+            steamers = [p for p in drift["pairs"]
+                        if p["dpct"] is not None and p["dpct"] <= -threshold]
+            drifters = [p for p in drift["pairs"]
+                        if p["dpct"] is not None and p["dpct"] >= threshold]
+            drifters.sort(key=lambda p: -(p["dpct"] or 0))
+
+            def _pair_row(rows, bg):
+                if not rows:
+                    st.caption("_no significant moves_")
+                    return
+                for p in rows[:max_each]:
+                    a, b = p["a"], p["b"]
+                    star = " \u2b50" if (a in top_pick_nos or b in top_pick_nos) else ""
+                    o_f = p["odds_first"]; o_l = p["odds_last"]; d = p["dpct"]
+                    of_str = f"{o_f:.0f}" if o_f is not None else "\u2014"
+                    ol_str = f"{o_l:.0f}" if o_l is not None else "\u2014"
+                    d_str = f"{d:+.1f}%"
+                    st.markdown(
+                        f'<div style="background:{bg};padding:4px 8px;'
+                        f'border-radius:5px;margin-bottom:3px;'
+                        f'display:flex;justify-content:space-between;'
+                        f'font-size:0.9em">'
+                        f'<span><b>{a}\u2013{b}</b>{star}</span>'
+                        f'<span style="font-family:monospace">'
+                        f'{of_str} \u2192 {ol_str} <b>({d_str})</b>'
+                        f'</span></div>',
+                        unsafe_allow_html=True,
+                    )
+
+            st.markdown(
+                f'<span style="color:#22c55e;font-weight:600;font-size:0.85em">'
+                f'\u25bc Steamers (\u2264 {-threshold:+.0f}%)</span>',
+                unsafe_allow_html=True,
+            )
+            _pair_row(steamers, "rgba(34,139,34,0.15)")
+            st.markdown(
+                f'<span style="color:#ef4444;font-weight:600;font-size:0.85em">'
+                f'\u25b2 Drifters (\u2265 {threshold:+.0f}%)</span>',
+                unsafe_allow_html=True,
+            )
+            _pair_row(drifters, "rgba(192,57,43,0.15)")
+
+
 def _pick_alignment(picks: list[dict], drift: dict,
                     steamer_thr: float = -25.0,
                     drifter_thr: float = 25.0,
@@ -12254,6 +12382,19 @@ def _render_race_day_market_pulse(date_compact: str, venue_code: str,
             "Move thresholds: a horse must move ≥25% on Win odds for "
             "either column to populate (filters out the wider overnight "
             "settling phase)."
+        )
+
+    # ── Quinella / Quinella-Place pair drift ────────────────────────────
+    with st.expander("Quinella / Quinella-Place pair moves", expanded=False):
+        st.caption(
+            "Pair-odds drift on QIN & QPL pools (≥25% move vs first "
+            "snapshot). Highlights pair combinations being smashed in or "
+            "drifted. A ⭐ indicates one leg is a model top-3 pick — "
+            "good QPL cover candidates when the pair is steaming."
+        )
+        _render_pair_drift_block(
+            date_compact, venue_code, int(race_no),
+            top_pick_nos=top_pick_nos,
         )
 
 
@@ -12719,7 +12860,7 @@ def page_live_odds():
         return ""
 
     # ════════════════════════════════════════════════════════════════
-    # 1) MEETING SUMMARY TABLE — no horse names, one row per race
+    # 1) MEETING SUMMARY TABLE — one row per race, with horse names
     # ════════════════════════════════════════════════════════════════
     st.markdown("### 📋 Meeting summary")
     summary_rows = []
@@ -12729,6 +12870,7 @@ def page_live_odds():
         earliest = rows[0]
         first_by_no = {h["no"]: h for h in earliest.get("odds", [])}
         last_odds = latest.get("odds", []) or []
+        name_by_no = {h["no"]: h.get("horse", "") for h in last_odds}
         # Favourite = lowest Win at latest snapshot
         fav = None
         for h in last_odds:
@@ -12736,7 +12878,7 @@ def page_live_odds():
             if wn is None: continue
             if fav is None or wn < fav[1]: fav = (h["no"], wn, h.get("horse", ""))
         # Biggest steamer & drifter on Win
-        big_steamer = None  # (no, Δ%)
+        big_steamer = None  # (no, Δ%, name)
         big_drifter = None
         for h in last_odds:
             no = h["no"]
@@ -12744,17 +12886,27 @@ def page_live_odds():
             l = _fnum(h.get("win"))
             d = _delta_pct(f, l)
             if d is None: continue
-            if big_steamer is None or d < big_steamer[1]: big_steamer = (no, d)
-            if big_drifter is None or d > big_drifter[1]: big_drifter = (no, d)
+            if big_steamer is None or d < big_steamer[1]:
+                big_steamer = (no, d, h.get("horse", ""))
+            if big_drifter is None or d > big_drifter[1]:
+                big_drifter = (no, d, h.get("horse", ""))
+
+        def _no_name(tup):
+            if not tup:
+                return None
+            n = int(tup[0]) if str(tup[0]).isdigit() else tup[0]
+            nm = name_by_no.get(tup[0]) or (tup[2] if len(tup) > 2 else "")
+            return f"#{n} {nm}".strip()
+
         summary_rows.append({
             "Race": rn,
             "Runners": latest.get("n_runners", len(last_odds)),
             "Snapshots": len(rows),
-            "Fav #": int(fav[0]) if fav else None,
+            "Favourite": _no_name(fav),
             "Fav Win": fav[1] if fav else None,
-            "Top steamer #": int(big_steamer[0]) if big_steamer else None,
+            "Top steamer": _no_name(big_steamer),
             "Steamer Δ%": big_steamer[1] if big_steamer else None,
-            "Top drifter #": int(big_drifter[0]) if big_drifter else None,
+            "Top drifter": _no_name(big_drifter),
             "Drifter Δ%": big_drifter[1] if big_drifter else None,
             "Latest update": latest.get("last_update", "").replace("Last Update:", "").strip(),
         })
@@ -12896,6 +13048,18 @@ def page_live_odds():
                               na_rep="—"))
             st.dataframe(sty_wp, hide_index=True, use_container_width=True,
                          height=min(420, 38 + 35 * len(df_wp)))
+
+        # ─ Notable Quinella / Quinella-Place pair moves ──────────────
+        if len(rows) >= 2:
+            with st.expander(
+                f"📈 Notable pair moves (QIN / QPL) — R{rn}",
+                expanded=False,
+            ):
+                _render_pair_drift_block(
+                    ymd, venue, int(rn),
+                    top_pick_nos=set(),
+                    threshold=float(red_thr),
+                )
 
         # ─ QIN / QPL matrices ────────────────────────────────────────
         def _build_pair_matrix(pool_key: str):
