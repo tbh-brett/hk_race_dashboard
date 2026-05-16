@@ -9599,6 +9599,57 @@ def _load_all_trial_horse_index() -> dict:
     return index
 
 
+def _trial_time_per_100m(entry: dict) -> float | None:
+    """Return trial pace in seconds per 100m, or None if unavailable.
+
+    Trial-time strings are typically ``MM.SS.hh`` (e.g. ``1.00.42``) or
+    ``SS.hh`` (e.g. ``59.43``). We parse defensively.
+    """
+    t_str = str(entry.get("time", "") or "").strip()
+    dist = entry.get("distance_m")
+    if not t_str or not dist:
+        return None
+    try:
+        dist = float(dist)
+        if dist <= 0:
+            return None
+    except (TypeError, ValueError):
+        return None
+    # Parse time → seconds
+    parts = t_str.split(".")
+    try:
+        if len(parts) == 3:           # M.SS.hh
+            secs = int(parts[0]) * 60 + int(parts[1]) + int(parts[2]) / 100.0
+        elif len(parts) == 2:         # SS.hh
+            secs = int(parts[0]) + int(parts[1]) / 100.0
+        else:
+            secs = float(t_str)
+    except (TypeError, ValueError):
+        return None
+    if secs <= 0:
+        return None
+    return secs / dist * 100.0
+
+
+def _trial_time_signal(entry: dict) -> tuple[str, str]:
+    """Classify a trial time relative to a per-100m benchmark.
+
+    Returns (flag, reason) where flag is "fast" / "good" / "slow" / "".
+    Even slow-paced trials can hide strong finishes, so this is purely a
+    time-quality cue — combine it with sentiment for the full picture.
+    """
+    p100 = _trial_time_per_100m(entry)
+    if p100 is None:
+        return "", ""
+    if p100 <= 5.85:
+        return "fast", f"Fast trial time ({p100:.2f}s/100m)"
+    if p100 <= 5.95:
+        return "good", f"Good trial time ({p100:.2f}s/100m)"
+    if p100 >= 6.30:
+        return "slow", f"Slow trial time ({p100:.2f}s/100m)"
+    return "", ""
+
+
 def _trial_sentiment(entry: dict) -> tuple[str, list[str]]:
     """Return (flag, reasons) for a single trial entry.
 
@@ -9621,34 +9672,55 @@ def _trial_sentiment(entry: dict) -> tuple[str, list[str]]:
     gained = (isinstance(sp, int) and isinstance(fp, int) and (sp - fp) >= 2)
     bottom_q = (isinstance(fp, int) and n >= 4 and fp >= n - 1)
 
+    time_flag, time_reason = _trial_time_signal(entry)
+    is_fast = time_flag == "fast"
+    is_good_time = time_flag in ("fast", "good")
+
     reasons: list[str] = []
 
     # ── ++ tier ─────────────────────────────────────────────
     if won and (is_concealed or has_pos):
         reasons.append("Won under hold / with finish")
+        if time_reason:
+            reasons.append(time_reason)
         return "++", reasons
     if won:
         reasons.append("Won trial")
+        if time_reason:
+            reasons.append(time_reason)
+        return "++", reasons
+    if is_fast and (top_half or is_concealed or has_pos):
+        reasons.append(time_reason)
+        if is_concealed: reasons.append("concealed")
+        elif has_pos: reasons.append("positive phrase")
+        elif top_half: reasons.append(f"top half ({fp}/{n})")
         return "++", reasons
     if is_concealed and top_half:
         reasons.append("Concealed + top half")
+        if time_reason: reasons.append(time_reason)
         return "++", reasons
     if has_eased and has_pos:
         reasons.append("Eased + strong finish")
+        if time_reason: reasons.append(time_reason)
         return "++", reasons
     if has_pos and top_half:
         reasons.append("Positive phrase + top half")
+        if time_reason: reasons.append(time_reason)
         return "++", reasons
 
     # ── - tier (explicit negatives) ────────────────────────
     if has_neg:
         reasons.append("Negative trial signal")
         return "-", reasons
-    if bottom_q and not has_pos and not is_concealed:
+    if bottom_q and not has_pos and not is_concealed and not is_good_time:
         reasons.append(f"Bottom-quartile finish ({fp}/{n})")
         return "-", reasons
 
     # ── + tier (any positive signal) ───────────────────────
+    if is_good_time:
+        reasons.append(time_reason)
+        if top_half: reasons.append(f"top half ({fp}/{n})")
+        return "+", reasons
     if has_eased:
         reasons.append("Eased (deliberately held)")
         return "+", reasons
@@ -9767,6 +9839,21 @@ def _trial_compact_html(entries: list) -> str:
 
         sentiment_html = _trial_sentiment_badge(e)
 
+        # Time colouring — fast trials are a strong stand-alone signal
+        t_flag, t_reason = _trial_time_signal(e)
+        t_raw = e.get("time", "")
+        if t_raw and t_flag == "fast":
+            time_html = (f'<span style="color:#22c55e;font-weight:700" '
+                         f'title="{t_reason}">{t_raw}</span>')
+        elif t_raw and t_flag == "good":
+            time_html = (f'<span style="color:#86efac;font-weight:600" '
+                         f'title="{t_reason}">{t_raw}</span>')
+        elif t_raw and t_flag == "slow":
+            time_html = (f'<span style="color:#fca5a5" '
+                         f'title="{t_reason}">{t_raw}</span>')
+        else:
+            time_html = str(t_raw)
+
         rows_html.append(
             f'{sentiment_html}'
             f'<span style="color:#6b7280;font-size:0.85em">{dt_disp}</span> '
@@ -9774,7 +9861,7 @@ def _trial_compact_html(entries: list) -> str:
             f'<span style="{pos_style}">{pos_str}</span>'
             f'({finish_pos}/{n}) '
             f'{lbw} '
-            f'{e.get("time", "")}'
+            f'{time_html}'
             f'{gear_html}'
             f'{res_html}'
             f'{vid_html}'
