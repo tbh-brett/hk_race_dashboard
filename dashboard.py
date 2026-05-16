@@ -17743,8 +17743,7 @@ def main():
         ("Race Lookup",    "🔎 Race Lookup"),
         ("Framework Lab",  "🧪 Framework Lab"),
         ("Results",        "🏆 Results"),
-        ("Live Feed",      "📡 Live Feed"),
-        ("Live Odds",      "💹 Live Odds"),
+        ("Live",           "📡 Live (Feed + Odds)"),
         ("My Bets",        "💰 My Bets"),
         ("Blackbook",      "📓 Blackbook"),
         ("Trials",         "🎽 Trials"),
@@ -17758,6 +17757,8 @@ def main():
         st.session_state["nav_page"] = "Model Analysis"
     if st.session_state["nav_page"] == "Overview":
         st.session_state["nav_page"] = "Race Day Insight"
+    if st.session_state["nav_page"] in ("Live Feed", "Live Odds"):
+        st.session_state["nav_page"] = "Live"
 
     for page_name, label in NAV_ITEMS:
         is_active = st.session_state["nav_page"] == page_name
@@ -17795,10 +17796,14 @@ def main():
     elif page == "Framework Lab":
 
         page_framework_lab()
-    elif page == "Live Feed":
-        page_live_feed()
-    elif page == "Live Odds":
-        page_live_odds()
+    elif page == "Live":
+        tab_feed, tab_odds = st.tabs([
+            "📡 Live Feed", "💹 Live Odds",
+        ])
+        with tab_feed:
+            page_live_feed()
+        with tab_odds:
+            page_live_odds()
     elif page == "Model Bets":
         page_model_bets()
     elif page == "Multi Builder":
