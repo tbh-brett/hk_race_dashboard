@@ -28,7 +28,7 @@ import sys
 import tempfile
 import uuid
 from collections import defaultdict
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -39,6 +39,33 @@ BASE = Path(__file__).parent
 REPORTS = BASE / "reports"
 PYTHON = sys.executable
 BLACKBOOK_FILE = BASE / "blackbook.json"
+
+
+# ── HKT timezone helpers (Asia/Hong_Kong = UTC+8, no DST) ───────────────────
+HKT = timezone(timedelta(hours=8))
+
+def hkt_now() -> datetime:
+    """Current wall-clock in Hong Kong (timezone-aware)."""
+    return datetime.now(tz=HKT)
+
+def hkt_from_ts(ts: float) -> datetime:
+    """Convert a POSIX timestamp (UTC seconds) to HKT-aware datetime."""
+    return datetime.fromtimestamp(ts, tz=HKT)
+
+def hkt_fmt(dt_or_ts, fmt: str = "%Y-%m-%d %H:%M") -> str:
+    """Format any timestamp/datetime as HKT. ``dt_or_ts`` may be a float
+    POSIX timestamp, a naive datetime (assumed local), or aware datetime."""
+    if isinstance(dt_or_ts, (int, float)):
+        dt = hkt_from_ts(float(dt_or_ts))
+    elif isinstance(dt_or_ts, datetime):
+        if dt_or_ts.tzinfo is None:
+            # naive — assume it was produced on the same host; convert via UTC
+            dt = dt_or_ts.astimezone(HKT) if False else dt_or_ts.replace(tzinfo=HKT)
+        else:
+            dt = dt_or_ts.astimezone(HKT)
+    else:
+        return str(dt_or_ts)
+    return dt.strftime(fmt) + " HKT"
 
 
 # ── Per-run commentary lookup (for Form Guide rows) ──────────────────────────
@@ -1124,7 +1151,7 @@ def _gh_record_error(msg: str) -> None:
     """
     try:
         buf = st.session_state.setdefault("_gh_errors", [])
-        ts = datetime.now().strftime("%H:%M:%S")
+        ts = hkt_now().strftime("%H:%M:%S") + " HKT"
         buf.append(f"[{ts}] {msg}")
         del buf[:-30]
     except Exception:
@@ -1135,7 +1162,7 @@ def _gh_record_push(repo_path: str) -> None:
     """Track the most-recent successful push for the status panel."""
     try:
         st.session_state["_gh_last_push"] = (
-            datetime.now().strftime("%H:%M:%S"), repo_path)
+            hkt_now().strftime("%H:%M:%S") + " HKT", repo_path)
         st.session_state["_gh_push_count"] = (
             st.session_state.get("_gh_push_count", 0) + 1)
     except Exception:
@@ -1825,19 +1852,51 @@ def _fmt_top5(top5: list[tuple], current_horse: str) -> str:
     return ", ".join(parts)
 
 
-def _fmt_top5_html(top5: list[tuple], current_horse: str) -> str:
-    """Top-5 finishers as HTML with bold horse names; current horse in amber."""
+def _fmt_top5_html(top5: list[tuple], current_horse: str,
+                   top5_next: list | None = None) -> str:
+    """Top-5 finishers as HTML with bold horse names; current horse in amber.
+
+    If ``top5_next`` is supplied (aligned with ``top5``), each co-runner gets
+    a small badge showing where they finished in their NEXT race after this
+    run. Badges are colour-coded: 1st green, 2nd–3rd amber, 4th cyan, others
+    muted. Entries with no next-run yet show '—'.
+    """
     parts = []
     h_up = current_horse.strip().upper()
-    for place, name in top5:
+    next_list = top5_next or []
+    for i, (place, name) in enumerate(top5):
         name_str = str(name)
         is_self = name_str.strip().upper() == h_up
+        # Build next-run badge
+        nxt_html = ""
+        if i < len(next_list):
+            nxt = next_list[i] or {}
+            np = nxt.get("place")
+            if np is not None and not is_self:
+                try:
+                    np_int = int(np)
+                    if np_int == 1:
+                        col = "#22c55e"
+                    elif np_int <= 3:
+                        col = "#f59e0b"
+                    elif np_int == 4:
+                        col = "#22d3ee"
+                    else:
+                        col = "#9ca3af"
+                    nxt_html = (
+                        f'<span title="Next race finish: {np_int} on {nxt.get("date","?")}" '
+                        f'style="margin-left:3px;padding:0 4px;border-radius:4px;'
+                        f'background:rgba(255,255,255,0.06);color:{col};'
+                        f'font-size:0.78em;font-weight:700">→{np_int}</span>'
+                    )
+                except (ValueError, TypeError):
+                    pass
         if is_self:
             parts.append(
-                f'<span class="t5-entry"><strong class="t5-self">{place}. {name_str}</strong></span>'
+                f'<span class="t5-entry"><strong class="t5-self">{place}. {name_str}</strong>{nxt_html}</span>'
             )
         else:
-            parts.append(f'<span class="t5-entry">{place}. <strong>{name_str}</strong></span>')
+            parts.append(f'<span class="t5-entry">{place}. <strong>{name_str}</strong>{nxt_html}</span>')
     return " ".join(parts)
 
 
@@ -8279,7 +8338,7 @@ def _build_form_guide_pdf(meeting_data: dict, racecard: dict | None,
         f"Form Guide — {meeting_data.get('meeting_title', '')}",
         sTitle))
     elements.append(Paragraph(
-        f"Generated {datetime.now().strftime('%d %b %Y %H:%M')} · "
+        f"Generated {hkt_now().strftime('%d %b %Y %H:%M')} HKT · "
         f"{len(form_db):,} historical records",
         sSmall))
     elements.append(Spacer(1, 3*mm))
@@ -8480,7 +8539,7 @@ def _build_form_guide_pdf_from_cache(fg_cache: dict, bb_lookup: dict) -> bytes:
     elements = []
     elements.append(Paragraph(f"Form Guide — {meeting_title}", sTitle))
     elements.append(Paragraph(
-        f"Generated {datetime.now().strftime('%d %b %Y %H:%M')} · Pre-built cache",
+        f"Generated {hkt_now().strftime('%d %b %Y %H:%M')} HKT · Pre-built cache",
         sSmall))
     elements.append(Spacer(1, 4*mm))
 
@@ -8644,11 +8703,11 @@ def page_live_feed():
         scrape_date = f"{dstr[:4]}-{dstr[4:6]}-{dstr[6:]}"
         if st.button("🔄 Scrape Results", key="live_scrape"):
             _run_results_scraper(scrape_date)
-            st.session_state["live_last_refresh"] = datetime.now().strftime("%H:%M:%S")
+            st.session_state["live_last_refresh"] = hkt_now().strftime("%H:%M:%S") + " HKT"
             st.rerun()
     with col_s2:
         if st.button("📊 Run Analysis", key="live_analyse"):
-            st.session_state["live_last_refresh"] = datetime.now().strftime("%H:%M:%S")
+            st.session_state["live_last_refresh"] = hkt_now().strftime("%H:%M:%S") + " HKT"
             st.rerun()
     with col_s3:
         res_file = REPORTS / f"results_{dstr}.json"
@@ -9068,12 +9127,17 @@ def page_form_guide():
         # ── Detect trainer / stable change ────────────────────────────────
         trainer_changed = False
         prev_trainer = ""
+        prev_rating: str | None = None
+        prev_weight: str | None = None
         if fg_cache and not is_debutant:
             cached_runs_check = horse.get("runs", [])
             if cached_runs_check:
-                prev_trainer = str(cached_runs_check[-1].get("trainer", ""))
+                last_run = cached_runs_check[-1]
+                prev_trainer = str(last_run.get("trainer", ""))
                 if prev_trainer and prev_trainer != "?" and current_trainer != "?" and prev_trainer.strip().upper() != current_trainer.strip().upper():
                     trainer_changed = True
+                prev_rating = str(last_run.get("rating", "")) or None
+                prev_weight = str(last_run.get("actual_weight", "")) or None
         elif not fg_cache and not is_debutant:
             mask = form_db["horse_name_upper"] == hname.strip().upper()
             trainer_hist = form_db[mask & (form_db["race_date"] < meeting_date)]
@@ -9082,12 +9146,45 @@ def page_form_guide():
                 prev_trainer = str(last_row.get("trainer", "")).strip()
                 if prev_trainer and current_trainer != "?" and prev_trainer.upper() != current_trainer.strip().upper():
                     trainer_changed = True
+                try:
+                    prev_rating = str(int(float(last_row.get("rating")))) if pd.notna(last_row.get("rating")) else None
+                except (ValueError, TypeError):
+                    prev_rating = None
+                try:
+                    prev_weight = str(int(float(last_row.get("actual_weight")))) if pd.notna(last_row.get("actual_weight")) else None
+                except (ValueError, TypeError):
+                    prev_weight = None
         trainer_display = (
             f'<span style="color:#d43700;font-weight:700" title="Stable change from {prev_trainer}">'
-            f'{current_trainer}</span>'
+            f'\u2691 {current_trainer}</span>'
             if trainer_changed
             else current_trainer
         )
+
+        # ── Rating / weight delta chips ───────────────────────────────────
+        def _delta_chip(curr, prev, label, units=""):
+            try:
+                c = int(float(curr)); p = int(float(prev))
+            except (ValueError, TypeError):
+                return ""
+            d = c - p
+            if d == 0:
+                return ""
+            if label == "RTG":
+                # Rating up = horse promoted (harder class); neutral colour
+                col = "#fbbf24" if d > 0 else "#60a5fa"
+            else:
+                # Weight: dropping kg = lighter (positive); rising = harder
+                col = "#22c55e" if d < 0 else "#ef4444"
+            sign = f"+{d}" if d > 0 else f"{d}"
+            return (
+                f'<span style="margin-left:4px;padding:0 5px;border-radius:5px;'
+                f'background:rgba(255,255,255,0.05);color:{col};font-size:0.78em;'
+                f'font-weight:700" title="Change vs last run ({prev}{units})">'
+                f'{sign}{units}</span>'
+            )
+        rtg_delta_chip = _delta_chip(current_rtg, prev_rating, "RTG") if prev_rating else ""
+        wt_delta_chip = _delta_chip(current_weight, prev_weight, "WT", "LB") if prev_weight else ""
 
         # ── Horse header ─────────────────────────────────────────────────
         l6_badges = _last6_html(last6)
@@ -9106,9 +9203,9 @@ def page_form_guide():
             f'<span class="h-num">#{hno}</span>'
             f'<span class="h-name">{hname}{bb_icon}</span>'
             f'<span class="h-sep">·</span>'
-            f'<span class="h-meta">RTG {current_rtg}</span>'
+            f'<span class="h-meta">RTG {current_rtg}{rtg_delta_chip}</span>'
             f'<span class="h-sep">·</span>'
-            f'<span class="h-meta">{current_weight} LB</span>'
+            f'<span class="h-meta">{current_weight} LB{wt_delta_chip}</span>'
             f'<span class="h-sep">·</span>'
             f'<span class="h-meta">{current_jockey}{ow_part}</span>'
             f'<span class="h-sep">·</span>'
@@ -9188,6 +9285,7 @@ def page_form_guide():
                     "pace_dev": run.get("pace_dev"),
                     "ftime": str(run.get("time", "-")),
                     "top5": top5,
+                    "top5_next": run.get("top5_next") or [],
                     "lane_avg": run.get("lane_avg"),
                     "lane_at":  run.get("lane_at") or {},
                     "ground_lost_m": run.get("ground_lost_m"),
@@ -9270,7 +9368,7 @@ def page_form_guide():
             pl_cell = _place_badge_html(place_val)
             margin_style = "color:#ef4444;font-weight:700;" if place_val == "1" else ""
             margin_cell = f'<span class="form-margin" style="{margin_style}">{_smart_frac_html(margin)}</span>'
-            t5_html = _fmt_top5_html(top5, hname) if top5 else "&mdash;"
+            t5_html = _fmt_top5_html(top5, hname, dr.get("top5_next")) if top5 else "&mdash;"
 
             # Pace cell — colour-code based on deviation from HKJC standard
             pace_label = str(dr.get("pace", "-")) or "-"
@@ -10568,7 +10666,7 @@ def _build_pdfbuilder_pdf(meeting_data: dict, selected_races: list[int],
     title = meeting_data.get("meeting_title", "Race Day Analysis")
     elements.append(Paragraph(title, sTitle))
     elements.append(Paragraph(
-        f"Generated {datetime.now().strftime('%d %b %Y %H:%M')} "
+        f"Generated {hkt_now().strftime('%d %b %Y %H:%M')} HKT "
         f"\u00b7 {len(selected_races)} race(s) selected",
         sSub))
     elements.append(HRFlowable(width="100%", thickness=1,
@@ -16382,6 +16480,7 @@ RL_PRESETS_PATH = BASE / "cache" / "race_lookup_presets.json"
 RL_FILTER_KEYS = [
     "rl_date_mode", "rl_date_range", "rl_date_exact", "rl_date_month",
     "rl_horse_name", "rl_track", "rl_course", "rl_class", "rl_distance",
+    "rl_going",
     "rl_gate_mode", "rl_gate_bands", "rl_gates",
     "rl_rating_mode", "rl_rating_bands", "rl_rating_range",
     "rl_jockey", "rl_trainer", "rl_style",
@@ -16629,16 +16728,48 @@ def page_race_lookup():
     pace_keys = set(df_all.loc[df_all["pace_label"] != "", "race_key"])
     all_keys = set(df_all["race_key"])
     missing_pace = sorted(all_keys - pace_keys)
-    db_dt = _dt.datetime.fromtimestamp(db_mtime)
-    cap_l, cap_r = st.columns([3, 1])
+    db_dt = hkt_from_ts(db_mtime)
+    cap_l, cap_pace, cap_sync = st.columns([3, 1, 1])
     with cap_l:
         st.caption(
-            f"DB last updated **{db_dt:%Y-%m-%d %H:%M}** · "
+            f"DB last updated **{db_dt:%Y-%m-%d %H:%M} HKT** · "
             f"{len(df_all):,} runs · {len(all_keys):,} races · "
             f"pace-labelled {len(pace_keys):,}/{len(all_keys):,} "
             f"({100 * len(pace_keys) / max(1, len(all_keys)):.0f}%)"
         )
-    with cap_r:
+    with cap_sync:
+        if st.button(
+            "🔄 Sync results→DB",
+            key="rl_sync_db", use_container_width=True,
+            help="Append every reports/results_*.json newer than the DB "
+                 "into hkjc.db. Idempotent: existing dates are overwritten.",
+        ):
+            try:
+                from db_utils import append_results_to_db as _appender
+                results_dir = BASE / "reports"
+                total = 0
+                appended = 0
+                with st.spinner("Appending results JSON files to DB …"):
+                    for fp in sorted(results_dir.glob("results_*.json")):
+                        if fp.stat().st_mtime <= db_mtime:
+                            continue
+                        n = _appender(fp, verbose=False)
+                        if n:
+                            appended += 1
+                            total += int(n)
+                _lookup_load_df.clear()
+                _lookup_baselines.clear()
+                if appended:
+                    st.toast(
+                        f"Synced {appended} meeting(s) — {total} rows.",
+                        icon="✅",
+                    )
+                else:
+                    st.toast("DB already up to date.", icon="ℹ️")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Sync failed: {e}")
+    with cap_pace:
         if missing_pace and st.button(
             f"⚙️ Build pace index ({len(missing_pace)} missing)",
             key="rl_build_pace", use_container_width=True,
@@ -16767,6 +16898,13 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
             sel_dist = st.multiselect("Distance (m)",
                                       sorted(df_all["distance_n"].dropna().astype(int).unique().tolist()),
                                       key="rl_distance")
+
+        # Row 2b: going (track condition)
+        going_opts = _lookup_distinct(df_all, "going")
+        sel_going = st.multiselect(
+            "Going (track condition)", going_opts, key="rl_going",
+            help="Filter by reported going (e.g. Good, Good to Firm, Yielding, Soft).",
+        ) if going_opts else []
 
         # Row 3: gate / rating
         c1, c2, c3, c4 = st.columns(4)
@@ -16901,6 +17039,7 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
     if sel_course:  df = df[df["race_course"].isin(sel_course)]
     if sel_class:   df = df[df["race_class"].astype(str).isin([str(c) for c in sel_class])]
     if sel_dist:    df = df[df["distance_n"].isin(sel_dist)]
+    if sel_going:   df = df[df["going"].astype(str).isin([str(g) for g in sel_going])]
 
     if sel_gate_mode == "Bands" and sel_gate_bands:
         df = df[df["gate_band"].isin(sel_gate_bands)]
