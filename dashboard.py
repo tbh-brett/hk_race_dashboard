@@ -3379,8 +3379,8 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
             unsafe_allow_html=True,
         )
 
-    # ── 3 columns: quick meta / mutual top-3 / factor edges ─────────
-    c1, c2, c3 = st.columns([1.1, 1.4, 1.5])
+    # ── 4 columns: ET top4 / SARR top4 / mutual / factor edges ─────────
+    c1, c_sarr, c2, c3 = st.columns([1.05, 1.05, 1.25, 1.35])
 
     # Helpers
     bb_names = set(bb_active.keys())
@@ -3415,8 +3415,8 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
 
     # ── Col 1: meta / top ET picks (solo) ────────────────────────────
     with c1:
-        st.markdown("**ET top 3**", help="Top 3 from the v4.4 ET model for this race")
-        for pick in (race.get("picks") or [])[:3]:
+        st.markdown("**ET top 4**", help="Top 4 from the v4.4 ET model for this race")
+        for pick in (race.get("picks") or [])[:4]:
             hn_u = str(pick.get("horse_name", "")).upper().strip()
             flags = _flags(hn_u)
             st.markdown(
@@ -3430,6 +3430,27 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
                 f'</div>',
                 unsafe_allow_html=True,
             )
+
+    # ── Col SARR: SARR top 4 ─────────────────────────────────────────
+    with c_sarr:
+        st.markdown("**SARR top 4**", help="Top 4 from the SARR (speed-adjusted) model for this race")
+        if not sarr_race:
+            st.caption("SARR not available — run [2/3] to populate.")
+        else:
+            for pick in (sarr_race.get("picks") or [])[:4]:
+                hn_u = str(pick.get("horse_name", "")).upper().strip()
+                flags = _flags(hn_u)
+                st.markdown(
+                    f'<div style="padding:3px 0">'
+                    f'<span style="opacity:0.55">#{pick.get("rank","?")}</span> '
+                    f'<span style="font-weight:700">{pick.get("horse_name","")}</span>'
+                    f' <span style="opacity:0.6;font-size:0.85em">({pick.get("horse_no","?")})</span>'
+                    f' &nbsp; {flags}'
+                    f'<div style="font-size:0.82em;opacity:0.7">'
+                    f'Win {pick.get("win_prob",0):.1f}% · {pick.get("jockey","")}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
 
     # ── Col 2: Mutual ET ∩ SARR top-4 ──────────────────────────────
     with c2:
@@ -4088,6 +4109,36 @@ def page_race_day(selected):
     if selected is None:
         st.markdown('<div class="page-title">Model Analysis</div>', unsafe_allow_html=True)
         st.info("No meetings available. Use the sidebar to run your first analysis.")
+        return
+
+    # Racecard-only meeting (analysis pending) — selected['file'] is None.
+    # Show a clear placeholder instead of crashing on load_meeting_data().
+    if selected.get("status") == "pending" or not selected.get("file"):
+        st.markdown(
+            f'<div class="page-title">Model Analysis</div>'
+            f'<div class="page-subtitle">{selected.get("title", "")}</div>',
+            unsafe_allow_html=True,
+        )
+        ds = selected.get("date_str", "")
+        iso = f"{ds[:4]}-{ds[4:6]}-{ds[6:]}" if len(ds) == 8 else ds
+        st.warning(
+            f"⚠️ Racecard for **{iso}** is scraped but the ET (v4.4) model "
+            "analysis JSON has not been generated yet (or the last pipeline "
+            "run failed at step [2/3] SARR or [3/3] ET).\n\n"
+            "Click **[ RUN ANALYSIS ]** in the sidebar with this date selected "
+            "to (re)compute the model report. If the scrape succeeds but the "
+            "model step fails, expand the pipeline output to read the error."
+        )
+        rc_xlsx = BASE / "racecards" / f"racecard_{ds}.xlsx"
+        if rc_xlsx.exists():
+            try:
+                size_kb = rc_xlsx.stat().st_size / 1024
+                st.caption(
+                    f"Racecard file: `{rc_xlsx.name}` — "
+                    f"{size_kb:.0f} KB · {selected.get('n_races', 0)} races"
+                )
+            except OSError:
+                pass
         return
 
     data = load_meeting_data(selected["file"])
