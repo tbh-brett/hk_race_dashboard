@@ -168,20 +168,34 @@ def _run_commentary_lookup(date_dc: str, race_no: int, horse_name: str) -> dict:
 
 # ── Playwright browser pre-install (Streamlit Cloud has no post-install hook) ─
 def _ensure_playwright_chromium():
-    """Install Playwright Chromium once per container boot (cached in session)."""
+    """Install Playwright Chromium once per container boot (cached in session).
+
+    NOTE: Do NOT use sync_playwright() inline here. Streamlit's Windows event
+    loop (SelectorEventLoop) cannot spawn subprocesses from sync_playwright,
+    which raises NotImplementedError on every page load. Instead we probe via
+    subprocess only.
+    """
     if st.session_state.get("_pw_checked"):
         return
     st.session_state["_pw_checked"] = True
     try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as p:
-            b = p.chromium.launch(headless=True)
-            b.close()
-    except Exception:
-        subprocess.run(
-            [sys.executable, "-m", "playwright", "install", "chromium"],
-            capture_output=True, timeout=180,
+        result = subprocess.run(
+            [sys.executable, "-m", "playwright", "install", "--dry-run", "chromium"],
+            capture_output=True, timeout=30,
         )
+        if result.returncode != 0:
+            subprocess.run(
+                [sys.executable, "-m", "playwright", "install", "chromium"],
+                capture_output=True, timeout=300,
+            )
+    except Exception:
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "playwright", "install", "chromium"],
+                capture_output=True, timeout=300,
+            )
+        except Exception:
+            pass
 
 try:
     _ensure_playwright_chromium()
@@ -953,7 +967,7 @@ def _render_push_sidebar() -> None:
             st.caption(f"Topic: `{mask}` · ready")
             st.markdown(f"[Subscribe in Chrome →](https://ntfy.sh/{topic})")
             if st.button("🔔 Send test", key="push_test_btn",
-                         use_container_width=True):
+                         width='stretch'):
                 ok = _push_notify(
                     "🔔 Dashboard test",
                     f"Push notifications wired up · {date.today().isoformat()}",
@@ -1101,14 +1115,14 @@ def _render_persistence_sidebar() -> None:
             for line in errs[-10:]:
                 st.code(line, language="text")
             if st.button("Clear errors", key="_gh_clear_errs",
-                         use_container_width=True):
+                         width='stretch'):
                 st.session_state["_gh_errors"] = []
                 st.rerun()
 
     if st.sidebar.button(
         "[ Sync All Data → GitHub ]",
         key="_gh_sync_all_btn",
-        use_container_width=True,
+        width='stretch',
         help="Walks racecards/, cache/, reports/, blackbook.json, "
              "user_bets_log.jsonl and running_position_photos/ and pushes "
              "everything to GitHub. Use this if data wasn't auto-synced "
@@ -2418,7 +2432,7 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
     # scrollbar (35px / row + ~38px header).
     _et_h = 38 + 35 * max(len(rows), 1) + 4
     st.dataframe(
-        styled, use_container_width=True, hide_index=True,
+        styled, width='stretch', hide_index=True,
         key=f"rd_et_table_{race['race_number']}",
         height=_et_h,
     )
@@ -2567,7 +2581,7 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
     # Height tuned so all rows fit without an inner scrollbar.
     _sarr_h = 38 + 35 * max(len(rows), 1) + 4
     st.dataframe(
-        styled, use_container_width=True, hide_index=True,
+        styled, width='stretch', hide_index=True,
         key=f"rd_sarr_table_{race['race_number']}",
         height=_sarr_h,
     )
@@ -3671,7 +3685,7 @@ def page_overview():
                 if st.button(
                     f"R{_rn}",
                     key=f"rdi_tab_{_rn}",
-                    use_container_width=True,
+                    width='stretch',
                     type="primary" if _is_active else "secondary",
                 ):
                     st.session_state["cockpit_race"] = _rn
@@ -4168,7 +4182,7 @@ def page_overview():
                 "Top-1%": f'{100*metrics.get("top1_rate", metrics.get("top1_win_rate", 0)):.0f}%',
                 "Top-3%": f'{100*metrics.get("top3_rate", metrics.get("top3_place_rate", 0)):.0f}%',
             })
-        st.dataframe(pd.DataFrame(bt_rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(bt_rows), width='stretch', hide_index=True)
     else:
         st.caption("No backtests available yet.")
 
@@ -4279,7 +4293,7 @@ def page_race_day(selected):
                             "🔄 Refresh meeting",
                             key=f"rd_refresh_{date_str}",
                             type="primary",
-                            use_container_width=True,
+                            width='stretch',
                         ):
                             iso = (f"{date_str[:4]}-{date_str[4:6]}-"
                                    f"{date_str[6:]}")
@@ -4308,7 +4322,7 @@ def page_race_day(selected):
         with _sarr_col2:
             if st.button("▶ Run SARR now",
                           key=f"run_sarr_now_{date_str}",
-                          use_container_width=True,
+                          width='stretch',
                           type="primary"):
                 iso = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
                 script = BASE / "sarr_raceday.py"
@@ -4423,7 +4437,7 @@ def page_race_day(selected):
                 })
 
         if summary_rows:
-            st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(summary_rows), width='stretch', hide_index=True)
             if sarr_available:
                 _n_agree = sum(1 for r in summary_rows
                                if r.get("Top Pick", "").startswith("★"))
@@ -4566,7 +4580,7 @@ def page_race_day(selected):
             is_active = st.session_state["rd_active_race"] == rn
             btn_label = f"R{rn}"
             if st.button(btn_label, key=f"rd_tab_{rn}",
-                         use_container_width=True,
+                         width='stretch',
                          type="primary" if is_active else "secondary"):
                 st.session_state["rd_active_race"] = rn
                 st.session_state.pop(f"rd_full_{rn}", None)
@@ -4744,7 +4758,7 @@ def _render_backtest_v4(data: dict, prefix: str = ""):
             "MAE": f'{r.get("mae", 0):.2f}s' if r.get("mae") is not None else "—",
         })
     if race_rows:
-        st.dataframe(pd.DataFrame(race_rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(race_rows), width='stretch', hide_index=True)
 
     st.markdown("---")
 
@@ -4766,7 +4780,7 @@ def _render_backtest_v4(data: dict, prefix: str = ""):
                 "Significance": sig,
                 "ρ (FT)": f'{f.get("rho_ft", 0):+.3f}',
             })
-        st.dataframe(pd.DataFrame(fi_rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(fi_rows), width='stretch', hide_index=True)
 
     st.markdown("---")
 
@@ -4793,7 +4807,7 @@ def _render_backtest_v4(data: dict, prefix: str = ""):
                     "Style": style_match,
                     "Odds": f'${h.get("actual_odds", 0):.1f}' if h.get("actual_odds") else "—",
                 })
-            st.dataframe(pd.DataFrame(h_rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(h_rows), width='stretch', hide_index=True)
 
 
 def render_backtest_metrics(data: dict, prefix: str = ""):
@@ -4850,7 +4864,7 @@ def render_backtest_metrics(data: dict, prefix: str = ""):
             pdf = pd.DataFrame(pace_details)
             if not pdf.empty:
                 pdf["match"] = pdf["match"].map({True: "✓", False: "✗"})
-                st.dataframe(pdf, use_container_width=True, hide_index=True)
+                st.dataframe(pdf, width='stretch', hide_index=True)
 
     st.markdown("---")
 
@@ -4892,7 +4906,7 @@ def render_backtest_metrics(data: dict, prefix: str = ""):
                 "ROI": f"{p.get('roi_pct', 0):+.1f}%",
             })
         if tier_rows:
-            st.dataframe(pd.DataFrame(tier_rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(tier_rows), width='stretch', hide_index=True)
 
     st.markdown("---")
 
@@ -4915,7 +4929,7 @@ def render_backtest_metrics(data: dict, prefix: str = ""):
                 for act_s in styles:
                     row[f"Act: {act_s}"] = confusion.get(pred_s, {}).get(act_s, 0)
                 rows_cm.append(row)
-            st.dataframe(pd.DataFrame(rows_cm), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(rows_cm), width='stretch', hide_index=True)
 
     st.markdown("---")
 
@@ -5058,7 +5072,7 @@ def _render_unified_overview(data: dict, prefix: str = ""):
                                 if mk.get("avg_top3_overlap") is not None else "—"),
          "Rank ρ": "—"},
     ]
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(rows), width='stretch', hide_index=True)
 
     st.markdown("##### Agreement Signal")
     if agree.get("n"):
@@ -5091,7 +5105,7 @@ def _render_unified_strategies(data: dict, prefix: str = ""):
                  "Place %": _fmt_pct_or_dash(b["place_rate"]),
                  "Win-only ROI": _fmt_signed_pct(b["win_roi"])}
                 for b in buckets]
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(rows), width='stretch', hide_index=True)
 
     bk = s.get("breakdown") or {}
     by_class = bk.get("by_class") or {}
@@ -5105,7 +5119,7 @@ def _render_unified_strategies(data: dict, prefix: str = ""):
                  "SARR Plc": _fmt_pct_or_dash(v["sa_plc"]),
                  "Market Win": _fmt_pct_or_dash(v["mk_win"])}
                 for k, v in sorted(by_class.items())]
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(rows), width='stretch', hide_index=True)
     if by_dist:
         st.markdown("##### Win Rate by Distance")
         rows = [{"Distance": k, "Races": v["n"],
@@ -5113,7 +5127,7 @@ def _render_unified_strategies(data: dict, prefix: str = ""):
                  "SARR Win": _fmt_pct_or_dash(v["sa_win"]),
                  "Market Win": _fmt_pct_or_dash(v["mk_win"])}
                 for k, v in by_dist.items()]
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(rows), width='stretch', hide_index=True)
 
 
 def _render_unified_pace_proj(data: dict, prefix: str = ""):
@@ -5140,7 +5154,7 @@ def _render_unified_pace_proj(data: dict, prefix: str = ""):
                          "Hit %": _fmt_pct_or_dash(
                              (v["correct"] / v["n"]) if v["n"] else None)}
                         for k, v in by_label.items()]
-                st.dataframe(pd.DataFrame(rows), use_container_width=True,
+                st.dataframe(pd.DataFrame(rows), width='stretch',
                              hide_index=True)
 
     pe = s.get("proj_err") or {}
@@ -5233,7 +5247,7 @@ def _render_unified_per_race(data: dict, prefix: str = ""):
          "Top-3 overlap": mk_m.get("top3_overlap"),
          "Rank ρ": "—"},
     ]
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(rows), width='stretch', hide_index=True)
 
     # Pace prediction vs actual
     pp, pa = r.get("pace_predicted"), r.get("pace_actual")
@@ -5267,7 +5281,7 @@ def _render_unified_per_race(data: dict, prefix: str = ""):
                              if h.get("sa_score") is not None else "—"),
                 "SA style": h.get("sa_style") or "",
             })
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(rows), width='stretch', hide_index=True)
 
 
 def _render_unified_trends(data: dict, prefix: str = ""):
@@ -5286,17 +5300,17 @@ def _render_unified_trends(data: dict, prefix: str = ""):
     show_cols = [c for c in ("et_top1_win", "sa_top1_win", "mk_top1_win") if c in df_idx.columns]
     if show_cols:
         st.markdown("##### Top-1 Win Rate by Meeting")
-        st.line_chart(df_idx[show_cols], use_container_width=True)
+        st.line_chart(df_idx[show_cols], width='stretch')
     if "agree_rate" in df_idx.columns:
         st.markdown("##### Model-Agreement Rate by Meeting")
-        st.line_chart(df_idx[["agree_rate"]], use_container_width=True)
+        st.line_chart(df_idx[["agree_rate"]], width='stretch')
     st.markdown("##### Per-Meeting Detail")
     fmt_df = df.copy()
     for col in ("et_top1_win", "sa_top1_win", "mk_top1_win", "agree_rate", "agree_win_rate"):
         if col in fmt_df.columns:
             fmt_df[col] = fmt_df[col].apply(
                 lambda x: f"{x*100:.1f}%" if isinstance(x, (int, float)) else "—")
-    st.dataframe(fmt_df, use_container_width=True, hide_index=True)
+    st.dataframe(fmt_df, width='stretch', hide_index=True)
 
 
 def _render_unified_backtest(data: dict, prefix: str = ""):
@@ -5344,7 +5358,7 @@ def page_model_comparison():
 
     c1, c2 = st.columns([3, 1])
     with c2:
-        if st.button("🔄 Recompute", use_container_width=True,
+        if st.button("🔄 Recompute", width='stretch',
                      help="Re-runs compare_et_vs_sarr.py across all "
                           "meetings with ET + SARR + results."):
             with st.spinner("Comparing ET vs SARR across all meetings…"):
@@ -5435,7 +5449,7 @@ def page_model_comparison():
                             "ET place%", "SARR place%", "Agree top-1 %"]
             for c in ["ET win%", "SARR win%", "ET place%", "SARR place%"]:
                 df_v[c] = (df_v[c] * 100).round(1)
-            st.dataframe(df_v, use_container_width=True, hide_index=True)
+            st.dataframe(df_v, width='stretch', hide_index=True)
 
         st.markdown("#### By distance bucket")
         df_d = _pd.DataFrame(data.get("by_dist_bucket", []))
@@ -5447,7 +5461,7 @@ def page_model_comparison():
                             "ET place%", "SARR place%"]
             for c in ["ET win%", "SARR win%", "ET place%", "SARR place%"]:
                 df_d[c] = (df_d[c] * 100).round(1)
-            st.dataframe(df_d, use_container_width=True, hide_index=True)
+            st.dataframe(df_d, width='stretch', hide_index=True)
 
     # ============================================================
     # TAB 2 — Mutual picks (ET ∩ SARR)
@@ -5510,7 +5524,7 @@ def page_model_comparison():
                             "P(all 3 in top-3)"]
             for c in df_m.columns[3:]:
                 df_m[c] = (df_m[c].fillna(0) * 100).round(1)
-            st.dataframe(df_m, use_container_width=True, hide_index=True)
+            st.dataframe(df_m, width='stretch', hide_index=True)
 
         # Practical takeaway
         if len(data.get("by_mutual_size", [])) >= 2:
@@ -5553,7 +5567,7 @@ def page_model_comparison():
                              "Mutual in top-3 %"]
             for c in df_vd.columns[3:]:
                 df_vd[c] = (df_vd[c].fillna(0) * 100).round(1)
-            st.dataframe(df_vd, use_container_width=True, hide_index=True)
+            st.dataframe(df_vd, width='stretch', hide_index=True)
 
         st.markdown("### By pace projection")
         df_p = _pd.DataFrame(data.get("by_pace", []))
@@ -5570,7 +5584,7 @@ def page_model_comparison():
                             "Mutual in top-3 %"]
             for c in df_p.columns[2:]:
                 df_p[c] = (df_p[c].fillna(0) * 100).round(1)
-            st.dataframe(df_p, use_container_width=True, hide_index=True)
+            st.dataframe(df_p, width='stretch', hide_index=True)
 
     # ============================================================
     # TAB 4 — Strength heatmap (which model wins where?)
@@ -5647,7 +5661,7 @@ def page_model_comparison():
                       else "")
                 return [bg] * len(row)
             st.dataframe(df_show.style.apply(_style, axis=1),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
 
         # ── Auto-recommendation ─────────────────────────────────────
         st.divider()
@@ -5671,7 +5685,7 @@ def page_model_comparison():
                         "Mutual top-3 %", "Recommended"]
             rec_df = rec_df[[c for c in cols_rec if c in rec_df.columns]]
             st.dataframe(rec_df.sort_values("n", ascending=False),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
 
     # ============================================================
     # TAB 5 — Today's mutual picks
@@ -5719,7 +5733,7 @@ def page_model_comparison():
                         return ["background-color: #4a4a1f; color: #f0f0a0"] * len(row)
                     return [""] * len(row)
                 st.dataframe(df_t.style.apply(_style, axis=1),
-                             use_container_width=True, hide_index=True)
+                             width='stretch', hide_index=True)
                 n_high = sum(1 for r in rows_out if r["Mutual size"] >= 2)
                 st.caption(
                     f"📌 **{n_high}** high-conviction races "
@@ -5808,7 +5822,7 @@ def page_model_comparison():
                     return ["background-color: #4a4a1f; color: #f0f0a0"] * len(row)
                 return [""] * len(row)
             st.dataframe(df_t.style.apply(_style, axis=1),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
             n_high = sum(1 for r in rows_out if r["Mutual size"] >= 2)
             st.caption(f"📌 **{n_high}** high-conviction races today "
                        f"(mutual size ≥ 2).")
@@ -5907,7 +5921,7 @@ def page_model_comparison():
                     return ["background-color: #1f3a4a; color: #ccddff"] * len(row)
                 return [""] * len(row)
             st.dataframe(df_pv.style.apply(_hl, axis=1),
-                          use_container_width=True, hide_index=True)
+                          width='stretch', hide_index=True)
             from collections import Counter as _Cnt
             cnt_old = _Cnt(r.get("legacy_label") for r in pv2.get("races", []))
             cnt_new = _Cnt(r.get("label_3") for r in pv2.get("races", []))
@@ -5948,7 +5962,7 @@ def page_model_comparison():
                                 "pace_advantage_v2", ascending=False
                             )
                             st.dataframe(
-                                adv_df, use_container_width=True,
+                                adv_df, width='stretch',
                                 hide_index=True,
                             )
                             st.caption(
@@ -6038,7 +6052,7 @@ shows where the market has it.
         help="If off, Framework A's market-anchor degrades to a uniform "
              "prior. B/C/D are unaffected.")
     run_btn = st.sidebar.button("Run frameworks", type="primary",
-                                use_container_width=True,
+                                width='stretch',
                                 key="fwlab_run_btn")
 
     # Lazy-run: only on button press, cache result in session_state by
@@ -6088,7 +6102,7 @@ shows where the market has it.
                 if st.button(
                     f"R{_rn}",
                     key=f"fwlab_tab_{date_iso}_{_rn}",
-                    use_container_width=True,
+                    width='stretch',
                     type="primary" if _is_active else "secondary",
                 ):
                     st.session_state[state_key] = _rn
@@ -6146,7 +6160,7 @@ shows where the market has it.
 
         st.dataframe(
             disp,
-            use_container_width=True,
+            width='stretch',
             hide_index=True,
             column_config={
                 "Mkt": st.column_config.NumberColumn("Mkt %", format="%.1f"),
@@ -6191,7 +6205,7 @@ shows where the market has it.
     top_each["No"] = top_each["No"].astype("Int64")
     top_each["Gt"] = top_each["Gt"].astype("Int64")
     top_each["MktRk"] = top_each["MktRk"].astype("Int64")
-    st.dataframe(top_each, use_container_width=True, hide_index=True)
+    st.dataframe(top_each, width='stretch', hide_index=True)
 
     # CSV export
     csv = runners.to_csv(index=False).encode("utf-8")
@@ -6214,7 +6228,7 @@ def page_backtest():
                                         key="bt_scrape_date")
     col_a, col_b = st.sidebar.columns(2)
     with col_a:
-        if st.button("[ Run Post-Race ]", use_container_width=True,
+        if st.button("[ Run Post-Race ]", width='stretch',
                       key="btn_scrape_results",
                       help="Full 8-step pipeline: results · DB scrape · "
                            "incidents · RP photos · OCR · form-guide rebuild · "
@@ -6229,7 +6243,7 @@ def page_backtest():
                 pass
             st.rerun()
     with col_b:
-        if st.button("[ Backtest only ]", use_container_width=True,
+        if st.button("[ Backtest only ]", width='stretch',
                       key="btn_run_backtest",
                       help="Re-run backtest (legacy + unified) for the selected date."):
             _run_backtest_single(scrape_date.isoformat())
@@ -6254,7 +6268,7 @@ def page_backtest():
     st.sidebar.markdown('<div class="sb-nav-section">Aggregate Reports</div>', unsafe_allow_html=True)
 
     if st.sidebar.button("[ Rebuild Unified Backtest ]",
-                         use_container_width=True,
+                         width='stretch',
                          key="btn_unified_all",
                          help="Regenerate every unified per-meeting JSON + "
                               "rolling windows (last7/30/90/all) + per-month "
@@ -6266,14 +6280,14 @@ def page_backtest():
     agg_month = st.sidebar.text_input("Legacy Month (YYYY-MM)",
                                        value=date.today().strftime("%Y-%m"),
                                        key="bt_month")
-    if st.sidebar.button("[ Legacy Monthly ]", use_container_width=True,
+    if st.sidebar.button("[ Legacy Monthly ]", width='stretch',
                           key="btn_monthly_bt"):
         _run_backtest_agg("--month", agg_month)
         st.cache_data.clear()
         st.rerun()
     agg_season = st.sidebar.text_input("Legacy Season", value="2025-2026",
                                         key="bt_season")
-    if st.sidebar.button("[ Legacy Seasonal ]", use_container_width=True,
+    if st.sidebar.button("[ Legacy Seasonal ]", width='stretch',
                           key="btn_season_bt"):
         _run_backtest_agg("--season", agg_season)
         st.cache_data.clear()
@@ -6980,7 +6994,7 @@ def page_blackbook():
                               .set_properties(subset=["Horse", "Tags", "Source"],
                                               **{"text-align": "left"}))
 
-                st.dataframe(styled_tbl, use_container_width=True, hide_index=True,
+                st.dataframe(styled_tbl, width='stretch', hide_index=True,
                              height=min(400, 35 * len(tbl_df) + 38))
 
                 # ── Detail panel — select horse from table ──
@@ -7047,7 +7061,7 @@ def page_blackbook():
                             "Verdict": f"{v_icon} {verdict}",
                             "Notes": pf.get("notes", ""),
                         })
-                    st.dataframe(pd.DataFrame(p_rows), use_container_width=True, hide_index=True)
+                    st.dataframe(pd.DataFrame(p_rows), width='stretch', hide_index=True)
 
                 # ── Actions ───────────────────────────────────
                 st.markdown("##### Actions")
@@ -7297,7 +7311,7 @@ def page_blackbook():
                           help="½u WIN + ½u PLACE per run, real dividends, SP fallback for missing.")
 
             if bb_chart_path.exists():
-                st.image(str(bb_chart_path), use_container_width=True)
+                st.image(str(bb_chart_path), width='stretch')
 
             with st.expander("By confidence cohort", expanded=False):
                 rows = []
@@ -7309,7 +7323,7 @@ def page_blackbook():
                         "WIN ROI": f"{(v.get('win_roi') or 0)*100:+.1f}%",
                         "PLA ROI": f"{(v.get('pla_roi') or 0)*100:+.1f}%",
                     })
-                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(rows), width='stretch', hide_index=True)
 
             with st.expander("Per-horse verdicts (KEEP / WATCH / EXPIRE)", expanded=False):
                 horses = bb_perf.get("horses", [])
@@ -7330,7 +7344,7 @@ def page_blackbook():
                             "PLA ROI": f"{(h.get('pla_roi') or 0)*100:+.1f}%",
                             "Tags": ", ".join(h.get("tags") or []),
                         })
-                    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                    st.dataframe(pd.DataFrame(rows), width='stretch', hide_index=True)
                 with tab_e:
                     rows = []
                     for h in sorted([x for x in horses if x.get("verdict") == "EXPIRE"],
@@ -7341,7 +7355,7 @@ def page_blackbook():
                             "PLA ROI": f"{(h.get('pla_roi') or 0)*100:+.1f}%",
                             "Reasoning": h.get("reasoning", ""),
                         })
-                    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                    st.dataframe(pd.DataFrame(rows), width='stretch', hide_index=True)
 
             with st.expander("Cross-check: BB vs your actual bookie bets", expanded=False):
                 if ua.get("settled_bets"):
@@ -7357,7 +7371,7 @@ def page_blackbook():
                     examples = ua.get("bb_overlap_examples") or []
                     if examples:
                         st.caption("Where a BB horse appeared in one of your tickets:")
-                        st.dataframe(pd.DataFrame(examples), use_container_width=True, hide_index=True)
+                        st.dataframe(pd.DataFrame(examples), width='stretch', hide_index=True)
                 else:
                     st.caption("No settled user bets yet — upload bookie statements via My Bets.")
         st.markdown("---")
@@ -7394,7 +7408,7 @@ def page_blackbook():
                     "Top-3%": f"{st_d['top3']/n*100:.0f}%" if n else "—",
                     "Top-5%": f"{st_d['top5']/n*100:.0f}%" if n else "—",
                 })
-            st.dataframe(pd.DataFrame(t_rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(t_rows), width='stretch', hide_index=True)
 
             st.markdown("---")
             st.markdown("### Confidence Calibration")
@@ -7421,7 +7435,7 @@ def page_blackbook():
                     "Win%": f"{sd['wins']/n*100:.0f}%" if n else "—",
                     "Top-3%": f"{sd['top3']/n*100:.0f}%" if n else "—",
                 })
-            st.dataframe(pd.DataFrame(c_rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(c_rows), width='stretch', hide_index=True)
 
             st.markdown("---")
             st.markdown("### Model Alignment")
@@ -7709,12 +7723,12 @@ def _signal_review(pred_data: dict, results_races: list) -> None:
 
     st.markdown("#### Signal hit-rate summary (this meeting)")
     st.dataframe(_pd.DataFrame(summary_rows), hide_index=True,
-                 use_container_width=True)
+                 width='stretch')
 
     st.markdown("#### Per-pick detail")
     if detail_rows:
         df_d = _pd.DataFrame(detail_rows).sort_values(["R", "Rk"])
-        st.dataframe(df_d, hide_index=True, use_container_width=True)
+        st.dataframe(df_d, hide_index=True, width='stretch')
     else:
         st.info("No overlap between model picks and result runners — "
                 "results may still be incomplete.")
@@ -7728,7 +7742,7 @@ def page_results():
     st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
     st.sidebar.markdown('<div class="sb-nav-section">Results Data</div>', unsafe_allow_html=True)
     scrape_date = st.sidebar.date_input("Date", value=date.today(), key="res_scrape_date")
-    if st.sidebar.button("[ Scrape Results ]", use_container_width=True, key="res_btn_scrape"):
+    if st.sidebar.button("[ Scrape Results ]", width='stretch', key="res_btn_scrape"):
         _run_results_scraper(scrape_date.isoformat(), full=True)
         st.cache_data.clear()
         # Form DB lives on cache_resource — clear explicitly because the
@@ -7839,7 +7853,7 @@ def page_results():
         with tab_cols[i]:
             is_active = st.session_state["res_active_rn"] == rn
             if st.button(f"R{rn}", key=f"res_tab_{selected_dc}_{rn}",
-                         use_container_width=True,
+                         width='stretch',
                          type="primary" if is_active else "secondary"):
                 st.session_state["res_active_rn"] = rn
                 st.rerun()
@@ -7995,10 +8009,10 @@ def page_results():
             return f"background-color:{col}1f;color:{col};font-weight:600"
         try:
             _styled = _res_df.style.map(_lane_style, subset=["Lane"])
-            st.dataframe(_styled, use_container_width=True, hide_index=True,
+            st.dataframe(_styled, width='stretch', hide_index=True,
                             column_config=_res_col_cfg)
         except Exception:
-            st.dataframe(_res_df, use_container_width=True, hide_index=True,
+            st.dataframe(_res_df, width='stretch', hide_index=True,
                             column_config=_res_col_cfg)
         # Lane legend + per-call breakdown
         _legend_html = " &nbsp; ".join(
@@ -8033,11 +8047,11 @@ def page_results():
                 try:
                     _pc_styled = _pc_df.style.map(_lane_style,
                         subset=[c for c in ["800M", "400M", "200M", "Avg"] if c in _pc_df.columns])
-                    st.dataframe(_pc_styled, use_container_width=True, hide_index=True)
+                    st.dataframe(_pc_styled, width='stretch', hide_index=True)
                 except Exception:
-                    st.dataframe(_pc_df, use_container_width=True, hide_index=True)
+                    st.dataframe(_pc_df, width='stretch', hide_index=True)
     else:
-        st.dataframe(_res_df, use_container_width=True, hide_index=True,
+        st.dataframe(_res_df, width='stretch', hide_index=True,
                         column_config=_res_col_cfg)
         _ocr_path = BASE / "running_position_photos" / selected_dc / f"R{selected_rn}.json"
         _jpg_path = BASE / "running_position_photos" / selected_dc / f"R{selected_rn}.jpg"
@@ -8219,7 +8233,7 @@ def page_results():
                 "(except Sha Tin 1000m). Use to validate speed-map predictions "
                 "and check if horses ran rail, 1-out, or 3–4 wide."
             )
-            st.image(str(rp_photo_path), use_container_width=True)
+            st.image(str(rp_photo_path), width='stretch')
         else:
             st.info(
                 f"No photo cached for R{selected_rn}. "
@@ -8266,7 +8280,7 @@ def page_results():
                         "Score": h.get("polarity_score", 0),
                     })
                 st.markdown("**Per-horse short commentary**")
-                st.dataframe(pd.DataFrame(_hrows), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(_hrows), width='stretch', hide_index=True)
             # Blackbook suggestions
             bb_sugg = _comm_race.get("blackbook_suggestions", [])
             if bb_sugg:
@@ -9115,7 +9129,7 @@ def page_form_guide():
         with btn_cols[i]:
             is_active = (i == active_idx)
             if st.button(f"R{race['race_number']}", key=f"fg_btn_{race['race_number']}",
-                         use_container_width=True,
+                         width='stretch',
                          type="primary" if is_active else "secondary"):
                 st.session_state["fg_active_race"] = i
                 st.rerun()
@@ -9948,7 +9962,7 @@ def sidebar_trials():
     st.sidebar.markdown('<div class="sb-nav-section">Scrape Trials</div>', unsafe_allow_html=True)
     trial_date = st.sidebar.date_input("Trial Date", value=date.today(), key="trial_date")
 
-    if st.sidebar.button("[ SCRAPE TRIALS ]", type="primary", use_container_width=True):
+    if st.sidebar.button("[ SCRAPE TRIALS ]", type="primary", width='stretch'):
         with st.spinner(f"Scraping trials for {trial_date.isoformat()}..."):
             result = subprocess.run(
                 [PYTHON, "scrape_hkjc_trials.py", "--date", trial_date.isoformat()],
@@ -9976,7 +9990,7 @@ def sidebar_trials():
         bulk_from = st.date_input("From", value=date.today() - timedelta(days=30), key="trial_bulk_from")
     with col_to:
         bulk_to = st.date_input("To", value=date.today(), key="trial_bulk_to")
-    if st.sidebar.button("[ BULK SCRAPE ]", use_container_width=True, key="trial_bulk_btn"):
+    if st.sidebar.button("[ BULK SCRAPE ]", width='stretch', key="trial_bulk_btn"):
         with st.spinner(f"Bulk scraping {bulk_from} to {bulk_to}..."):
             result = subprocess.run(
                 [PYTHON, "scrape_hkjc_trials.py",
@@ -10391,7 +10405,7 @@ def _render_trial_standouts():
                           .set_properties(subset=["Horse"], **{
                               "text-align": "left", "font-weight": "600"}) \
                           .set_properties(subset=["Signal"], **{"text-align": "left"})
-        st.dataframe(styled, use_container_width=True, hide_index=True)
+        st.dataframe(styled, width='stretch', hide_index=True)
 
         # Expandable details
         with st.expander(f"Show comments ({len(group)} horses)"):
@@ -11212,7 +11226,7 @@ def _signal_audit_tab(window: str, factor_mtime: float) -> None:
                 })
             df = pd.DataFrame(flat_rows)
             st.dataframe(
-                df, hide_index=True, use_container_width=True,
+                df, hide_index=True, width='stretch',
                 column_config={
                     "R":     st.column_config.NumberColumn(format="%d"),
                     "Rk":    st.column_config.NumberColumn(format="%d"),
@@ -11256,7 +11270,7 @@ def _signal_audit_tab(window: str, factor_mtime: float) -> None:
         # User can sort interactively via dataframe column headers.
         st.dataframe(
             df_sum.sort_values("Top-3 %", ascending=False),
-            hide_index=True, use_container_width=True,
+            hide_index=True, width='stretch',
             column_config={
                 "Fired":      st.column_config.NumberColumn(format="%d"),
                 "Top-1":      st.column_config.NumberColumn(format="%d"),
@@ -11291,7 +11305,7 @@ def _signal_audit_tab(window: str, factor_mtime: float) -> None:
             st.info("No signals fired across selected meetings.")
             return
         df_t = pd.DataFrame(rows).sort_values(["Signal", "Date"])
-        st.dataframe(df_t, hide_index=True, use_container_width=True)
+        st.dataframe(df_t, hide_index=True, width='stretch')
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -11435,7 +11449,7 @@ def page_horse_profile():
         )
     with c_st3:
         if st.button("🔄 Rebuild", key="hi_rebuild",
-                     use_container_width=True,
+                     width='stretch',
                      help="Re-run horse_intel.py against the master DB."):
             try:
                 with st.spinner("Rebuilding from master DB…"):
@@ -11527,7 +11541,7 @@ def page_horse_profile():
         with cols[i % 3]:
             # Use a button styled to look like a card
             if st.button(label, key=f"hi_pick_{name}",
-                         use_container_width=True,
+                         width='stretch',
                          type="primary" if name == pick else "secondary"):
                 st.session_state["hi_pick"] = name
                 pick = name
@@ -11633,7 +11647,7 @@ def page_horse_profile():
 
     st.markdown("#### Run history (most recent first)")
     st.dataframe(
-        df_runs, hide_index=True, use_container_width=True,
+        df_runs, hide_index=True, width='stretch',
         column_config={
             "R":        st.column_config.NumberColumn(format="%d"),
             "Dist":     st.column_config.NumberColumn(format="%d"),
@@ -11673,7 +11687,7 @@ def page_horse_profile():
                 tooltip=["Date:T", "Fin:Q", "Perf:Q"],
             ).properties(height=180).configure_view(strokeWidth=0)
             st.markdown("#### Perf score timeline")
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width='stretch')
     except ImportError:
         pass
 
@@ -11767,7 +11781,7 @@ def page_data_analysis():
         # the file system is ephemeral and the xlsx source isn't deployed.
         can_regen = (os.environ.get("STREAMLIT_SERVER_HEADLESS") != "true"
                      or (BASE / "hkjc_results_updated.xlsx").exists())
-        if st.button("Regenerate", use_container_width=True,
+        if st.button("Regenerate", width='stretch',
                      key="da_regen", disabled=not can_regen,
                      help=None if can_regen
                           else "Regeneration disabled on hosted deployment "
@@ -11856,7 +11870,7 @@ def page_data_analysis():
             st.info(f"No rows with N ≥ {min_n}. Lower the Min-N slider "
                     f"(table has {total_rows} rows in total).")
             return
-        st.dataframe(_style_df(df), use_container_width=True, hide_index=True)
+        st.dataframe(_style_df(df), width='stretch', hide_index=True)
 
     # ── Summary tab ───────────────────────────────────
     with tabs[0]:
@@ -11889,7 +11903,7 @@ def page_data_analysis():
                 cdf.style.format({"Win%": "{:.1%}", "IV": "{:.2f}",
                                   "A/E": "{:.2f}", "ROI": "{:+.2%}",
                                   "N": "{:.0f}"}),
-                use_container_width=True, hide_index=True,
+                width='stretch', hide_index=True,
             )
 
     with tabs[1]:
@@ -11984,7 +11998,7 @@ def page_data_analysis():
             df_fu = df_fu.sort_values("NextPlc_pct", ascending=False)
             fmt = {"NextWin_pct": "{:.1%}", "NextPlc_pct": "{:.1%}", "N": "{:.0f}"}
             st.dataframe(df_fu.style.format(fmt, na_rep="—"),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
 
         st.markdown("##### Jockey × class move (supplementary)")
         st.caption(
@@ -12649,7 +12663,7 @@ def _render_race_day_value_lens(date_compact: str, venue_code: str,
             }
             for r in top
         ])
-        st.dataframe(df, hide_index=True, use_container_width=True)
+        st.dataframe(df, hide_index=True, width='stretch')
     else:
         st.caption(
             "_No positive-edge runners — model agrees with the market._"
@@ -12673,7 +12687,7 @@ def _render_race_day_value_lens(date_compact: str, venue_code: str,
                 }
                 for r in bot
             ])
-            st.dataframe(df2, hide_index=True, use_container_width=True)
+            st.dataframe(df2, hide_index=True, width='stretch')
 
     # Backtest reference
     st.caption(
@@ -12873,7 +12887,7 @@ def page_live_odds():
         with sc5:
             st.write(""); st.write("")
             run_btn = st.button("▶ Run scraper", type="primary",
-                                use_container_width=True,
+                                width='stretch',
                                 key="liveodds_run_btn")
         if run_btn:
             req_races = _parse_race_list(scr_races)
@@ -13069,7 +13083,7 @@ def page_live_odds():
                    "Steamer Δ%": "{:+.1f}%",
                    "Drifter Δ%": "{:+.1f}%",
                }, na_rep="—"))
-    st.dataframe(sty_sum, hide_index=True, use_container_width=True)
+    st.dataframe(sty_sum, hide_index=True, width='stretch')
 
     # ════════════════════════════════════════════════════════════════
     # 2) TIME SLIDER — Win odds across races at a chosen capture time
@@ -13140,7 +13154,7 @@ def page_live_odds():
         sty_o = (df_o.style.apply(_style_full, axis=None)
                  .format({c: "{:.1f}" for c in df_o.columns if c != "Race"},
                          na_rep="—"))
-        st.dataframe(sty_o, hide_index=True, use_container_width=True)
+        st.dataframe(sty_o, hide_index=True, width='stretch')
         st.caption(f"Snapshot time shown: **{target_ts}** · "
                    f"green = Win odds dropped vs first snapshot, red = drifted.")
 
@@ -13158,7 +13172,7 @@ def page_live_odds():
         is_active = st.session_state[sel_key] == rn
         label = f"▶ R{rn}" if is_active else f"R{rn}"
         if btn_cols[i].button(
-            label, key=f"liveodds_btn_r{rn}", use_container_width=True,
+            label, key=f"liveodds_btn_r{rn}", width='stretch',
             type="primary" if is_active else "secondary",
         ):
             st.session_state[sel_key] = rn
@@ -13214,7 +13228,7 @@ def page_live_odds():
                       .format({"Win (first)": "{:.1f}", "Win": "{:.1f}",
                                "Place": "{:.1f}", "Δ Win %": "{:+.1f}%"},
                               na_rep="—"))
-            st.dataframe(sty_wp, hide_index=True, use_container_width=True,
+            st.dataframe(sty_wp, hide_index=True, width='stretch',
                          height=min(420, 38 + 35 * len(df_wp)))
 
         # ─ Notable Quinella / Quinella-Place pair moves ──────────────
@@ -13272,7 +13286,7 @@ def page_live_odds():
                                 pass
                     return out
                 sty = mat.style.apply(_style_pair, axis=None)
-                st.dataframe(sty, use_container_width=True)
+                st.dataframe(sty, width='stretch')
                 st.caption(
                     f"Cells coloured by Δ% vs earliest snapshot. "
                     f"Pairs in the upper triangle (row #, col #). "
@@ -13310,7 +13324,7 @@ def page_live_odds():
                 top.style.map(_delta_color, subset=["Δ%"])
                 .format({"First Win": "{:.1f}", "Latest Win": "{:.1f}",
                          "Δ%": "{:+.1f}%"}, na_rep="—"),
-                hide_index=True, use_container_width=True,
+                hide_index=True, width='stretch',
             )
         with c2:
             st.markdown("### 🔴 Top drifters (biggest Win-odds rises)")
@@ -13319,7 +13333,7 @@ def page_live_odds():
                 top.style.map(_delta_color, subset=["Δ%"])
                 .format({"First Win": "{:.1f}", "Latest Win": "{:.1f}",
                          "Δ%": "{:+.1f}%"}, na_rep="—"),
-                hide_index=True, use_container_width=True,
+                hide_index=True, width='stretch',
             )
 
     # ── Strategy doc ──────────────────────────────────────────────────
@@ -13547,7 +13561,7 @@ def _mb_render_per_race_tab():
             "In top-3": "✓" if rk <= 3 else "",
         })
     st.dataframe(pd.DataFrame(leg_rows), hide_index=True,
-                 use_container_width=True)
+                 width='stretch')
 
     st.markdown(
         f"**Will submit:** {evald['n_pairs']} × QIN_BANKER + "
@@ -13561,7 +13575,7 @@ def _mb_render_per_race_tab():
     with submit_col:
         confirm = st.checkbox("Confirm submission", key="mb_confirm")
         if st.button("💸 Submit to My Bets", type="primary",
-                      disabled=not confirm, use_container_width=True):
+                      disabled=not confirm, width='stretch'):
             note = (f"Multi Builder · {evald['shape']} · {badge} · "
                     f"banker rank {ev['banker_rank']} edge "
                     f"{ev.get('banker_edge_pp', 0):+.1f}pp")
@@ -13624,7 +13638,7 @@ def _mb_render_per_race_tab():
                 "Status": s.get("skip_reason") or "ok",
             })
         st.dataframe(pd.DataFrame(scan_rows), hide_index=True,
-                     use_container_width=True)
+                     width='stretch')
         actionable = [s for s in all_sugs if not s.get("skip_reason")]
         if actionable:
             total_stake = sum(s["stake_total"] for s in actionable)
@@ -13940,7 +13954,7 @@ def _mb_render_allup_tab():
         "P(full hit)": f"{r['p_full']*100:.2f}%",
         "Sharpe": f"{r['sharpe']:.2f}",
     } for r in shape_rows])
-    st.dataframe(cmp_table, hide_index=True, use_container_width=True)
+    st.dataframe(cmp_table, hide_index=True, width='stretch')
 
     best = shape_rows[0]
     st.info(
@@ -13990,7 +14004,7 @@ def _mb_render_allup_tab():
         total_stake += t["total_stake"]
         total_ev += e["ev"]
     st.dataframe(pd.DataFrame(eval_rows), hide_index=True,
-                 use_container_width=True)
+                 width='stretch')
 
     # Per-leg breakdown
     with st.expander("🔍 Per-leg probabilities & payouts", expanded=False):
@@ -14017,7 +14031,7 @@ def _mb_render_allup_tab():
                 "Avg payout/$1": f"${eprim['leg_payout'][i]:.1f}",
             })
         st.dataframe(pd.DataFrame(leg_table), hide_index=True,
-                     use_container_width=True)
+                     width='stretch')
 
     # ── Kelly stake suggestion ────────────────────────────────
     st.markdown("##### 5. Stake sizing (quarter-Kelly cap)")
@@ -14188,7 +14202,7 @@ def _mb_render_allup_tab():
                          if r.get("status") == "settled" else "—"),
             })
         st.dataframe(pd.DataFrame(table), hide_index=True,
-                     use_container_width=True)
+                     width='stretch')
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -14212,7 +14226,7 @@ def page_my_bets():
         )
         with st.form("mb_login_form", clear_on_submit=False):
             pw = st.text_input("Password", type="password", key="mb_pw")
-            ok = st.form_submit_button("Unlock", use_container_width=True)
+            ok = st.form_submit_button("Unlock", width='stretch')
         if ok:
             if (pw or "").strip() == "mighty_commander":
                 st.session_state["_mb_authed"] = True
@@ -14273,14 +14287,14 @@ def page_my_bets():
                         preview = st.button(
                             "🔍 Preview only",
                             key="mb_stmt_prev",
-                            use_container_width=True,
+                            width='stretch',
                         )
                     with cimp:
                         do_import = st.button(
                             "✅ Import now",
                             key="mb_stmt_imp",
                             type="primary",
-                            use_container_width=True,
+                            width='stretch',
                         )
                     if preview:
                         parsed = pas.parse_statement(tmp_path)
@@ -14289,7 +14303,7 @@ def page_my_bets():
                             st.dataframe(
                                 pd.DataFrame(parsed),
                                 hide_index=True,
-                                use_container_width=True,
+                                width='stretch',
                             )
                     if do_import:
                         summary = pas.import_statement(
@@ -14341,7 +14355,7 @@ def page_my_bets():
                             st.dataframe(
                                 pd.DataFrame(summary["inserted_details"]),
                                 hide_index=True,
-                                use_container_width=True,
+                                width='stretch',
                             )
                         if summary["skipped_refs"]:
                             st.caption(
@@ -14479,7 +14493,7 @@ def page_my_bets():
                                     placeholder="e.g. \"HKJC bundle: QIN+QPL "
                                                 "1 banker × 3 sels\"")
             submit = st.form_submit_button("💾 Save bet",
-                                                use_container_width=True,
+                                                width='stretch',
                                                 type="primary")
             if submit:
                 try:
@@ -14695,7 +14709,7 @@ def page_my_bets():
                     "Notes":   r.get("notes", ""),
                 })
             st.dataframe(
-                pd.DataFrame(table), hide_index=True, use_container_width=True,
+                pd.DataFrame(table), hide_index=True, width='stretch',
                 column_config={
                     "R":      st.column_config.NumberColumn(format="%d"),
                     "Stake":  st.column_config.NumberColumn(format="$%.0f"),
@@ -14746,7 +14760,7 @@ def page_my_bets():
                     })
                 st.dataframe(
                     pd.DataFrame(bt_rows).sort_values("ROI %", ascending=False),
-                    hide_index=True, use_container_width=True,
+                    hide_index=True, width='stretch',
                     column_config={
                         "Bets":   st.column_config.NumberColumn(format="%d"),
                         "Hits":   st.column_config.NumberColumn(format="%d"),
@@ -14842,7 +14856,7 @@ def page_my_bets():
                 st.markdown("#### Cumulative PnL")
                 if _alt is None:
                     st.line_chart(df_c.set_index("#")["Cumulative"],
-                                  use_container_width=True)
+                                  width='stretch')
                 else:
                     df_c["Cum$"] = df_c["Cumulative"].astype(float)
                     df_c["Color"] = df_c["PnL"].apply(
@@ -14906,7 +14920,7 @@ def page_my_bets():
                     chart = (zero_rule + area + pts).properties(
                         height=320,
                     ).configure_view(strokeWidth=0)
-                    st.altair_chart(chart, use_container_width=True)
+                    st.altair_chart(chart, width='stretch')
 
                     # Per-bet PnL bar chart (red/green) for context.
                     df_b = df_c.copy()
@@ -14931,7 +14945,7 @@ def page_my_bets():
                             _alt.Tooltip("PnL:Q", format="+$.2f"),
                         ],
                     ).properties(height=180).configure_view(strokeWidth=0)
-                    st.altair_chart(bars, use_container_width=True)
+                    st.altair_chart(bars, width='stretch')
 
                     # Daily aggregation (clearer signal than per-bet noise).
                     if df_c["Date"].nunique() >= 2:
@@ -14973,7 +14987,7 @@ def page_my_bets():
                                              format="+$.2f"),
                             ],
                         ).properties(height=200).configure_view(strokeWidth=0)
-                        st.altair_chart(daily_bars, use_container_width=True)
+                        st.altair_chart(daily_bars, width='stretch')
 
     # ── TAB 5 — Calendar (month/day W-L heatmap) ───────────────────────
     with tabs[4]:
@@ -15065,7 +15079,7 @@ def page_my_bets():
 
                 if _alt2 is None:
                     st.dataframe(df_cal[df_cal["Has"]], hide_index=True,
-                                 use_container_width=True)
+                                 width='stretch')
                 else:
                     pnl_max = max(
                         abs(df_cal[df_cal["Has"]]["PnL"].max() or 0.0),
@@ -15147,7 +15161,7 @@ def page_my_bets():
                     cal = (cells_chart + day_text + pnl_text).properties(
                         height=max(280, 95 * n_weeks),
                     ).configure_view(strokeWidth=0)
-                    st.altair_chart(cal, use_container_width=True)
+                    st.altair_chart(cal, width='stretch')
 
                 # Month totals strip.
                 month_rows = [c for c in cells if c["Has"]]
@@ -15190,7 +15204,7 @@ def page_my_bets():
                     })
                 st.dataframe(
                     pd.DataFrame(rows_dl), hide_index=True,
-                    use_container_width=True,
+                    width='stretch',
                     column_config={
                         "Bets":    st.column_config.NumberColumn(format="%d"),
                         "Hits":    st.column_config.NumberColumn(format="%d"),
@@ -15326,7 +15340,7 @@ def page_my_bets():
                     with container:
                         st.markdown(f"#### Alignment — {label}")
                         st.dataframe(
-                            agg, hide_index=True, use_container_width=True,
+                            agg, hide_index=True, width='stretch',
                             column_config={
                                 "Bets":  st.column_config.NumberColumn(format="%d"),
                                 "Stake": st.column_config.NumberColumn(format="$%.0f"),
@@ -15350,7 +15364,7 @@ def page_my_bets():
                     agg_e["ROI %"] = (agg_e["PnL"] / agg_e["Stake"].replace(
                         0, pd.NA) * 100).round(1)
                     st.dataframe(
-                        agg_e, hide_index=True, use_container_width=True,
+                        agg_e, hide_index=True, width='stretch',
                         column_config={
                             "Bets":  st.column_config.NumberColumn(format="%d"),
                             "Stake": st.column_config.NumberColumn(format="$%.0f"),
@@ -15362,7 +15376,7 @@ def page_my_bets():
                 st.markdown("#### Per-bet comparison")
                 st.dataframe(
                     df_cmp.sort_values(["Date", "R"]),
-                    hide_index=True, use_container_width=True,
+                    hide_index=True, width='stretch',
                     column_config={
                         "Stake $":    st.column_config.NumberColumn(format="$%.0f"),
                         "Your PnL $": st.column_config.NumberColumn(format="%+.2f"),
@@ -15387,7 +15401,7 @@ def page_my_bets():
                             st.dataframe(
                                 wins[["Date", "R", "Bet", "Your sel",
                                       "ET top3", "SARR top3", "Your PnL $"]],
-                                hide_index=True, use_container_width=True,
+                                hide_index=True, width='stretch',
                             )
                     with c2:
                         st.markdown("##### ⚠️ Deviated & missed (bottom 5)")
@@ -15397,7 +15411,7 @@ def page_my_bets():
                             st.dataframe(
                                 losses[["Date", "R", "Bet", "Your sel",
                                         "ET top3", "SARR top3", "Your PnL $"]],
-                                hide_index=True, use_container_width=True,
+                                hide_index=True, width='stretch',
                             )
 
                 st.markdown(
@@ -15559,7 +15573,7 @@ def _render_strategy_slate_tab() -> None:
     df = pd.DataFrame(rows)
     st.markdown("#### Per-race plan")
     edited = st.data_editor(
-        df, hide_index=True, use_container_width=True,
+        df, hide_index=True, width='stretch',
         key=f"slate_editor_{date_str}_{mode}",
         disabled=["R", "Play", "Banker", "Banker #", "Legs",
                   "Odds", "p_used", "p_mkt", "Edge %", "Why"],
@@ -15617,7 +15631,7 @@ def _render_strategy_slate_tab() -> None:
             })
         au_df = pd.DataFrame(au_rows)
         st.dataframe(
-            au_df, hide_index=True, use_container_width=True,
+            au_df, hide_index=True, width='stretch',
             column_config={
                 "#":        st.column_config.NumberColumn(format="%d"),
                 "Stake $":  st.column_config.NumberColumn(format="$%.0f"),
@@ -15634,7 +15648,7 @@ def _render_strategy_slate_tab() -> None:
     # ── Persist ─────────────────────────────────────────────────────────────
     save_cols = st.columns([1, 1, 3])
     if save_cols[0].button("💾 Save plan", key="slate_save",
-                                 use_container_width=True):
+                                 width='stretch'):
         out = {
             "date": date_str, "mode": mode, "bankroll": float(bankroll),
             "exposure_cap_hkd": cap_hkd,
@@ -15675,7 +15689,7 @@ def _render_strategy_slate_tab() -> None:
         ]
         st.dataframe(
             pd.DataFrame(why_rows), hide_index=True,
-            use_container_width=True,
+            width='stretch',
             column_config={
                 "R": st.column_config.NumberColumn(format="%d"),
                 "Stake $": st.column_config.NumberColumn(format="$%.0f"),
@@ -15726,7 +15740,7 @@ def page_model_bets():
             with col_b:
                 log_clicked = st.button("💾 Save picks to log",
                                             key="mb_log_btn",
-                                            use_container_width=True)
+                                            width='stretch')
             with col_a:
                 st.caption(
                     f"**{sel_title}** · {sel['n_races']} races · "
@@ -15798,7 +15812,7 @@ def page_model_bets():
                                 "med": "🟡 med", "low": "⚪ low"}
                 df["Conf"] = df["Conf"].map(lambda c: conf_icons.get(c, c))
                 st.dataframe(
-                    df, hide_index=True, use_container_width=True,
+                    df, hide_index=True, width='stretch',
                     column_config={
                         "R":         st.column_config.NumberColumn(format="%d"),
                         "Dist":      st.column_config.NumberColumn(format="%d"),
@@ -15849,7 +15863,7 @@ def page_model_bets():
                                         expanded=False):
                         st.dataframe(
                             pd.DataFrame(overlays_rows),
-                            hide_index=True, use_container_width=True,
+                            hide_index=True, width='stretch',
                             column_config={
                                 "R": st.column_config.NumberColumn(format="%d"),
                                 "Stake (u)": st.column_config.NumberColumn(format="%.2f"),
@@ -15966,7 +15980,7 @@ SARR-QPL strategy instead.
             if br_rows:
                 st.dataframe(
                     pd.DataFrame(br_rows), hide_index=True,
-                    use_container_width=True,
+                    width='stretch',
                     column_config={
                         "Bets": st.column_config.NumberColumn(format="%d"),
                         "Hits": st.column_config.NumberColumn(format="%d"),
@@ -16053,7 +16067,7 @@ SARR-QPL strategy instead.
                     })
                 st.dataframe(
                     pd.DataFrame(log_rows), hide_index=True,
-                    use_container_width=True,
+                    width='stretch',
                     column_config={
                         "R":      st.column_config.NumberColumn(format="%d"),
                         "Fin":    st.column_config.NumberColumn(format="%d"),
@@ -16100,7 +16114,7 @@ SARR-QPL strategy instead.
                 sweep_rows.sort(key=lambda r: -r["ROI %"])
                 st.dataframe(
                     pd.DataFrame(sweep_rows), hide_index=True,
-                    use_container_width=True,
+                    width='stretch',
                     column_config={
                         "Bets":   st.column_config.NumberColumn(format="%d"),
                         "Hit %":  st.column_config.NumberColumn(format="%.1f%%"),
@@ -16131,7 +16145,7 @@ SARR-QPL strategy instead.
                     {"Filter": "Mutual top-3",    "QIN ROI": "-46%", "QPL ROI": "+22%", "Better": "QPL"},
                     {"Filter": "Mutual + gap ≥ 0.08", "QIN ROI": "-36%", "QPL ROI": "+88%", "Better": "QPL"},
                 ])
-                st.dataframe(qin_qpl, hide_index=True, use_container_width=True)
+                st.dataframe(qin_qpl, hide_index=True, width='stretch')
 
     # ── TAB 5 — Filter rules ────────────────────────────────────────────────
     with tabs[4]:
@@ -16316,7 +16330,7 @@ def page_pdf_builder():
     st.markdown("### Export PDF")
 
     if st.button("Generate PDF", type="primary", key="pb_generate",
-                 use_container_width=True):
+                 width='stretch'):
         with st.spinner("Building PDF..."):
             pdf_bytes = _build_pdfbuilder_pdf(
                 data, selected_races, race_selections, race_notes,
@@ -16331,7 +16345,7 @@ def page_pdf_builder():
             file_name=f"race_analysis_{date_str}.pdf",
             mime="application/pdf",
             key="pb_download",
-            use_container_width=True,
+            width='stretch',
         )
 
 
@@ -16361,7 +16375,7 @@ def page_calibration():
     cal_version = st.sidebar.text_input("Model version", value="v4.4",
                                         key="cal_version")
     if st.sidebar.button("[ Rebuild Harness ]", key="btn_cal_rebuild",
-                         use_container_width=True):
+                         width='stretch'):
         try:
             from calibration_harness import run as _cal_run
             d_from = (cal_from or "").replace("-", "") or None
@@ -16421,7 +16435,7 @@ def page_calibration():
                 f"{(m.get('logloss_lift_vs_shin') or 0):+.4f}"),
         })
     st.dataframe(pd.DataFrame(metric_rows), hide_index=True,
-                 use_container_width=True)
+                 width='stretch')
 
     # ── Section 2: reliability curve ──────────────────────────────────
     st.markdown("### 2 · Reliability curve")
@@ -16468,9 +16482,9 @@ def page_calibration():
             )
             ideal = alt.Chart(pd.DataFrame({"x": [0, 0.6], "y": [0, 0.6]})).mark_line(
                 strokeDash=[4, 4], color="#888").encode(x="x:Q", y="y:Q")
-            st.altair_chart(ideal + chart, use_container_width=True)
+            st.altair_chart(ideal + chart, width='stretch')
         except Exception:
-            st.dataframe(rel_df, hide_index=True, use_container_width=True)
+            st.dataframe(rel_df, hide_index=True, width='stretch')
 
     # ── Section 3: edge quintiles ─────────────────────────────────────
     st.markdown("### 3 · ROI by edge quintile")
@@ -16505,7 +16519,7 @@ def page_calibration():
                 )
                 .properties(height=300)
             )
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width='stretch')
         except Exception:
             pass
         display_df = qdf[["quintile", "n", "edge_band", "strike",
@@ -16513,7 +16527,7 @@ def page_calibration():
         display_df["strike"] = (display_df["strike"] * 100).round(2).astype(str) + "%"
         display_df["flat_roi"] = (display_df["flat_roi"] * 100).round(2).astype(str) + "%"
         display_df["kelly_roi"] = (display_df["kelly_roi"] * 100).round(2).astype(str) + "%"
-        st.dataframe(display_df, hide_index=True, use_container_width=True)
+        st.dataframe(display_df, hide_index=True, width='stretch')
 
     # ── Section 4: rank × edge grid ───────────────────────────────────
     st.markdown("### 4 · Rank × edge-sign ROI grid")
@@ -16551,13 +16565,13 @@ def page_calibration():
                             "abs(datum.roi_pct) > 30",
                             alt.value("white"), alt.value("black")))
             )
-            st.altair_chart(heat + text, use_container_width=True)
+            st.altair_chart(heat + text, width='stretch')
         except Exception:
             pass
         st.dataframe(
             gdf[["rank", "edge", "n", "strike_pct", "roi_pct"]]
             .rename(columns={"strike_pct": "strike%", "roi_pct": "roi%"}),
-            hide_index=True, use_container_width=True,
+            hide_index=True, width='stretch',
         )
 
     # ── Section 5: per-rank winrate ───────────────────────────────────
@@ -16575,7 +16589,7 @@ def page_calibration():
         st.dataframe(
             rdf[["rank", "n", "wins", "strike_pct",
                  "p_model", "p_market_shin"]],
-            hide_index=True, use_container_width=True,
+            hide_index=True, width='stretch',
         )
 
     md_path = REPORTS / "CALIBRATION_HARNESS.md"
@@ -16611,7 +16625,7 @@ def page_gbm():
                                        max_value=10, value=5, step=1,
                                        key="gbm_splits")
     if st.sidebar.button("[ Train GBM ]", key="btn_gbm_train",
-                         use_container_width=True):
+                         width='stretch'):
         try:
             from train_gbm import run as _gbm_run
             d_from = (g_from or "").replace("-", "") or None
@@ -16628,7 +16642,7 @@ def page_gbm():
                                         value=date.today(),
                                         key="gbm_score_date")
     if st.sidebar.button("[ Score Meeting ]", key="btn_gbm_score",
-                         use_container_width=True):
+                         width='stretch'):
         try:
             from train_gbm import score_report as _gbm_score
             d = score_date.isoformat().replace("-", "")
@@ -16689,7 +16703,7 @@ def page_gbm():
          "LogLoss lift":
              f"{(g.get('logloss_lift_vs_v44') or 0):+.4f}"},
     ])
-    st.dataframe(h2h, hide_index=True, use_container_width=True)
+    st.dataframe(h2h, hide_index=True, width='stretch')
 
     # ── Section 2: feature importance ───────────────────────────────────
     st.markdown("### 2 · What the GBM learned")
@@ -16710,9 +16724,9 @@ def page_gbm():
                 )
                 .properties(height=420)
             )
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width='stretch')
         except Exception:
-            st.dataframe(idf, hide_index=True, use_container_width=True)
+            st.dataframe(idf, hide_index=True, width='stretch')
 
     # ── Section 3: reliability ──────────────────────────────────────────
     st.markdown("### 3 · Reliability — p_gbm (OOF)")
@@ -16736,9 +16750,9 @@ def page_gbm():
                 pd.DataFrame({"x": [0, 0.6], "y": [0, 0.6]})
             ).mark_line(strokeDash=[4, 4], color="#888").encode(
                 x="x:Q", y="y:Q")
-            st.altair_chart(ideal + line, use_container_width=True)
+            st.altair_chart(ideal + line, width='stretch')
         except Exception:
-            st.dataframe(bdf, hide_index=True, use_container_width=True)
+            st.dataframe(bdf, hide_index=True, width='stretch')
 
     # ── Section 4: per-fold CV ────────────────────────────────────────
     folds = (s.get("cv") or {}).get("folds") or []
@@ -16748,14 +16762,14 @@ def page_gbm():
                    "held-out meeting. Stable logloss across folds = GBM "
                    "isn't overfitting one particular meeting.")
         st.dataframe(pd.DataFrame(folds), hide_index=True,
-                     use_container_width=True)
+                     width='stretch')
 
     # ── Section 5: most-recent scored meeting (if any) ─────────────────────
     last = st.session_state.get("_gbm_last_scored")
     if last:
         st.markdown(f"### 5 · GBM scores for {last['date']}")
         st.dataframe(pd.DataFrame(last["rows"]),
-                     hide_index=True, use_container_width=True)
+                     hide_index=True, width='stretch')
 
     md_path = REPORTS / "GBM_TRAINING.md"
     if md_path.exists():
@@ -17089,7 +17103,7 @@ def page_race_lookup():
     with cap_sync:
         if st.button(
             "🔄 Sync results→DB",
-            key="rl_sync_db", use_container_width=True,
+            key="rl_sync_db", width='stretch',
             help="Append every reports/results_*.json newer than the DB "
                  "into hkjc.db. Idempotent: existing dates are overwritten.",
         ):
@@ -17121,7 +17135,7 @@ def page_race_lookup():
     with cap_pace:
         if missing_pace and st.button(
             f"⚙️ Build pace index ({len(missing_pace)} missing)",
-            key="rl_build_pace", use_container_width=True,
+            key="rl_build_pace", width='stretch',
             help="Run build_pace_index.py to populate `pace_label` for "
                  "races that don't yet have a label."
         ):
@@ -17366,7 +17380,7 @@ def _rl_render_patterns(df_all: pd.DataFrame):
                    .map(_edge_color, subset=["vs baseline"])
                    .format({"Place%": "{:.0%}", "Win%": "{:.0%}",
                             "vs baseline": "{:+.0%}"}, na_rep="—"))
-            st.dataframe(sty, hide_index=True, use_container_width=True,
+            st.dataframe(sty, hide_index=True, width='stretch',
                          height=min(420, 38 + 35 * len(df_rows)))
 
 
@@ -17380,7 +17394,7 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
     a1, a2, a3, a4 = st.columns([0.9, 1.6, 1.4, 1.1])
     with a1:
         if st.button("✖️ Clear filters", key="rl_clear",
-                     use_container_width=True,
+                     width='stretch',
                      help="Reset every filter to its default state."):
             _rl_clear_all_filters()
             st.rerun()
@@ -17400,7 +17414,7 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
                                  label_visibility="collapsed")
     with a4:
         if st.button("💾 Save preset", key="rl_preset_save",
-                     use_container_width=True,
+                     width='stretch',
                      disabled=not new_name.strip()):
             snap = {k: st.session_state.get(k) for k in RL_FILTER_KEYS
                     if k in st.session_state}
@@ -17414,7 +17428,7 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
                 cc1, cc2 = st.columns([4, 1])
                 cc1.markdown(f"- **{nm}**")
                 if cc2.button("Delete", key=f"rl_pdel_{nm}",
-                              use_container_width=True):
+                              width='stretch'):
                     presets.pop(nm, None)
                     _rl_save_presets(presets)
                     st.rerun()
@@ -17721,7 +17735,7 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
         })
 
         st.dataframe(
-            disp, use_container_width=True, hide_index=True,
+            disp, width='stretch', hide_index=True,
             height=min(900, 120 + 35 * min(len(disp), 22)),
             column_config={
                 "▶ Replay": st.column_config.LinkColumn(
@@ -17739,7 +17753,7 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
         csv = disp.to_csv(index=False).encode("utf-8")
         st.download_button("⬇️ Download CSV", data=csv,
                            file_name="race_lookup.csv", mime="text/csv",
-                           use_container_width=False)
+                           width='content')
 
         # ── Form-line drilldown: pick a horse from the slice ───────────
         st.markdown("##### Drill into form line")
@@ -17782,7 +17796,7 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
                         "speed_fig": "SpdFig", "lbw": "LBW",
                         "win_odds": "Odds", "video": "▶ Replay",
                     }),
-                    use_container_width=True, hide_index=True,
+                    width='stretch', hide_index=True,
                     column_config={
                         "▶ Replay": st.column_config.LinkColumn(
                             "▶ Replay", display_text="▶", width="small"),
@@ -17819,33 +17833,33 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
         with c1:
             st.markdown("**By gate band**")
             st.dataframe(_agg(["gate_band"], 20),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
             st.markdown("**By running style (profile)**")
             st.dataframe(_agg(["run_style"], 20),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
             st.markdown("**By rating band**")
             st.dataframe(_agg(["rating_band"], 20),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
             st.markdown("**By distance**")
             st.dataframe(_agg(["distance_n"], 20),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
         with c2:
             st.markdown("**Top jockeys (vs their full-DB baseline)**")
             st.dataframe(_agg(["jockey"], 20,
                               baselines.get("jockey_win"),
                               baselines.get("jockey_n")),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
             st.markdown("**Top trainers (vs their full-DB baseline)**")
             st.dataframe(_agg(["trainer"], 20,
                               baselines.get("trainer_win"),
                               baselines.get("trainer_n")),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
             st.markdown("**Top jockey × trainer combos**")
             st.dataframe(_agg(["jockey", "trainer"], 30),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
             st.markdown("**By race pace**")
             st.dataframe(_agg(["pace_label"], 20),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
 
         # People combos
         st.markdown("##### People × Horse combos (in slice)")
@@ -17853,15 +17867,15 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
         with cc1:
             st.markdown("**Top jockey × horse**")
             st.dataframe(_agg(["jockey", "horse_name"], 30),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
         with cc2:
             st.markdown("**Top trainer × horse**")
             st.dataframe(_agg(["trainer", "horse_name"], 30),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
 
         st.markdown("**Course-specialist jockeys (jockey × race_course)**")
         st.dataframe(_agg(["jockey", "race_course"], 30),
-                     use_container_width=True, hide_index=True)
+                     width='stretch', hide_index=True)
 
         # Bias matrices with baseline-deviation colouring
         st.markdown("##### Bias matrix — win% by (gate band × distance)")
@@ -17878,14 +17892,14 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
             st.dataframe(
                 dev.style.format("{:+.1f}").background_gradient(
                     cmap="RdYlGn", vmin=-15, vmax=15, axis=None),
-                use_container_width=True,
+                width='stretch',
             )
             st.caption("Cells = (slice win%) − (full-DB win% for same "
                        "gate-band × distance). Green = positive bias, "
                        "red = negative. Empty = bucket not in slice.")
         except Exception as e:
             st.dataframe(bias.style.format("{:.1f}%"),
-                         use_container_width=True)
+                         width='stretch')
             st.caption(f"Heatmap unavailable: {e}")
 
         if df["pace_label"].astype(bool).any():
@@ -17897,11 +17911,11 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
                 st.dataframe(
                     bias2.style.format("{:.1f}%").background_gradient(
                         cmap="RdYlGn", vmin=0, vmax=25, axis=None),
-                    use_container_width=True,
+                    width='stretch',
                 )
             except Exception:
                 st.dataframe(bias2.style.format("{:.1f}%"),
-                             use_container_width=True)
+                             width='stretch')
 
     # ───────────────────────── Pivot designer ────────────────────────────
     with sub_pivot:
@@ -17974,11 +17988,11 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
                     st.dataframe(
                         pv.style.format(fmt, na_rep="—")
                           .background_gradient(cmap=cmap, axis=None),
-                        use_container_width=True,
+                        width='stretch',
                     )
                 except Exception:
                     st.dataframe(pv.style.format(fmt, na_rep="—"),
-                                 use_container_width=True)
+                                 width='stretch')
             except Exception as e:
                 st.error(f"Pivot failed: {e}")
 
@@ -18000,7 +18014,7 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
                 "draw", "jockey", "trainer", "run_style", "win_odds",
                 "place"]
         cols = [c for c in cols if c in boil.columns]
-        st.dataframe(boil[cols].head(200), use_container_width=True,
+        st.dataframe(boil[cols].head(200), width='stretch',
                      hide_index=True)
 
         st.markdown(f"**Flops — {len(flop)} rows**")
@@ -18009,7 +18023,7 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
                 "draw", "jockey", "trainer", "run_style", "win_odds",
                 "place"]
         cols = [c for c in cols if c in flop.columns]
-        st.dataframe(flop[cols].head(200), use_container_width=True,
+        st.dataframe(flop[cols].head(200), width='stretch',
                      hide_index=True)
 
 
@@ -18232,7 +18246,7 @@ def main():
         is_active = st.session_state["nav_page"] == page_name
         wrap_cls = "sb-active" if is_active else ""
         st.sidebar.markdown(f'<div class="{wrap_cls}">', unsafe_allow_html=True)
-        if st.sidebar.button(label, key=f"nav_{page_name}", use_container_width=True):
+        if st.sidebar.button(label, key=f"nav_{page_name}", width='stretch'):
             st.session_state["nav_page"] = page_name
             st.rerun()
         st.sidebar.markdown('</div>', unsafe_allow_html=True)
@@ -18347,7 +18361,7 @@ def sidebar_race_day():
         st.session_state.get("_uploaded_rc_date") == date_iso
     )
 
-    if st.sidebar.button("[ RUN ANALYSIS ]", type="primary", use_container_width=True):
+    if st.sidebar.button("[ RUN ANALYSIS ]", type="primary", width='stretch'):
         # Only skip scraping when we have an EXPLICIT user-uploaded racecard
         # for this date (cloud-without-HKJC workflow). Otherwise, always
         # re-scrape so late scratches and substitutes are captured.
