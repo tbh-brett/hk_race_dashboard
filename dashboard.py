@@ -17143,13 +17143,231 @@ def page_race_lookup():
                 st.error(str(e))
 
     # ── Top tabs: Lookup vs merged Horse Profile ────────────────────────
-    tab_lookup, tab_horse = st.tabs(["🔎 Race Lookup", "🐴 Horse Profile"])
+    tab_lookup, tab_patterns, tab_horse = st.tabs(
+        ["🔎 Race Lookup", "🎯 Race Patterns", "🐴 Horse Profile"]
+    )
 
     with tab_horse:
         page_horse_profile()
 
     with tab_lookup:
         _rl_render_lookup(df_all, baselines, min_d, max_d)
+
+    with tab_patterns:
+        _rl_render_patterns(df_all)
+
+
+def _rl_profile_match(horse_runs: pd.DataFrame, target: dict) -> dict:
+    """Return the most-specific historical profile bucket for a horse vs the
+    target race signature, plus place / win rates inside that bucket.
+
+    Buckets, from most → least specific:
+      1. same course + distance + class + surface
+      2. same course + distance + class
+      3. same course + distance
+      4. same distance + class
+      5. same distance
+    Returns the first bucket with ``min_n`` runs, or the broadest available.
+    """
+    if horse_runs is None or horse_runs.empty:
+        return {"label": "no past runs", "n": 0, "n_place": 0, "n_win": 0,
+                "place_rate": 0.0, "win_rate": 0.0}
+    course = target.get("course")
+    dist = target.get("distance")
+    cls = target.get("race_class")
+    surface = target.get("surface")
+    min_n = 3
+    candidates = [
+        (f"same {course} · {dist}m · Class {cls} · {surface}",
+         (horse_runs["race_course"] == course)
+         & (horse_runs["distance_n"] == dist)
+         & (horse_runs["race_class"].astype(str) == str(cls))
+         & (horse_runs["surface"] == surface)),
+        (f"same {course} · {dist}m · Class {cls}",
+         (horse_runs["race_course"] == course)
+         & (horse_runs["distance_n"] == dist)
+         & (horse_runs["race_class"].astype(str) == str(cls))),
+        (f"same {course} · {dist}m",
+         (horse_runs["race_course"] == course)
+         & (horse_runs["distance_n"] == dist)),
+        (f"same {dist}m · Class {cls}",
+         (horse_runs["distance_n"] == dist)
+         & (horse_runs["race_class"].astype(str) == str(cls))),
+        (f"same {dist}m",
+         (horse_runs["distance_n"] == dist)),
+    ]
+    chosen_label = ""
+    chosen_mask = None
+    for label, mask in candidates:
+        n = int(mask.sum())
+        if n >= min_n:
+            chosen_label = label
+            chosen_mask = mask
+            break
+    if chosen_mask is None:
+        label, mask = candidates[-1]
+        chosen_label = label
+        chosen_mask = mask
+    sub = horse_runs[chosen_mask]
+    n = len(sub)
+    if n == 0:
+        return {"label": chosen_label, "n": 0, "n_place": 0, "n_win": 0,
+                "place_rate": 0.0, "win_rate": 0.0}
+    n_place = int(sub["place_n"].between(1, 3, inclusive="both").sum())
+    n_win = int((sub["place_n"] == 1).sum())
+    return {
+        "label": chosen_label,
+        "n": n,
+        "n_place": n_place,
+        "n_win": n_win,
+        "place_rate": n_place / n if n else 0.0,
+        "win_rate": n_win / n if n else 0.0,
+        "recent": sub.sort_values("race_date", ascending=False).head(3),
+    }
+
+
+def _rl_render_patterns(df_all: pd.DataFrame):
+    """For an upcoming meeting, highlight horses whose past form shows a
+    strong place rate at the matching profile bucket (course / distance /
+    class / surface). The aim is to surface profile-suited runners — a
+    pattern-led counterpart to the model / SARR picks.
+    """
+    import datetime as _dt
+    st.markdown("### 🎯 Profile-suited runners by race")
+    st.caption(
+        "For each race we compute every runner's place-rate (top-3) and "
+        "win-rate at the closest match of *course · distance · class · "
+        "surface*. Horses are flagged when their bucket place-rate beats "
+        "the random baseline (≈3 / field-size) by a meaningful margin and "
+        "they have at least 3 past runs in that bucket."
+    )
+
+    # ── Racecard picker ───────────────────────────────────────────────
+    rc_dir = BASE / "cache"
+    rc_files = sorted(rc_dir.glob("racecard_*.json"), reverse=True)
+    if not rc_files:
+        st.info("No racecard caches found. Generate a racecard first.")
+        return
+    today = _dt.date.today()
+    options = []
+    default_idx = 0
+    for i, fp in enumerate(rc_files):
+        iso = fp.stem.replace("racecard_", "")
+        try:
+            d = _dt.date.fromisoformat(iso)
+        except Exception:
+            continue
+        label = f"{iso} {'(upcoming)' if d >= today else '(past)'}"
+        options.append((iso, label, fp))
+        if d >= today and default_idx == 0:
+            default_idx = len(options) - 1
+    if not options:
+        st.info("No valid racecards.")
+        return
+    labels = [o[1] for o in options]
+    pick_idx = st.selectbox(
+        "Meeting", range(len(options)),
+        index=min(default_idx, len(options) - 1),
+        format_func=lambda i: labels[i],
+        key="rlpat_meeting",
+    )
+    iso, _, rc_path = options[pick_idx]
+
+    try:
+        racecard = json.loads(rc_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        st.error(f"Failed to read racecard: {e}")
+        return
+    races = racecard.get("races", []) or []
+    if not races:
+        st.warning("Racecard has no races.")
+        return
+
+    # Index df_all by horse_name for fast filtering
+    df_by_horse = dict(tuple(df_all.groupby(df_all["horse_name"].astype(str).str.upper())))
+
+    surface_map = {"TURF": "Turf", "AWT": "AWT", "ALL WEATHER TRACK": "AWT"}
+
+    for race in races:
+        meta = race.get("meta", {}) or {}
+        rn = meta.get("race_number")
+        rname = meta.get("race_name", "")
+        course = meta.get("race_course") or ""
+        dist = meta.get("distance")
+        cls = meta.get("race_class")
+        surface_raw = (meta.get("surface") or "").upper()
+        surface = surface_map.get(surface_raw, "Turf")
+        going = meta.get("going") or ""
+        n_field = len([h for h in race.get("horses", []) if not h.get("is_standby")])
+
+        with st.expander(
+            f"R{rn} · {dist}m · Class {cls} · {course} · {surface}"
+            + (f" · {going}" if going else "")
+            + f" — {rname}",
+            expanded=False,
+        ):
+            baseline = 3 / max(1, n_field)
+            st.caption(
+                f"Field {n_field} · baseline place-rate ≈ {baseline:.0%}"
+            )
+            target = {"course": course, "distance": dist,
+                      "race_class": cls, "surface": surface,
+                      "going": going}
+            rows = []
+            for h in race.get("horses", []):
+                if h.get("is_standby"):
+                    continue
+                name = str(h.get("horse_name", "")).upper()
+                runs = df_by_horse.get(name)
+                if runs is None or runs.empty:
+                    rows.append({
+                        "No": h.get("horse_no"), "Horse": h.get("horse_name"),
+                        "Jockey": h.get("jockey", ""),
+                        "Bucket": "no past runs",
+                        "n": 0, "Place%": 0.0, "Win%": 0.0,
+                        "vs baseline": 0.0, "flag": "",
+                    })
+                    continue
+                m = _rl_profile_match(runs, target)
+                edge = m["place_rate"] - baseline
+                if m["n"] >= 3 and edge >= 0.15:
+                    flag = "⭐⭐"
+                elif m["n"] >= 3 and edge >= 0.05:
+                    flag = "⭐"
+                else:
+                    flag = ""
+                rows.append({
+                    "No": h.get("horse_no"), "Horse": h.get("horse_name"),
+                    "Jockey": h.get("jockey", ""),
+                    "Bucket": m["label"],
+                    "n": m["n"],
+                    "Place%": m["place_rate"],
+                    "Win%": m["win_rate"],
+                    "vs baseline": edge,
+                    "flag": flag,
+                })
+            if not rows:
+                st.info("No runners in this race.")
+                continue
+            df_rows = pd.DataFrame(rows).sort_values(
+                ["vs baseline", "Place%", "n"],
+                ascending=[False, False, False]
+            ).reset_index(drop=True)
+
+            def _edge_color(v):
+                try: v = float(v)
+                except Exception: return ""
+                if v >= 0.15: return "background-color:#1b7837;color:white"
+                if v >= 0.05: return "background-color:#b7e3b7;color:black"
+                if v <= -0.10: return "background-color:#f5cbcb;color:black"
+                return ""
+
+            sty = (df_rows.style
+                   .map(_edge_color, subset=["vs baseline"])
+                   .format({"Place%": "{:.0%}", "Win%": "{:.0%}",
+                            "vs baseline": "{:+.0%}"}, na_rep="—"))
+            st.dataframe(sty, hide_index=True, use_container_width=True,
+                         height=min(420, 38 + 35 * len(df_rows)))
 
 
 def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
