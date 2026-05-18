@@ -2040,14 +2040,24 @@ def render_speed_map(race: dict):
     for h in smap["grid"]:
         by_col.setdefault(h["col"], []).append(h)
 
+    dist = race["distance"]
+    race_course = race.get("race_course", "")
+    is_straight = dist == 1000 and str(race_course).upper() in ("ST", "SHA TIN")
+
     grid = {}
     for col, col_horses in by_col.items():
-        col_horses.sort(key=lambda x: x.get("row", 1))  # rail-first preserved
+        # Sort for display: hv_conceded horses (identified by "conceded" in notes)
+        # keep RAIL priority; all others sort by draw — small draw = RAIL (inside)
+        # for normal tracks, large draw = RAIL only at ST 1000m straight.
+        def _disp_sort(h, _straight=is_straight):
+            if "conceded" in (h.get("notes") or "").lower():
+                return (0, 0)
+            d = h.get("draw", 99)
+            return (1, -d) if _straight else (1, d)
+        col_horses.sort(key=_disp_sort)
         for idx, h in enumerate(col_horses):
             display_row = min(idx + 1, n_rows)
             grid[(col, display_row)] = h
-
-    dist = race["distance"]
     pace = race.get("pace", "Normal")
 
     # Row labels

@@ -3210,6 +3210,38 @@ def compute_speed_map(df, race, pace_label="Normal"):
                 h["smap_col"] = max(2, h["smap_col"] - 1)
                 hv_conceded.add(h["horse_no"])
 
+    # ── 2d. Pre-flatten: cap each column at n_rows before grid assignment ──
+    # When pressed_back + hv_conceded both redirect horses into the same column,
+    # that column can have more than n_rows entries. If those excess horses are
+    # placed mid-loop via the overflow fallback, they occupy row slots before the
+    # column's own iteration, which prevents inside-draw horses from getting their
+    # correct RAIL row. Pre-redistribute here (before any grid assignment) so every
+    # column has ≤ n_rows horses and draw-priority sorting works cleanly.
+    _changed = True
+    while _changed:
+        _changed = False
+        for col in range(n_cols, 0, -1):
+            col_hs = [h for h in horses if h["smap_col"] == col]
+            if len(col_hs) <= n_rows:
+                continue
+            excess = len(col_hs) - n_rows
+            # hv_conceded horses keep their deliberate rail position; move others first.
+            moveable = [h for h in col_hs if h["horse_no"] not in hv_conceded]
+            if len(moveable) < excess:
+                # Edge case: move some hv_conceded as last resort (shouldn't happen normally)
+                moveable = sorted(col_hs, key=lambda h: -h["draw"])
+            else:
+                # pressed_back horses are already "demoted" — move them first;
+                # among equals, widest draw moves back (they benefit least from front col)
+                moveable.sort(key=lambda h: (
+                    0 if h["horse_no"] in pressed_back else 1,
+                    -h["draw"],
+                ))
+            target = max(1, col - 1)
+            for h in moveable[:excess]:
+                h["smap_col"] = target
+            _changed = True
+
     # ── 3. Assign row by DRAW rank within each column ──
     grid = {}
 
