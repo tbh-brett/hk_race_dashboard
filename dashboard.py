@@ -2677,6 +2677,20 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
         # Always pass --skip-scrape (we just scraped) and --skip-sarr (step 2/3
         # already ran SARR). run_meeting.py handles vet + form-guide cache +
         # analysis-script generation.
+        # First: ensure hkjc.db has every results JSON on disk, so the form
+        # guide built inside run_meeting picks up the latest meetings. Without
+        # this, a horse who ran on (e.g.) 17 May would be missing from a
+        # racecard generated for 20 May.
+        try:
+            n_mtg, n_rows = _auto_sync_results_to_db(verbose=False)
+            if n_mtg:
+                st.info(
+                    f"Auto-synced {n_mtg} meeting(s) to hkjc.db before form-guide "
+                    f"build ({n_rows} rows)."
+                )
+        except Exception as _e:
+            st.warning(f"DB auto-sync skipped: {_e}")
+
         et_cmd = [PYTHON, str(BASE / "run_meeting.py"),
                   "--date", date_str, "--model", model,
                   "--skip-scrape", "--skip-sarr",
@@ -6383,6 +6397,58 @@ def _results_json_to_excel_bytes(results_path: Path) -> bytes | None:
     buf = io.BytesIO()
     df.to_excel(buf, index=False, sheet_name="Results")
     return buf.getvalue()
+
+
+def _auto_sync_results_to_db(verbose: bool = False) -> tuple[int, int]:
+    """Backfill any reports/results_*.json files missing from hkjc.db.
+
+    This guards against the recurring failure mode where the post-race
+    pipeline scraped a results JSON but the DB-append step never ran
+    (e.g. the pipeline was interrupted, the safety-net was added later,
+    or a meeting was scraped from a different machine and only the JSON
+    was synced via git). Form Guide and Race Lookup both read from
+    hkjc.db, so any missing date silently disappears from the form lines
+    of downstream race cards.
+
+    Strategy: for every results_*.json on disk, check if its race_date is
+    already present in hkjc.db. If not, call ``db_utils.append_results_to_db``
+    on it. ``append_results_to_db`` is itself idempotent, so re-running it
+    over already-imported dates is safe — but we skip them anyway to keep
+    the no-op path cheap.
+
+    Returns ``(n_meetings_synced, n_rows_appended)``. Silent if nothing
+    to do; callers may surface the count via st.toast / st.info.
+    """
+    try:
+        from db_utils import append_results_to_db, read_sqlite
+    except Exception:
+        return (0, 0)
+    results_dir = BASE / "reports"
+    if not results_dir.exists():
+        return (0, 0)
+    try:
+        df = read_sqlite("SELECT DISTINCT race_date FROM results")
+        have = {str(d)[:10] for d in df["race_date"].astype(str)}
+    except Exception:
+        have = set()
+    n_meetings = 0
+    n_rows = 0
+    for fp in sorted(results_dir.glob("results_*.json")):
+        stem = fp.stem.replace("results_", "")
+        if len(stem) != 8 or not stem.isdigit():
+            continue
+        iso = f"{stem[:4]}-{stem[4:6]}-{stem[6:]}"
+        if iso in have:
+            continue
+        try:
+            n = append_results_to_db(fp, verbose=verbose)
+            if n:
+                n_meetings += 1
+                n_rows += int(n)
+                have.add(iso)
+        except Exception:
+            continue
+    return (n_meetings, n_rows)
 
 
 def _append_results_to_db(results_path: Path):
@@ -16978,6 +17044,23 @@ def page_race_lookup():
     if not db_path.exists():
         st.error("hkjc.db not found. Run `python db_utils.py --rebuild` first.")
         return
+
+    # ── Auto-sync: backfill any results JSON that's not yet in the DB ──
+    # Runs once per Streamlit session to avoid hammering on every rerun.
+    if not st.session_state.get("_rl_autosync_done"):
+        try:
+            n_mtg, n_rows = _auto_sync_results_to_db(verbose=False)
+            if n_mtg:
+                _lookup_load_df.clear()
+                _lookup_baselines.clear()
+                st.toast(
+                    f"Auto-synced {n_mtg} missing meeting(s) to DB ({n_rows} rows).",
+                    icon="🔄",
+                )
+        except Exception:
+            pass
+        st.session_state["_rl_autosync_done"] = True
+
     db_mtime = db_path.stat().st_mtime
     pace_mtime = pace_path.stat().st_mtime if pace_path.exists() else 0.0
 
@@ -17713,6 +17796,175 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Agent Skills — live mirror of the VS Code Copilot skills under
+# .github/prompts/skills/. The agent and this page both call into
+# agent_skills.py so there is one source of truth.
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_agent_skills():
+    """Surface every repo-scoped agent skill as a one-click dashboard action."""
+    import agent_skills as _ask
+
+    st.markdown("## 🤖 Agent Skills")
+    st.caption(
+        "These are the same skills the VS Code Copilot agent uses, exposed "
+        "here as buttons so the live dashboard can trigger them too. Logic "
+        "lives in `agent_skills.py`; prose lives in "
+        "`.github/prompts/skills/<name>/SKILL.md`."
+    )
+
+    skill_titles = [s["title"] for s in _ask.SKILLS]
+    tabs = st.tabs(skill_titles)
+
+    # ── 1. Pre-Race Meeting Run ────────────────────────────────────────────
+    with tabs[0]:
+        st.markdown("### Pre-Race Meeting Run")
+        st.caption("Runs the full pre-race pipeline for one meeting.")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            d = st.date_input("Race date", value=date.today(),
+                              key="askill_prerace_date")
+        with c2:
+            going_turf = st.text_input("Turf going", value="Good",
+                                       key="askill_prerace_turf")
+        with c3:
+            going_awt = st.text_input("AWT going", value="Good",
+                                      key="askill_prerace_awt")
+        skip_scrape = st.checkbox(
+            "Skip scrape (use existing racecard)",
+            value=_ask._auto_skip_scrape(d.isoformat()),
+            key="askill_prerace_skipscrape",
+        )
+        if st.button("▶ Run pre-race pipeline", type="primary",
+                     key="askill_prerace_go"):
+            with st.spinner("Running run_meeting.py — can take several minutes…"):
+                res = _ask.run_prerace_meeting(
+                    d.isoformat(),
+                    going_turf=going_turf,
+                    going_awt=going_awt,
+                    skip_scrape=skip_scrape,
+                )
+            m1, m2 = st.columns(2)
+            m1.metric("Exit code", res.returncode)
+            m2.metric("Warnings", len(res.warnings))
+            if res.pdf_path:
+                st.success(f"PDF: `{res.pdf_path}`")
+            if res.txt_path:
+                st.success(f"TXT: `{res.txt_path}`")
+            for w in res.warnings:
+                st.warning(w)
+            with st.expander("Tail of run_meeting.py stdout", expanded=False):
+                st.code(res.tail_stdout or "(empty)", language="text")
+
+    # ── 2. Post-Race Pipeline ──────────────────────────────────────────────
+    with tabs[1]:
+        st.markdown("### Post-Race Pipeline")
+        st.caption(
+            "Belt-and-braces DB append + auto form-guide rebuild for any "
+            "meeting in the next 14 days. Codified after the 9+13 May 2026 "
+            "backfill (routine housekeeping — rain-affected going, results "
+            "not yet appended to DB)."
+        )
+        d2 = st.date_input("Race date", value=date.today(),
+                           key="askill_postrace_date")
+        if st.button("▶ Run post-race pipeline", type="primary",
+                     key="askill_postrace_go"):
+            with st.spinner("Appending results, rebuilding caches…"):
+                res = _ask.run_postrace_pipeline(d2.isoformat())
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Rows appended", res.db_rows_appended)
+            m2.metric("Form guides rebuilt", len(res.form_guides_rebuilt))
+            m3.metric("Warnings", len(res.warnings))
+            if res.form_guides_rebuilt:
+                st.success("Rebuilt: " + ", ".join(res.form_guides_rebuilt))
+            for w in res.warnings:
+                st.warning(w)
+            if res.smap_diag_path:
+                st.info(f"Pace diagnostic: `{res.smap_diag_path}`")
+
+    # ── 3. Python Env Enforcer ─────────────────────────────────────────────
+    with tabs[2]:
+        st.markdown("### Python Env Enforcer")
+        st.caption(
+            "Generate the canonical PowerShell command for any script — "
+            "uses miniconda interpreter and forces UTF-8 stdio encoding."
+        )
+        script = st.text_input("Script", value="run_meeting.py",
+                               key="askill_env_script")
+        args = st.text_input("Args (space-separated)",
+                             value="--date 2026-05-17 --skip-scrape",
+                             key="askill_env_args")
+        tail = st.number_input("Tail N lines (0 = full)", value=60, min_value=0,
+                               key="askill_env_tail")
+        cmd = _ask.build_python_cmd(
+            script, args.split() if args else [],
+            tail=int(tail) or None,
+        )
+        st.code(cmd, language="powershell")
+
+    # ── 4. Scrape Doctor ───────────────────────────────────────────────────
+    with tabs[3]:
+        st.markdown("### Scrape Doctor")
+        st.caption("Inspect today's (or any) racecard xlsx and diagnose problems.")
+        d4 = st.date_input("Race date", value=date.today(),
+                           key="askill_doctor_date")
+        if st.button("▶ Diagnose", type="primary", key="askill_doctor_go"):
+            with st.spinner("Inspecting racecard…"):
+                report = _ask.diagnose_scrape(d4.isoformat())
+            m1, m2 = st.columns(2)
+            m1.metric("Racecard exists", "✔" if report["racecard_exists"] else "✘")
+            m2.metric("Size (KB)", report["racecard_size_kb"])
+            st.markdown(f"**Suggested action:** {report['suggested_action']}")
+            if report.get("field_size_per_race"):
+                st.markdown("**Field size per race**")
+                st.json(report["field_size_per_race"])
+            if report.get("standby_contamination"):
+                st.warning(
+                    f"Possible standby contamination: "
+                    f"{', '.join(report['standby_contamination'][:10])}"
+                    + ("…" if len(report['standby_contamination']) > 10 else "")
+                )
+            with st.expander("Full report (JSON)"):
+                st.json(report)
+
+    # ── 5. Memory Curator ──────────────────────────────────────────────────
+    with tabs[4]:
+        st.markdown("### Memory Curator")
+        st.caption(
+            "Compose a memory note. The dashboard proposes a diff — actual "
+            "writes happen via the VS Code Copilot `memory` tool (or you "
+            "paste it into the appropriate `/memories/` file)."
+        )
+        scope = st.selectbox(
+            "Scope",
+            ["repo", "user", "session"],
+            index=0,
+            key="askill_mem_scope",
+            help="repo = project-scoped (recommended for HKJC facts), "
+                 "user = global preferences, session = current chat only.",
+        )
+        notes = st.text_area("Notes", height=200, key="askill_mem_notes",
+                             placeholder="e.g. \"smap_postrace_diagnostic.py "
+                             "must be run within 24 h of the meeting or its "
+                             "cache invalidates.\"")
+        if st.button("▶ Propose memory diff", type="primary",
+                     key="askill_mem_go"):
+            if not notes.strip():
+                st.warning("Notes are empty — nothing to propose.")
+            else:
+                proposal = _ask.curate_session_memory(notes, scope=scope)
+                st.success(f"Proposed target: `{proposal['target_dir']}`")
+                st.code(proposal["proposal"], language="markdown")
+                st.caption(proposal["next_action"])
+
+    # ── Footer: links to underlying SKILL.md files ─────────────────────────
+    st.markdown("---")
+    st.markdown("**Skill definitions (read-only docs):**")
+    for s in _ask.SKILLS:
+        st.markdown(f"- `{s['skill_md']}` — {s['summary']}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Entry point — page router
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -17737,7 +17989,6 @@ def main():
         ("Model Bets",     "🎯 Model Bets"),
         ("Multi Builder",  "🧮 Multi Builder"),
         ("Data Analysis",  "🔬 Data Analysis"),
-        ("Horse Profile",  "🐴 Horse Profile"),
         ("Race Lookup",    "🔎 Race Lookup"),
         ("Framework Lab",  "🧪 Framework Lab"),
         ("Results",        "🏆 Results"),
@@ -17747,6 +17998,7 @@ def main():
         ("Trials",         "🎽 Trials"),
         ("Model Lab",      "🧠 Model Lab"),
         ("PDF Builder",    "📄 PDF Builder"),
+        ("Agent Skills",   "🤖 Agent Skills"),
     ]
     if "nav_page" not in st.session_state:
         st.session_state["nav_page"] = "Race Day Insight"
@@ -17785,7 +18037,9 @@ def main():
     elif page == "Data Analysis":
         page_data_analysis()
     elif page == "Horse Profile":
-        page_horse_profile()
+        # Legacy nav key — redirect to Race Lookup (which hosts Horse Profile as a tab).
+        st.session_state["nav_page"] = "Race Lookup"
+        page_race_lookup()
 
     elif page == "Race Lookup":
 
@@ -17822,6 +18076,8 @@ def main():
         page_blackbook()
     elif page == "PDF Builder":
         page_pdf_builder()
+    elif page == "Agent Skills":
+        page_agent_skills()
 
     # Push notifications panel (ntfy.sh / Chrome Web Push)
     _render_push_sidebar()
