@@ -14250,7 +14250,8 @@ def page_my_bets():
 
     tabs = st.tabs(
         ["➕ New bet", "📒 Open bets", "✅ Settled history",
-         "📊 Summary", "📅 Calendar", "🆚 vs Model"]
+         "📊 Summary", "📅 Calendar", "🆚 vs Model",
+         "🔬 Forensic Analyzer"]
     )
 
     # ── TAB 1 — Submit ──────────────────────────────────────────────────
@@ -15421,6 +15422,274 @@ def page_my_bets():
                     "The **🤝 Ensemble bucket** is the strongest signal — "
                     "your ROI when your picks match the ET ∩ SARR overlap."
                 )
+
+    # ── TAB 7 — Forensic Analyzer (brutally honest period review) ──────
+    with tabs[6]:
+        _render_forensic_analyzer_tab(rows)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Forensic Analyzer — period-scoped, ruthless performance review
+# ─────────────────────────────────────────────────────────────────────────────
+def _render_forensic_analyzer_tab(rows: list[dict]) -> None:
+    """Brutally-honest, data-driven review of bet performance over a period.
+
+    Wraps ``bet_analyzer.analyze_betting_period`` with a Streamlit UI:
+    date range + presets, bet-type filter, full-report / weaknesses-only
+    toggle, CSV + markdown export. Designed for recurring use without
+    needing to invoke the agent each time.
+    """
+    import datetime as _dt
+    import bet_analyzer as ba
+
+    st.markdown("### 🔬 Forensic period review")
+    st.caption(
+        "No hype, no padding. Pick a window — the analyzer ranks weaknesses "
+        "by P&L impact, identifies repeatable strengths, audits your model "
+        "overrides, and emits a written rule per leak. Run this weekly."
+    )
+
+    if not rows:
+        st.info("No bets logged yet. Submit some bets first.")
+        return
+
+    settled_dates = sorted(
+        [r["meeting_date"] for r in rows if r.get("status") == "settled"
+         and r.get("meeting_date")]
+    )
+    if not settled_dates:
+        st.info("No settled bets yet — the analyzer needs settled rows "
+                "to compute P&L.")
+        return
+
+    # ── Preset window picker ─────────────────────────────────────────
+    today = _dt.date.today()
+    presets = {
+        "Last 7 days":  today - _dt.timedelta(days=7),
+        "Last 30 days": today - _dt.timedelta(days=30),
+        "Last 90 days": today - _dt.timedelta(days=90),
+        "Season (Sep→)": _dt.date(today.year if today.month >= 9
+                                  else today.year - 1, 9, 1),
+        "All time":     _dt.datetime.strptime(settled_dates[0],
+                                              "%Y%m%d").date(),
+        "Custom":       None,
+    }
+    c1, c2, c3 = st.columns([1.4, 1, 1])
+    preset = c1.selectbox("Window preset",
+                          list(presets.keys()), index=1,
+                          key="forensic_preset")
+    if preset == "Custom":
+        default_start = today - _dt.timedelta(days=30)
+        start = c2.date_input("Start", value=default_start,
+                              key="forensic_start")
+        end = c3.date_input("End", value=today, key="forensic_end")
+    else:
+        start = presets[preset]
+        end = today
+        c2.metric("Start", start.isoformat())
+        c3.metric("End", end.isoformat())
+
+    # ── Filters ──────────────────────────────────────────────────────
+    all_types = sorted({r.get("bet_type", "").upper() for r in rows
+                        if r.get("bet_type")})
+    f1, f2 = st.columns([2, 1])
+    type_filter = f1.multiselect(
+        "Filter by bet type (empty = all)", all_types, default=[],
+        key="forensic_type_filter",
+    )
+    view_mode = f2.radio("View", ["Full report", "Weaknesses only"],
+                         horizontal=True, key="forensic_view")
+
+    if not st.button("▶ Run analysis", type="primary",
+                     key="forensic_run", width='stretch'):
+        st.caption("Configure the window above and click **Run analysis**.")
+        return
+
+    try:
+        report = ba.analyze_betting_period(
+            rows, start, end,
+            bet_type_filter=type_filter or None,
+        )
+    except ValueError as e:
+        st.error(str(e))
+        return
+
+    j = report["json"]
+    md = report["markdown"]
+
+    if j["n_settled"] == 0:
+        st.warning("No settled bets in this window with the chosen filters.")
+        return
+
+    # ── Snapshot strip ───────────────────────────────────────────────
+    snap = j["snapshot"]
+    m1, m2, m3, m4, m5 = st.columns(5)
+    m1.metric("Bets", j["n_settled"])
+    m2.metric("Hit rate", f"{snap['win_rate']*100:.1f}%")
+    m3.metric("ROI", f"{snap['roi']*100:+.1f}%")
+    m4.metric("Net P&L", f"${snap['pnl']:+,.0f}")
+    m5.metric("Avg stake", f"${snap['avg_stake']:.0f}")
+
+    # ── Weaknesses (always shown) ───────────────────────────────────
+    st.markdown("### 🩸 Weaknesses (ranked by P&L impact)")
+    if not j["weaknesses"]:
+        st.success("No statistically meaningful leaks detected in this "
+                   "window. Either you are disciplined or the sample is "
+                   "too small to flag them. Keep logging.")
+    else:
+        for i, w in enumerate(j["weaknesses"], 1):
+            with st.container(border=True):
+                st.markdown(f"**{i}. {w['title']}**")
+                st.markdown(f"- **Damage:** {w['quantified']}")
+                st.markdown(f"- **Likely cause:** {w['cause']}")
+                st.markdown(f"- **Rule to enforce:** `{w['rule']}`")
+
+    if view_mode == "Weaknesses only":
+        st.markdown("---")
+        st.markdown("### 📜 Verdict")
+        st.markdown(f"> {j['verdict']}")
+    else:
+        # ── Strengths ──────────────────────────────────────────────
+        st.markdown("### 💪 Strengths")
+        if not j["strengths"]:
+            st.info("No statistically convincing strengths in this window. "
+                    "Until one emerges, treat every bet as if you have "
+                    "no edge — flat-stake the model picks only.")
+        else:
+            for x in j["strengths"]:
+                st.markdown(f"- **{x['title']}** — {x['evidence']}")
+
+        # ── Model alignment audit ──────────────────────────────────
+        st.markdown("### 🆚 Model alignment audit")
+        a = j["model_alignment"]
+        if a["n_total_with_report"] == 0:
+            st.caption("No cached model reports for the bets in this range.")
+        else:
+            align_df = pd.DataFrame([
+                {"Bucket": "ET ∩ SARR overlap", **a["aligned_both"]},
+                {"Bucket": "ET or SARR (either)", **a["aligned_et_or_sarr"]},
+                {"Bucket": "Deviated from both", **a["deviated"]},
+                {"Bucket": "No model report", **a["no_report"]},
+            ])
+            align_df = align_df.rename(columns={
+                "n": "Bets", "hit_rate": "Hit %",
+                "stake": "Stake", "pnl": "PnL", "roi": "ROI",
+            })
+            align_df["Hit %"] = (align_df["Hit %"] * 100).round(1)
+            align_df["ROI"] = (align_df["ROI"] * 100).round(1)
+            st.dataframe(
+                align_df, hide_index=True, width='stretch',
+                column_config={
+                    "Bets":  st.column_config.NumberColumn(format="%d"),
+                    "Stake": st.column_config.NumberColumn(format="$%.0f"),
+                    "PnL":   st.column_config.NumberColumn(format="$%+,.0f"),
+                    "ROI":   st.column_config.NumberColumn(format="%+.1f%%"),
+                    "Hit %": st.column_config.NumberColumn(format="%.1f%%"),
+                },
+            )
+
+        # ── Breakdown tables ───────────────────────────────────────
+        bcol1, bcol2 = st.columns(2)
+        with bcol1:
+            st.markdown("#### By bet type")
+            bt_df = pd.DataFrame(j["by_bet_type"])
+            if not bt_df.empty:
+                bt_df = bt_df.rename(columns={
+                    "bet_type": "Type", "n": "Bets",
+                    "hit_rate": "Hit %", "stake": "Stake",
+                    "pnl": "PnL", "roi": "ROI",
+                })
+                bt_df["Hit %"] = (bt_df["Hit %"] * 100).round(1)
+                bt_df["ROI"] = (bt_df["ROI"] * 100).round(1)
+                st.dataframe(
+                    bt_df, hide_index=True, width='stretch',
+                    column_config={
+                        "Stake": st.column_config.NumberColumn(format="$%.0f"),
+                        "PnL":   st.column_config.NumberColumn(format="$%+,.0f"),
+                        "ROI":   st.column_config.NumberColumn(format="%+.1f%%"),
+                        "Hit %": st.column_config.NumberColumn(format="%.1f%%"),
+                    },
+                )
+        with bcol2:
+            st.markdown("#### By payout band (winners only)")
+            st.caption("Bets are bucketed by the payout multiple of HITS. "
+                       "Losers all sit in the `lost` row. Once pre-race odds "
+                       "are tracked, this becomes a true implied-odds edge "
+                       "view.")
+            od_df = pd.DataFrame(j["by_odds_bucket"])
+            if not od_df.empty:
+                od_df = od_df.rename(columns={
+                    "bucket": "Band", "n": "Bets",
+                    "hit_rate": "Hit %", "stake": "Stake",
+                    "pnl": "PnL", "roi": "ROI",
+                })
+                od_df["Hit %"] = (od_df["Hit %"] * 100).round(1)
+                od_df["ROI"] = (od_df["ROI"] * 100).round(1)
+                st.dataframe(
+                    od_df, hide_index=True, width='stretch',
+                    column_config={
+                        "Stake": st.column_config.NumberColumn(format="$%.0f"),
+                        "PnL":   st.column_config.NumberColumn(format="$%+,.0f"),
+                        "ROI":   st.column_config.NumberColumn(format="%+.1f%%"),
+                        "Hit %": st.column_config.NumberColumn(format="%.1f%%"),
+                    },
+                )
+
+        # ── Behaviour flags ────────────────────────────────────────
+        chase = j["loss_chasing"]
+        if chase.get("n_meeting_days"):
+            st.markdown("#### Loss-chasing detector")
+            if chase["flagged"]:
+                st.error(
+                    f"⚠ Flagged: {chase['n_chase_days']} of "
+                    f"{chase['n_meeting_days']} meeting days showed stake "
+                    "≥120% of your 7-meeting median the day after a "
+                    "losing meeting."
+                )
+            else:
+                st.success(
+                    f"OK — only {chase['n_chase_days']} of "
+                    f"{chase['n_meeting_days']} meeting days fit the "
+                    "loss-chasing pattern."
+                )
+            if chase["detail"]:
+                with st.expander("Detail rows"):
+                    st.dataframe(pd.DataFrame(chase["detail"]),
+                                 hide_index=True, width='stretch')
+
+        # ── Verdict ────────────────────────────────────────────────
+        st.markdown("### 📜 Verdict")
+        st.markdown(f"> {j['verdict']}")
+
+        # ── Data gaps ──────────────────────────────────────────────
+        if j["data_gaps"]:
+            with st.expander("Data gaps & caveats"):
+                for g in j["data_gaps"]:
+                    st.markdown(f"- {g}")
+
+    # ── Exports ──────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### 📤 Export")
+    e1, e2, e3 = st.columns(3)
+    fname = f"forensic_{j['period']['start']}_{j['period']['end']}"
+    e1.download_button(
+        "⬇ JSON", data=json.dumps(j, indent=2, default=str),
+        file_name=f"{fname}.json", mime="application/json",
+        key="forensic_dl_json", width='stretch',
+    )
+    e2.download_button(
+        "⬇ Markdown", data=md, file_name=f"{fname}.md",
+        mime="text/markdown", key="forensic_dl_md",
+        width='stretch',
+    )
+    # CSV of per-bet alignment detail
+    if j["model_alignment"]["detail"]:
+        det_df = pd.DataFrame(j["model_alignment"]["detail"])
+        e3.download_button(
+            "⬇ Per-bet CSV", data=det_df.to_csv(index=False),
+            file_name=f"{fname}_per_bet.csv", mime="text/csv",
+            key="forensic_dl_csv", width='stretch',
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
