@@ -80,6 +80,18 @@ PROB_CONF_DEFLATE = True   # enable confidence-weighted win probabilities
 # ── v3.3 Audit-Driven Correction Parameters ───────────────────────────────────
 # A. Recency decay: weight_i = RECENCY_LAMBDA^(n - 1 - i),  most recent run = weight 1.0
 RECENCY_LAMBDA = 0.85      # each prior run discounted by 15%
+# v4.6: Form recency emphasis — boost the most recent N starts by an extra
+# multiplier on top of the exponential decay.  Backtest (Apr–May 2026, 100
+# races) showed ET#1 place rate jumped from 32% to 47% when last-3-form
+# carried more weight in soft-going conditions.  Conservative 2.0× boost.
+RECENCY_LAST_N         = 3       # number of most recent starts to boost
+RECENCY_LAST_N_BOOST   = 2.0     # multiplier on top of RECENCY_LAMBDA decay
+# v4.6: Going-band per-horse weighting in recency residual.  When the
+# horse has runs at the same going band as today's race, those runs are
+# upweighted; cross-band runs are downweighted.  Mirrors the existing
+# AWT_TURF_DISCOUNT / HV_ST_DISCOUNT pattern but for ground condition.
+GOING_BAND_SAME_BOOST  = 1.30    # same band (e.g. soft↔soft) ×1.30
+GOING_BAND_CROSS_DISC  = 0.75    # cross band (e.g. firm history, soft today) ×0.75
 
 # B. Uncertainty penalty: added to projection when n_runs < UNCERTAINTY_N_THRESH
 #    penalty = UNCERTAINTY_BASE / sqrt(n_runs)  (e.g., +0.10s for n=1)
@@ -1866,6 +1878,23 @@ def _map_going(code):
     return GOING_CODE_MAP.get(str(code).strip(), "Good")
 
 
+def _going_band(going_label):
+    """v4.6: Group going labels into bands for per-horse going weighting.
+    Returns one of: 'firm', 'good', 'soft', 'awt', or 'unknown'."""
+    if not going_label:
+        return "unknown"
+    g = str(going_label).strip()
+    if g.startswith("AWT"):
+        return "awt"
+    if g in ("Good-to-Firm", "Fast", "Firm", "Hard"):
+        return "firm"
+    if g == "Good":
+        return "good"
+    if g in ("Good-to-Yielding", "Yielding", "Soft", "Heavy", "Soft/Heavy"):
+        return "soft"
+    return "unknown"
+
+
 def _safe_place(val):
     """Parse place value safely — handles '3 DH', 'WV', NaN etc."""
     if pd.isna(val):
@@ -1917,7 +1946,8 @@ def _get_race_pace_index(race_date, race_number, db, class_fine, fine, coarse, u
 
 def compute_recency_residual(horse_name, db, class_fine, fine, coarse, ultra,
                               today_track_type="Turf", today_venue="ST",
-                              today_distance=None, draw_off=None):
+                              today_distance=None, draw_off=None,
+                              today_going=None):
     """
     v3.3 Adjustment A: recency-weighted raw residual from individual runs.
     v3.4: also returns the raw residuals list + surfaces + venues for trajectory detection.
@@ -1956,6 +1986,7 @@ def compute_recency_residual(horse_name, db, class_fine, fine, coarse, ultra,
     distances = []  # v3.4.1 (M): parallel list of distance per valid run
     courses = []    # v4.5 (K2): parallel list of race_course per valid run
     places = []     # v3.4.2 (Q): parallel list of finishing place per valid run
+    goings = []     # v4.6: parallel list of going label per valid run
     race_dates_l = []      # v4.0 Change 4: for race quality lookup
     race_numbers_l = []    # v4.0 Change 4
     context_draw_adjs = [] # v4.0 Change 2: draw context adj per run
@@ -2013,6 +2044,7 @@ def compute_recency_residual(horse_name, db, class_fine, fine, coarse, ultra,
             distances.append(dist)
             courses.append(rc)
             places.append(place_val)
+            goings.append(going_label)
             race_dates_l.append(run.get("race_date"))
             race_numbers_l.append(run.get("race_number"))
             context_draw_adjs.append(_ctx_draw)
@@ -2048,6 +2080,30 @@ def compute_recency_residual(horse_name, db, class_fine, fine, coarse, ultra,
 
     # Apply exponential recency decay: most recent run gets weight 1.0
     weights = np.array([RECENCY_LAMBDA ** (n_valid - 1 - i) for i in range(n_valid)])
+
+    # v4.6: Last-N recency boost — emphasise the most recent N starts.
+    # Indices of most recent runs are the highest (n_valid-1 = most recent).
+    if RECENCY_LAST_N_BOOST != 1.0 and n_valid > 0:
+        boost_start = max(0, n_valid - RECENCY_LAST_N)
+        for i in range(boost_start, n_valid):
+            weights[i] *= RECENCY_LAST_N_BOOST
+
+    # v4.6: Going-band weighting — boost same-band runs, discount cross-band.
+    # AWT goings always match AWT today (band=='awt'); turf bands are
+    # firm/good/soft.  Unknown bands left at weight 1.0.
+    if today_going is not None:
+        today_band = _going_band(today_going)
+        if today_band not in ("unknown",):
+            for i, g in enumerate(goings):
+                run_band = _going_band(g)
+                if run_band == "unknown":
+                    continue
+                if run_band == today_band:
+                    weights[i] *= GOING_BAND_SAME_BOOST
+                else:
+                    # Don't double-discount AWT cross — surface discount already covers it.
+                    if run_band != "awt" and today_band != "awt":
+                        weights[i] *= GOING_BAND_CROSS_DISC
 
     # v4.0 Change 3: Asymmetric distance penalties — stepping down (to shorter)
     # vs stepping up (to longer) have different relevance weights.
@@ -2460,7 +2516,8 @@ def project_race(race, class_fine, fine, coarse, ultra, draw_off, db=None, sec_d
                 compute_recency_residual(
                     h["horse_name"], db, class_fine, fine, coarse, ultra,
                     today_track_type=track_type, today_venue=MEETING_VENUE,
-                    today_distance=distance, draw_off=draw_off)
+                    today_distance=distance, draw_off=draw_off,
+                    today_going=going)
             trajectory_info = detect_trajectory(residuals_list, surfaces_list, track_type,
                                                 venues_list=venues_list, today_venue=MEETING_VENUE)
 
@@ -2642,6 +2699,28 @@ def project_race(race, class_fine, fine, coarse, ultra, draw_off, db=None, sec_d
                                     # STEP DOWN (to lower quality)
                                     raw_bonus = CLASS_STEP_DN_BASE * comp_mult * class_steps
                                     raw_bonus += momentum_adj  # declining → reduces bonus
+                                    # v4.6: Direction-aware step-down. Drop after
+                                    # a WIN at old class = trainer confident move
+                                    # (genuine bonus). Drop after a 4-run losing
+                                    # streak with no place = trainer hiding form
+                                    # (halve bonus). Uses last-3 finishing places
+                                    # in old class.
+                                    try:
+                                        last_places = []
+                                        for _, ocr in old_class_runs.head(3).iterrows():
+                                            lp = _safe_place(ocr.get("place", 99))
+                                            if lp < 90:
+                                                last_places.append(lp)
+                                        if last_places:
+                                            best_recent = min(last_places)
+                                            if best_recent == 1:
+                                                # Dropped after a win — amplify bonus 1.3×
+                                                raw_bonus *= 1.30
+                                            elif best_recent >= 6 and len(last_places) >= 3:
+                                                # All last-3 outside top-5 → halve bonus
+                                                raw_bonus *= 0.50
+                                    except Exception:
+                                        pass
                                     class_trans_pen = max(CLASS_STEP_DN_CAP, min(0.0, raw_bonus))
                                     class_trans_label = f"StepDn({comp_label})"
 

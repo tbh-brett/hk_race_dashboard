@@ -300,7 +300,7 @@ def run_analysis(script_path: Path) -> int:
     return result.returncode
 
 
-def run_sarr(date_str: str) -> int:
+def run_sarr(date_str: str, going_turf: str = "", going_awt: str = "") -> int:
     """Run the independent SARR race-day model. Non-fatal on failure."""
     sarr_script = BASE / "sarr_raceday.py"
     if not sarr_script.exists():
@@ -311,10 +311,12 @@ def run_sarr(date_str: str) -> int:
     print(f"{'='*60}\n")
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
-    r = subprocess.run(
-        [PYTHON, str(sarr_script), "--date", date_str],
-        env=env, cwd=str(BASE), capture_output=False,
-    )
+    cmd = [PYTHON, str(sarr_script), "--date", date_str]
+    if going_turf:
+        cmd += ["--going-turf", going_turf]
+    if going_awt:
+        cmd += ["--going-awt", going_awt]
+    r = subprocess.run(cmd, env=env, cwd=str(BASE), capture_output=False)
     if r.returncode != 0:
         print(f"  (SARR exited {r.returncode} — non-fatal)")
     return r.returncode
@@ -498,7 +500,7 @@ def main():
         print("\n[4c] SARR SKIPPED (--skip-sarr)")
     else:
         try:
-            run_sarr(args.date)
+            run_sarr(args.date, args.going_turf, args.going_awt)
         except Exception as e:
             print(f"WARNING: SARR run failed: {e}")
 

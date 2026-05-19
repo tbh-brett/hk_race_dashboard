@@ -55,6 +55,22 @@ DB_TMP = os.path.join(os.environ.get("TEMP", "/tmp"), "hkjc_sarr_raceday.xlsx")
 RECENCY_LAMBDA = 0.85
 MAX_PRIOR_RUNS = 15
 
+# v4.6 (May 2026 backtest improvements):
+#   - Going-band place_rate: filter horse history to today's going band when
+#     ≥3 same-band runs exist; otherwise fall back to overall place_rate.
+#     Backtest showed SARR collapses to 0% W on Yielding because overall
+#     place_rate masks soft-going specialists/duds.
+#   - Last-start style boost: weight the most recent run's style ×3 when
+#     deriving the dominant style.  Horses' tactical positions drift; recent
+#     intent is more predictive than long-run mode.
+#   - Trainer-debut win rate: replace SARR=0.50 default for debutants with
+#     the trainer's historical first-up place rate (with shrinkage toward
+#     0.20 league average).
+GOING_BAND_MIN_N        = 3       # min same-band runs to use specific place_rate
+LAST_STYLE_BOOST        = 3.0     # weight on most recent run's style
+DEBUT_TRAINER_SHRINK_N  = 10      # Bayesian shrinkage prior count
+DEBUT_LEAGUE_PLACE_RATE = 0.20    # baseline first-up place rate
+
 SECTION_LENGTHS = {
     1000: [200, 400, 400], 1200: [400, 400, 400],
     1400: [200, 400, 400, 400], 1600: [400, 400, 400, 400],
@@ -98,6 +114,25 @@ def safe_place(val):
     if pd.isna(val): return 99
     m = re.match(r"^(\d+)", str(val).strip())
     return int(m.group(1)) if m else 99
+
+
+def going_band(going_label):
+    """v4.6: Group going codes into bands for filtering.
+    DB codes: GF/G/GY/Y/SE/WF/WS/FM/F/HD."""
+    if going_label is None:
+        return "unknown"
+    g = str(going_label).strip().upper()
+    if not g:
+        return "unknown"
+    if g in ("SE", "SEALED", "WF", "WS", "AWT"):
+        return "awt"
+    if g in ("FM", "F", "HD", "GF"):
+        return "firm"
+    if g == "G":
+        return "good"
+    if g in ("GY", "Y", "S", "SOFT", "HEAVY", "H"):
+        return "soft"
+    return "unknown"
 
 def safe_float(val, default=np.nan):
     try: return float(val)
@@ -226,12 +261,13 @@ def build_history(db):
             "distance":  r["_distance"],
             "venue":     r.get("race_track", ""),
             "surface":   r.get("track_type", ""),
+            "going":     r.get("going", ""),
         })
 
     return horse_hist
 
 
-def build_profile(hist, today_dist, today_venue, today_surface):
+def build_profile(hist, today_dist, today_venue, today_surface, today_going=None):
     if not hist: return None
     runs = list(reversed(hist[-MAX_PRIOR_RUNS:]))
 
@@ -267,8 +303,19 @@ def build_profile(hist, today_dist, today_venue, today_surface):
 
     styles = [r["style"] for r in runs if r.get("style", "Unknown") != "Unknown"]
     if styles:
-        sc = defaultdict(int)
-        for s in styles: sc[s] += 1
+        # v4.6: Last-start style boost — weight the most recent valid style
+        # heavier so tactical drift (Closer → On-Pace) is reflected quickly.
+        sc = defaultdict(float)
+        last_style = None
+        for r in runs:
+            s = r.get("style", "Unknown")
+            if s != "Unknown" and last_style is None:
+                last_style = s
+                break
+        for s in styles:
+            sc[s] += 1.0
+        if last_style is not None:
+            sc[last_style] += LAST_STYLE_BOOST - 1.0
         style = max(sc, key=sc.get)
     else:
         style = "Midfield"
@@ -290,6 +337,20 @@ def build_profile(hist, today_dist, today_venue, today_surface):
     n_runs = len(places)
     place_rate = sum(1 for p in places if p <= 3) / max(n_runs, 1)
 
+    # v4.6: Going-band specific place_rate — when ≥GOING_BAND_MIN_N runs at
+    # today's going band exist, expose that filtered rate; else None.
+    place_rate_band = None
+    n_band = 0
+    if today_going:
+        today_band = going_band(today_going)
+        if today_band != "unknown":
+            band_places = [r.get("place", 99) for r in runs
+                           if going_band(r.get("going", "")) == today_band]
+            n_band = len(band_places)
+            if n_band >= GOING_BAND_MIN_N:
+                place_rate_band = (sum(1 for p in band_places if p <= 3)
+                                   / max(n_band, 1))
+
     last6_places = [r.get("place", 99) for r in runs[:6]]
     last6_str = "/".join(str(p) if p < 90 else "—" for p in last6_places)
 
@@ -303,6 +364,8 @@ def build_profile(hist, today_dist, today_venue, today_surface):
         "rating": rating,
         "traj": slope,
         "place_rate": place_rate,
+        "place_rate_band": place_rate_band,
+        "n_band": n_band,
         "n_runs": n_runs,
         "last6": last6_str,
     }
@@ -357,6 +420,8 @@ def get_draw_score(draw, venue, draw_stats):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--date", default="2026-04-19", help="YYYY-MM-DD")
+    parser.add_argument("--going-turf", default="", help="Turf going (e.g. 'Good', 'Good-to-Yielding')")
+    parser.add_argument("--going-awt",  default="", help="AWT going (e.g. 'Good', 'Wet Fast')")
     args = parser.parse_args()
     race_date = args.date
 
@@ -403,9 +468,27 @@ def main():
             places = grp["_place"].values
             draw_stats[(v, int(d))] = (n_g, np.mean(places) - 6.5)
 
+    # v4.6: Trainer first-up (debut) place-rate stats — for each trainer,
+    # find the FIRST recorded run per horse and compute their place rate.
+    print("  Building trainer-debut stats...")
+    db_chrono = db.sort_values(["horse_name", "race_date"]).reset_index(drop=True)
+    first_runs = db_chrono.groupby("horse_name", as_index=False).first()
+    trainer_debut_stats = {}  # trainer -> (n, place_rate)
+    for trainer, grp in first_runs.groupby("trainer"):
+        places = grp["_place"].values
+        n = len(places)
+        if n >= 3:
+            pr = float((places <= 3).mean())
+            trainer_debut_stats[str(trainer).strip()] = (n, pr)
+    print(f"    {len(trainer_debut_stats):,} trainers with debut data")
+
     # ── Score each race ───────────────────────────────────────────────
     print("  Scoring races...")
     all_race_results = []
+
+    # v4.6: Today's going (turf vs AWT) — used to filter place_rate.
+    _GT = (args.going_turf or "").strip()
+    _GA = (args.going_awt  or "").strip()
 
     for race in rc["races"]:
         meta = race["meta"]
@@ -417,6 +500,21 @@ def main():
         rname = meta.get("race_name", "")
         rating_range = meta.get("rating_range", "")
         prize = meta.get("prize", "")
+
+        # Resolve today's going for this race (racecard meta or CLI fallback)
+        meta_going = str(meta.get("going", "") or "").strip()
+        if surface and "AWT" in str(surface).upper():
+            today_going = meta_going or _GA
+        else:
+            today_going = meta_going or _GT
+        # Map full label to short DB code so going_band() works on history
+        _GOING_TO_CODE = {
+            "Good": "G", "Good-to-Firm": "GF", "Good to Firm": "GF",
+            "Good-to-Yielding": "GY", "Good to Yielding": "GY",
+            "Yielding": "Y", "Soft": "S", "Heavy": "H",
+            "Wet Fast": "WF", "Wet Slow": "WS", "Standard": "SE",
+        }
+        today_going_code = _GOING_TO_CODE.get(today_going, today_going)
 
         horses = [h for h in race["horses"] if not h.get("is_standby", False)]
         field_sz = len(horses)
@@ -433,10 +531,21 @@ def main():
         for h in horses:
             hn = h["horse_name"]
             hist = horse_hist.get(hn, [])
-            prof = build_profile(hist, dist, venue, surface) if hist else None
+            prof = (build_profile(hist, dist, venue, surface, today_going_code)
+                    if hist else None)
 
             if prof is None:
-                # Debut — score with neutral factors
+                # v4.6: Debut — use trainer's historical first-up place rate
+                # with Bayesian shrinkage toward league baseline (0.20).
+                trainer_name = str(h.get("trainer", "")).strip()
+                n_t, pr_t = trainer_debut_stats.get(trainer_name, (0, 0.0))
+                # Shrunken estimate: (n*pr + k*league) / (n+k)
+                pr_est = ((n_t * pr_t + DEBUT_TRAINER_SHRINK_N * DEBUT_LEAGUE_PLACE_RATE)
+                          / (n_t + DEBUT_TRAINER_SHRINK_N))
+                # Map place rate to SARR score (lower = better). Range roughly
+                # [0.05, 0.40] place-rate → SARR [0.65, 0.35]; pivot at 0.20.
+                debut_sarr = 0.50 - (pr_est - DEBUT_LEAGUE_PLACE_RATE) * 1.5
+                debut_sarr = float(max(0.30, min(0.70, debut_sarr)))
                 scored.append({
                     "horse_name": hn,
                     "horse_no": h.get("horse_no", ""),
@@ -451,11 +560,11 @@ def main():
                     "f_fmrp": 0.0, "f_lsa": 0.0, "f_esz": 0.0,
                     "f_style": 0.0, "f_rating": 0.0, "f_traj": 0.0,
                     "f_wpr": 0.0, "f_dist": 0.0, "draw_adj": 0.0,
-                    "sarr": 0.50,  # debut penalty — pushed toward bottom
+                    "sarr": debut_sarr,  # v4.6: trainer-debut-rate aware
                     "style": "?",
                     "avg_ssi": 0.0,
                     "late_std": 0.5,
-                    "place_rate": 0.0,
+                    "place_rate": float(pr_est),
                     "is_debut": True,
                 })
                 continue
@@ -472,7 +581,12 @@ def main():
             f_style  = get_style_fit(prof["style"], dist, venue)
             f_rating = -(rat - med_rat) / 10.0
             f_traj   = prof["traj"]
-            f_wpr    = -prof["place_rate"] * 5
+            # v4.6: Use going-band-specific place_rate when available; else
+            # fall back to overall place_rate.
+            pr_for_wpr = prof.get("place_rate_band")
+            if pr_for_wpr is None:
+                pr_for_wpr = prof["place_rate"]
+            f_wpr    = -pr_for_wpr * 5
             f_dist   = abs(_nan0(prof["avg_ssi"]) - IDEAL_SSI.get(int(dist), -0.20))
             draw_adj = get_draw_score(h.get("draw", 0), venue, draw_stats) * 0.3
 
