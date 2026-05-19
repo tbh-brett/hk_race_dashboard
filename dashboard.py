@@ -1331,6 +1331,45 @@ def _gh_persist_postrace_outputs(date_str: str) -> tuple[int, int, list[str]]:
     return (pushed, missing, errors)
 
 
+def _gh_persist_live_odds_snapshots(date_iso: str, venue: str
+                                    ) -> tuple[int, int, list[str]]:
+    """Push live-odds JSON snapshots to GitHub so they survive Cloud reboots.
+
+    Streamlit Cloud's filesystem is ephemeral — anything not in git is wiped
+    on every redeploy. Without this, scraping odds in the deployed app
+    produces snapshots that vanish on the next push, and gradual price
+    movements are lost. This function mirrors `_gh_persist_postrace_outputs`
+    for the `cache/live_odds/YYYYMMDD/{VENUE}_R*.json` files.
+
+    Returns (n_pushed, n_skipped_missing, errors). No-op locally (local
+    workflows commit via git directly).
+    """
+    if not _is_streamlit_cloud():
+        return (0, 0, [])
+    if not _gh_headers():
+        return (0, 0, ["No GITHUB_TOKEN — live odds snapshots will be lost on restart"])
+
+    dc = date_iso.replace("-", "")
+    snap_dir = BASE / "cache" / "live_odds" / dc
+    if not snap_dir.exists():
+        return (0, 0, [])
+
+    pushed = 0
+    errors: list[str] = []
+    msg = f"live-odds: auto-sync {date_iso} {venue} [skip ci]"
+    for fp in sorted(snap_dir.glob(f"{venue}_R*.json")):
+        repo_path = f"cache/live_odds/{dc}/{fp.name}"
+        try:
+            data = fp.read_bytes()
+            if _gh_push_file(repo_path, data, msg):
+                pushed += 1
+            else:
+                errors.append(repo_path)
+        except Exception as e:
+            errors.append(f"{repo_path}: {e}")
+    return (pushed, 0, errors)
+
+
 def _gh_persist_pipeline_outputs(date_str: str, model: str) -> tuple[int, int, list[str]]:
     """Push all artifacts a single pipeline run produces back to GitHub.
 
@@ -9025,15 +9064,32 @@ def _build_form_guide_pdf_from_cache(fg_cache: dict, bb_lookup: dict) -> bytes:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _live_load_analysis(dstr: str) -> dict | None:
-    """Run live_analysis engine for a meeting date."""
+    """Run live_analysis engine for a meeting date.
+
+    Returns the analysis dict, or a dict containing an ``error`` key so the
+    UI can surface the real reason. Previously this function swallowed all
+    exceptions and returned ``None`` — which made the dashboard show
+    'No results scraped yet…' even when results existed but the analyser
+    crashed (e.g. missing module / KeyError). That made the page appear
+    completely non-functional.
+    """
     try:
         from live_analysis import run_live_analysis
+    except Exception as e:
+        import traceback as _tb
+        return {"error": f"Cannot import live_analysis: "
+                         f"{type(e).__name__}: {e}",
+                "traceback": _tb.format_exc()}
+    try:
         result = run_live_analysis(dstr)
-        if "error" in result:
-            return None
+        # run_live_analysis already returns {"error": ...} on its own
+        # known failures (e.g. no predictions / no results). Pass through.
         return result
-    except Exception:
-        return None
+    except Exception as e:
+        import traceback as _tb
+        return {"error": f"run_live_analysis crashed: "
+                         f"{type(e).__name__}: {e}",
+                "traceback": _tb.format_exc()}
 
 
 def page_live_feed():
@@ -9094,6 +9150,24 @@ def page_live_feed():
             "No results scraped yet for this meeting. "
             "Click **Scrape Results** once races have been run, then **Run Analysis**."
         )
+        return
+    if "error" in analysis:
+        st.error(f"Live analysis failed: {analysis['error']}")
+        tb = analysis.get("traceback")
+        if tb:
+            with st.expander("Traceback (for debugging)"):
+                st.code(tb[-3000:])
+        # Common known reasons — give actionable guidance
+        msg = str(analysis.get("error", "")).lower()
+        if "no predictions" in msg or "prediction" in msg:
+            st.caption("💡 Make sure the **pre-race meeting pipeline** has been "
+                       "run for this date (Race Day page → Run Meeting). The "
+                       "Live Feed needs ET + SARR predictions to compare against "
+                       "actual results.")
+        elif "no results" in msg or "results_" in msg:
+            st.caption("💡 Click **Scrape Results** above once at least one race "
+                       "has been run. The analyser needs the `results_YYYYMMDD.json` "
+                       "file to exist.")
         return
 
     race_analyses = analysis.get("race_analyses", [])
@@ -13209,6 +13283,20 @@ def page_live_odds():
                 st.success(
                     f"✓ Scrape complete — **{n_new}** new snapshot(s) written."
                 )
+                # On Streamlit Cloud, immediately push snapshots to GitHub so
+                # they survive the next redeploy/reboot. Without this, only
+                # the snapshots committed at deploy time would persist.
+                if _is_streamlit_cloud():
+                    with st.spinner("Persisting snapshots to GitHub…"):
+                        pushed, _missing, errs = _gh_persist_live_odds_snapshots(
+                            scr_date.isoformat(), scr_venue)
+                    if pushed:
+                        st.info(f"☁ Synced {pushed} snapshot file(s) to GitHub "
+                                f"(survives Cloud reboot).")
+                    if errs:
+                        with st.expander(f"⚠ {len(errs)} sync error(s)"):
+                            for e in errs[:20]:
+                                st.code(str(e))
             elif rc == 0:
                 st.warning(
                     "Scraper exited cleanly but **no new snapshot files** "
@@ -13618,6 +13706,118 @@ def page_live_odds():
                 .format({"First Win": "{:.1f}", "Latest Win": "{:.1f}",
                          "Δ%": "{:+.1f}%"}, na_rep="—"),
                 hide_index=True, width='stretch',
+            )
+
+    # ════════════════════════════════════════════════════════════════
+    # 5) CROSS-POOL SMART-MONEY SIGNAL — horses where money comes in
+    #    across BOTH the Win pool AND the QIN/QPL exotic pools.
+    #    A Win-only steam can be a punter splash; a *cross-pool* steam
+    #    is harder to fake and far more often informed.
+    # ════════════════════════════════════════════════════════════════
+    smart_rows = []
+    for rn in races:
+        rows = by_race[rn]
+        if len(rows) < 2:
+            continue
+        first_w = {str(h.get("no")): _fnum(h.get("win"))
+                   for h in rows[0].get("odds", [])}
+        last_w = {str(h.get("no")): h for h in rows[-1].get("odds", [])}
+        # Pair drifts (QIN + QPL) for this race using the helper
+        qin_d = _compute_pair_drift(ymd, venue, int(rn), pool="qin")
+        qpl_d = _compute_pair_drift(ymd, venue, int(rn), pool="qpl")
+
+        def _per_horse_pair_stats(pairs):
+            """Aggregate {horse_no: (n_firming, avg_dpct, n_total)} from a list
+            of pair drift records."""
+            buckets: dict[int, list[float]] = {}
+            for p in pairs:
+                d = p.get("dpct")
+                if d is None:
+                    continue
+                for k in (p["a"], p["b"]):
+                    buckets.setdefault(int(k), []).append(float(d))
+            out = {}
+            for k, vs in buckets.items():
+                n_firm = sum(1 for v in vs if v <= -10.0)
+                out[k] = (n_firm, round(sum(vs) / len(vs), 1), len(vs))
+            return out
+
+        qin_stats = _per_horse_pair_stats(qin_d.get("pairs", []))
+        qpl_stats = _per_horse_pair_stats(qpl_d.get("pairs", []))
+
+        for no_s, h in last_w.items():
+            try:
+                no_n = int(no_s)
+            except (TypeError, ValueError):
+                continue
+            wf = first_w.get(no_s)
+            wl = _fnum(h.get("win"))
+            wd = _delta_pct(wf, wl)
+            qin_firm, qin_avg, qin_n = qin_stats.get(no_n, (0, None, 0))
+            qpl_firm, qpl_avg, qpl_n = qpl_stats.get(no_n, (0, None, 0))
+            # Composite score: more negative = stronger smart-money signal.
+            # Weight Win heavily, plus contributions from each exotic pool's
+            # average drift on pairs involving this horse.
+            parts = []
+            if wd is not None:
+                parts.append(("W", wd, 1.0))
+            if qin_avg is not None and qin_n >= 2:
+                parts.append(("QIN", qin_avg, 0.6))
+            if qpl_avg is not None and qpl_n >= 2:
+                parts.append(("QPL", qpl_avg, 0.6))
+            if not parts:
+                continue
+            score = sum(d * w for _, d, w in parts) / sum(w for _, _, w in parts)
+            # Count pools where this horse is firming meaningfully
+            pools_in = sum(1 for _, d, _ in parts if d <= -10.0)
+            smart_rows.append({
+                "Race": rn,
+                "No": no_n,
+                "Horse": h.get("horse", ""),
+                "Win Δ%": wd,
+                "QIN avg Δ%": qin_avg,
+                "QIN firm": f"{qin_firm}/{qin_n}" if qin_n else "—",
+                "QPL avg Δ%": qpl_avg,
+                "QPL firm": f"{qpl_firm}/{qpl_n}" if qpl_n else "—",
+                "Pools↓": pools_in,
+                "Score": round(score, 1),
+            })
+    if smart_rows:
+        st.markdown("---")
+        st.markdown("### 💰 Cross-Pool Smart-Money Board")
+        st.caption(
+            "Horses where money is coming in across **multiple pools** are a "
+            "stronger informed-money signal than a Win-only steam (which can be "
+            "noise from late public flash). `Pools↓` counts how many of "
+            "{W, QIN, QPL} show ≤-10% drift for this horse. Score is a weighted "
+            "average of those pool drifts (Win=1.0, QIN=0.6, QPL=0.6)."
+        )
+        df_sm = _pd.DataFrame(smart_rows)
+        # Show only horses with at least one significant move OR with money in
+        # ≥2 pools (avoids cluttering the board with 200 horses).
+        df_show = df_sm[(df_sm["Pools↓"] >= 2)
+                        | (df_sm["Score"] <= -10.0)
+                        | (df_sm["Score"] >= 15.0)].copy()
+        if df_show.empty:
+            st.caption("_No cross-pool moves yet — wait for more snapshots._")
+        else:
+            df_show = df_show.sort_values("Score").head(20)
+            st.dataframe(
+                df_show.style.map(_delta_color,
+                                  subset=["Win Δ%", "QIN avg Δ%",
+                                          "QPL avg Δ%", "Score"])
+                .format({"Win Δ%": "{:+.1f}%",
+                         "QIN avg Δ%": "{:+.1f}%",
+                         "QPL avg Δ%": "{:+.1f}%",
+                         "Score": "{:+.1f}"}, na_rep="—"),
+                hide_index=True, width='stretch',
+            )
+            st.caption(
+                "💡 **How to read:** Horses near the top of this list (most "
+                "negative Score) are the closest the live market gets to a "
+                "'smart money' tell. A horse with Pools↓ = 3 and Score ≤ -15% "
+                "is being keyed by people who put money in *all three* pools — "
+                "if that horse isn't already in your top-3, consider QPL cover."
             )
 
     # ── Strategy doc ──────────────────────────────────────────────────
