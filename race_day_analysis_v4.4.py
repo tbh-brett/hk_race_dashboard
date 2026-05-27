@@ -3678,7 +3678,19 @@ def generate_pdf(all_results, races, path):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 
-    doc = SimpleDocTemplate(str(path), pagesize=landscape(A4),
+    # ── OneDrive-safe write: build the PDF into $TEMP first so a stale
+    #    OneDrive lock on the final path can't block reportlab indefinitely.
+    #    We then atomically replace the target. If the move fails (file
+    #    locked by Acrobat / OneDrive sync), retry a few times with a short
+    #    delay, then give up gracefully and leave the temp file as a fallback.
+    import os as _os
+    import shutil as _shutil
+    import tempfile as _tempfile
+    import time as _time
+    _tmp_dir = _os.environ.get("TEMP") or _tempfile.gettempdir()
+    _tmp_pdf = Path(_tmp_dir) / f"{path.stem}.tmp.{_os.getpid()}.pdf"
+
+    doc = SimpleDocTemplate(str(_tmp_pdf), pagesize=landscape(A4),
                             leftMargin=12*mm, rightMargin=12*mm,
                             topMargin=14*mm, bottomMargin=14*mm)
     styles = getSampleStyleSheet()
@@ -4072,7 +4084,35 @@ def generate_pdf(all_results, races, path):
         story.append(PageBreak())
 
     doc.build(story)
-    print(f"  ✓ PDF saved: {path.name}")
+
+    # ── Atomic move temp → final path (OneDrive lock tolerant) ─────────
+    _moved = False
+    for _attempt in range(5):
+        try:
+            _shutil.move(str(_tmp_pdf), str(path))
+            _moved = True
+            break
+        except PermissionError as _pe:
+            print(f"  ⚠ PDF target locked (attempt {_attempt+1}/5): {_pe}")
+            _time.sleep(1.5)
+        except OSError as _oe:
+            print(f"  ⚠ PDF move failed (attempt {_attempt+1}/5): {_oe}")
+            _time.sleep(1.5)
+    if not _moved:
+        # Fallback: try a streaming copy + unlink, which sometimes works when
+        # rename() doesn't (cross-volume, OneDrive placeholder, etc.).
+        try:
+            _shutil.copyfile(str(_tmp_pdf), str(path))
+            try:
+                _os.unlink(str(_tmp_pdf))
+            except OSError:
+                pass
+            _moved = True
+        except Exception as _e:
+            print(f"  ✗ PDF could not be written to {path}: {_e}")
+            print(f"    Temp copy left at: {_tmp_pdf}")
+    if _moved:
+        print(f"  ✓ PDF saved: {path.name}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════

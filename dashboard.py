@@ -6298,6 +6298,42 @@ def page_model_comparison():
                 st.warning(f"Could not compute advantage: {_e}")
 
 
+# ── Framework Lab helpers (restored — originally added in 91676bc) ─────────
+@st.cache_data(ttl=300, show_spinner=False)
+def _fwlab_available_racecards() -> list[str]:
+    """Return ISO dates for which a racecard cache exists, newest first."""
+    out: list[str] = []
+    rc_dir = BASE / "cache"
+    if not rc_dir.exists():
+        return out
+    for fp in rc_dir.glob("racecard_*.json"):
+        try:
+            iso = fp.stem.replace("racecard_", "")
+            datetime.strptime(iso, "%Y-%m-%d")
+            out.append(iso)
+        except ValueError:
+            continue
+    return sorted(out, reverse=True)
+
+
+@st.cache_resource(show_spinner=False)
+def _fwlab_load_dataset():
+    """Cache the cleaned dataset across reruns (heavy DB read + parsing)."""
+    from frameworks.live_predict import load_dataset as _ld
+    return _ld()
+
+
+def _fwlab_run_predictions(date_iso: str, fit_window_days: int,
+                           use_live_odds: bool):
+    """Run the four frameworks against the chosen racecard."""
+    from frameworks.live_predict import predict_racecard, load_racecard
+    ds = _fwlab_load_dataset()
+    rc = load_racecard(date_iso)
+    return predict_racecard(date_iso, fit_window_days=fit_window_days,
+                            dataset=ds, racecard=rc,
+                            use_live_odds=use_live_odds)
+
+
 def page_framework_lab():
     st.markdown('<div class="page-title">Framework Lab</div>',
                 unsafe_allow_html=True)
@@ -9120,8 +9156,11 @@ def page_live_feed():
     col_s1, col_s2, col_s3 = st.columns([2, 2, 4])
     with col_s1:
         scrape_date = f"{dstr[:4]}-{dstr[4:6]}-{dstr[6:]}"
-        if st.button("🔄 Scrape Results", key="live_scrape"):
-            _run_results_scraper(scrape_date)
+        if st.button("🔄 Scrape Results (Full)", key="live_scrape",
+                     help="Runs the full post-race pipeline: results JSON + DB "
+                          "scrape + incidents + photos + OCR + form-guide "
+                          "rebuild + commentary + backtest."):
+            _run_results_scraper(scrape_date, full=True)
             st.session_state["live_last_refresh"] = hkt_now().strftime("%H:%M:%S") + " HKT"
             st.rerun()
     with col_s2:
