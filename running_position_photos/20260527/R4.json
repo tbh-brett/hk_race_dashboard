@@ -1,0 +1,582 @@
+{
+  "date": "2026-05-27",
+  "race_number": 4,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "728",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "BRIGHT DAY",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 234,
+          "cy": 39,
+          "x_frac": 0.32534722222222223,
+          "conf": 0.96,
+          "match_score": 1.0,
+          "ocr_text": "Bright Day",
+          "band_label": "728",
+          "y_in_band": 0.24
+        },
+        {
+          "band_idx": 2,
+          "cx": 227,
+          "cy": 321,
+          "x_frac": 0.31527777777777777,
+          "conf": 0.936,
+          "match_score": 1.0,
+          "ocr_text": "Bright Day",
+          "band_label": "400M",
+          "y_in_band": 0.273
+        }
+      ],
+      "ocr_texts": [
+        "Bright Day",
+        "Bright Day"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.257,
+      "avg_x_frac": 0.32,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "COUNTRY PRIDE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 227,
+          "cy": 132,
+          "x_frac": 0.31527777777777777,
+          "conf": 0.966,
+          "match_score": 0.96,
+          "ocr_text": "CountryPride",
+          "band_label": "800M",
+          "y_in_band": 0.007
+        },
+        {
+          "band_idx": 1,
+          "cx": 235,
+          "cy": 263,
+          "x_frac": 0.3263888888888889,
+          "conf": 0.922,
+          "match_score": 1.0,
+          "ocr_text": "Country Pride",
+          "band_label": "800M",
+          "y_in_band": 0.886
+        },
+        {
+          "band_idx": 2,
+          "cx": 299,
+          "cy": 410,
+          "x_frac": 0.41597222222222224,
+          "conf": 0.951,
+          "match_score": 1.0,
+          "ocr_text": "Country Pride",
+          "band_label": "400M",
+          "y_in_band": 0.867
+        },
+        {
+          "band_idx": 3,
+          "cx": 491,
+          "cy": 565,
+          "x_frac": 0.6819444444444445,
+          "conf": 0.956,
+          "match_score": 1.0,
+          "ocr_text": "Country Pride",
+          "band_label": "200M",
+          "y_in_band": 0.785
+        }
+      ],
+      "ocr_texts": [
+        "CountryPride",
+        "Country Pride",
+        "Country Pride",
+        "Country Pride"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.636,
+      "avg_x_frac": 0.435,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FIND MY LOVE",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 460,
+          "cy": 43,
+          "x_frac": 0.6395833333333333,
+          "conf": 0.93,
+          "match_score": 1.0,
+          "ocr_text": "Find My Love",
+          "band_label": "728",
+          "y_in_band": 0.273
+        },
+        {
+          "band_idx": 2,
+          "cx": 408,
+          "cy": 329,
+          "x_frac": 0.5677083333333334,
+          "conf": 0.96,
+          "match_score": 0.957,
+          "ocr_text": "FindMy Love",
+          "band_label": "400M",
+          "y_in_band": 0.327
+        }
+      ],
+      "ocr_texts": [
+        "Find My Love",
+        "FindMy Love"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.3,
+      "avg_x_frac": 0.604,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "GOLDEN FRIENDSHIP",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 165,
+          "cy": 44,
+          "x_frac": 0.2298611111111111,
+          "conf": 0.889,
+          "match_score": 0.909,
+          "ocr_text": "GoldenFhiendship",
+          "band_label": "728",
+          "y_in_band": 0.281
+        },
+        {
+          "band_idx": 2,
+          "cx": 216,
+          "cy": 384,
+          "x_frac": 0.3,
+          "conf": 0.983,
+          "match_score": 0.97,
+          "ocr_text": "GoldenFriendship",
+          "band_label": "400M",
+          "y_in_band": 0.693
+        }
+      ],
+      "ocr_texts": [
+        "GoldenFhiendship",
+        "GoldenFriendship"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.487,
+      "avg_x_frac": 0.265,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GRACEFUL HEART",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 171,
+          "cy": 114,
+          "x_frac": 0.2375,
+          "conf": 0.971,
+          "match_score": 0.963,
+          "ocr_text": "GracefulHeart",
+          "band_label": "728",
+          "y_in_band": 0.86
+        },
+        {
+          "band_idx": 1,
+          "cx": 170,
+          "cy": 259,
+          "x_frac": 0.23680555555555555,
+          "conf": 0.912,
+          "match_score": 1.0,
+          "ocr_text": "Graceful Heart",
+          "band_label": "800M",
+          "y_in_band": 0.859
+        },
+        {
+          "band_idx": 2,
+          "cx": 205,
+          "cy": 410,
+          "x_frac": 0.2847222222222222,
+          "conf": 0.869,
+          "match_score": 1.0,
+          "ocr_text": "Graceful Heart",
+          "band_label": "400M",
+          "y_in_band": 0.867
+        },
+        {
+          "band_idx": 3,
+          "cx": 222,
+          "cy": 561,
+          "x_frac": 0.30833333333333335,
+          "conf": 0.941,
+          "match_score": 1.0,
+          "ocr_text": "Graceful Heart",
+          "band_label": "200M",
+          "y_in_band": 0.762
+        }
+      ],
+      "ocr_texts": [
+        "GracefulHeart",
+        "Graceful Heart",
+        "Graceful Heart",
+        "Graceful Heart"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.837,
+      "avg_x_frac": 0.267,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "JUSTIFYING",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 382,
+          "cy": 129,
+          "x_frac": 0.5309027777777777,
+          "conf": 0.918,
+          "match_score": 0.842,
+          "ocr_text": "Justhying",
+          "band_label": "728",
+          "y_in_band": 0.983
+        },
+        {
+          "band_idx": 1,
+          "cx": 427,
+          "cy": 272,
+          "x_frac": 0.5930555555555556,
+          "conf": 0.881,
+          "match_score": 0.9,
+          "ocr_text": "Justibying",
+          "band_label": "800M",
+          "y_in_band": 0.946
+        },
+        {
+          "band_idx": 3,
+          "cx": 542,
+          "cy": 574,
+          "x_frac": 0.753125,
+          "conf": 0.897,
+          "match_score": 0.9,
+          "ocr_text": "Justilying",
+          "band_label": "200M",
+          "y_in_band": 0.837
+        }
+      ],
+      "ocr_texts": [
+        "Justhying",
+        "Justibying",
+        "Justilying"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.922,
+      "avg_x_frac": 0.626,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KWAI CHUNG TALENTS",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 312,
+          "cy": 129,
+          "x_frac": 0.4340277777777778,
+          "conf": 0.959,
+          "match_score": 1.0,
+          "ocr_text": "Kwai Chung Talents",
+          "band_label": "728",
+          "y_in_band": 0.983
+        },
+        {
+          "band_idx": 1,
+          "cx": 348,
+          "cy": 269,
+          "x_frac": 0.48333333333333334,
+          "conf": 0.934,
+          "match_score": 1.0,
+          "ocr_text": "Kwai Chung Talents",
+          "band_label": "800M",
+          "y_in_band": 0.926
+        },
+        {
+          "band_idx": 3,
+          "cx": 327,
+          "cy": 439,
+          "x_frac": 0.45416666666666666,
+          "conf": 0.959,
+          "match_score": 1.0,
+          "ocr_text": "Kwai Chung Talents",
+          "band_label": "200M",
+          "y_in_band": 0.052
+        }
+      ],
+      "ocr_texts": [
+        "Kwai Chung Talents",
+        "Kwai Chung Talents",
+        "Kwai Chung Talents"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.654,
+      "avg_x_frac": 0.457,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LIGHTNING ACE",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 356,
+          "cy": 243,
+          "x_frac": 0.4951388888888889,
+          "conf": 0.89,
+          "match_score": 0.96,
+          "ocr_text": "ightning Ace",
+          "band_label": "800M",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 2,
+          "cx": 361,
+          "cy": 413,
+          "x_frac": 0.5013888888888889,
+          "conf": 0.992,
+          "match_score": 0.96,
+          "ocr_text": "LightningAce",
+          "band_label": "400M",
+          "y_in_band": 0.887
+        },
+        {
+          "band_idx": 3,
+          "cx": 296,
+          "cy": 561,
+          "x_frac": 0.41180555555555554,
+          "conf": 0.97,
+          "match_score": 1.0,
+          "ocr_text": "Lightning Ace",
+          "band_label": "200M",
+          "y_in_band": 0.762
+        }
+      ],
+      "ocr_texts": [
+        "ightning Ace",
+        "LightningAce",
+        "Lightning Ace"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.8,
+      "avg_x_frac": 0.469,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LOVING VIBES",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 118,
+          "cy": 123,
+          "x_frac": 0.16458333333333333,
+          "conf": 0.994,
+          "match_score": 0.957,
+          "ocr_text": "LovingVibes",
+          "band_label": "728",
+          "y_in_band": 0.934
+        },
+        {
+          "band_idx": 2,
+          "cx": 115,
+          "cy": 405,
+          "x_frac": 0.1597222222222222,
+          "conf": 0.973,
+          "match_score": 1.0,
+          "ocr_text": "Loving Vibes",
+          "band_label": "400M",
+          "y_in_band": 0.833
+        },
+        {
+          "band_idx": 3,
+          "cx": 161,
+          "cy": 561,
+          "x_frac": 0.22361111111111112,
+          "conf": 0.99,
+          "match_score": 0.957,
+          "ocr_text": "LovingVibes",
+          "band_label": "200M",
+          "y_in_band": 0.762
+        }
+      ],
+      "ocr_texts": [
+        "LovingVibes",
+        "Loving Vibes",
+        "LovingVibes"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.843,
+      "avg_x_frac": 0.183,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NATURAL HIGH",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 229,
+          "cy": 107,
+          "x_frac": 0.31875,
+          "conf": 0.883,
+          "match_score": 0.957,
+          "ocr_text": "NaturalHigh",
+          "band_label": "728",
+          "y_in_band": 0.802
+        },
+        {
+          "band_idx": 1,
+          "cx": 287,
+          "cy": 257,
+          "x_frac": 0.39861111111111114,
+          "conf": 0.956,
+          "match_score": 1.0,
+          "ocr_text": "Natural High",
+          "band_label": "800M",
+          "y_in_band": 0.846
+        },
+        {
+          "band_idx": 2,
+          "cx": 348,
+          "cy": 328,
+          "x_frac": 0.4840277777777778,
+          "conf": 0.985,
+          "match_score": 0.957,
+          "ocr_text": "NaturalHigh",
+          "band_label": "400M",
+          "y_in_band": 0.32
+        },
+        {
+          "band_idx": 3,
+          "cx": 400,
+          "cy": 560,
+          "x_frac": 0.55625,
+          "conf": 0.911,
+          "match_score": 1.0,
+          "ocr_text": "Natural High",
+          "band_label": "200M",
+          "y_in_band": 0.756
+        }
+      ],
+      "ocr_texts": [
+        "NaturalHigh",
+        "Natural High",
+        "NaturalHigh",
+        "Natural High"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.681,
+      "avg_x_frac": 0.439,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SMART FIGHTER",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 297,
+          "cy": 321,
+          "x_frac": 0.4125,
+          "conf": 0.965,
+          "match_score": 0.96,
+          "ocr_text": "SmartFighter",
+          "band_label": "400M",
+          "y_in_band": 0.273
+        }
+      ],
+      "ocr_texts": [
+        "SmartFighter"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.273,
+      "avg_x_frac": 0.412,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 80,
+    "matched_horses": 11,
+    "field_size": 12,
+    "coverage": 0.917,
+    "parsed_at": "2026-05-28T02:54:23"
+  }
+}
