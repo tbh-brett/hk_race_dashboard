@@ -1,0 +1,426 @@
+{
+  "date": "2026-05-17",
+  "race_number": 2,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "695",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "BUSTLING CITY",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 163,
+          "cy": 144,
+          "x_frac": 0.22708333333333333,
+          "conf": 0.934,
+          "match_score": 0.96,
+          "ocr_text": "Busting City",
+          "band_label": "800M",
+          "y_in_band": 0.087
+        },
+        {
+          "band_idx": 2,
+          "cx": 100,
+          "cy": 293,
+          "x_frac": 0.1388888888888889,
+          "conf": 0.937,
+          "match_score": 0.96,
+          "ocr_text": "Bustling Cit",
+          "band_label": "400M",
+          "y_in_band": 0.087
+        }
+      ],
+      "ocr_texts": [
+        "Busting City",
+        "Bustling Cit"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.087,
+      "avg_x_frac": 0.183,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "CLOUD NINE",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 117,
+          "cy": 141,
+          "x_frac": 0.1625,
+          "conf": 0.995,
+          "match_score": 0.947,
+          "ocr_text": "CloudNine",
+          "band_label": "800M",
+          "y_in_band": 0.067
+        },
+        {
+          "band_idx": 2,
+          "cx": 152,
+          "cy": 288,
+          "x_frac": 0.21180555555555555,
+          "conf": 0.913,
+          "match_score": 0.824,
+          "ocr_text": "ud Nine",
+          "band_label": "400M",
+          "y_in_band": 0.053
+        }
+      ],
+      "ocr_texts": [
+        "CloudNine",
+        "ud Nine"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.06,
+      "avg_x_frac": 0.187,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "COMET RADIANCE",
+      "horse_no": 13,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 272,
+          "cy": 195,
+          "x_frac": 0.37777777777777777,
+          "conf": 0.967,
+          "match_score": 1.0,
+          "ocr_text": "Comet Radiance",
+          "band_label": "800M",
+          "y_in_band": 0.43
+        },
+        {
+          "band_idx": 3,
+          "cx": 565,
+          "cy": 483,
+          "x_frac": 0.7847222222222222,
+          "conf": 0.985,
+          "match_score": 0.963,
+          "ocr_text": "CometRadiance",
+          "band_label": "200M",
+          "y_in_band": 0.308
+        }
+      ],
+      "ocr_texts": [
+        "Comet Radiance",
+        "CometRadiance"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.369,
+      "avg_x_frac": 0.581,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "COUNTRY PRIDE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 281,
+          "cy": 136,
+          "x_frac": 0.3902777777777778,
+          "conf": 0.988,
+          "match_score": 0.96,
+          "ocr_text": "CountryPride",
+          "band_label": "800M",
+          "y_in_band": 0.034
+        }
+      ],
+      "ocr_texts": [
+        "CountryPride"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.034,
+      "avg_x_frac": 0.39,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "FLOWING",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 568,
+          "cy": 138,
+          "x_frac": 0.7895833333333333,
+          "conf": 0.989,
+          "match_score": 1.0,
+          "ocr_text": "Flowing",
+          "band_label": "800M",
+          "y_in_band": 0.047
+        }
+      ],
+      "ocr_texts": [
+        "Flowing"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.047,
+      "avg_x_frac": 0.79,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "KINGDOM",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 249,
+          "cy": 171,
+          "x_frac": 0.3458333333333333,
+          "conf": 0.987,
+          "match_score": 1.0,
+          "ocr_text": "Kingdom",
+          "band_label": "800M",
+          "y_in_band": 0.268
+        },
+        {
+          "band_idx": 3,
+          "cx": 619,
+          "cy": 479,
+          "x_frac": 0.8604166666666667,
+          "conf": 0.989,
+          "match_score": 1.0,
+          "ocr_text": "Kingdom",
+          "band_label": "200M",
+          "y_in_band": 0.285
+        }
+      ],
+      "ocr_texts": [
+        "Kingdom",
+        "Kingdom"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.276,
+      "avg_x_frac": 0.603,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "LAHORE",
+      "horse_no": 14,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 234,
+          "cy": 140,
+          "x_frac": 0.325,
+          "conf": 0.985,
+          "match_score": 1.0,
+          "ocr_text": "Lahore",
+          "band_label": "800M",
+          "y_in_band": 0.06
+        }
+      ],
+      "ocr_texts": [
+        "Lahore"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.06,
+      "avg_x_frac": 0.325,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "MABUBU",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 117,
+          "cy": 177,
+          "x_frac": 0.1625,
+          "conf": 0.991,
+          "match_score": 1.0,
+          "ocr_text": "Mabubu",
+          "band_label": "800M",
+          "y_in_band": 0.309
+        }
+      ],
+      "ocr_texts": [
+        "Mabubu"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.309,
+      "avg_x_frac": 0.163,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "RUBY THRIVE",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 255,
+          "cy": 19,
+          "x_frac": 0.3541666666666667,
+          "conf": 0.936,
+          "match_score": 1.0,
+          "ocr_text": "Ruby Thrive",
+          "band_label": "695",
+          "y_in_band": 0.074
+        },
+        {
+          "band_idx": 1,
+          "cx": 163,
+          "cy": 168,
+          "x_frac": 0.2263888888888889,
+          "conf": 0.932,
+          "match_score": 1.0,
+          "ocr_text": "Ruby Thrive",
+          "band_label": "800M",
+          "y_in_band": 0.248
+        }
+      ],
+      "ocr_texts": [
+        "Ruby Thrive",
+        "Ruby Thrive"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.161,
+      "avg_x_frac": 0.29,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "RUN RUN SUNRISE",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 272,
+          "cy": 217,
+          "x_frac": 0.3784722222222222,
+          "conf": 0.93,
+          "match_score": 0.966,
+          "ocr_text": "RunRun Sunrise",
+          "band_label": "800M",
+          "y_in_band": 0.577
+        },
+        {
+          "band_idx": 3,
+          "cx": 503,
+          "cy": 490,
+          "x_frac": 0.6996527777777778,
+          "conf": 0.932,
+          "match_score": 1.0,
+          "ocr_text": "Run Run Sunrise",
+          "band_label": "200M",
+          "y_in_band": 0.349
+        }
+      ],
+      "ocr_texts": [
+        "RunRun Sunrise",
+        "Run Run Sunrise"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.463,
+      "avg_x_frac": 0.539,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ZOUPER FELLOW",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 198,
+          "cy": 106,
+          "x_frac": 0.275,
+          "conf": 0.96,
+          "match_score": 0.87,
+          "ocr_text": "ZouperFell",
+          "band_label": "695",
+          "y_in_band": 0.793
+        },
+        {
+          "band_idx": 1,
+          "cx": 80,
+          "cy": 201,
+          "x_frac": 0.1111111111111111,
+          "conf": 0.929,
+          "match_score": 0.833,
+          "ocr_text": "ZouperFellc",
+          "band_label": "800M",
+          "y_in_band": 0.47
+        }
+      ],
+      "ocr_texts": [
+        "ZouperFell",
+        "ZouperFellc"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.631,
+      "avg_x_frac": 0.193,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 45,
+    "matched_horses": 11,
+    "field_size": 14,
+    "coverage": 0.786,
+    "parsed_at": "2026-05-28T10:35:30"
+  }
+}
