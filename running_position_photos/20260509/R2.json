@@ -1,0 +1,741 @@
+{
+  "date": "2026-05-09",
+  "race_number": 2,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "675",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ACA FAST",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 550,
+          "cy": 107,
+          "x_frac": 0.7638888888888888,
+          "conf": 0.935,
+          "match_score": 0.933,
+          "ocr_text": "AcaFast",
+          "band_label": "675",
+          "y_in_band": 0.802
+        },
+        {
+          "band_idx": 1,
+          "cx": 473,
+          "cy": 175,
+          "x_frac": 0.6576388888888889,
+          "conf": 0.955,
+          "match_score": 0.933,
+          "ocr_text": "AcaFast",
+          "band_label": "800M",
+          "y_in_band": 0.295
+        },
+        {
+          "band_idx": 2,
+          "cx": 512,
+          "cy": 324,
+          "x_frac": 0.7111111111111111,
+          "conf": 0.978,
+          "match_score": 0.933,
+          "ocr_text": "AcaFast",
+          "band_label": "400M",
+          "y_in_band": 0.293
+        },
+        {
+          "band_idx": 3,
+          "cx": 472,
+          "cy": 474,
+          "x_frac": 0.65625,
+          "conf": 0.991,
+          "match_score": 0.933,
+          "ocr_text": "AcaFast",
+          "band_label": "200M",
+          "y_in_band": 0.256
+        }
+      ],
+      "ocr_texts": [
+        "AcaFast",
+        "AcaFast",
+        "AcaFast",
+        "AcaFast"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.411,
+      "avg_x_frac": 0.697,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "BRIGHT DAY",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 364,
+          "cy": 275,
+          "x_frac": 0.5055555555555555,
+          "conf": 0.911,
+          "match_score": 0.9,
+          "ocr_text": "Bnight Day",
+          "band_label": "800M",
+          "y_in_band": 0.966
+        },
+        {
+          "band_idx": 3,
+          "cx": 315,
+          "cy": 570,
+          "x_frac": 0.4375,
+          "conf": 0.92,
+          "match_score": 0.9,
+          "ocr_text": "Bnight Day",
+          "band_label": "200M",
+          "y_in_band": 0.814
+        }
+      ],
+      "ocr_texts": [
+        "Bnight Day",
+        "Bnight Day"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.89,
+      "avg_x_frac": 0.472,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "EXTRAORDINARY GALL",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 428,
+          "cy": 131,
+          "x_frac": 0.5951388888888889,
+          "conf": 0.944,
+          "match_score": 1.0,
+          "ocr_text": "Extraordinary Gall",
+          "band_label": "800M",
+          "y_in_band": 0.0
+        },
+        {
+          "band_idx": 2,
+          "cx": 427,
+          "cy": 282,
+          "x_frac": 0.59375,
+          "conf": 0.954,
+          "match_score": 1.0,
+          "ocr_text": "Extraordinary Gall",
+          "band_label": "400M",
+          "y_in_band": 0.013
+        },
+        {
+          "band_idx": 2,
+          "cx": 501,
+          "cy": 427,
+          "x_frac": 0.6958333333333333,
+          "conf": 0.954,
+          "match_score": 1.0,
+          "ocr_text": "Extraordinary Gall",
+          "band_label": "400M",
+          "y_in_band": 0.98
+        },
+        {
+          "band_idx": 3,
+          "cx": 605,
+          "cy": 576,
+          "x_frac": 0.8409722222222222,
+          "conf": 0.959,
+          "match_score": 1.0,
+          "ocr_text": "Extraordinary Gall",
+          "band_label": "200M",
+          "y_in_band": 0.849
+        }
+      ],
+      "ocr_texts": [
+        "Extraordinary Gall",
+        "Extraordinary Gall",
+        "Extraordinary Gall",
+        "Extraordinary Gall"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.461,
+      "avg_x_frac": 0.681,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LIGHTNING ACE",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 267,
+          "cy": 106,
+          "x_frac": 0.37083333333333335,
+          "conf": 0.935,
+          "match_score": 1.0,
+          "ocr_text": "Lightning Ace",
+          "band_label": "675",
+          "y_in_band": 0.793
+        },
+        {
+          "band_idx": 1,
+          "cx": 269,
+          "cy": 243,
+          "x_frac": 0.3736111111111111,
+          "conf": 0.961,
+          "match_score": 1.0,
+          "ocr_text": "Lightning Ace",
+          "band_label": "800M",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 2,
+          "cx": 340,
+          "cy": 405,
+          "x_frac": 0.47256944444444443,
+          "conf": 0.956,
+          "match_score": 1.0,
+          "ocr_text": "Lightning Ace",
+          "band_label": "400M",
+          "y_in_band": 0.833
+        },
+        {
+          "band_idx": 3,
+          "cx": 433,
+          "cy": 564,
+          "x_frac": 0.6020833333333333,
+          "conf": 0.989,
+          "match_score": 1.0,
+          "ocr_text": "Lightning Ace",
+          "band_label": "200M",
+          "y_in_band": 0.779
+        }
+      ],
+      "ocr_texts": [
+        "Lightning Ace",
+        "Lightning Ace",
+        "Lightning Ace",
+        "Lightning Ace"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.789,
+      "avg_x_frac": 0.455,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MATZDEN",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 168,
+          "cy": 107,
+          "x_frac": 0.23333333333333334,
+          "conf": 0.967,
+          "match_score": 1.0,
+          "ocr_text": "Matzden",
+          "band_label": "675",
+          "y_in_band": 0.802
+        },
+        {
+          "band_idx": 1,
+          "cx": 199,
+          "cy": 243,
+          "x_frac": 0.27743055555555557,
+          "conf": 0.917,
+          "match_score": 0.857,
+          "ocr_text": "Matrden",
+          "band_label": "800M",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 2,
+          "cx": 239,
+          "cy": 404,
+          "x_frac": 0.3326388888888889,
+          "conf": 0.993,
+          "match_score": 1.0,
+          "ocr_text": "Matzden",
+          "band_label": "400M",
+          "y_in_band": 0.827
+        }
+      ],
+      "ocr_texts": [
+        "Matzden",
+        "Matrden",
+        "Matzden"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.794,
+      "avg_x_frac": 0.281,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NORTHERN FIRE BALL",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 108,
+          "cy": 106,
+          "x_frac": 0.15069444444444444,
+          "conf": 0.913,
+          "match_score": 1.0,
+          "ocr_text": "Northern Fire Ball",
+          "band_label": "675",
+          "y_in_band": 0.793
+        },
+        {
+          "band_idx": 1,
+          "cx": 98,
+          "cy": 174,
+          "x_frac": 0.1361111111111111,
+          "conf": 0.953,
+          "match_score": 0.971,
+          "ocr_text": "NorthernFire Ball",
+          "band_label": "800M",
+          "y_in_band": 0.289
+        },
+        {
+          "band_idx": 2,
+          "cx": 116,
+          "cy": 324,
+          "x_frac": 0.16111111111111112,
+          "conf": 0.914,
+          "match_score": 0.971,
+          "ocr_text": "NorthernFire Ball",
+          "band_label": "400M",
+          "y_in_band": 0.293
+        },
+        {
+          "band_idx": 3,
+          "cx": 124,
+          "cy": 538,
+          "x_frac": 0.17222222222222222,
+          "conf": 0.943,
+          "match_score": 0.882,
+          "ocr_text": "NorthemFire Ball",
+          "band_label": "200M",
+          "y_in_band": 0.628
+        }
+      ],
+      "ocr_texts": [
+        "Northern Fire Ball",
+        "NorthernFire Ball",
+        "NorthernFire Ball",
+        "NorthemFire Ball"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.501,
+      "avg_x_frac": 0.155,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "QUARTZ LEGEND",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 303,
+          "cy": 31,
+          "x_frac": 0.42083333333333334,
+          "conf": 0.924,
+          "match_score": 1.0,
+          "ocr_text": "Quartz Legend",
+          "band_label": "675",
+          "y_in_band": 0.174
+        },
+        {
+          "band_idx": 1,
+          "cx": 250,
+          "cy": 174,
+          "x_frac": 0.3472222222222222,
+          "conf": 0.933,
+          "match_score": 1.0,
+          "ocr_text": "Quartz Legend",
+          "band_label": "800M",
+          "y_in_band": 0.289
+        },
+        {
+          "band_idx": 2,
+          "cx": 307,
+          "cy": 323,
+          "x_frac": 0.42743055555555554,
+          "conf": 0.946,
+          "match_score": 1.0,
+          "ocr_text": "Quartz Legend",
+          "band_label": "400M",
+          "y_in_band": 0.287
+        },
+        {
+          "band_idx": 3,
+          "cx": 380,
+          "cy": 539,
+          "x_frac": 0.5284722222222222,
+          "conf": 0.922,
+          "match_score": 1.0,
+          "ocr_text": "Quartz Legend",
+          "band_label": "200M",
+          "y_in_band": 0.634
+        }
+      ],
+      "ocr_texts": [
+        "Quartz Legend",
+        "Quartz Legend",
+        "Quartz Legend",
+        "Quartz Legend"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.346,
+      "avg_x_frac": 0.431,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RUSSET GLOW",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 292,
+          "cy": 130,
+          "x_frac": 0.40555555555555556,
+          "conf": 0.908,
+          "match_score": 0.952,
+          "ocr_text": "RussetGlow",
+          "band_label": "675",
+          "y_in_band": 0.992
+        },
+        {
+          "band_idx": 2,
+          "cx": 513,
+          "cy": 403,
+          "x_frac": 0.7125,
+          "conf": 0.941,
+          "match_score": 1.0,
+          "ocr_text": "Russet Glow",
+          "band_label": "400M",
+          "y_in_band": 0.82
+        }
+      ],
+      "ocr_texts": [
+        "RussetGlow",
+        "Russet Glow"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.906,
+      "avg_x_frac": 0.559,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RYUI KOKOROE",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 414,
+          "cy": 31,
+          "x_frac": 0.575,
+          "conf": 0.954,
+          "match_score": 1.0,
+          "ocr_text": "Ryui Kokoroe",
+          "band_label": "675",
+          "y_in_band": 0.174
+        },
+        {
+          "band_idx": 1,
+          "cx": 326,
+          "cy": 245,
+          "x_frac": 0.4527777777777778,
+          "conf": 0.931,
+          "match_score": 1.0,
+          "ocr_text": "Ryui Kokoroe",
+          "band_label": "800M",
+          "y_in_band": 0.765
+        },
+        {
+          "band_idx": 2,
+          "cx": 390,
+          "cy": 403,
+          "x_frac": 0.5423611111111111,
+          "conf": 0.928,
+          "match_score": 1.0,
+          "ocr_text": "Ryui Kokoroe",
+          "band_label": "400M",
+          "y_in_band": 0.82
+        },
+        {
+          "band_idx": 3,
+          "cx": 495,
+          "cy": 566,
+          "x_frac": 0.6875,
+          "conf": 0.967,
+          "match_score": 1.0,
+          "ocr_text": "Ryui Kokoroe",
+          "band_label": "200M",
+          "y_in_band": 0.791
+        }
+      ],
+      "ocr_texts": [
+        "Ryui Kokoroe",
+        "Ryui Kokoroe",
+        "Ryui Kokoroe",
+        "Ryui Kokoroe"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.637,
+      "avg_x_frac": 0.564,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SPIRITED STEED",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 440,
+          "cy": 105,
+          "x_frac": 0.6111111111111112,
+          "conf": 0.957,
+          "match_score": 0.963,
+          "ocr_text": "SpiritedSteed",
+          "band_label": "675",
+          "y_in_band": 0.785
+        },
+        {
+          "band_idx": 1,
+          "cx": 405,
+          "cy": 243,
+          "x_frac": 0.5628472222222223,
+          "conf": 0.931,
+          "match_score": 1.0,
+          "ocr_text": "Spirited Steed",
+          "band_label": "800M",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 2,
+          "cx": 440,
+          "cy": 396,
+          "x_frac": 0.6118055555555556,
+          "conf": 0.865,
+          "match_score": 0.963,
+          "ocr_text": "Spirited Stee",
+          "band_label": "400M",
+          "y_in_band": 0.773
+        },
+        {
+          "band_idx": 3,
+          "cx": 465,
+          "cy": 539,
+          "x_frac": 0.646875,
+          "conf": 0.91,
+          "match_score": 0.846,
+          "ocr_text": "SpintedSteed",
+          "band_label": "200M",
+          "y_in_band": 0.634
+        }
+      ],
+      "ocr_texts": [
+        "SpiritedSteed",
+        "Spirited Steed",
+        "Spirited Stee",
+        "SpintedSteed"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.736,
+      "avg_x_frac": 0.608,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE COSMIC POWER",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 643,
+          "cy": 105,
+          "x_frac": 0.8930555555555556,
+          "conf": 0.977,
+          "match_score": 0.933,
+          "ocr_text": "TheCosmicPower",
+          "band_label": "675",
+          "y_in_band": 0.785
+        },
+        {
+          "band_idx": 1,
+          "cx": 576,
+          "cy": 175,
+          "x_frac": 0.8,
+          "conf": 0.953,
+          "match_score": 1.0,
+          "ocr_text": "The Cosmic Power",
+          "band_label": "800M",
+          "y_in_band": 0.295
+        },
+        {
+          "band_idx": 2,
+          "cx": 629,
+          "cy": 405,
+          "x_frac": 0.8743055555555556,
+          "conf": 0.983,
+          "match_score": 0.968,
+          "ocr_text": "The CosmicPower",
+          "band_label": "400M",
+          "y_in_band": 0.833
+        },
+        {
+          "band_idx": 3,
+          "cx": 677,
+          "cy": 556,
+          "x_frac": 0.940625,
+          "conf": 0.934,
+          "match_score": 0.968,
+          "ocr_text": "The CosmicPower",
+          "band_label": "200M",
+          "y_in_band": 0.733
+        }
+      ],
+      "ocr_texts": [
+        "TheCosmicPower",
+        "The Cosmic Power",
+        "The CosmicPower",
+        "The CosmicPower"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.661,
+      "avg_x_frac": 0.877,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WARRIORS DREAM",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 217,
+          "cy": 32,
+          "x_frac": 0.3017361111111111,
+          "conf": 0.89,
+          "match_score": 0.846,
+          "ocr_text": "WarnorsDream",
+          "band_label": "675",
+          "y_in_band": 0.182
+        },
+        {
+          "band_idx": 1,
+          "cx": 170,
+          "cy": 175,
+          "x_frac": 0.23680555555555555,
+          "conf": 0.973,
+          "match_score": 0.963,
+          "ocr_text": "WarriorsDream",
+          "band_label": "800M",
+          "y_in_band": 0.295
+        },
+        {
+          "band_idx": 2,
+          "cx": 226,
+          "cy": 385,
+          "x_frac": 0.3138888888888889,
+          "conf": 0.926,
+          "match_score": 0.8,
+          "ocr_text": "WamorsDream",
+          "band_label": "400M",
+          "y_in_band": 0.7
+        },
+        {
+          "band_idx": 3,
+          "cx": 292,
+          "cy": 540,
+          "x_frac": 0.40555555555555556,
+          "conf": 0.95,
+          "match_score": 1.0,
+          "ocr_text": "Warriors Dream",
+          "band_label": "200M",
+          "y_in_band": 0.64
+        }
+      ],
+      "ocr_texts": [
+        "WarnorsDream",
+        "WarriorsDream",
+        "WamorsDream",
+        "Warriors Dream"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.454,
+      "avg_x_frac": 0.314,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 96,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-05-28T08:11:51"
+  }
+}
