@@ -4566,6 +4566,25 @@ def page_race_day(selected):
     _bb_expire_stale(bb)
     bb_lookup = _bb_active_lookup(bb)
 
+    # ── Form-Screen lookup (auto-build) ───────────────────────────────────
+    fs_race_lookup_rd: dict = {}
+    if date_str and len(date_str) == 8:
+        date_iso_rd = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+        try:
+            screen_path_rd = BASE / "reports" / f"form_screen_{date_str}.json"
+            if not screen_path_rd.exists():
+                try:
+                    import agent_skills as _ask_local
+                    _ask_local.run_form_screener(date_iso_rd, rebuild=False)
+                except Exception:
+                    pass
+            if screen_path_rd.exists():
+                _fs_data = json.loads(screen_path_rd.read_text(encoding="utf-8"))
+                for _r in _fs_data.get("races", []):
+                    fs_race_lookup_rd[int(_r.get("race_no", 0))] = _r
+        except Exception:
+            pass
+
     et_races = data.get("races", [])
 
     # ── Load SARR data for same date ─────────────────────────────────────
@@ -4913,6 +4932,39 @@ def page_race_day(selected):
     # ── Render selected race ─────────────────────────────────────────────
     active_rn = st.session_state["rd_active_race"]
     if active_rn:
+        # Form-Screen shortlist callout (top-3 by evidence weight)
+        _fs_race = fs_race_lookup_rd.get(int(active_rn))
+        if _fs_race:
+            _sl = _fs_race.get("shortlist") or []
+            _sm = _fs_race.get("stable_mates") or []
+            if _sl:
+                _sl_html = []
+                for _i, _s in enumerate(_sl, 1):
+                    _rat = (_s.get("rationale") or "").replace("|", "·")
+                    _sl_html.append(
+                        f'<span style="background:rgba(34,197,94,0.15);color:#22c55e;'
+                        f'padding:3px 9px;border-radius:10px;font-size:0.85em;'
+                        f'font-weight:700;margin-right:6px">#{_i} {_s["horse"]}</span>'
+                        f'<span style="color:#94a3b8;font-size:0.78em;margin-right:10px">{_rat}</span>'
+                    )
+                _sm_html = ""
+                if _sm:
+                    _sm_txt = " &nbsp;|&nbsp; ".join(
+                        f'<b>{_t}</b>: {", ".join(_ns)}' for _t, _ns in _sm
+                    )
+                    _sm_html = (
+                        f'<div style="color:#a78bfa;font-size:0.78em;margin-top:4px">'
+                        f'Stable-mate watch: {_sm_txt}</div>'
+                    )
+                st.markdown(
+                    f'<div style="background:rgba(15,23,42,0.55);border-left:3px solid #22c55e;'
+                    f'padding:6px 12px;border-radius:6px;margin:4px 0 10px 0">'
+                    f'<div style="color:#e2e8f0;font-size:0.78em;font-weight:700;'
+                    f'letter-spacing:0.5px;margin-bottom:4px">🔍 FORM-SCREEN SHORTLIST</div>'
+                    f'{"".join(_sl_html)}{_sm_html}'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
         if use_sarr:
             sarr_race = next((r for r in sarr_races if r["race_number"] == active_rn), None)
             et_race = next((r for r in et_races if r["race_number"] == active_rn), None)
@@ -6296,42 +6348,6 @@ def page_model_comparison():
                             )
             except Exception as _e:
                 st.warning(f"Could not compute advantage: {_e}")
-
-
-# ── Framework Lab helpers (restored — originally added in 91676bc) ─────────
-@st.cache_data(ttl=300, show_spinner=False)
-def _fwlab_available_racecards() -> list[str]:
-    """Return ISO dates for which a racecard cache exists, newest first."""
-    out: list[str] = []
-    rc_dir = BASE / "cache"
-    if not rc_dir.exists():
-        return out
-    for fp in rc_dir.glob("racecard_*.json"):
-        try:
-            iso = fp.stem.replace("racecard_", "")
-            datetime.strptime(iso, "%Y-%m-%d")
-            out.append(iso)
-        except ValueError:
-            continue
-    return sorted(out, reverse=True)
-
-
-@st.cache_resource(show_spinner=False)
-def _fwlab_load_dataset():
-    """Cache the cleaned dataset across reruns (heavy DB read + parsing)."""
-    from frameworks.live_predict import load_dataset as _ld
-    return _ld()
-
-
-def _fwlab_run_predictions(date_iso: str, fit_window_days: int,
-                           use_live_odds: bool):
-    """Run the four frameworks against the chosen racecard."""
-    from frameworks.live_predict import predict_racecard, load_racecard
-    ds = _fwlab_load_dataset()
-    rc = load_racecard(date_iso)
-    return predict_racecard(date_iso, fit_window_days=fit_window_days,
-                            dataset=ds, racecard=rc,
-                            use_live_odds=use_live_odds)
 
 
 def page_framework_lab():
@@ -9156,11 +9172,8 @@ def page_live_feed():
     col_s1, col_s2, col_s3 = st.columns([2, 2, 4])
     with col_s1:
         scrape_date = f"{dstr[:4]}-{dstr[4:6]}-{dstr[6:]}"
-        if st.button("🔄 Scrape Results (Full)", key="live_scrape",
-                     help="Runs the full post-race pipeline: results JSON + DB "
-                          "scrape + incidents + photos + OCR + form-guide "
-                          "rebuild + commentary + backtest."):
-            _run_results_scraper(scrape_date, full=True)
+        if st.button("🔄 Scrape Results", key="live_scrape"):
+            _run_results_scraper(scrape_date)
             st.session_state["live_last_refresh"] = hkt_now().strftime("%H:%M:%S") + " HKT"
             st.rerun()
     with col_s2:
@@ -9411,6 +9424,30 @@ def page_form_guide():
     bb_lookup = _bb_active_lookup(bb)
     trial_index = _load_all_trial_horse_index()
 
+    # ── Form Screen (auto-build per meeting) ──────────────────────────────
+    fs_lookup: dict = {}      # (race_no, horse_name_upper) -> screen dict
+    fs_race_lookup: dict = {} # race_no -> race screen dict (shortlist, stable_mates)
+    try:
+        screen_path = Path(__file__).parent / "reports" / f"form_screen_{date_compact}.json"
+        if not screen_path.exists() and fg_cache:
+            with st.spinner(f"Building Form Screen for {date_iso}..."):
+                try:
+                    import agent_skills as _ask_local
+                    _ask_local.run_form_screener(date_iso, rebuild=False)
+                except Exception as exc:
+                    st.caption(f"Form Screen build failed: {exc}")
+        if screen_path.exists():
+            screen_data = json.loads(screen_path.read_text(encoding="utf-8"))
+            for r in screen_data.get("races", []):
+                rno = int(r.get("race_no", 0))
+                fs_race_lookup[rno] = r
+                for h in r.get("horses", []):
+                    nm = (h.get("horse_name") or "").strip().upper()
+                    if nm:
+                        fs_lookup[(rno, nm)] = h
+    except Exception as exc:
+        st.caption(f"Form Screen unavailable: {exc}")
+
     # Build / Rebuild form guide button
     if st.sidebar.button("Build Form Guide cache", key="fg_build_btn",
                          help=f"Runs build_form_guide.py {date_iso}"):
@@ -9551,6 +9588,40 @@ def page_form_guide():
         f'</div></div>',
         unsafe_allow_html=True,
     )
+
+    # ── Form-Screen shortlist callout ─────────────────────────────────────
+    fs_race = fs_race_lookup.get(rn)
+    if fs_race:
+        sl = fs_race.get("shortlist") or []
+        sm = fs_race.get("stable_mates") or []
+        if sl:
+            sl_html_parts = []
+            for i, s in enumerate(sl, 1):
+                rationale = (s.get("rationale") or "").replace("|", "·")
+                sl_html_parts.append(
+                    f'<span style="background:rgba(34,197,94,0.15);color:#22c55e;'
+                    f'padding:3px 9px;border-radius:10px;font-size:0.85em;'
+                    f'font-weight:700;margin-right:6px">#{i} {s["horse"]}</span>'
+                    f'<span style="color:#94a3b8;font-size:0.78em;margin-right:10px">{rationale}</span>'
+                )
+            sm_html = ""
+            if sm:
+                sm_txt = " &nbsp;|&nbsp; ".join(
+                    f'<b>{t}</b>: {", ".join(ns)}' for t, ns in sm
+                )
+                sm_html = (
+                    f'<div style="color:#a78bfa;font-size:0.78em;margin-top:4px">'
+                    f'Stable-mate watch: {sm_txt}</div>'
+                )
+            st.markdown(
+                f'<div style="background:rgba(15,23,42,0.55);border-left:3px solid #22c55e;'
+                f'padding:6px 12px;border-radius:6px;margin:-4px 0 10px 0">'
+                f'<div style="color:#e2e8f0;font-size:0.78em;font-weight:700;'
+                f'letter-spacing:0.5px;margin-bottom:4px">🔍 FORM-SCREEN SHORTLIST</div>'
+                f'{"".join(sl_html_parts)}{sm_html}'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
 
     # ── Get horse list — from form guide cache or racecard ───────────────
     if fg_cache:
@@ -9718,6 +9789,95 @@ def page_form_guide():
         trial_entries = trial_index.get(hname.strip().upper(), [])
         if trial_entries:
             st.markdown(_trial_compact_html(trial_entries), unsafe_allow_html=True)
+
+        # ── Form Screen panel (per-horse) ─────────────────────────────────
+        fs_horse = fs_lookup.get((rn, hname.strip().upper()))
+        if fs_horse:
+            status = fs_horse.get("status", "raced")
+            sub = fs_horse.get("sub_scores") or fs_horse.get("scores") or {}
+            extras = fs_horse.get("extras") or {}
+            h2h = fs_horse.get("head_to_head") or []
+            cond = sub.get("conditions_match", sub.get("conditions"))
+            coll = sub.get("collateral_strength", sub.get("collateral"))
+            status_chip = {
+                "raced": "",
+                "trial_only": '<span style="background:rgba(59,130,246,0.18);color:#60a5fa;'
+                              'padding:1px 7px;border-radius:8px;font-size:0.72em;'
+                              'font-weight:700;margin-left:6px">TRIAL-ONLY</span>',
+                "true_debutant": '<span style="background:rgba(239,68,68,0.18);color:#f87171;'
+                                 'padding:1px 7px;border-radius:8px;font-size:0.72em;'
+                                 'font-weight:700;margin-left:6px">TRUE DEBUTANT</span>',
+            }.get(status, "")
+
+            # Build extras chips
+            chip_parts = []
+            def _chip(label, val, col="#94a3b8"):
+                return (f'<span style="background:rgba(148,163,184,0.12);color:{col};'
+                        f'padding:1px 7px;border-radius:8px;font-size:0.72em;'
+                        f'font-weight:600;margin-right:4px">{label}: {val}</span>')
+            if extras.get("E1_gear_change"):
+                chip_parts.append(_chip("GEAR", extras["E1_gear_change"], "#fbbf24"))
+            ru = extras.get("E3_run_up")
+            if ru and ru not in {"in-form_cycle", "unknown"}:
+                chip_parts.append(_chip("RUN-UP", ru))
+            if extras.get("E4_trip_change"):
+                chip_parts.append(_chip("TRIP", extras["E4_trip_change"]))
+            if extras.get("E8_going_record"):
+                chip_parts.append(_chip("GOING", extras["E8_going_record"]))
+            if extras.get("E9_freshness"):
+                chip_parts.append(_chip("FRESH", extras["E9_freshness"]))
+            t7 = extras.get("E7_time_vs_class_par")
+            if isinstance(t7, dict) and t7.get("verdict"):
+                chip_parts.append(_chip("TIME_VS_PAR",
+                    f"{t7.get('delta_sec', 0):+.2f}s({t7['verdict']})"))
+
+            score_line = (
+                f'<span style="color:#cbd5e1;font-size:0.78em">'
+                f'cond=<b>{cond if cond is not None else "—"}</b> &nbsp;·&nbsp; '
+                f'coll=<b>{coll if coll is not None else "—"}</b></span>'
+            )
+            chips_html = "".join(chip_parts) if chip_parts else (
+                '<span style="color:#64748b;font-size:0.72em">(no notable extras)</span>'
+            )
+            st.markdown(
+                f'<div style="background:rgba(15,23,42,0.4);border-left:2px solid #60a5fa;'
+                f'padding:5px 10px;border-radius:5px;margin:4px 0 6px 0">'
+                f'<div style="font-size:0.78em;color:#60a5fa;font-weight:700;'
+                f'letter-spacing:0.5px;margin-bottom:3px">🔍 FORM SCREEN{status_chip}</div>'
+                f'<div style="margin-bottom:3px">{score_line}</div>'
+                f'<div>{chips_html}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+            # Top head-to-head swing (one-liner if any)
+            if h2h:
+                # find biggest absolute swing across all meetings
+                top_swing = None
+                for r_h in h2h:
+                    for m in r_h.get("meetings", []) or []:
+                        sw = m.get("swing_lbs")
+                        if sw is None:
+                            continue
+                        if top_swing is None or abs(sw) > abs(top_swing["swing"]):
+                            top_swing = {
+                                "rival": r_h.get("rival"),
+                                "swing": sw,
+                                "date": m.get("race_date"),
+                                "a_place": m.get("a_place"),
+                                "b_place": m.get("b_place"),
+                            }
+                if top_swing:
+                    col = "#22c55e" if top_swing["swing"] < 0 else "#f87171"
+                    st.markdown(
+                        f'<div style="font-size:0.74em;color:#94a3b8;margin:-2px 0 6px 4px">'
+                        f'H2H vs <b>{top_swing["rival"]}</b> ({top_swing["date"]}): '
+                        f'P{top_swing["a_place"]} vs P{top_swing["b_place"]} '
+                        f'&nbsp;·&nbsp; weight swing today: '
+                        f'<b style="color:{col}">{top_swing["swing"]:+.1f} lb</b>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
 
         if is_debutant:
             st.caption("*Debutant — no historical form*")
@@ -18825,6 +18985,176 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
 # agent_skills.py so there is one source of truth.
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _render_form_screener_tab(_ask):
+    """Form Screener tab — renders form_screen_<YYYYMMDD>.json."""
+    st.markdown("### Form Screener")
+    st.caption(
+        "Multi-pass manual-style form review: conditions match, collateral "
+        "form (via top5_next), head-to-head & weight-swing vs today's rivals, "
+        "plus extras (gear change, run-up pattern, trip change, going-specific "
+        "record, freshness band, time-vs-class-par, stable mates, auto-shortlist)."
+    )
+
+    c1, c2, c3 = st.columns([2, 1, 1])
+    with c1:
+        d = st.date_input("Meeting date", value=date.today(),
+                          key="askill_screen_date")
+    with c2:
+        rebuild = st.checkbox("Rebuild", value=False,
+                              key="askill_screen_rebuild",
+                              help="Recompute even if cached JSON exists.")
+    with c3:
+        run_btn = st.button("▶ Run / Load", type="primary",
+                            key="askill_screen_go",
+                            use_container_width=True)
+
+    if not run_btn:
+        st.info("Pick a date and click **Run / Load**.")
+        return
+
+    date_iso = d.isoformat()
+    with st.spinner("Screening every horse on the meeting…"):
+        try:
+            payload = _ask.run_form_screener(date_iso, rebuild=rebuild)
+        except FileNotFoundError as exc:
+            st.error(f"Missing prerequisite: {exc}")
+            return
+        except Exception as exc:
+            st.error(f"Screener crashed: {exc!r}")
+            return
+
+    if payload.get("_loaded_from_cache"):
+        st.success(f"Loaded cached screen for {date_iso}.")
+    else:
+        st.success(f"Generated fresh screen for {date_iso}.")
+
+    races = payload.get("races", [])
+    if not races:
+        st.warning("No races in payload — racecard probably empty.")
+        return
+
+    race_tabs = st.tabs([f"R{r['race_no']}" for r in races])
+    for race, rt in zip(races, race_tabs):
+        with rt:
+            st.markdown(
+                f"**Race {race['race_no']}** — {race.get('race_name','')} · "
+                f"{race.get('distance','?')}m · "
+                f"going **{race.get('going','?')}** · "
+                f"class **{race.get('race_class','?')}**"
+            )
+
+            # Shortlist
+            sl = race.get("shortlist") or []
+            if sl:
+                st.markdown("#### 🏅 Auto-shortlist (top-3 form score)")
+                for item in sl:
+                    st.markdown(
+                        f"- **{item['horse']}** — score {item['score']} · "
+                        f"`{item['rationale']}`"
+                    )
+
+            # Stable mates
+            sm = race.get("stable_mates") or []
+            if sm:
+                with st.expander(f"🏇 Stable-mate watch ({len(sm)} trainer(s))",
+                                 expanded=False):
+                    for trainer, names in sm:
+                        st.markdown(f"- **{trainer}** → {', '.join(names)}")
+
+            st.markdown("#### 🐴 Per-horse form review")
+            for h in race.get("horses", []):
+                _render_horse_expander(h)
+
+
+def _render_horse_expander(h: dict):
+    """One expander per horse — score cards + form lines + head-to-head."""
+    nm = h.get("horse_name", "?")
+    sc = h.get("scores", {}) or {}
+    label = (
+        f"#{h.get('horse_no','?')} {nm} "
+        f"(draw {h.get('draw','?')}, "
+        f"wt {h.get('actual_weight_today','?')}lb"
+        + (f" / claim −{h['claim']}" if h.get("claim") else "")
+        + f") — form_score {sc.get('form_score','-')}"
+    )
+    if h.get("blackbook"):
+        label += " · 📓 BB"
+    with st.expander(label, expanded=False):
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Form score", sc.get("form_score", "-"))
+        m2.metric("Conditions", sc.get("conditions", "-"))
+        m3.metric("Collateral", sc.get("collateral", "-"))
+        m4.metric("Draw band", h.get("draw_band", "-"))
+
+        ex = h.get("extras") or {}
+        chips = []
+        if ex.get("E1_gear_change"):
+            chips.append(f"🎽 {ex['E1_gear_change']}")
+        if ex.get("E3_run_up"):
+            chips.append(f"⏱ {ex['E3_run_up']}")
+        if ex.get("E4_trip_change"):
+            chips.append(f"📏 {ex['E4_trip_change']}")
+        if ex.get("E8_going_record"):
+            chips.append(f"☔ {ex['E8_going_record']}")
+        if ex.get("E9_freshness"):
+            chips.append(f"💤 {ex['E9_freshness']}")
+        if ex.get("E7_time_vs_class_par"):
+            t = ex["E7_time_vs_class_par"]
+            chips.append(f"🏁 Δpar {t['delta_sec']:+.2f}s")
+        if chips:
+            st.markdown(" · ".join(chips))
+
+        bb = h.get("blackbook")
+        if bb:
+            st.info(
+                f"**Blackbook** (`{bb.get('status','?')}`, "
+                f"confidence {bb.get('confidence','?')}): {bb.get('reasoning','')}"
+            )
+
+        # Form lines table
+        fls = h.get("form_lines") or []
+        if fls:
+            import pandas as _pd
+            df = _pd.DataFrame(fls)
+            keep = ["date", "race_no", "distance", "going", "track",
+                    "race_class", "place", "margin_lengths",
+                    "rating", "actual_weight", "draw",
+                    "conditions_match", "class_move_vs_today",
+                    "top5_next_score", "incident_tags"]
+            keep = [c for c in keep if c in df.columns]
+            st.markdown("**Form lines** (most recent first)")
+            st.dataframe(df[keep], use_container_width=True, hide_index=True)
+
+        # Head-to-head
+        h2h = h.get("head_to_head") or []
+        if h2h:
+            st.markdown("**Head-to-head vs today's rivals**")
+            for hh in h2h:
+                with st.container():
+                    st.markdown(
+                        f"vs **{hh['rival']}** (today wt "
+                        f"{hh.get('rival_actual_today','?')}lb)"
+                    )
+                    rows = []
+                    for m in hh.get("meetings", []):
+                        rows.append({
+                            "date": m.get("race_date"),
+                            "dist": m.get("distance"),
+                            "going": m.get("going"),
+                            "class": m.get("race_class"),
+                            f"{nm[:14]}_pos": m.get("a_place"),
+                            f"{hh['rival'][:14]}_pos": m.get("b_place"),
+                            "A_wt": m.get("a_weight"),
+                            "B_wt": m.get("b_weight"),
+                            "swing_lbs_today": m.get("swing_lbs"),
+                        })
+                    if rows:
+                        import pandas as _pd
+                        st.dataframe(_pd.DataFrame(rows),
+                                     use_container_width=True,
+                                     hide_index=True)
+
+
 def page_agent_skills():
     """Surface every repo-scoped agent skill as a one-click dashboard action."""
     import agent_skills as _ask
@@ -18980,6 +19310,10 @@ def page_agent_skills():
                 st.success(f"Proposed target: `{proposal['target_dir']}`")
                 st.code(proposal["proposal"], language="markdown")
                 st.caption(proposal["next_action"])
+
+    # ── 6. Form Screener ───────────────────────────────────────────────────
+    with tabs[5]:
+        _render_form_screener_tab(_ask)
 
     # ── Footer: links to underlying SKILL.md files ─────────────────────────
     st.markdown("---")
