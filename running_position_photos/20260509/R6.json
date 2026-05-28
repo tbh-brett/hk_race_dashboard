@@ -1,0 +1,795 @@
+{
+  "date": "2026-05-09",
+  "race_number": 6,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "679",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "BEST WORLD",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 374,
+          "cy": 32,
+          "x_frac": 0.5201388888888889,
+          "conf": 0.934,
+          "match_score": 1.0,
+          "ocr_text": "Best World",
+          "band_label": "679",
+          "y_in_band": 0.182
+        },
+        {
+          "band_idx": 2,
+          "cx": 245,
+          "cy": 319,
+          "x_frac": 0.3402777777777778,
+          "conf": 0.962,
+          "match_score": 0.947,
+          "ocr_text": "BestWorld",
+          "band_label": "400M",
+          "y_in_band": 0.26
+        },
+        {
+          "band_idx": 3,
+          "cx": 255,
+          "cy": 568,
+          "x_frac": 0.3548611111111111,
+          "conf": 0.952,
+          "match_score": 0.947,
+          "ocr_text": "BestWorld",
+          "band_label": "200M",
+          "y_in_band": 0.802
+        }
+      ],
+      "ocr_texts": [
+        "Best World",
+        "BestWorld",
+        "BestWorld"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.415,
+      "avg_x_frac": 0.405,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CELESTIAL STRIDER",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 572,
+          "cy": 31,
+          "x_frac": 0.7944444444444444,
+          "conf": 0.921,
+          "match_score": 0.909,
+          "ocr_text": "CelestialStnider",
+          "band_label": "679",
+          "y_in_band": 0.174
+        },
+        {
+          "band_idx": 1,
+          "cx": 503,
+          "cy": 176,
+          "x_frac": 0.6993055555555555,
+          "conf": 0.928,
+          "match_score": 1.0,
+          "ocr_text": "Celestial Strider",
+          "band_label": "800M",
+          "y_in_band": 0.302
+        },
+        {
+          "band_idx": 2,
+          "cx": 481,
+          "cy": 396,
+          "x_frac": 0.66875,
+          "conf": 0.935,
+          "match_score": 1.0,
+          "ocr_text": "Celestial Strider",
+          "band_label": "400M",
+          "y_in_band": 0.773
+        },
+        {
+          "band_idx": 3,
+          "cx": 637,
+          "cy": 543,
+          "x_frac": 0.8854166666666666,
+          "conf": 0.929,
+          "match_score": 1.0,
+          "ocr_text": "Celestial Strider",
+          "band_label": "200M",
+          "y_in_band": 0.657
+        }
+      ],
+      "ocr_texts": [
+        "CelestialStnider",
+        "Celestial Strider",
+        "Celestial Strider",
+        "Celestial Strider"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.477,
+      "avg_x_frac": 0.762,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CHEERFUL WONGCHOY",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 359,
+          "cy": 251,
+          "x_frac": 0.49930555555555556,
+          "conf": 0.937,
+          "match_score": 0.941,
+          "ocr_text": "Cheertul Wongchoy",
+          "band_label": "800M",
+          "y_in_band": 0.805
+        },
+        {
+          "band_idx": 2,
+          "cx": 361,
+          "cy": 418,
+          "x_frac": 0.5017361111111112,
+          "conf": 0.909,
+          "match_score": 0.941,
+          "ocr_text": "Cheerlul Wongchoy",
+          "band_label": "400M",
+          "y_in_band": 0.92
+        },
+        {
+          "band_idx": 3,
+          "cx": 499,
+          "cy": 590,
+          "x_frac": 0.6930555555555555,
+          "conf": 0.873,
+          "match_score": 0.97,
+          "ocr_text": "Cheerul Wongchoy",
+          "band_label": "200M",
+          "y_in_band": 0.93
+        }
+      ],
+      "ocr_texts": [
+        "Cheertul Wongchoy",
+        "Cheerlul Wongchoy",
+        "Cheerul Wongchoy"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.885,
+      "avg_x_frac": 0.565,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DECISION LINK",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 357,
+          "cy": 274,
+          "x_frac": 0.4965277777777778,
+          "conf": 0.987,
+          "match_score": 0.96,
+          "ocr_text": "DecisionLink",
+          "band_label": "800M",
+          "y_in_band": 0.96
+        },
+        {
+          "band_idx": 3,
+          "cx": 256,
+          "cy": 431,
+          "x_frac": 0.35625,
+          "conf": 0.948,
+          "match_score": 1.0,
+          "ocr_text": "Decision Link",
+          "band_label": "200M",
+          "y_in_band": 0.006
+        },
+        {
+          "band_idx": 3,
+          "cx": 275,
+          "cy": 589,
+          "x_frac": 0.38263888888888886,
+          "conf": 0.941,
+          "match_score": 1.0,
+          "ocr_text": "Decision Link",
+          "band_label": "200M",
+          "y_in_band": 0.924
+        }
+      ],
+      "ocr_texts": [
+        "DecisionLink",
+        "Decision Link",
+        "Decision Link"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.63,
+      "avg_x_frac": 0.412,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FLYING FORTUNE",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 246,
+          "cy": 130,
+          "x_frac": 0.3423611111111111,
+          "conf": 0.99,
+          "match_score": 0.963,
+          "ocr_text": "FlyingFortune",
+          "band_label": "679",
+          "y_in_band": 0.992
+        },
+        {
+          "band_idx": 1,
+          "cx": 409,
+          "cy": 278,
+          "x_frac": 0.5684027777777778,
+          "conf": 0.977,
+          "match_score": 0.963,
+          "ocr_text": "FlyingFortune",
+          "band_label": "800M",
+          "y_in_band": 0.987
+        },
+        {
+          "band_idx": 2,
+          "cx": 426,
+          "cy": 420,
+          "x_frac": 0.5927083333333333,
+          "conf": 0.961,
+          "match_score": 0.963,
+          "ocr_text": "FlyingFortune",
+          "band_label": "400M",
+          "y_in_band": 0.933
+        }
+      ],
+      "ocr_texts": [
+        "FlyingFortune",
+        "FlyingFortune",
+        "FlyingFortune"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.971,
+      "avg_x_frac": 0.501,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "INVICTUS",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 144,
+          "cy": 239,
+          "x_frac": 0.20069444444444445,
+          "conf": 0.975,
+          "match_score": 1.0,
+          "ocr_text": "Invictus",
+          "band_label": "800M",
+          "y_in_band": 0.725
+        },
+        {
+          "band_idx": 2,
+          "cx": 118,
+          "cy": 382,
+          "x_frac": 0.16458333333333333,
+          "conf": 0.975,
+          "match_score": 1.0,
+          "ocr_text": "Invictus",
+          "band_label": "400M",
+          "y_in_band": 0.68
+        }
+      ],
+      "ocr_texts": [
+        "Invictus",
+        "Invictus"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.703,
+      "avg_x_frac": 0.183,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "INVICTUS DRAGON",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 451,
+          "cy": 31,
+          "x_frac": 0.6270833333333333,
+          "conf": 0.963,
+          "match_score": 0.966,
+          "ocr_text": "InvictusDragon",
+          "band_label": "679",
+          "y_in_band": 0.174
+        },
+        {
+          "band_idx": 2,
+          "cx": 196,
+          "cy": 408,
+          "x_frac": 0.2725694444444444,
+          "conf": 0.974,
+          "match_score": 0.966,
+          "ocr_text": "InvictusDragon",
+          "band_label": "400M",
+          "y_in_band": 0.853
+        },
+        {
+          "band_idx": 3,
+          "cx": 128,
+          "cy": 562,
+          "x_frac": 0.17881944444444445,
+          "conf": 0.924,
+          "match_score": 0.966,
+          "ocr_text": "InvictusDragon",
+          "band_label": "200M",
+          "y_in_band": 0.767
+        }
+      ],
+      "ocr_texts": [
+        "InvictusDragon",
+        "InvictusDragon",
+        "InvictusDragon"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.598,
+      "avg_x_frac": 0.359,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LEATHER GOODS",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 450,
+          "cy": 100,
+          "x_frac": 0.625,
+          "conf": 0.955,
+          "match_score": 1.0,
+          "ocr_text": "Leather Goods",
+          "band_label": "679",
+          "y_in_band": 0.744
+        },
+        {
+          "band_idx": 1,
+          "cx": 556,
+          "cy": 252,
+          "x_frac": 0.7722222222222223,
+          "conf": 0.968,
+          "match_score": 1.0,
+          "ocr_text": "Leather Goods",
+          "band_label": "800M",
+          "y_in_band": 0.812
+        },
+        {
+          "band_idx": 2,
+          "cx": 603,
+          "cy": 399,
+          "x_frac": 0.8381944444444445,
+          "conf": 0.959,
+          "match_score": 1.0,
+          "ocr_text": "Leather Goods",
+          "band_label": "400M",
+          "y_in_band": 0.793
+        }
+      ],
+      "ocr_texts": [
+        "Leather Goods",
+        "Leather Goods",
+        "Leather Goods"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.783,
+      "avg_x_frac": 0.745,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LUCKY BID",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 2,
+          "cx": 342,
+          "cy": 395,
+          "x_frac": 0.4756944444444444,
+          "conf": 0.939,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Bid",
+          "band_label": "400M",
+          "y_in_band": 0.767
+        }
+      ],
+      "ocr_texts": [
+        "Lucky Bid"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.767,
+      "avg_x_frac": 0.476,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LUCKY MAN",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 198,
+          "cy": 30,
+          "x_frac": 0.275,
+          "conf": 0.942,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Man",
+          "band_label": "679",
+          "y_in_band": 0.165
+        },
+        {
+          "band_idx": 1,
+          "cx": 171,
+          "cy": 176,
+          "x_frac": 0.23819444444444443,
+          "conf": 0.955,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Man",
+          "band_label": "800M",
+          "y_in_band": 0.302
+        },
+        {
+          "band_idx": 2,
+          "cx": 186,
+          "cy": 318,
+          "x_frac": 0.2590277777777778,
+          "conf": 0.939,
+          "match_score": 1.0,
+          "ocr_text": "Lucky Man",
+          "band_label": "400M",
+          "y_in_band": 0.253
+        },
+        {
+          "band_idx": 3,
+          "cx": 190,
+          "cy": 552,
+          "x_frac": 0.2638888888888889,
+          "conf": 0.995,
+          "match_score": 0.941,
+          "ocr_text": "LuckyMan",
+          "band_label": "200M",
+          "y_in_band": 0.709
+        }
+      ],
+      "ocr_texts": [
+        "Lucky Man",
+        "Lucky Man",
+        "Lucky Man",
+        "LuckyMan"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.357,
+      "avg_x_frac": 0.259,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MONEY TYCOON",
+      "horse_no": 14,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 274,
+          "cy": 33,
+          "x_frac": 0.38055555555555554,
+          "conf": 0.93,
+          "match_score": 1.0,
+          "ocr_text": "Money Tycoon",
+          "band_label": "679",
+          "y_in_band": 0.19
+        },
+        {
+          "band_idx": 1,
+          "cx": 269,
+          "cy": 176,
+          "x_frac": 0.3736111111111111,
+          "conf": 0.931,
+          "match_score": 1.0,
+          "ocr_text": "Money Tycoon",
+          "band_label": "800M",
+          "y_in_band": 0.302
+        },
+        {
+          "band_idx": 2,
+          "cx": 307,
+          "cy": 323,
+          "x_frac": 0.4263888888888889,
+          "conf": 0.968,
+          "match_score": 1.0,
+          "ocr_text": "Money Tycoon",
+          "band_label": "400M",
+          "y_in_band": 0.287
+        },
+        {
+          "band_idx": 3,
+          "cx": 675,
+          "cy": 566,
+          "x_frac": 0.9385416666666667,
+          "conf": 0.907,
+          "match_score": 0.957,
+          "ocr_text": "MoneyTycoon",
+          "band_label": "200M",
+          "y_in_band": 0.791
+        }
+      ],
+      "ocr_texts": [
+        "Money Tycoon",
+        "Money Tycoon",
+        "Money Tycoon",
+        "MoneyTycoon"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.392,
+      "avg_x_frac": 0.53,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "STAR SATYR",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 210,
+          "cy": 98,
+          "x_frac": 0.2923611111111111,
+          "conf": 0.96,
+          "match_score": 0.889,
+          "ocr_text": "StarSaty",
+          "band_label": "679",
+          "y_in_band": 0.727
+        },
+        {
+          "band_idx": 1,
+          "cx": 203,
+          "cy": 241,
+          "x_frac": 0.28194444444444444,
+          "conf": 0.973,
+          "match_score": 0.947,
+          "ocr_text": "StarSatyr",
+          "band_label": "800M",
+          "y_in_band": 0.738
+        },
+        {
+          "band_idx": 2,
+          "cx": 183,
+          "cy": 386,
+          "x_frac": 0.25416666666666665,
+          "conf": 0.959,
+          "match_score": 0.947,
+          "ocr_text": "StarSatyr",
+          "band_label": "400M",
+          "y_in_band": 0.707
+        },
+        {
+          "band_idx": 3,
+          "cx": 247,
+          "cy": 545,
+          "x_frac": 0.34375,
+          "conf": 0.941,
+          "match_score": 0.889,
+          "ocr_text": "StarSaty",
+          "band_label": "200M",
+          "y_in_band": 0.669
+        }
+      ],
+      "ocr_texts": [
+        "StarSaty",
+        "StarSatyr",
+        "StarSatyr",
+        "StarSaty"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.71,
+      "avg_x_frac": 0.293,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SUPER DRAGON",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 298,
+          "cy": 122,
+          "x_frac": 0.41458333333333336,
+          "conf": 0.989,
+          "match_score": 0.957,
+          "ocr_text": "SuperDragon",
+          "band_label": "679",
+          "y_in_band": 0.926
+        },
+        {
+          "band_idx": 1,
+          "cx": 290,
+          "cy": 266,
+          "x_frac": 0.4027777777777778,
+          "conf": 0.974,
+          "match_score": 0.957,
+          "ocr_text": "SuperDragon",
+          "band_label": "800M",
+          "y_in_band": 0.906
+        },
+        {
+          "band_idx": 2,
+          "cx": 269,
+          "cy": 408,
+          "x_frac": 0.37395833333333334,
+          "conf": 0.954,
+          "match_score": 1.0,
+          "ocr_text": "Super Dragon",
+          "band_label": "400M",
+          "y_in_band": 0.853
+        },
+        {
+          "band_idx": 3,
+          "cx": 515,
+          "cy": 569,
+          "x_frac": 0.7159722222222222,
+          "conf": 0.927,
+          "match_score": 0.957,
+          "ocr_text": "SuperDragon",
+          "band_label": "200M",
+          "y_in_band": 0.808
+        }
+      ],
+      "ocr_texts": [
+        "SuperDragon",
+        "SuperDragon",
+        "Super Dragon",
+        "SuperDragon"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.873,
+      "avg_x_frac": 0.477,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE CONCENTRATION",
+      "horse_no": 13,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 107,
+          "cy": 32,
+          "x_frac": 0.14930555555555555,
+          "conf": 0.962,
+          "match_score": 1.0,
+          "ocr_text": "The Concentration",
+          "band_label": "679",
+          "y_in_band": 0.182
+        },
+        {
+          "band_idx": 1,
+          "cx": 106,
+          "cy": 176,
+          "x_frac": 0.14722222222222223,
+          "conf": 0.968,
+          "match_score": 1.0,
+          "ocr_text": "The Concentration",
+          "band_label": "800M",
+          "y_in_band": 0.302
+        },
+        {
+          "band_idx": 2,
+          "cx": 129,
+          "cy": 318,
+          "x_frac": 0.1795138888888889,
+          "conf": 0.93,
+          "match_score": 1.0,
+          "ocr_text": "The Concentration",
+          "band_label": "400M",
+          "y_in_band": 0.253
+        },
+        {
+          "band_idx": 3,
+          "cx": 305,
+          "cy": 472,
+          "x_frac": 0.4236111111111111,
+          "conf": 0.983,
+          "match_score": 1.0,
+          "ocr_text": "The Concentration",
+          "band_label": "200M",
+          "y_in_band": 0.244
+        }
+      ],
+      "ocr_texts": [
+        "The Concentration",
+        "The Concentration",
+        "The Concentration",
+        "The Concentration"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.245,
+      "avg_x_frac": 0.225,
+      "wide_frames": 0,
+      "rail_frames": 4,
+      "wide_all_way": false,
+      "rail_all_way": true
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 103,
+    "matched_horses": 14,
+    "field_size": 14,
+    "coverage": 1.0,
+    "parsed_at": "2026-05-28T08:11:56"
+  }
+}
