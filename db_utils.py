@@ -259,14 +259,34 @@ def append_results_to_db(results_path: Path,
             shutil.copy2(db_file, db_file.with_suffix(".xlsx.bak"))
         except Exception:
             pass
-    try:
-        shutil.copy2(tmp_out, db_file)
-        if verbose:
-            print(f"  [db] appended {len(new_df)} rows to {db_file.name} "
-                  f"(total: {len(combined)}).")
-    except PermissionError:
-        if verbose:
-            print(f"  [db] OneDrive lock — saved to {tmp_out} instead.")
+    # Retry the copy a few times — OneDrive can briefly lock the xlsx while
+    # it syncs the previous version. A silent failure here is exactly what
+    # leaves the master xlsx stale relative to sqlite (the symptom the user
+    # hit with the post-29-April scrape).
+    import time as _time
+    xlsx_status = "stale"
+    for _attempt in range(5):
+        try:
+            shutil.copy2(tmp_out, db_file)
+            if verbose:
+                print(f"  [db] appended {len(new_df)} rows to {db_file.name} "
+                      f"(total: {len(combined)}).")
+            xlsx_status = "ok"
+            break
+        except PermissionError:
+            if verbose:
+                print(f"  [db] xlsx locked (attempt {_attempt+1}/5) — retrying…")
+            _time.sleep(1.5)
+        except OSError as e:
+            if verbose:
+                print(f"  [db] xlsx copy failed: {e}")
+            xlsx_status = f"error: {e}"
+            break
+    if xlsx_status == "stale" and verbose:
+        print(f"  [db] WARN: xlsx still locked after 5 attempts — sqlite "
+              f"mirror IS up to date but {db_file.name} on disk is stale. "
+              f"Run rebuild_xlsx_from_sqlite() once the lock clears, or "
+              f"close any Excel windows holding the file.")
 
     # v4.7: also mirror full table to SQLite (hkjc.db). Drop-in replacement
     # for xlsx reads — no OneDrive lock, ~10x faster, queryable with SQL.
@@ -336,6 +356,63 @@ def rebuild_sqlite_from_xlsx(xlsx_path: Path = DB_FILE,
     """Bootstrap helper: rebuild hkjc.db from the master xlsx in one shot."""
     df = safe_read_excel(Path(xlsx_path))
     return write_sqlite(df, Path(sqlite_path))
+
+
+def rebuild_xlsx_from_sqlite(xlsx_path: Path = DB_FILE,
+                             sqlite_path: Path = SQLITE_FILE,
+                             *, verbose: bool = False) -> tuple[int, str]:
+    """Rebuild the master xlsx from the SQLite mirror.
+
+    SQLite is the runtime source of truth (Step 1 of the post-race pipeline
+    always keeps it current via ``append_results_to_db`` + ``write_sqlite``).
+    The xlsx, by contrast, lives under OneDrive and can silently fail to
+    update when OneDrive holds a sync lock — leaving the on-disk xlsx
+    (and any copy pushed to GitHub) stale relative to sqlite.
+
+    This helper regenerates the xlsx from sqlite via the OneDrive-safe
+    TEMP → copy pattern with 5x retry. Returns ``(rows_written, status)``.
+    Status is one of: ``"ok"``, ``"locked"`` (xlsx in TEMP, target locked),
+    or ``"error: <msg>"``.
+    """
+    import os
+    import time
+    sqlite_path = Path(sqlite_path)
+    xlsx_path = Path(xlsx_path)
+    if not sqlite_path.exists():
+        return (0, f"error: {sqlite_path} missing")
+    try:
+        with sqlite3.connect(str(sqlite_path)) as conn:
+            df = pd.read_sql_query(f"SELECT * FROM {SQLITE_TABLE}", conn)
+    except Exception as e:
+        return (0, f"error: sqlite read failed: {e}")
+    if df.empty:
+        return (0, "error: sqlite empty")
+    tmp_out = Path(tempfile.gettempdir()) / xlsx_path.name
+    try:
+        df.to_excel(tmp_out, index=False)
+    except Exception as e:
+        return (0, f"error: xlsx write to TEMP failed: {e}")
+    if xlsx_path.exists():
+        try:
+            shutil.copy2(xlsx_path, xlsx_path.with_suffix(".xlsx.bak"))
+        except Exception:
+            pass
+    for attempt in range(5):
+        try:
+            shutil.copy2(tmp_out, xlsx_path)
+            if verbose:
+                print(f"  [db] rebuilt {xlsx_path.name} from sqlite "
+                      f"({len(df)} rows).")
+            return (len(df), "ok")
+        except PermissionError:
+            if verbose:
+                print(f"  [db] xlsx locked (attempt {attempt+1}/5) — retrying…")
+            time.sleep(1.5)
+        except OSError as e:
+            return (len(df), f"error: {e}")
+    if verbose:
+        print(f"  [db] xlsx still locked after 5 attempts; left at {tmp_out}.")
+    return (len(df), "locked")
 
 
 def read_sqlite(query: str = f"SELECT * FROM {SQLITE_TABLE}",
