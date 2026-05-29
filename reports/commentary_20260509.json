@@ -1,7 +1,7 @@
 {
   "date": "2026-05-09",
   "venue": "ST",
-  "generated_at": "2026-05-10T04:16:50",
+  "generated_at": "2026-05-28T08:12:13",
   "n_races": 11,
   "races": [
     {
@@ -864,7 +864,7 @@
             "steadied"
           ],
           "polarity_score": 1,
-          "incident_text": "Over the concluding stages was steadied when crowded by STORM MIRROR which shifted out when being steadied to avoid CAP LINER."
+          "incident_text": "Near to 200 Metres was steadied when momentarily crowded by ALSONSO which shifted out. Over the concluding stages was steadied when crowded by STORM MIRROR which shifted out when being steadied to avoid CAP LINER."
         },
         {
           "horse_name": "COMET RADIANCE",
@@ -1040,7 +1040,7 @@
             "held_up"
           ],
           "polarity_score": 1,
-          "incident_text": "Over the final 150 Metres could not be ridden out when held up behind REAL GENTLEMAN."
+          "incident_text": "Had difficulty obtaining clear running between the 400 Metres and 300 Metres.  Over the final 150 Metres could not be ridden out when held up behind REAL GENTLEMAN."
         },
         {
           "horse_name": "BROWNNEEDSFURTHER",
@@ -2562,7 +2562,7 @@
       "distance": 1200,
       "race_class": "2",
       "going": "GY",
-      "narrative": "Race 11: SAI WAN SHAN HANDICAP — 1200m, Class 2, going GY. Early lead: Hot Delight, Lady'S Choice. Patch Of Stars (#4) won from midfield, defeating Crimson Flash by 1 with Public Attention third at SP 6.9. Forgive: Lady'S Choice (P7) wide no cover; Young Champion (P12) wide no cover.",
+      "narrative": "Race 11: SAI WAN SHAN HANDICAP — 1200m, Class 2, going GY. Early lead: Hot Delight, Lady'S Choice. Patch Of Stars (#4) won from midfield, defeating Crimson Flash by 1 with Public Attention third at SP 6.9. Veterinary: Bulb General (P6) — needs to pass vet exam before racing again. Forgive: Lady'S Choice (P7) wide no cover; Young Champion (P12) wide no cover.",
       "horses": [
         {
           "horse_name": "PATCH OF STARS",
@@ -2610,7 +2610,7 @@
             "bumped_mid"
           ],
           "polarity_score": 0,
-          "incident_text": "Shortly after the start was bumped by AKASHAVANI which shifted out."
+          "incident_text": "Shortly after the start was bumped by AKASHVANI which shifted out."
         },
         {
           "horse_name": "HOT DELIGHT",
@@ -2651,14 +2651,15 @@
           "running_position": "11 10 6",
           "draw": 4,
           "win_odds": "4.7",
-          "short": "Crowded",
+          "short": "Must pass veterinary exam before racing again",
           "tags": [
+            "vet_hold",
             "crowded",
             "shifted_in",
             "wide_all_way"
           ],
-          "polarity_score": 1,
-          "incident_text": "Jumped awkwardly and lost ground.  Shortly after the start was then steadied when crowded between PATCH OF STARS and YOUNG CHAMPION which shifted in."
+          "polarity_score": 0,
+          "incident_text": "Jumped awkwardly and lost ground.  Shortly after the start was then steadied when crowded between PATCH OF STARS and YOUNG CHAMPION which shifted in. <11/5/2026 Additional Veterinary Report> The Veterinary Officer reported that BULB GENERAL was lame in its right front leg on the morning after racing. Before being allowed to race again, BULB GENERAL will be subjected to an official veterinary examination."
         },
         {
           "horse_name": "LADY'S CHOICE",
@@ -2755,6 +2756,13 @@
         }
       ],
       "blackbook_suggestions": [
+        {
+          "horse_name": "BULB GENERAL",
+          "tag": "vet_hold",
+          "reason": "Must pass vet exam before racing again",
+          "polarity": "-",
+          "place": 6
+        },
         {
           "horse_name": "BULB GENERAL",
           "tag": "crowded",
