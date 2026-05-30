@@ -394,6 +394,8 @@ def build_meeting_slate(
     """
     cfg = MODE_TABLE[mode]
     is_uncapped = (mode == "uncapped")
+    # Accept both compact (YYYYMMDD) and dashed ISO (YYYY-MM-DD).
+    date_compact = str(date_compact).replace("-", "")
     items = build_meeting_tickets(date_compact, blackbook=blackbook,
                                    factor_tbls=factor_tbls)
     if not items:

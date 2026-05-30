@@ -150,6 +150,11 @@ def _load_json(path: Path) -> Optional[dict]:
 
 def load_meeting(date_compact: str) -> dict:
     """Returns {et, sarr, results, live_odds} — each may be None if unavailable."""
+    # Accept both compact (YYYYMMDD) and dashed ISO (YYYY-MM-DD) — report files
+    # are named with the compact form, so normalise defensively. Passing a
+    # dashed date here used to silently resolve to a non-existent path and
+    # return an empty meeting (root cause of "slate isn't working").
+    date_compact = str(date_compact).replace("-", "")
     et_path = REPORTS / f"race_day_report_{date_compact}_v4.4.json"
     if not et_path.exists():
         et_path = REPORTS / f"race_day_report_{date_compact}_v3.4.8.json"
@@ -1366,6 +1371,7 @@ def build_meeting_tickets(date_compact: str,
         hindsight ROI review), falling back to live odds.
       * ``"auto"``    — legacy behaviour: settled SP if present, else live.
     """
+    date_compact = str(date_compact).replace("-", "")
     if blackbook is None:
         blackbook = load_blackbook()
     if factor_tbls is None:

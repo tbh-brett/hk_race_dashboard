@@ -6616,6 +6616,41 @@ def page_model_comparison():
                 st.warning(f"Could not compute advantage: {_e}")
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def _fwlab_available_racecards() -> list[str]:
+    """Return ISO dates for which a racecard cache exists, newest first."""
+    out: list[str] = []
+    rc_dir = BASE / "cache"
+    if not rc_dir.exists():
+        return out
+    for fp in rc_dir.glob("racecard_*.json"):
+        try:
+            iso = fp.stem.replace("racecard_", "")
+            datetime.strptime(iso, "%Y-%m-%d")
+            out.append(iso)
+        except ValueError:
+            continue
+    return sorted(out, reverse=True)
+
+
+@st.cache_resource(show_spinner=False)
+def _fwlab_load_dataset():
+    """Cache the cleaned dataset across reruns (heavy DB read + parsing)."""
+    from frameworks.live_predict import load_dataset as _ld
+    return _ld()
+
+
+def _fwlab_run_predictions(date_iso: str, fit_window_days: int,
+                           use_live_odds: bool):
+    """Run the four frameworks against the chosen racecard."""
+    from frameworks.live_predict import predict_racecard, load_racecard
+    ds = _fwlab_load_dataset()
+    rc = load_racecard(date_iso)
+    return predict_racecard(date_iso, fit_window_days=fit_window_days,
+                            dataset=ds, racecard=rc,
+                            use_live_odds=use_live_odds)
+
+
 def page_framework_lab():
     st.markdown('<div class="page-title">Framework Lab</div>',
                 unsafe_allow_html=True)
@@ -16852,6 +16887,15 @@ def _render_strategy_slate_tab() -> None:
     summary = slate.get("summary", {}) or {}
     races = slate.get("races", []) or []
     allup_plans = slate.get("allup_plans", []) or []
+
+    if not races:
+        reason = summary.get("reason", "no eligible races")
+        st.warning(
+            f"No slate generated for **{sel_title}** ({date_str}) — {reason}. "
+            "This usually means the ET (v4.4) report for this meeting hasn't "
+            "been built yet. Run a Model Analysis for this date first."
+        )
+        return
 
     # Apply user's exposure cap (post-build, advisory only)
     cap_hkd = bankroll * total_cap_pct / 100.0
