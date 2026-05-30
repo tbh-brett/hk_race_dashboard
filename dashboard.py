@@ -3618,14 +3618,41 @@ def _load_form_screen(date_compact: str) -> dict | None:
     return _form_screen_cached(date_compact, mtime)
 
 
-def _top_h2h_pairs(fs_race: dict, top_n: int = 5) -> list[dict]:
-    """Aggregate the strongest head-to-head pairings among today's runners.
+def _h2h_recency_weight(date_str: str, today_str: str) -> float:
+    """Half-life weight: a meeting loses half its importance every ~12 months."""
+    from datetime import date as _date
+    try:
+        d = _date.fromisoformat(str(date_str)[:10])
+        t = _date.fromisoformat(str(today_str)[:10])
+        days = max((t - d).days, 0)
+    except Exception:
+        return 0.5
+    return 0.5 ** (days / 365.0)
+
+
+def _top_h2h_pairs(fs_race: dict, today_iso: str = "",
+                   top_n: int | None = None) -> list[dict]:
+    """Aggregate head-to-head pairings among today's runners, with full context.
 
     Each horse in the form-screen carries a `head_to_head` list of prior
     meetings vs other runners in THIS race. A-vs-B appears under both horses,
-    so we collapse to an unordered pair and tally who finished ahead.
-    Ranked by number of prior meetings, then recency.
+    so we collapse to an unordered pair, tally who finished ahead, and retain
+    each meeting's barrier gates + handicap weights so we can show what's
+    changed today. Pairs are ranked by *recency-weighted importance* (recent
+    clashes count for more than old ones); ``top_n=None`` returns all pairs.
     """
+    # Today's gates/weights per runner (for the "difference" context).
+    today_meta: dict[str, dict] = {}
+    for h in fs_race.get("horses", []) or []:
+        nm = str(h.get("horse_name", "")).strip().upper()
+        if nm:
+            today_meta[nm] = {
+                "draw": h.get("draw"),
+                "weight": (h.get("actual_weight_today")
+                           or h.get("declared_weight")),
+                "no": h.get("horse_no"),
+            }
+
     pairs: dict[frozenset, dict] = {}
     for h in fs_race.get("horses", []) or []:
         a = str(h.get("horse_name", "")).strip()
@@ -3639,8 +3666,10 @@ def _top_h2h_pairs(fs_race: dict, top_n: int = 5) -> list[dict]:
             rec = pairs.get(key)
             if rec is None:
                 rec = {"a": a, "b": b, "a_ahead": 0, "b_ahead": 0,
-                       "n": 0, "last_date": "", "last_desc": "", "_seen": set()}
+                       "n": 0, "last_date": "", "importance": 0.0,
+                       "meetings": [], "_seen": set()}
                 pairs[key] = rec
+            a_is_rec_a = (a == rec["a"])
             for m in blk.get("meetings", []) or []:
                 try:
                     ap = float(m.get("a_place"))
@@ -3649,33 +3678,128 @@ def _top_h2h_pairs(fs_race: dict, top_n: int = 5) -> list[dict]:
                     continue
                 # Same meeting appears under BOTH horses' h2h lists — dedupe
                 # by (date, race_number) so each meeting is counted once.
-                mkey = (str(m.get("race_date", ""))[:10], m.get("race_number"))
+                rd = str(m.get("race_date", ""))[:10]
+                mkey = (rd, m.get("race_number"))
                 if mkey in rec["_seen"]:
                     continue
                 rec["_seen"].add(mkey)
-                # 'a' in this block is horse `a`; orient counts to rec['a'].
-                a_is_rec_a = (a == rec["a"])
                 a_ahead = ap < bp
                 if a_ahead:
                     rec["a_ahead" if a_is_rec_a else "b_ahead"] += 1
                 else:
                     rec["b_ahead" if a_is_rec_a else "a_ahead"] += 1
                 rec["n"] += 1
-                rd = str(m.get("race_date", ""))[:10]
+                rec["importance"] += _h2h_recency_weight(rd, today_iso or rd)
                 if rd > rec["last_date"]:
                     rec["last_date"] = rd
-                    if a_is_rec_a:
-                        ra, rb = m.get("a_place"), m.get("b_place")
-                    else:
-                        ra, rb = m.get("b_place"), m.get("a_place")
-                    rec["last_desc"] = (
-                        f"{rd} · {int(m.get('distance') or 0)}m · "
-                        f"{rec['a']} {ra} vs {rec['b']} {rb}")
+                # Orient all meeting fields to rec['a'] / rec['b'].
+                if a_is_rec_a:
+                    om = {
+                        "a_place": m.get("a_place"), "b_place": m.get("b_place"),
+                        "a_draw": m.get("a_draw"), "b_draw": m.get("b_draw"),
+                        "a_weight": m.get("a_weight"), "b_weight": m.get("b_weight"),
+                    }
+                else:
+                    om = {
+                        "a_place": m.get("b_place"), "b_place": m.get("a_place"),
+                        "a_draw": m.get("b_draw"), "b_draw": m.get("a_draw"),
+                        "a_weight": m.get("b_weight"), "b_weight": m.get("a_weight"),
+                    }
+                om["date"] = rd
+                om["distance"] = m.get("distance")
+                om["going"] = m.get("going")
+                om["race_class"] = m.get("race_class")
+                rec["meetings"].append(om)
+
     out = [r for r in pairs.values() if r["n"] > 0]
     for r in out:
         r.pop("_seen", None)
-    out.sort(key=lambda r: (r["n"], r["last_date"]), reverse=True)
-    return out[:top_n]
+        r["meetings"].sort(key=lambda x: x.get("date", ""), reverse=True)
+        # Attach today's gates/weights for the difference context.
+        ta = today_meta.get(r["a"].upper(), {})
+        tb = today_meta.get(r["b"].upper(), {})
+        r["today_a_draw"] = ta.get("draw")
+        r["today_b_draw"] = tb.get("draw")
+        r["today_a_weight"] = ta.get("weight")
+        r["today_b_weight"] = tb.get("weight")
+    # Recency-weighted importance first, then raw meeting count, then recency.
+    out.sort(key=lambda r: (round(r["importance"], 3), r["n"], r["last_date"]),
+             reverse=True)
+    return out if top_n is None else out[:top_n]
+
+
+def _fmt_h2h_pair(p: dict) -> str:
+    """Render one head-to-head pair card: record + last clash gates/weights +
+    what's changed today (gate moves, weight swing)."""
+    def _i(v):
+        try:
+            return int(float(v))
+        except (TypeError, ValueError):
+            return None
+
+    a, b = p["a"].title(), p["b"].title()
+    if p["a_ahead"] == p["b_ahead"]:
+        lead = f'level {p["a_ahead"]}–{p["b_ahead"]}'
+        col = "#9ca3af"
+    else:
+        leader = a if p["a_ahead"] > p["b_ahead"] else b
+        hi, lo = max(p["a_ahead"], p["b_ahead"]), min(p["a_ahead"], p["b_ahead"])
+        lead = f'{leader} leads {hi}–{lo}'
+        col = "#22c55e"
+
+    meets = p.get("meetings", []) or []
+    last = meets[0] if meets else {}
+    # Last-clash context line: gates drawn + weights carried then.
+    ctx = ""
+    if last:
+        la_d, lb_d = _i(last.get("a_draw")), _i(last.get("b_draw"))
+        la_w, lb_w = _i(last.get("a_weight")), _i(last.get("b_weight"))
+        dist = _i(last.get("distance"))
+        going = str(last.get("going") or "").strip()
+        ap, bp = last.get("a_place"), last.get("b_place")
+        gpart_a = f'gate {la_d}' if la_d is not None else 'gate ?'
+        gpart_b = f'gate {lb_d}' if lb_d is not None else 'gate ?'
+        wpart_a = f'{la_w}lb' if la_w is not None else ''
+        wpart_b = f'{lb_w}lb' if lb_w is not None else ''
+        head = (f'{last.get("date","")} · {dist}m'
+                + (f' {going}' if going else ''))
+        ctx = (
+            f'<div style="font-size:0.72em;opacity:0.7;margin-top:2px">'
+            f'last: {head}<br>'
+            f'<b>{a}</b> {gpart_a} {wpart_a} → {ap} · '
+            f'<b>{b}</b> {gpart_b} {wpart_b} → {bp}</div>')
+
+        # "Difference today" line: gate moves + weight swing vs that clash.
+        diffs = []
+        ta_d, tb_d = _i(p.get("today_a_draw")), _i(p.get("today_b_draw"))
+        ta_w, tb_w = _i(p.get("today_a_weight")), _i(p.get("today_b_weight"))
+        if la_d is not None and ta_d is not None and ta_d != la_d:
+            diffs.append(f'{a.split()[0]} gate {la_d}→{ta_d}')
+        if lb_d is not None and tb_d is not None and tb_d != lb_d:
+            diffs.append(f'{b.split()[0]} gate {lb_d}→{tb_d}')
+        # Weight swing: change in the A−B weight gap (− = A better off today).
+        if None not in (la_w, lb_w, ta_w, tb_w):
+            prior_gap = la_w - lb_w
+            today_gap = ta_w - tb_w
+            swing = today_gap - prior_gap
+            if swing != 0:
+                better = a if swing < 0 else b
+                diffs.append(f'{abs(swing)}lb swing to {better.split()[0]}')
+        if diffs:
+            ctx += (f'<div style="font-size:0.72em;opacity:0.6;'
+                    f'color:#fbbf24;margin-top:1px">Δ today: '
+                    f'{" · ".join(diffs)}</div>')
+
+    return (
+        f'<div style="padding:4px 0;border-left:3px solid {col};'
+        f'padding-left:8px;margin-bottom:5px">'
+        f'<span style="font-weight:700">{a}</span>'
+        f' <span style="opacity:0.55">vs</span> '
+        f'<span style="font-weight:700">{b}</span>'
+        f' <span style="opacity:0.6;font-size:0.82em">'
+        f'· {p["n"]} mtg{"s" if p["n"] != 1 else ""}</span>'
+        f'<div style="font-size:0.78em;opacity:0.78">{lead}</div>'
+        f'{ctx}</div>')
 
 
 def _render_form_screen_panel(race: dict, date_compact: str) -> None:
@@ -3716,32 +3840,20 @@ def _render_form_screen_panel(race: dict, date_compact: str) -> None:
             st.caption("No standout shortlist for this race.")
 
     with c2:
-        st.markdown("**Top head-to-head (runners who've met)**")
-        pairs = _top_h2h_pairs(fs_race, top_n=5)
+        st.markdown("**Head-to-head (runners who've met)**")
+        pairs = _top_h2h_pairs(fs_race, today_iso=fs.get("date_iso", ""),
+                               top_n=None)
         if pairs:
-            for p in pairs:
-                if p["a_ahead"] == p["b_ahead"]:
-                    lead = (f'{p["a"].title()} & {p["b"].title()} level '
-                            f'{p["a_ahead"]}–{p["b_ahead"]}')
-                    col = "#9ca3af"
-                else:
-                    leader = p["a"] if p["a_ahead"] > p["b_ahead"] else p["b"]
-                    hi = max(p["a_ahead"], p["b_ahead"])
-                    lo = min(p["a_ahead"], p["b_ahead"])
-                    lead = f'{leader.title()} leads {hi}–{lo}'
-                    col = "#22c55e"
-                st.markdown(
-                    f'<div style="padding:3px 0;border-left:3px solid {col};'
-                    f'padding-left:8px;margin-bottom:3px">'
-                    f'<span style="font-weight:700">{p["a"].title()}</span>'
-                    f' <span style="opacity:0.55">vs</span> '
-                    f'<span style="font-weight:700">{p["b"].title()}</span>'
-                    f' <span style="opacity:0.6;font-size:0.82em">'
-                    f'· {p["n"]} mtg{"s" if p["n"] != 1 else ""}</span>'
-                    f'<div style="font-size:0.78em;opacity:0.75">{lead}</div>'
-                    f'<div style="font-size:0.72em;opacity:0.55">'
-                    f'last: {p["last_desc"]}</div>'
-                    f'</div>', unsafe_allow_html=True)
+            # "Important ones": recent clashes weighted highest. Show the most
+            # important inline; collapse the long tail into an expander.
+            INLINE = 6
+            for p in pairs[:INLINE]:
+                st.markdown(_fmt_h2h_pair(p), unsafe_allow_html=True)
+            if len(pairs) > INLINE:
+                with st.expander(f"➕ {len(pairs) - INLINE} more pairings",
+                                 expanded=False):
+                    for p in pairs[INLINE:]:
+                        st.markdown(_fmt_h2h_pair(p), unsafe_allow_html=True)
         else:
             st.caption("No prior meetings between today's runners.")
 
@@ -16913,6 +17025,69 @@ def _render_strategy_slate_tab() -> None:
     )
 
 
+def _mb_confluence_maps(date_compact: str) -> dict:
+    """Cross-engine agreement maps for Model Bets, keyed by (race_no, NAME).
+
+    Pulls the rating-cycle flags (horse_cycle) and the form-screen shortlist so
+    the bet table can show when independent systems back — or warn against —
+    the model's banker. Cheap; results are small dicts.
+    """
+    cycle_map: dict = {}
+    short_map: dict = {}
+    try:
+        from horse_cycle import load_or_build_card_cycle
+        payload = load_or_build_card_cycle(date_compact)
+        for h in (payload or {}).get("horses", []) or []:
+            rn = h.get("race_number")
+            nm = str(h.get("horse_name", "")).strip().upper()
+            if rn and nm:
+                cycle_map[(rn, nm)] = h.get("primary_flag")
+    except Exception:
+        pass
+    try:
+        fs = _load_form_screen(date_compact)
+        for r in (fs or {}).get("races", []) or []:
+            rn = r.get("race_no")
+            for item in r.get("shortlist", []) or []:
+                nm = str(item.get("horse", "")).strip().upper()
+                if rn and nm:
+                    short_map[(rn, nm)] = True
+    except Exception:
+        pass
+    return {"cycle": cycle_map, "short": short_map}
+
+
+def _mb_confluence_for(it: dict, conf_map: dict) -> dict:
+    """Agreement tags for a ticket's banker.
+
+    ``support`` = number of independent engines backing the banker;
+    ``fade`` = the rating-cycle flags the banker as overrated (caution).
+    """
+    t = it.get("ticket") or {}
+    b = t.get("banker") or {}
+    rn = it.get("race_number")
+    nm = str(b.get("horse_name", "")).strip().upper()
+    if not nm:
+        return {"tags": [], "support": 0, "fade": False}
+    tags: list[str] = []
+    support = 0
+    fade = False
+    flag = conf_map.get("cycle", {}).get((rn, nm))
+    if flag == "PRIMED":
+        tags.append("🌡️PRIMED"); support += 1
+    elif flag == "EARLY_DROPPER":
+        tags.append("🫒DROP"); support += 1
+    elif flag == "FADE_OVERRATED":
+        tags.append("🔴FADE"); fade = True
+    elif flag == "WATCH":
+        tags.append("🟡WATCH")
+    if conf_map.get("short", {}).get((rn, nm)):
+        tags.append("🔬form"); support += 1
+    if b.get("bb_match"):
+        tags.append("★BB"); support += 1
+    return {"tags": tags, "support": support, "fade": fade}
+
+
 def page_model_bets():
     """Filter-based betting recommendations + sustained performance tracker."""
     from betting_strategy import (build_meeting_tickets, log_meeting_picks,
@@ -16955,8 +17130,33 @@ def page_model_bets():
                     f"model {sel.get('model_version', '?')}"
                 )
 
+            oc1, oc2 = st.columns([2, 3])
+            with oc1:
+                odds_mode_label = st.radio(
+                    "Odds basis",
+                    ["Pre-race (live scraped)", "Review (settled SP)"],
+                    horizontal=True, key="mb_odds_mode",
+                    help=("Pre-race uses ONLY the live odds you scraped "
+                          "(cache/live_odds). Review borrows the final SP "
+                          "from the results file — that's hindsight, so only "
+                          "use it to audit ROI after the fact. This is why "
+                          "edges could appear 'before you scraped': a settled "
+                          "meeting already carries its SP in the results JSON."),
+                )
+            odds_mode = ("prerace" if odds_mode_label.startswith("Pre")
+                         else "review")
+            with oc2:
+                only_confluence = st.checkbox(
+                    "⭐ Only bets with model agreement (confluence)",
+                    value=False, key="mb_only_confluence",
+                    help=("Show only races where the rating-cycle engine "
+                          "and/or form-screen back the model's banker, and "
+                          "the cycle is NOT flagging it as overrated."),
+                )
+
             with st.spinner("Building tickets…"):
-                items = build_meeting_tickets(date_str)
+                items = build_meeting_tickets(date_str, odds_mode=odds_mode)
+            conf_map = _mb_confluence_maps(date_str)
 
             if log_clicked:
                 n = log_meeting_picks(date_str, sel.get("venue", ""), items)
@@ -16965,11 +17165,44 @@ def page_model_bets():
             if not items:
                 st.warning("No ET report loaded for this meeting.")
             else:
+                # Odds-provenance summary so the basis is never ambiguous.
+                src_counts: dict[str, int] = {}
+                for it in items:
+                    s = it.get("odds_source", "none")
+                    src_counts[s] = src_counts.get(s, 0) + 1
+                src_lbl = {"live": "🟢 live scraped",
+                           "settled_sp": "🟠 settled SP (hindsight)",
+                           "none": "⚪ no odds yet"}
+                st.caption(
+                    "Odds basis · " + " · ".join(
+                        f"{src_lbl.get(k, k)}: {v}" for k, v in
+                        sorted(src_counts.items())))
+                if odds_mode == "prerace" and src_counts.get("none"):
+                    st.info(
+                        f"{src_counts['none']} race(s) have no live odds "
+                        "scraped yet — their edge/value columns are blank "
+                        "until you scrape odds. Bankers/legs still rank on "
+                        "the model alone.")
+
+                # Apply optional confluence filter.
+                shown_items = items
+                if only_confluence:
+                    shown_items = [
+                        it for it in items
+                        if it["ticket"]["play"] != "SKIP"
+                        and _mb_confluence_for(it, conf_map)["support"] > 0
+                        and not _mb_confluence_for(it, conf_map)["fade"]
+                    ]
+                    if not shown_items:
+                        st.warning("No bets have supporting model agreement "
+                                   "for this meeting under the current filter.")
+
                 # Build display table
                 rows = []
-                for it in items:
+                for it in shown_items:
                     t = it["ticket"]
                     b = t.get("banker") or {}
+                    conf_sig = _mb_confluence_for(it, conf_map)
                     legs_str = ", ".join(
                         f"#{l['horse_no']} {l['horse_name']}"
                         for l in t.get("legs", [])
@@ -16991,12 +17224,18 @@ def page_model_bets():
                         markers.append("🛡️ hedge")
                     if t.get("f4"):
                         markers.append("⭐ F4")
+                    odds_badge = {"live": "🟢 live",
+                                  "settled_sp": "🟠 SP",
+                                  "none": "⚪ —"}.get(
+                                      it.get("odds_source", "none"), "—")
                     rows.append({
                         "R": it["race_number"],
                         "Class": str(it.get("race_class") or ""),
                         "Dist": it.get("distance"),
                         "Play": t["play"],
                         "Conf": t.get("confidence", "low"),
+                        "Signals": " ".join(conf_sig["tags"]) or "—",
+                        "Odds": odds_badge,
                         "Banker": banker_str,
                         "Legs": legs_str,
                         "Combos": t.get("n_combos", 0),
@@ -17029,10 +17268,17 @@ def page_model_bets():
                         "HKD min":   st.column_config.NumberColumn(format="$%.0f"),
                     },
                 )
+                st.caption(
+                    "**Signals** = cross-engine agreement on the banker · "
+                    "🌡️PRIMED / 🫒DROP = rating-cycle backs it · "
+                    "🔴FADE = cycle says overrated (caution) · "
+                    "🔬form = on the form-screen shortlist · ★BB = blackbook. "
+                    "**Odds**: 🟢 live scraped · 🟠 settled SP (hindsight) · ⚪ none yet."
+                )
 
                 # ── Overlays panel: Value / Hedge / F4 detail ───────────
                 overlays_rows = []
-                for it in items:
+                for it in shown_items:
                     t = it["ticket"]
                     rn = it["race_number"]
                     for ex in t.get("extras", []):

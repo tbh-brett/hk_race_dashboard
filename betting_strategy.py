@@ -1347,10 +1347,24 @@ def build_model_ticket(race: dict, rows: list[dict],
 
 def build_meeting_tickets(date_compact: str,
                             blackbook: Optional[dict] = None,
-                            factor_tbls: Optional[dict] = None) -> list[dict]:
+                            factor_tbls: Optional[dict] = None,
+                            odds_mode: str = "auto") -> list[dict]:
     """Build model tickets for every race on a meeting.
 
-    Returns a list of {race_number, race_class, distance, course, ticket, top_rows}.
+    Returns a list of {race_number, race_class, distance, course, ticket,
+    top_rows, odds_source}.
+
+    ``odds_mode`` controls which odds feed the edge/value logic — this matters
+    because a *settled* meeting carries the final SP inside its results JSON,
+    and using that pre-race is hindsight (the "odds appeared before I scraped"
+    surprise):
+
+      * ``"prerace"`` — use ONLY live odds we scraped (cache/live_odds/…).
+        If none exist for a race, edges are left blank rather than borrowing
+        the settled SP. This is the honest pre-race view.
+      * ``"review"``  — prefer settled SP from the results JSON (for
+        hindsight ROI review), falling back to live odds.
+      * ``"auto"``    — legacy behaviour: settled SP if present, else live.
     """
     if blackbook is None:
         blackbook = load_blackbook()
@@ -1372,14 +1386,34 @@ def build_meeting_tickets(date_compact: str,
         rn = race["race_number"]
         sarr_race = sarr_by_no.get(rn)
         res_race = res_by_no.get(rn)
+        # Resolve which odds to use + record the provenance.
+        settled = {}
         if res_race:
             rb = _results_race_by_no(res_race)
-            odds_by = {no: v["win_odds"] for no, v in rb.items()}
-        else:
-            odds_by = live.get(rn, {})
+            settled = {no: v["win_odds"] for no, v in rb.items()}
+        live_race = live.get(rn, {}) or {}
+
+        if odds_mode == "prerace":
+            odds_by = live_race
+            odds_source = "live" if live_race else "none"
+        elif odds_mode == "review":
+            if settled:
+                odds_by, odds_source = settled, "settled_sp"
+            elif live_race:
+                odds_by, odds_source = live_race, "live"
+            else:
+                odds_by, odds_source = {}, "none"
+        else:  # auto (legacy)
+            if settled:
+                odds_by, odds_source = settled, "settled_sp"
+            elif live_race:
+                odds_by, odds_source = live_race, "live"
+            else:
+                odds_by, odds_source = {}, "none"
+
         rows = score_race(race, sarr_race, factor_tbls, blackbook,
                            actual_odds_by_no=odds_by)
-        ticket = build_model_ticket(race, rows, live_odds=live.get(rn))
+        ticket = build_model_ticket(race, rows, live_odds=odds_by or None)
         out.append({
             "race_number": rn,
             "race_class": race.get("race_class"),
@@ -1387,6 +1421,7 @@ def build_meeting_tickets(date_compact: str,
             "course": race.get("race_course"),
             "ticket": ticket,
             "rows": rows,
+            "odds_source": odds_source,
         })
     return out
 
