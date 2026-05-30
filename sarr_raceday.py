@@ -439,8 +439,15 @@ def main():
 
     # ── Load historical DB ────────────────────────────────────────────
     print("  Loading historical DB...")
-    shutil.copy2(DB_SRC, DB_TMP)
-    db = pd.read_excel(DB_TMP)
+    try:
+        from db_utils import load_results_db
+        db = load_results_db()
+        if db.empty:
+            raise RuntimeError("empty results DB")
+    except Exception as _exc:
+        print(f"  (sqlite loader unavailable: {_exc}; reading xlsx)")
+        shutil.copy2(DB_SRC, DB_TMP)
+        db = pd.read_excel(DB_TMP)
     db["race_date"]  = pd.to_datetime(db["race_date"])
     db["_place"]     = db["place"].apply(safe_place)
     db["_ft"]        = db["finish_time_seconds"].apply(safe_float)

@@ -431,6 +431,91 @@ def read_sqlite(query: str = f"SELECT * FROM {SQLITE_TABLE}",
     return df
 
 
+def _coerce_excel_like(df: pd.DataFrame) -> pd.DataFrame:
+    """Make a sqlite-loaded frame dtype-match ``pd.read_excel``.
+
+    SQLite stores some numeric columns (notably ``draw``) as TEXT, so a
+    value reads back as the string ``"12.0"`` instead of the float ``12.0``
+    that ``read_excel`` infers. Downstream model code does ``int(draw)`` and
+    crashes on ``int("12.0")``. To keep ``load_results_db`` a true drop-in for
+    ``read_excel``, replicate pandas' Excel numeric inference: any object
+    column whose every non-null value parses as a number is converted to
+    numeric (float64 when nulls/fractions are present, int64 otherwise).
+    Genuinely textual columns (horse names, section times, running
+    positions, place codes like ``"PU"``) are left untouched.
+    """
+    for col in df.columns:
+        if df[col].dtype != object:
+            continue
+        nonnull = df[col].dropna()
+        if nonnull.empty:
+            continue
+        coerced = pd.to_numeric(nonnull, errors="coerce")
+        if coerced.isna().any():
+            continue  # at least one genuinely non-numeric value -> keep text
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+    return df
+
+
+def load_results_db(*, verbose: bool = False) -> pd.DataFrame:
+    """Fast loader for the full historical results table.
+
+    Prefers the sqlite mirror (``hkjc.db``, ~0.7 s) over the multi-MB
+    OneDrive xlsx (~27 s). The sqlite mirror is auto-rebuilt by
+    ``append_results_to_db`` on every results scrape, so it tracks the
+    xlsx automatically. The xlsx is only consulted when the mirror is
+    missing or staler than the xlsx, in which case it is also read via a
+    $TEMP copy to dodge OneDrive PermissionError / zip-lock issues.
+
+    Returns a DataFrame with ``race_date`` coerced to datetime. This is a
+    drop-in replacement for ``pd.read_excel(hkjc_results_updated.xlsx)``.
+    """
+    try:
+        xlsx_mtime = DB_FILE.stat().st_mtime if DB_FILE.exists() else 0.0
+    except OSError:
+        xlsx_mtime = 0.0
+    try:
+        sql_mtime = SQLITE_FILE.stat().st_mtime if SQLITE_FILE.exists() else 0.0
+    except OSError:
+        sql_mtime = 0.0
+
+    # Fast path: trust the sqlite mirror when it's at least as fresh as the
+    # xlsx (append_results_to_db writes both, so this is the common case).
+    if SQLITE_FILE.exists() and sql_mtime >= xlsx_mtime:
+        try:
+            df = read_sqlite()
+            if not df.empty:
+                df = _coerce_excel_like(df)
+                if verbose:
+                    print(f"  [db] loaded {len(df):,} rows from "
+                          f"{SQLITE_FILE.name} (sqlite mirror)")
+                return df
+        except Exception as exc:  # pragma: no cover - defensive
+            if verbose:
+                print(f"  [db] sqlite read failed ({exc}); falling back to xlsx")
+
+    # Slow path: xlsx via a $TEMP copy (OneDrive lock-safe).
+    if not DB_FILE.exists():
+        return pd.DataFrame()
+    target = DB_FILE
+    for attempt in range(2):
+        if attempt == 1:
+            target = Path(tempfile.gettempdir()) / DB_FILE.name
+            shutil.copy2(DB_FILE, target)
+        try:
+            df = pd.read_excel(target)
+            break
+        except (PermissionError, zipfile.BadZipFile):
+            if attempt == 0:
+                continue
+            raise
+    if "race_date" in df.columns:
+        df["race_date"] = pd.to_datetime(df["race_date"], errors="coerce")
+    if verbose:
+        print(f"  [db] loaded {len(df):,} rows from {DB_FILE.name} (xlsx)")
+    return df
+
+
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser(

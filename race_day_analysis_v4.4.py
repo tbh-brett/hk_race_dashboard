@@ -53,6 +53,36 @@ OUT_PDF  = BASE / "reports" / "race_day_report_20260415_v4.4_sec.pdf"
 OUT_TEXT = BASE / "reports" / "race_day_analysis_20260415_v4.4_sec.txt"
 DB_FILE  = _find_data_file("hkjc_results_updated.xlsx")
 
+
+def _load_results_fast() -> "pd.DataFrame":
+    """Load the historical results DB, preferring the sqlite mirror
+    (hkjc.db, ~0.7 s) over the multi-MB OneDrive xlsx (~27 s).
+
+    Falls back to ``pd.read_excel(DB_FILE)`` if db_utils / sqlite are
+    unavailable, so behaviour is unchanged when the mirror is missing.
+
+    The historical ``draw`` column is normalised to a nullable numeric:
+    the raw DB stores barriers inconsistently as ``"12"``, ``"12.0"`` and the
+    placeholder ``"---"``. Downstream model code does ``int(draw)`` which
+    raises ``ValueError`` on ``"12.0"`` / ``"---"`` — the cause of intermittent
+    ET failures. Coercing to float (``12.0``) keeps ``int(...)`` safe and turns
+    placeholders into ``NaN`` so the existing ``pd.notna`` guards skip them.
+    """
+    df = None
+    try:
+        from db_utils import load_results_db
+        df = load_results_db()
+        if df.empty:
+            df = None
+    except Exception:
+        df = None
+    if df is None:
+        df = pd.read_excel(DB_FILE)
+    if "draw" in df.columns:
+        df["draw"] = pd.to_numeric(df["draw"], errors="coerce")
+    return df
+
+
 MEETING_TITLE = "HAPPY VALLEY — WEDNESDAY, 15 APRIL 2026"
 MEETING_VENUE = "HV"
 
@@ -906,7 +936,7 @@ def load_references_v3():
     draw_off = pd.DataFrame()
     db_path = DB_FILE
     if db_path.exists():
-        db_raw = pd.read_excel(db_path)
+        db_raw = _load_results_fast()
         db_raw["draw_num"] = pd.to_numeric(db_raw["draw"], errors="coerce")
         db_raw = db_raw[db_raw["draw_num"].notna()
                         & db_raw["finish_time_seconds"].notna()
@@ -3678,19 +3708,7 @@ def generate_pdf(all_results, races, path):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 
-    # ── OneDrive-safe write: build the PDF into $TEMP first so a stale
-    #    OneDrive lock on the final path can't block reportlab indefinitely.
-    #    We then atomically replace the target. If the move fails (file
-    #    locked by Acrobat / OneDrive sync), retry a few times with a short
-    #    delay, then give up gracefully and leave the temp file as a fallback.
-    import os as _os
-    import shutil as _shutil
-    import tempfile as _tempfile
-    import time as _time
-    _tmp_dir = _os.environ.get("TEMP") or _tempfile.gettempdir()
-    _tmp_pdf = Path(_tmp_dir) / f"{path.stem}.tmp.{_os.getpid()}.pdf"
-
-    doc = SimpleDocTemplate(str(_tmp_pdf), pagesize=landscape(A4),
+    doc = SimpleDocTemplate(str(path), pagesize=landscape(A4),
                             leftMargin=12*mm, rightMargin=12*mm,
                             topMargin=14*mm, bottomMargin=14*mm)
     styles = getSampleStyleSheet()
@@ -4084,35 +4102,7 @@ def generate_pdf(all_results, races, path):
         story.append(PageBreak())
 
     doc.build(story)
-
-    # ── Atomic move temp → final path (OneDrive lock tolerant) ─────────
-    _moved = False
-    for _attempt in range(5):
-        try:
-            _shutil.move(str(_tmp_pdf), str(path))
-            _moved = True
-            break
-        except PermissionError as _pe:
-            print(f"  ⚠ PDF target locked (attempt {_attempt+1}/5): {_pe}")
-            _time.sleep(1.5)
-        except OSError as _oe:
-            print(f"  ⚠ PDF move failed (attempt {_attempt+1}/5): {_oe}")
-            _time.sleep(1.5)
-    if not _moved:
-        # Fallback: try a streaming copy + unlink, which sometimes works when
-        # rename() doesn't (cross-volume, OneDrive placeholder, etc.).
-        try:
-            _shutil.copyfile(str(_tmp_pdf), str(path))
-            try:
-                _os.unlink(str(_tmp_pdf))
-            except OSError:
-                pass
-            _moved = True
-        except Exception as _e:
-            print(f"  ✗ PDF could not be written to {path}: {_e}")
-            print(f"    Temp copy left at: {_tmp_pdf}")
-    if _moved:
-        print(f"  ✓ PDF saved: {path.name}")
+    print(f"  ✓ PDF saved: {path.name}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -4297,7 +4287,7 @@ def main():
     print(f"  Draw offsets: {len(draw_off)}")
 
     # v3.3: load historical DB for recency computation + final sectional
-    db = pd.read_excel(DB_FILE)
+    db = _load_results_fast()
     db["race_date"] = pd.to_datetime(db["race_date"], errors="coerce")
     print(f"  Historical DB: {len(db)} records loaded from {DB_FILE.name}")
 
