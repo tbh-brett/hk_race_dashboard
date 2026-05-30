@@ -1302,12 +1302,6 @@ def _gh_persist_postrace_outputs(date_str: str) -> tuple[int, int, list[str]]:
         # Form guide cache often gets lane data added during step 6.
         (BASE / "cache" / f"form_guide_{date_str}.json",
          f"cache/form_guide_{date_str}.json"),
-        # Master aggregate stores — keep GitHub up to date so users
-        # downloading the repo always get the latest results. Without this,
-        # the xlsx/db pushed at last manual commit drift further out of date
-        # with every cloud-run scrape.
-        (BASE / "hkjc_results_updated.xlsx", "hkjc_results_updated.xlsx"),
-        (BASE / "hkjc.db",                   "hkjc.db"),
     ]
     rp_dir = BASE / "running_position_photos" / dc
     if rp_dir.exists():
@@ -3606,6 +3600,197 @@ def _overview_find_today_meeting() -> dict | None:
     return meetings[0]  # fallback to most recent
 
 
+@st.cache_data(show_spinner=False, ttl=600)
+def _form_screen_cached(date_compact: str, _mtime: float) -> dict | None:
+    """Load reports/form_screen_<date>.json keyed on file mtime."""
+    p = REPORTS / f"form_screen_{date_compact}.json"
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _load_form_screen(date_compact: str) -> dict | None:
+    p = REPORTS / f"form_screen_{date_compact}.json"
+    mtime = p.stat().st_mtime if p.exists() else 0.0
+    return _form_screen_cached(date_compact, mtime)
+
+
+def _top_h2h_pairs(fs_race: dict, top_n: int = 5) -> list[dict]:
+    """Aggregate the strongest head-to-head pairings among today's runners.
+
+    Each horse in the form-screen carries a `head_to_head` list of prior
+    meetings vs other runners in THIS race. A-vs-B appears under both horses,
+    so we collapse to an unordered pair and tally who finished ahead.
+    Ranked by number of prior meetings, then recency.
+    """
+    pairs: dict[frozenset, dict] = {}
+    for h in fs_race.get("horses", []) or []:
+        a = str(h.get("horse_name", "")).strip()
+        if not a:
+            continue
+        for blk in h.get("head_to_head", []) or []:
+            b = str(blk.get("rival", "")).strip()
+            if not b:
+                continue
+            key = frozenset({a.upper(), b.upper()})
+            rec = pairs.get(key)
+            if rec is None:
+                rec = {"a": a, "b": b, "a_ahead": 0, "b_ahead": 0,
+                       "n": 0, "last_date": "", "last_desc": "", "_seen": set()}
+                pairs[key] = rec
+            for m in blk.get("meetings", []) or []:
+                try:
+                    ap = float(m.get("a_place"))
+                    bp = float(m.get("b_place"))
+                except (TypeError, ValueError):
+                    continue
+                # Same meeting appears under BOTH horses' h2h lists — dedupe
+                # by (date, race_number) so each meeting is counted once.
+                mkey = (str(m.get("race_date", ""))[:10], m.get("race_number"))
+                if mkey in rec["_seen"]:
+                    continue
+                rec["_seen"].add(mkey)
+                # 'a' in this block is horse `a`; orient counts to rec['a'].
+                a_is_rec_a = (a == rec["a"])
+                a_ahead = ap < bp
+                if a_ahead:
+                    rec["a_ahead" if a_is_rec_a else "b_ahead"] += 1
+                else:
+                    rec["b_ahead" if a_is_rec_a else "a_ahead"] += 1
+                rec["n"] += 1
+                rd = str(m.get("race_date", ""))[:10]
+                if rd > rec["last_date"]:
+                    rec["last_date"] = rd
+                    if a_is_rec_a:
+                        ra, rb = m.get("a_place"), m.get("b_place")
+                    else:
+                        ra, rb = m.get("b_place"), m.get("a_place")
+                    rec["last_desc"] = (
+                        f"{rd} · {int(m.get('distance') or 0)}m · "
+                        f"{rec['a']} {ra} vs {rec['b']} {rb}")
+    out = [r for r in pairs.values() if r["n"] > 0]
+    for r in out:
+        r.pop("_seen", None)
+    out.sort(key=lambda r: (r["n"], r["last_date"]), reverse=True)
+    return out[:top_n]
+
+
+def _render_form_screen_panel(race: dict, date_compact: str) -> None:
+    """Form-screen notable mentions + top-5 H2H encounters for this race."""
+    fs = _load_form_screen(date_compact)
+    if not fs:
+        return
+    rn = race.get("race_number")
+    fs_race = next((r for r in fs.get("races", [])
+                    if r.get("race_no") == rn), None)
+    if not fs_race:
+        return
+
+    st.markdown("#### 🔬 Form Screen")
+    c1, c2 = st.columns(2)
+
+    with c1:
+        st.markdown("**Notable mentions**")
+        shortlist = fs_race.get("shortlist", []) or []
+        horses = {str(h.get("horse_name", "")).upper(): h
+                  for h in fs_race.get("horses", []) or []}
+        if shortlist:
+            for item in shortlist[:5]:
+                hn = str(item.get("horse", "")).strip()
+                h = horses.get(hn.upper(), {})
+                no = h.get("horse_no", "?")
+                bb_chip = " ★" if h.get("blackbook") else ""
+                rationale = str(item.get("rationale", "")).strip()
+                st.markdown(
+                    f'<div style="padding:3px 0;border-left:3px solid #60a5fa;'
+                    f'padding-left:8px;margin-bottom:3px">'
+                    f'<span style="font-weight:700">{hn.title()}</span>'
+                    f' <span style="opacity:0.6;font-size:0.85em">(#{no})</span>'
+                    f'{bb_chip}'
+                    f'<div style="font-size:0.78em;opacity:0.7">{rationale}</div>'
+                    f'</div>', unsafe_allow_html=True)
+        else:
+            st.caption("No standout shortlist for this race.")
+
+    with c2:
+        st.markdown("**Top head-to-head (runners who've met)**")
+        pairs = _top_h2h_pairs(fs_race, top_n=5)
+        if pairs:
+            for p in pairs:
+                if p["a_ahead"] == p["b_ahead"]:
+                    lead = (f'{p["a"].title()} & {p["b"].title()} level '
+                            f'{p["a_ahead"]}–{p["b_ahead"]}')
+                    col = "#9ca3af"
+                else:
+                    leader = p["a"] if p["a_ahead"] > p["b_ahead"] else p["b"]
+                    hi = max(p["a_ahead"], p["b_ahead"])
+                    lo = min(p["a_ahead"], p["b_ahead"])
+                    lead = f'{leader.title()} leads {hi}–{lo}'
+                    col = "#22c55e"
+                st.markdown(
+                    f'<div style="padding:3px 0;border-left:3px solid {col};'
+                    f'padding-left:8px;margin-bottom:3px">'
+                    f'<span style="font-weight:700">{p["a"].title()}</span>'
+                    f' <span style="opacity:0.55">vs</span> '
+                    f'<span style="font-weight:700">{p["b"].title()}</span>'
+                    f' <span style="opacity:0.6;font-size:0.82em">'
+                    f'· {p["n"]} mtg{"s" if p["n"] != 1 else ""}</span>'
+                    f'<div style="font-size:0.78em;opacity:0.75">{lead}</div>'
+                    f'<div style="font-size:0.72em;opacity:0.55">'
+                    f'last: {p["last_desc"]}</div>'
+                    f'</div>', unsafe_allow_html=True)
+        else:
+            st.caption("No prior meetings between today's runners.")
+
+
+def _render_cycle_signals_for_race(race: dict, date_compact: str) -> None:
+    """Rating-cycle (class-dropper) signals for this race, from horse_cycle."""
+    try:
+        from horse_cycle import load_or_build_card_cycle
+        payload = load_or_build_card_cycle(date_compact)
+    except Exception:
+        return
+    if not payload:
+        return
+    rn = race.get("race_number")
+    rows = [h for h in payload.get("horses", [])
+            if h.get("race_number") == rn
+            and h.get("primary_flag") in ("PRIMED", "EARLY_DROPPER",
+                                          "WATCH", "FADE_OVERRATED")]
+    if not rows:
+        return
+    order = {"PRIMED": 0, "EARLY_DROPPER": 1, "WATCH": 2, "FADE_OVERRATED": 3}
+    rows.sort(key=lambda r: (order.get(r["primary_flag"], 9),
+                             r.get("combined_tier", "Z")))
+    flag_disp = {
+        "PRIMED": ("#22c55e", "🟢 PRIMED"),
+        "EARLY_DROPPER": ("#84cc16", "🫒 DROPPER"),
+        "WATCH": ("#f59e0b", "🟡 WATCH"),
+        "FADE_OVERRATED": ("#ef4444", "🔴 FADE"),
+    }
+    st.markdown("#### 🌡️ Rating-cycle signals")
+    for r in rows:
+        col, lbl = flag_disp.get(r["primary_flag"], ("#9ca3af", r["primary_flag"]))
+        tier = r.get("combined_tier", "")
+        tier_chip = (f'<span style="background:{col};color:#0b0b0b;'
+                     f'padding:0 6px;border-radius:6px;font-size:0.72em;'
+                     f'font-weight:800;margin-left:6px">Tier {tier}</span>'
+                     if tier else "")
+        st.markdown(
+            f'<div style="padding:3px 0;border-left:3px solid {col};'
+            f'padding-left:8px;margin-bottom:3px">'
+            f'<span style="color:{col};font-weight:800">{lbl}</span> '
+            f'<span style="font-weight:700">{str(r.get("horse_name","")).title()}</span>'
+            f' <span style="opacity:0.6;font-size:0.82em">'
+            f'· {r.get("trainer","")} · {r.get("stable_mode","")}</span>'
+            f'{tier_chip}'
+            f'<div style="font-size:0.78em;opacity:0.72">{r.get("note","")}</div>'
+            f'</div>', unsafe_allow_html=True)
+
+
 def _render_race_cockpit(race: dict, sarr_race: dict | None,
                          edges_for_race: list[dict],
                          bb_active: dict, trial_index: dict | None,
@@ -3945,6 +4130,21 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
     # ── Speed-map + pace research (always shown, no dropdown) ──────
     st.markdown("#### Speedmap + pace research")
     render_speed_map(race)
+
+    # ── Form Screen (notable mentions + top-5 H2H) ────────────────
+    try:
+        _date_compact2 = st.session_state.get("_rdi_date_compact", "")
+        if _date_compact2:
+            _render_form_screen_panel(race, _date_compact2)
+    except Exception as _fs_err:
+        st.caption(f"_Form Screen unavailable: {_fs_err}_")
+
+    # ── Rating-cycle / class-dropper signals ──────────────────────
+    try:
+        if _date_compact2:
+            _render_cycle_signals_for_race(race, _date_compact2)
+    except Exception as _cy_err:
+        st.caption(f"_Rating-cycle signals unavailable: {_cy_err}_")
 
     # Footer: cross-navigation
     st.caption("★ Blackbook &nbsp; 🏇 Recent trial &nbsp; ● Pace beneficiary "
@@ -6579,31 +6779,6 @@ def page_backtest():
             st.cache_data.clear()
             st.rerun()
 
-    # ── Recovery: rebuild master xlsx from sqlite ──────────────────
-    # sqlite is the runtime source of truth; xlsx can drift stale if
-    # OneDrive holds a sync lock during a scrape. This button regenerates
-    # the xlsx atomically (via $TEMP → copy, 5x retry).
-    if st.sidebar.button("[ Rebuild master xlsx from SQLite ]",
-                          width='stretch', key="btn_rebuild_xlsx",
-                          help="Regenerate hkjc_results_updated.xlsx from "
-                               "hkjc.db. Use if OneDrive locked the xlsx "
-                               "during a recent scrape (form guide works but "
-                               "downloaded xlsx is stale)."):
-        try:
-            from db_utils import rebuild_xlsx_from_sqlite as _rebuild_xlsx
-            with st.spinner("Rebuilding master xlsx from sqlite…"):
-                n_rows, status = _rebuild_xlsx(verbose=True)
-            if status == "ok":
-                st.sidebar.success(f"✓ Rebuilt: {n_rows:,} rows.")
-            elif status == "locked":
-                st.sidebar.warning(
-                    f"⚠ Still locked. Close Excel/OneDrive sync, then retry."
-                )
-            else:
-                st.sidebar.error(f"✗ {status}")
-        except Exception as _e:
-            st.sidebar.error(f"✗ Rebuild failed: {_e}")
-
     # Download scraped results as Excel
     _scrape_compact = scrape_date.isoformat().replace("-", "")
     _results_json = REPORTS / f"results_{_scrape_compact}.json"
@@ -7042,39 +7217,6 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
             with st.expander(f"{icon} {label} (exit {rc})", expanded=(rc != 0)):
                 st.code(tail or "(no output)")
 
-        # ── Safety net: rebuild master xlsx from sqlite ───────────────
-        # SQLite was just updated (Step 1 + DB safety-net + _merge_full_
-        # scrape_to_db). If OneDrive locked the xlsx during any of those
-        # writes, the on-disk xlsx is stale relative to sqlite. Rebuild
-        # from sqlite now so the xlsx (and any GitHub push below) always
-        # matches the data the dashboard is actually reading.
-        try:
-            from db_utils import rebuild_xlsx_from_sqlite as _rebuild_xlsx
-            n_rows, status = _rebuild_xlsx(verbose=False)
-            if status == "ok":
-                st.caption(f"📊 Master xlsx rebuilt from sqlite ({n_rows:,} rows).")
-            elif status == "locked":
-                st.warning(
-                    "⚠ Master xlsx is still locked by OneDrive/Excel — "
-                    "sqlite mirror is current, xlsx pending. Close any open "
-                    "Excel windows and click 'Rebuild master xlsx' in the "
-                    "sidebar."
-                )
-            else:
-                st.warning(f"⚠ Master xlsx rebuild: {status}")
-        except Exception as _e:
-            st.warning(f"⚠ Master xlsx rebuild skipped: {_e}")
-
-        # Invalidate Race Lookup's session-scoped autosync flag so its
-        # next page load picks up the newly-ingested meeting without
-        # requiring a manual session restart.
-        for _flag in ("_rl_autosync_done",):
-            st.session_state.pop(_flag, None)
-        try:
-            _lookup_load_df.clear()
-        except Exception:
-            pass
-
         # ── Persist post-race artifacts to GitHub on Streamlit Cloud ──
         if _is_streamlit_cloud():
             try:
@@ -7151,13 +7293,7 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
 
 
 def _merge_full_scrape_to_db(fresh_path: Path, date_str: str):
-    """Merge a full scrape Excel (hkjc_results.xlsx) into the main DB.
-
-    Updates BOTH the master xlsx and the SQLite mirror so downstream pages
-    (Form Guide, Race Lookup, build_form_guide.py) never see a stale store.
-    Retries the xlsx copy 5x on OneDrive PermissionError; if it still fails,
-    surfaces a visible warning (the previous behaviour was silent stale).
-    """
+    """Merge a full scrape Excel (hkjc_results.xlsx) into the main DB."""
     db_file = BASE / "hkjc_results_updated.xlsx"
     try:
         fresh = pd.read_excel(fresh_path)
@@ -7197,41 +7333,11 @@ def _merge_full_scrape_to_db(fresh_path: Path, date_str: str):
             shutil.copy2(db_file, bak)
         except Exception:
             pass
-
-    # Retry xlsx copy — OneDrive briefly locks the file while syncing.
-    import time as _time
-    xlsx_ok = False
-    last_err = ""
-    for _attempt in range(5):
-        try:
-            shutil.copy2(tmp_out, db_file)
-            xlsx_ok = True
-            break
-        except PermissionError as _pe:
-            last_err = str(_pe)
-            _time.sleep(1.5)
-        except OSError as _oe:
-            last_err = str(_oe)
-            break
-    if xlsx_ok:
-        st.success(f"Merged {len(fresh)} rows into {db_file.name} (total: {len(combined)})")
-    else:
-        st.warning(
-            f"⚠ OneDrive lock — could not update {db_file.name}: {last_err}. "
-            f"Fresh copy saved to {tmp_out}. SQLite mirror IS still being "
-            f"updated below; the dashboard reads sqlite, so analysis stays "
-            f"current. Close any Excel windows holding the file and click "
-            f"'Rebuild master xlsx from SQLite' in the sidebar to recover."
-        )
-
-    # Always mirror to SQLite — even if xlsx copy failed. SQLite is the
-    # runtime source of truth (Race Lookup, Form Guide, build_form_guide).
     try:
-        from db_utils import write_sqlite, SQLITE_FILE
-        n_sql = write_sqlite(combined, SQLITE_FILE)
-        st.caption(f"🗄  SQLite mirror updated: {n_sql:,} rows.")
-    except Exception as _e:
-        st.error(f"SQLite mirror update failed: {_e}")
+        shutil.copy2(tmp_out, db_file)
+        st.success(f"Merged {len(fresh)} rows into {db_file.name} (total: {len(combined)})")
+    except PermissionError:
+        st.warning(f"OneDrive lock — saved to {tmp_out}. Copy manually.")
 
 
 def _run_backtest_single(date_str: str):
@@ -11839,6 +11945,252 @@ def _horse_search(query: str, idx: dict, limit: int = 12) -> list[str]:
     return out
 
 
+@st.cache_data(show_spinner=False, ttl=900)
+def _horse_cycle_profile_cached(horse_name: str) -> dict | None:
+    """Cached wrapper around horse_cycle.compute_profile_cycle (by name)."""
+    try:
+        from horse_cycle import compute_profile_cycle
+        return compute_profile_cycle(horse_name=horse_name)
+    except Exception:
+        return None
+
+
+def _render_horse_cycle_panel(horse_name: str) -> None:
+    """Rating-cycle / class-dropper panel for the Horse Profile page.
+
+    Shows where the horse's current rating sits inside its own winning band
+    (a thermometer), its per-condition winning bands, and a plain-language
+    read on its cycle state (PRIMED / fading / approaching, etc.).
+    """
+    cyc = _horse_cycle_profile_cached(horse_name)
+    if not cyc:
+        return
+    cur = cyc.get("current_rating")
+    bmin, bmean, bmax = cyc.get("band_min"), cyc.get("band_mean"), cyc.get("band_max")
+    flag = cyc.get("primary_flag", "NO_DATA")
+    state = cyc.get("cycle_state", "unknown")
+
+    flag_style = {
+        "PRIMED":         ("#22c55e", "🟢 PRIMED — back in winning band"),
+        "EARLY_DROPPER":  ("#84cc16", "🫒 EARLY DROPPER — at band, freshly off a win"),
+        "WATCH":          ("#f59e0b", "🟡 WATCH — easing toward band"),
+        "FADE_OVERRATED": ("#ef4444", "🔴 FADE — at career-high after a win"),
+        "NEUTRAL":        ("#9ca3af", "⚪ NEUTRAL"),
+        "NO_DATA":        ("#6b7280", "· insufficient win history"),
+    }
+    col, label = flag_style.get(flag, ("#9ca3af", flag))
+
+    st.markdown("#### 🌡️ Rating Cycle")
+    top = st.columns([1.1, 1.6])
+    with top[0]:
+        st.markdown(
+            f'<div style="border-left:4px solid {col};padding:6px 12px;'
+            f'background:rgba(255,255,255,0.03);border-radius:6px">'
+            f'<div style="font-weight:800;color:{col};font-size:1.0em">{label}</div>'
+            f'<div style="opacity:0.8;font-size:0.85em;margin-top:3px">{cyc.get("note","")}</div>'
+            f'</div>', unsafe_allow_html=True)
+        rsw = cyc.get("runs_since_last_win")
+        st.caption(
+            f"Current rating **{cur:.0f}**" if cur is not None else "Current rating —"
+        )
+        st.caption(
+            f"Winning band **{bmin:.0f}–{bmax:.0f}** (mean {bmean:.0f}) · "
+            f"{cyc.get('n_wins',0)}W/{cyc.get('n_runs',0)}R · "
+            f"{rsw if rsw is not None else '—'} runs since last win"
+            if bmean is not None else "No rated wins on record."
+        )
+
+    with top[1]:
+        # Thermometer: current rating marker inside the band range (+/- margins)
+        if cur is not None and bmin is not None and bmax is not None:
+            lo = min(bmin, cur) - 3
+            hi = max(bmax, cur) + 3
+            span = max(1.0, hi - lo)
+            band_l = (bmin - lo) / span * 100
+            band_w = (bmax - bmin) / span * 100
+            cur_p = (cur - lo) / span * 100
+            st.markdown(
+                f'<div style="margin-top:24px;position:relative;height:34px">'
+                f'<div style="position:absolute;top:12px;left:0;right:0;height:10px;'
+                f'background:rgba(255,255,255,0.06);border-radius:5px"></div>'
+                f'<div style="position:absolute;top:12px;left:{band_l:.1f}%;'
+                f'width:{max(band_w,1.5):.1f}%;height:10px;background:rgba(34,197,94,0.45);'
+                f'border-radius:5px" title="Winning band"></div>'
+                f'<div style="position:absolute;top:6px;left:{cur_p:.1f}%;'
+                f'transform:translateX(-50%);width:3px;height:22px;background:{col}"></div>'
+                f'<div style="position:absolute;top:-6px;left:{cur_p:.1f}%;'
+                f'transform:translateX(-50%);font-size:0.72em;color:{col};'
+                f'font-weight:700;white-space:nowrap">now {cur:.0f}</div>'
+                f'<div style="position:absolute;bottom:-8px;left:{band_l:.1f}%;'
+                f'font-size:0.68em;opacity:0.6">{bmin:.0f}</div>'
+                f'<div style="position:absolute;bottom:-8px;left:{(band_l+band_w):.1f}%;'
+                f'transform:translateX(-100%);font-size:0.68em;opacity:0.6">{bmax:.0f}</div>'
+                f'</div>', unsafe_allow_html=True)
+
+    cond_bands = cyc.get("cond_bands") or []
+    if cond_bands:
+        with st.expander("Per-condition winning bands", expanded=False):
+            df = pd.DataFrame([{
+                "Venue": c["venue"], "Surface": c["surface"],
+                "Dist": f'{c["distance"]}m', "Wins": c["n_wins"],
+                "Band": f'{c["band_min"]:.0f}–{c["band_max"]:.0f}',
+                "Mean": f'{c["band_mean"]:.0f}',
+            } for c in cond_bands])
+            st.dataframe(df, hide_index=True, width='stretch')
+    st.divider()
+
+
+def page_fixtures():
+    """Fixture-targeting board — anticipate which horses are aimed where.
+
+    Renders a month-style calendar of upcoming fixtures with the number of
+    anticipated targets per day, plus per-fixture detail panels. The
+    anticipation is an inference from each horse's preferred conditions,
+    prep timing, and rating-cycle state — NOT an official declaration.
+    """
+    from datetime import datetime as _dt, timedelta as _td
+
+    st.markdown('<div class="page-title">Fixture Targeting</div>',
+                unsafe_allow_html=True)
+    st.markdown(
+        '<div class="page-subtitle">Where we anticipate horses are being '
+        'aimed &middot; inference, not official entries</div>',
+        unsafe_allow_html=True)
+
+    ctrl = st.columns([1, 1, 2])
+    with ctrl[0]:
+        weeks = st.slider("Weeks ahead", 2, 10, 6, key="fx_weeks")
+    with ctrl[1]:
+        rebuild = st.button("🔄 Rebuild", key="fx_rebuild")
+    with ctrl[2]:
+        only_signals = st.toggle(
+            "Cycle signals only (PRIMED / dropper / watch)",
+            value=True, key="fx_only_signals")
+
+    try:
+        import fixture_targeting as _ft
+        if rebuild:
+            payload = _ft.anticipate_targets(weeks=weeks)
+            out = REPORTS / "fixture_targets.json"
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(json.dumps(payload, indent=2, default=str),
+                           encoding="utf-8")
+        else:
+            payload = _ft.load_or_build_targets(weeks=weeks)
+    except Exception as e:
+        st.error(f"Fixture targeting failed: {e}")
+        return
+
+    fixtures = payload.get("fixtures", [])
+    by_date = payload.get("by_date", {})
+    if not fixtures:
+        st.info("No upcoming fixtures resolved.")
+        return
+
+    n_prov = sum(1 for f in fixtures if f.get("provisional"))
+    st.caption(
+        f"Data through **{payload.get('latest_data_date','?')}** · "
+        f"{len(fixtures)} fixtures · {len(payload.get('targets', []))} "
+        f"anticipated targets · generated {payload.get('generated_at','')[:16]}")
+    if n_prov:
+        st.warning(
+            f"⚠️ {n_prov} of {len(fixtures)} fixtures are **provisional** "
+            "(standard Wed-HV / Sun-ST cadence). Drop an authoritative "
+            "`data/fixtures.json` (list of `{date, venue, surface}`) to "
+            "override.")
+
+    # ── Calendar grid ─────────────────────────────────────────────
+    fx_by_date = {f["date"]: f for f in fixtures}
+    fdates = sorted(_dt.strptime(f["date"], "%Y-%m-%d").date() for f in fixtures)
+    start = fdates[0] - _td(days=fdates[0].weekday())          # Monday on/before
+    end = fdates[-1] + _td(days=(6 - fdates[-1].weekday()))    # Sunday on/after
+
+    st.markdown("#### 🗓️ Calendar")
+    hdr = st.columns(7)
+    for i, dn in enumerate(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):
+        hdr[i].markdown(
+            f"<div style='text-align:center;opacity:0.6;font-size:0.8em;"
+            f"font-weight:700'>{dn}</div>", unsafe_allow_html=True)
+
+    day = start
+    while day <= end:
+        wk = st.columns(7)
+        for i in range(7):
+            iso = day.isoformat()
+            fx = fx_by_date.get(iso)
+            with wk[i]:
+                if fx:
+                    venue = fx["venue"]
+                    vcol = "#60a5fa" if venue == "ST" else "#a78bfa"
+                    n_t = len(by_date.get(iso, []))
+                    n_sig = sum(1 for t in by_date.get(iso, [])
+                                if t.get("cycle_flag") in
+                                ("PRIMED", "EARLY_DROPPER", "WATCH"))
+                    prov = "·prov" if fx.get("provisional") else ""
+                    st.markdown(
+                        f"<div style='border:1px solid {vcol};border-radius:6px;"
+                        f"padding:4px 6px;min-height:62px;background:"
+                        f"rgba(96,165,250,0.06)'>"
+                        f"<div style='font-size:0.78em;opacity:0.7'>"
+                        f"{day.day}{prov}</div>"
+                        f"<div style='font-weight:800;color:{vcol}'>{venue}</div>"
+                        f"<div style='font-size:0.72em;opacity:0.8'>"
+                        f"{n_t} aimed · <b>{n_sig}</b> sig</div>"
+                        f"</div>", unsafe_allow_html=True)
+                else:
+                    faint = "0.25" if day.month == fdates[0].month else "0.12"
+                    st.markdown(
+                        f"<div style='padding:4px 6px;min-height:62px;'>"
+                        f"<div style='font-size:0.78em;opacity:{faint}'>"
+                        f"{day.day}</div></div>", unsafe_allow_html=True)
+            day += _td(days=1)
+
+    st.markdown("---")
+
+    # ── Per-fixture anticipated targets ───────────────────────────
+    st.markdown("#### Anticipated targets by fixture")
+    flag_disp = {
+        "PRIMED": ("#22c55e", "🟢 PRIMED"),
+        "EARLY_DROPPER": ("#84cc16", "🫒 DROPPER"),
+        "WATCH": ("#f59e0b", "🟡 WATCH"),
+        "FADE_OVERRATED": ("#ef4444", "🔴 FADE"),
+        "NEUTRAL": ("#9ca3af", "⚪"),
+        "NO_DATA": ("#6b7280", "·"),
+    }
+    for f in fixtures:
+        iso = f["date"]
+        items = by_date.get(iso, [])
+        if only_signals:
+            items = [t for t in items if t.get("cycle_flag") in
+                     ("PRIMED", "EARLY_DROPPER", "WATCH")]
+        if not items:
+            continue
+        venue = f["venue"]
+        vname = {"ST": "Sha Tin", "HV": "Happy Valley"}.get(venue, venue)
+        prov = " · provisional" if f.get("provisional") else ""
+        with st.expander(
+            f"{iso} — {vname} ({venue}){prov} · {len(items)} candidates",
+            expanded=False):
+            for t in items[:25]:
+                col, lbl = flag_disp.get(t.get("cycle_flag"), ("#9ca3af", ""))
+                rtg = t.get("current_rating")
+                rtg_s = f"R{rtg:.0f}" if rtg is not None else "R—"
+                st.markdown(
+                    f'<div style="padding:3px 0;border-left:3px solid {col};'
+                    f'padding-left:8px;margin-bottom:3px">'
+                    f'<span style="opacity:0.55;font-size:0.8em">'
+                    f'{t.get("score",0):.2f}</span> '
+                    f'<span style="font-weight:700">'
+                    f'{str(t.get("horse_name","")).title()}</span> '
+                    f'<span style="color:{col};font-size:0.78em;font-weight:700">'
+                    f'{lbl}</span>'
+                    f' <span style="opacity:0.6;font-size:0.82em">'
+                    f'· {t.get("trainer","")} · {rtg_s}</span>'
+                    f'<div style="font-size:0.76em;opacity:0.72">'
+                    f'{t.get("reason","")}</div>'
+                    f'</div>', unsafe_allow_html=True)
+
+
 def page_horse_profile():
     """Per-horse contextualised performance — pivot of master DB +
     reports + commentary into a single horse view. Top-level nav page."""
@@ -12059,6 +12411,9 @@ def page_horse_profile():
             + (f" — _{s.get('blackbook_note', '')}_"
                if s.get("blackbook_note") else "")
         )
+
+    # ── Rating-cycle / class-dropper panel ──────────────────
+    _render_horse_cycle_panel(pick)
 
     # Recurring excuses
     recs = s.get("recurring_excuses") or {}
@@ -19081,6 +19436,7 @@ def main():
         ("My Bets",        "💰 My Bets"),
         ("Blackbook",      "📓 Blackbook"),
         ("Trials",         "🎽 Trials"),
+        ("Fixtures",       "🗓️ Fixtures"),
         ("Model Lab",      "🧠 Model Lab"),
         ("PDF Builder",    "📄 PDF Builder"),
         ("Agent Skills",   "🤖 Agent Skills"),
@@ -19151,6 +19507,8 @@ def main():
         page_form_guide()
     elif page == "Trials":
         page_trials()
+    elif page == "Fixtures":
+        page_fixtures()
     elif page == "Model Lab":
         page_model_lab()
     elif page == "Backtest":
