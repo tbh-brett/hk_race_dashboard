@@ -524,6 +524,34 @@ st.markdown("""
         padding-bottom: 3px;
     }
     .page-subtitle { font-size: 0.8em; opacity: 0.5; margin-bottom: 14px; }
+
+    /* ══ RESPONSIVE / NARROW SCREENS (#18) ══ */
+    @media (max-width: 640px) {
+        /* Tighten the main content padding so tables get more room. */
+        .block-container {
+            padding-left: 0.6rem !important;
+            padding-right: 0.6rem !important;
+            padding-top: 2.6rem !important;
+        }
+        /* Shrink page chrome. */
+        .page-title { font-size: 1.0em !important; }
+        div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+            font-size: 1.15em !important;
+        }
+        div[data-testid="stMetric"] { padding: 7px 9px !important; }
+        /* Race-tab / R1…Rn button rows: compact so they don't overflow. */
+        div[data-testid="stHorizontalBlock"] .stButton > button {
+            padding: 2px 4px !important;
+            font-size: 0.78em !important;
+        }
+        /* Let dataframes scroll horizontally instead of squashing. */
+        [data-testid="stDataFrame"] { overflow-x: auto !important; }
+        /* Keep the sticky race-tab bar clear of the smaller mobile header. */
+        .element-container:has(#rd-tabbar-anchor)
+            + div[data-testid="stHorizontalBlock"] {
+            top: 2.4rem !important;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -2377,6 +2405,42 @@ _SARR_COL_HELP = {
 }
 
 
+# ── Shared glossary (cross-page) ──────────────────────────────────────────
+# Single source of truth for metric definitions surfaced as an expander on
+# the analysis pages so terminology stays consistent everywhere.
+GLOSSARY = {
+    "ESZ (Early Speed Z)": "Standardised early-speed rating. Negative = faster "
+        "away from the gate; ≥1.0 = very slow to begin. Strongest single signal.",
+    "SARR": "Composite speed/ability residual score. Negative = the horse "
+        "outperforms expectations (better).",
+    "FMRP": "Form Residual Performance — negative = recent form better than the "
+        "official rating implies.",
+    "LSA (Late Speed Advantage)": "Finishing-speed measure. Negative = strong "
+        "closer late in the race.",
+    "SSI (Sectional Speed Index)": "Consistency of sectional times. Negative = "
+        "reliably faster than the field.",
+    "Eff Resid (Effective Residual)": "Negative = the horse runs faster than its "
+        "rating would predict.",
+    "WPR% (Win/Place Rate)": "Historic strike rate — higher = more consistent.",
+    "Edge": "Model win probability minus market-implied probability (de-overround "
+        "live odds). Positive = potential value / overlay.",
+    "Traj (Trajectory)": "Form trend. Negative = improving.",
+    "Win%": "Estimated win probability. ≥20% is a strong pick.",
+    "Style": "Predicted running style (Lead / Prominent / Midfield / Closer).",
+    "BB": "Horse is in your Blackbook watch-list.",
+    "Vet": "Vet flag — RED concern, AMB monitor, INF informational.",
+    "Fin": "Actual finishing position after the race. 1 = gold, 2–3 = placed.",
+}
+
+
+def _render_glossary(key: str = "glossary") -> None:
+    """Drop-in collapsible glossary of model metrics for any page."""
+    with st.expander("ℹ️ Glossary — metric definitions", expanded=False):
+        st.markdown(
+            "\n".join(f"- **{term}** — {desc}" for term, desc in GLOSSARY.items())
+        )
+
+
 def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int = 4,
                      bb_lookup: dict | None = None, odds_lookup: dict | None = None,
                      result_lookup: dict | None = None):
@@ -2810,6 +2874,7 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
             return e
 
     with st.spinner(f"Running pipeline for {date_str}..."):
+        _pbar = st.progress(0, text="[1/3] Scraping race card…")
         # ── [1/3] Scrape race card ──────────────────────────────────
         if skip_scrape:
             st.info(f"[1/3] Scrape SKIPPED (using existing {racecard_xlsx.name})")
@@ -2835,6 +2900,7 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                     st.code((res.stdout or "")[-2500:])
 
         # ── [2/3] SARR model on the fresh card ─────────────────────
+        _pbar.progress(33, text="[2/3] Running SARR model…")
         if not sarr_script.exists():
             st.error(f"✗ [2/3] SARR script not found at {sarr_script}")
         else:
@@ -2860,6 +2926,7 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                         st.code((res.stderr or res.stdout or "")[-3000:])
 
         # ── [3/3] ET (v4.4) model — vet scrape + form-guide + analysis ──
+        _pbar.progress(66, text="[3/3] Running ET (v4.4) model…")
         # Always pass --skip-scrape (we just scraped) and --skip-sarr (step 2/3
         # already ran SARR). run_meeting.py handles vet + form-guide cache +
         # analysis-script generation.
@@ -2895,6 +2962,7 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                     st.code((res.stderr or res.stdout or "")[-3000:])
             with st.expander("ET pipeline output"):
                 st.code((res.stdout or "")[-4000:])
+        _pbar.progress(100, text="Pipeline complete ✓")
 
     # ── Post-pipeline hooks: persist mutual picks + pace_v2 ─────────
     # These derive canonical artifacts from the freshly-generated ET + SARR
@@ -4386,6 +4454,36 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
                "&nbsp; · &nbsp; Jump to full analysis on **Model Analysis** page.")
 
 
+def _set_meeting_ctx(date_iso: str, venue: str, n_races: int) -> None:
+    """Stash the active meeting for the cross-page context bar."""
+    st.session_state["_meeting_ctx"] = {
+        "date": date_iso or "",
+        "venue": str(venue or ""),
+        "n_races": int(n_races or 0),
+    }
+
+
+def _render_meeting_ctx_bar() -> None:
+    """Render a thin global context bar showing the active meeting."""
+    ctx = st.session_state.get("_meeting_ctx")
+    if not ctx or not ctx.get("date"):
+        return
+    venue = ctx.get("venue") or "—"
+    n = ctx.get("n_races") or 0
+    st.markdown(
+        '<div style="display:flex;gap:14px;align-items:center;font-size:0.82rem;'
+        'padding:4px 12px;margin:0 0 8px 0;border-radius:6px;'
+        'background:rgba(250,250,250,0.05);'
+        'border:1px solid rgba(250,250,250,0.10);color:#cbd5e1;">'
+        f'<span>📍 <b>{venue}</b></span>'
+        f'<span>🗓 {ctx["date"]}</span>'
+        f'<span>🏇 {n} races</span>'
+        '<span style="margin-left:auto;opacity:0.6;">active meeting</span>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def page_overview():
 
     st.markdown('<div class="page-title">Race Day Insight</div>', unsafe_allow_html=True)
@@ -4409,6 +4507,9 @@ def page_overview():
     st.session_state["_rdi_venue_code"] = _venue_to_code(
         data.get("meeting_venue", ""))
 
+    # Stash global meeting context (cross-page context bar).
+    _set_meeting_ctx(nice_date, data.get("meeting_venue", ""), len(races))
+
     # Load SARR data for this meeting
     sarr_data = load_sarr_data(dstr)
     sarr_races = sarr_data.get("races", []) if sarr_data else []
@@ -4431,6 +4532,8 @@ def page_overview():
     st.markdown(f"### {data.get('meeting_title', nice_date)}")
     if version:
         st.caption(f"Model {version}  ·  {len(races)} races")
+
+    _render_glossary(key="rdi_glossary")
 
     # ══════════════════════════════════════════════════════════════════
     # RACE-TIME COCKPIT — top-of-page, single-race focus
@@ -5002,6 +5105,12 @@ def page_race_day(selected):
     _date_match = re.search(r"(\d{8})", str(selected["file"]))
     date_str = _date_match.group(1) if _date_match else ""
     vet_lookup = _load_vet_lookup(date_str) if date_str else {}
+
+    # Stash global meeting context (cross-page context bar).
+    _ctx_iso = (f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+                if len(date_str) == 8 else date_str)
+    _set_meeting_ctx(_ctx_iso, data.get("meeting_venue", ""),
+                     len(data.get("races", [])))
 
     bb = _load_blackbook()
     _bb_expire_stale(bb)
@@ -20308,25 +20417,34 @@ def main():
         unsafe_allow_html=True,
     )
 
-    # ── Navigation ────────────────────────────────────────────────────────
-    NAV_ITEMS = [
-        ("Race Day Insight", "🏁 Race Day Insight"),
-        ("Betting",        "💡 Betting"),
-        ("Form Guide",     "📖 Form Guide"),
-        ("Model Analysis", "📊 Model Analysis"),
-        ("Data Analysis",  "🔬 Data Analysis"),
-        ("Race Lookup",    "🔎 Race Lookup"),
-        ("Framework Lab",  "🧪 Framework Lab"),
-        ("Results",        "🏆 Results"),
-        ("Live",           "📡 Live (Feed + Odds)"),
-        ("My Bets",        "💰 My Bets"),
-        ("Blackbook",      "📓 Blackbook"),
-        ("Trials",         "🎽 Trials"),
-        ("Fixtures",       "🗓️ Fixtures"),
-        ("Model Lab",      "🧠 Model Lab"),
-        ("PDF Builder",    "📄 PDF Builder"),
-        ("Agent Skills",   "🤖 Agent Skills"),
+    # ── Navigation (grouped by workflow stage) ─────────────────────────────
+    NAV_GROUPS = [
+        ("Pre-Race", [
+            ("Race Day Insight", "🏁 Race Day Insight"),
+            ("Form Guide",     "📖 Form Guide"),
+            ("Model Analysis", "📊 Model Analysis"),
+            ("Race Lookup",    "🔎 Race Lookup"),
+            ("Trials",         "🎽 Trials"),
+            ("Fixtures",       "🗓️ Fixtures"),
+        ]),
+        ("Betting", [
+            ("Betting",        "💡 Betting"),
+            ("My Bets",        "💰 My Bets"),
+            ("Blackbook",      "📓 Blackbook"),
+            ("Live",           "📡 Live (Feed + Odds)"),
+        ]),
+        ("Post-Race", [
+            ("Results",        "🏆 Results"),
+            ("Data Analysis",  "🔬 Data Analysis"),
+        ]),
+        ("Lab & Tools", [
+            ("Framework Lab",  "🧪 Framework Lab"),
+            ("Model Lab",      "🧠 Model Lab"),
+            ("PDF Builder",    "📄 PDF Builder"),
+            ("Agent Skills",   "🤖 Agent Skills"),
+        ]),
     ]
+    NAV_ITEMS = [item for _grp, _items in NAV_GROUPS for item in _items]
     if "nav_page" not in st.session_state:
         st.session_state["nav_page"] = "Race Day Insight"
     # Migrate old nav-keys if persisted
@@ -20339,18 +20457,26 @@ def main():
     if st.session_state["nav_page"] in ("Bet Optimizer", "Model Bets", "Multi Builder"):
         st.session_state["nav_page"] = "Betting"
 
-    for page_name, label in NAV_ITEMS:
-        is_active = st.session_state["nav_page"] == page_name
-        wrap_cls = "sb-active" if is_active else ""
-        st.sidebar.markdown(f'<div class="{wrap_cls}">', unsafe_allow_html=True)
-        if st.sidebar.button(label, key=f"nav_{page_name}", width='stretch'):
-            st.session_state["nav_page"] = page_name
-            st.rerun()
-        st.sidebar.markdown('</div>', unsafe_allow_html=True)
+    for _grp_name, _grp_items in NAV_GROUPS:
+        st.sidebar.markdown(
+            f'<div class="sb-nav-section">{_grp_name}</div>',
+            unsafe_allow_html=True,
+        )
+        for page_name, label in _grp_items:
+            is_active = st.session_state["nav_page"] == page_name
+            wrap_cls = "sb-active" if is_active else ""
+            st.sidebar.markdown(f'<div class="{wrap_cls}">', unsafe_allow_html=True)
+            if st.sidebar.button(label, key=f"nav_{page_name}", width='stretch'):
+                st.session_state["nav_page"] = page_name
+                st.rerun()
+            st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
     st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
 
     page = st.session_state["nav_page"]
+
+    # Global meeting context bar (shows the active meeting on every page).
+    _render_meeting_ctx_bar()
 
     if page == "Race Day Insight":
         page_overview()
