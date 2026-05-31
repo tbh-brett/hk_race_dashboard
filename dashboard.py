@@ -4463,6 +4463,183 @@ def _set_meeting_ctx(date_iso: str, venue: str, n_races: int) -> None:
     }
 
 
+# ── Scratching / reserve-promotion tracking (#1) ──────────────────────────
+# We snapshot the active field each time a meeting is loaded with a changed
+# line-up, then diff the two most recent snapshots so a late scratching or a
+# promoted reserve can be flagged on the readiness strip.
+_RACECARD_SNAP_DIR = BASE / "cache" / "racecard_snapshots"
+
+
+def _field_signature(races: list) -> dict:
+    """Build a per-race {active:[no], standby:[no], names:{no:name}} map."""
+    field = {}
+    for r in races or []:
+        rn = r.get("race_number")
+        if rn is None:
+            continue
+        active, standby, names = [], [], {}
+        for p in r.get("picks", []) or []:
+            hno = p.get("horse_no")
+            if hno is None:
+                continue
+            try:
+                hno = int(hno)
+            except (TypeError, ValueError):
+                continue
+            names[hno] = p.get("horse_name", "")
+            if p.get("is_standby"):
+                standby.append(hno)
+            else:
+                active.append(hno)
+        field[str(rn)] = {
+            "active": sorted(active),
+            "standby": sorted(standby),
+            "names": names,
+        }
+    return field
+
+
+def _snapshot_racecard_field(date_compact: str, races: list) -> None:
+    """Append a field snapshot for `date_compact` when the line-up changes."""
+    if not date_compact or not races:
+        return
+    try:
+        field = _field_signature(races)
+        if not field:
+            return
+        _RACECARD_SNAP_DIR.mkdir(parents=True, exist_ok=True)
+        snap_fp = _RACECARD_SNAP_DIR / f"{date_compact}.json"
+        snaps = []
+        if snap_fp.exists():
+            try:
+                snaps = json.loads(snap_fp.read_text(encoding="utf-8"))
+            except Exception:
+                snaps = []
+        # Only append if the active/standby signature changed from the last.
+        def _sig(f):
+            return {k: (v["active"], v["standby"]) for k, v in f.items()}
+        if snaps and _sig(snaps[-1].get("field", {})) == _sig(field):
+            return
+        snaps.append({"ts": hkt_now().isoformat(timespec="seconds"),
+                      "field": field})
+        snaps = snaps[-10:]  # keep the last 10 versions
+        snap_fp.write_text(json.dumps(snaps, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _detect_field_changes(date_compact: str) -> dict | None:
+    """Diff the two most recent field snapshots for a meeting.
+
+    Returns ``{scratched, promoted, since}`` (lists of "R<n> #<no> <name>")
+    or ``None`` when there is nothing to report.
+    """
+    if not date_compact:
+        return None
+    snap_fp = _RACECARD_SNAP_DIR / f"{date_compact}.json"
+    if not snap_fp.exists():
+        return None
+    try:
+        snaps = json.loads(snap_fp.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if not snaps or len(snaps) < 2:
+        return None
+    prev, curr = snaps[-2]["field"], snaps[-1]["field"]
+    scratched, promoted = [], []
+    for rn, cur in curr.items():
+        old = prev.get(rn)
+        if not old:
+            continue
+        old_active = set(old.get("active", []))
+        new_active = set(cur.get("active", []))
+        old_standby = set(old.get("standby", []))
+        names = {**old.get("names", {}), **cur.get("names", {})}
+        names = {int(k): v for k, v in names.items()} if names else {}
+        for hno in sorted(old_active - new_active):
+            scratched.append(f"R{rn} #{hno} {names.get(hno, '')}".strip())
+        for hno in sorted(new_active - old_active):
+            # A newly-active horse that was previously a standby = promotion.
+            tag = "(reserve)" if hno in old_standby else ""
+            promoted.append(f"R{rn} #{hno} {names.get(hno, '')} {tag}".strip())
+    if not scratched and not promoted:
+        return None
+    return {"scratched": scratched, "promoted": promoted,
+            "since": snaps[-2].get("ts", "")}
+
+
+def _render_scratch_chip(date_compact: str) -> None:
+    """Surface a compact scratchings / reserve-promotion alert."""
+    changes = _detect_field_changes(date_compact)
+    if not changes:
+        return
+    n_s = len(changes["scratched"])
+    n_p = len(changes["promoted"])
+    bits = []
+    if n_s:
+        bits.append(f"**{n_s}** scratched")
+    if n_p:
+        bits.append(f"**{n_p}** reserve promoted")
+    since = changes.get("since", "")[11:16]
+    head = "⚠️ Field changed: " + ", ".join(bits)
+    if since:
+        head += f" (since {since} HKT)"
+    with st.expander(head, expanded=bool(n_s)):
+        if changes["scratched"]:
+            st.markdown("**Scratched**\n"
+                        + "\n".join(f"- {x}" for x in changes["scratched"]))
+        if changes["promoted"]:
+            st.markdown("**Promoted / added**\n"
+                        + "\n".join(f"- {x}" for x in changes["promoted"]))
+
+
+def _db_results_integrity() -> list:
+    """Return ISO dates that have a results JSON on disk but are NOT in hkjc.db."""
+    try:
+        from db_utils import read_sqlite
+    except Exception:
+        return []
+    results_dir = BASE / "reports"
+    if not results_dir.exists():
+        return []
+    try:
+        df = read_sqlite("SELECT DISTINCT race_date FROM results")
+        have = {str(d)[:10] for d in df["race_date"].astype(str)}
+    except Exception:
+        have = set()
+    missing = []
+    for fp in sorted(results_dir.glob("results_*.json")):
+        stem = fp.stem.replace("results_", "")
+        if len(stem) != 8 or not stem.isdigit():
+            continue
+        iso = f"{stem[:4]}-{stem[4:6]}-{stem[6:]}"
+        if iso not in have:
+            missing.append(iso)
+    return missing
+
+
+def _render_db_integrity_panel() -> None:
+    """Surface a DB-integrity check with a one-click sync (#2)."""
+    missing = _db_results_integrity()
+    if not missing:
+        st.caption("🗄️ DB integrity ✓ — every results file is in `hkjc.db`.")
+        return
+    st.warning(
+        f"🗄️ **DB integrity: {len(missing)} meeting(s) missing from `hkjc.db`** "
+        f"— {', '.join(missing)}. These won't appear in the Form Guide until synced."
+    )
+    if st.button("🔄 Sync missing meetings to DB", key="db_integrity_sync",
+                 type="primary"):
+        n_mtg, n_rows = _auto_sync_results_to_db(verbose=False)
+        st.success(f"Synced {n_mtg} meeting(s), {n_rows} rows. Rebuild the "
+                   "Form Guide to pick them up.")
+        try:
+            st.cache_data.clear()
+        except Exception:
+            pass
+        st.rerun()
+
+
 def _render_meeting_ctx_bar() -> None:
     """Render a thin global context bar showing the active meeting."""
     ctx = st.session_state.get("_meeting_ctx")
@@ -4534,6 +4711,10 @@ def page_overview():
         st.caption(f"Model {version}  ·  {len(races)} races")
 
     _render_glossary(key="rdi_glossary")
+
+    # Field-change tracking: snapshot line-up & flag scratchings / promotions.
+    _snapshot_racecard_field(dstr, races)
+    _render_scratch_chip(dstr)
 
     # ══════════════════════════════════════════════════════════════════
     # RACE-TIME COCKPIT — top-of-page, single-race focus
@@ -5187,6 +5368,10 @@ def page_race_day(selected):
         ]
         st.caption(" &nbsp;·&nbsp; ".join(_strip)
                    + " &nbsp;·&nbsp; *open controls below to re-scrape / run.*")
+        # Field-change tracking: snapshot the current line-up and flag any
+        # scratchings / reserve promotions versus the previous version.
+        _snapshot_racecard_field(date_str, et_races or data.get("races", []))
+        _render_scratch_chip(date_str)
         with st.expander("🏁 Race-day controls — re-scrape & run everything",
                          expanded=False):
             rc1, rc2 = st.columns([3, 2])
@@ -8827,6 +9012,9 @@ def page_results():
     if not res_dates:
         st.info("No scraped results found. Use the sidebar to scrape results for a date.")
         return
+
+    # ── DB-integrity check (#2): results-on-disk vs hkjc.db ──────────────
+    _render_db_integrity_panel()
 
     date_labels = {dc: f"{dc[:4]}-{dc[4:6]}-{dc[6:]}" for dc in sorted(res_dates, reverse=True)}
     selected_dc = st.selectbox("Meeting date:", list(date_labels.keys()),
