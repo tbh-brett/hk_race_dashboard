@@ -19700,6 +19700,234 @@ def page_agent_skills():
 
 
 
+def page_bet_optimizer():
+    """Integrated per-card betting strategy — leans into the place-reliable
+    QPL banker-parlay structure that has actually made money in this account.
+    Backed by bet_optimizer.optimise_card (single source of truth)."""
+    import bet_optimizer as _bo
+
+    st.markdown('<div class="page-title">Bet Optimizer</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-subtitle">Profitable-by-design slate &middot; '
+                'QPL bankers + all-up jackpot</div>', unsafe_allow_html=True)
+
+    meetings = load_available_meetings()
+    if not meetings:
+        st.info("No meeting reports found yet. Generate a race-day report first.")
+        return
+
+    date_opts = [m["date_str"] for m in meetings]
+    def _fmt(ds: str) -> str:
+        return f"{ds[:4]}-{ds[4:6]}-{ds[6:]}"
+    c1, c2, c3 = st.columns([2, 1, 1])
+    with c1:
+        sel_ds = st.selectbox("Meeting", date_opts, index=0, format_func=_fmt,
+                              key="bo_date")
+    with c2:
+        bankroll = st.number_input("Bankroll (HK$)", min_value=100.0,
+                                   max_value=100000.0, value=500.0, step=100.0,
+                                   key="bo_bankroll")
+    with c3:
+        goal = st.selectbox("Goal", ["upside", "balanced", "grind"], index=0,
+                            key="bo_goal",
+                            help="upside = lean into all-up jackpots (accept "
+                                 "losing weeks); grind = protect bankroll, bank "
+                                 "the QPL edge; balanced = both.")
+
+    date_iso = _fmt(sel_ds)
+    res = _bo.optimise_card(date_iso, float(bankroll), goal)
+    if not res.get("ok"):
+        st.warning(res.get("reason", "Could not build a slate for this meeting."))
+        return
+
+    # ── headline ───────────────────────────────────────────────────────────
+    st.markdown(f"### {res['meeting_title'] or _fmt(sel_ds)}")
+    st.caption(f"Model {res['model_version']}  ·  {len(res['race_analyses'])} races "
+               f"with a usable banker  ·  goal **{res['risk_goal']}**")
+
+    bs, sp = res["budget_split"], res["spent"]
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Bankroll", f"${res['bankroll']:.0f}")
+    m2.metric("Jackpot slice", f"${bs['jackpot']:.0f}", f"spent ${sp['jackpot']:.0f}")
+    m3.metric("Singles slice", f"${bs['singles']:.0f}", f"spent ${sp['singles']:.0f}")
+    m4.metric("Total staked", f"${sp['total']:.0f}",
+              f"reserve ${bs['reserve']:.0f}")
+
+    st.info(
+        "**Why this shape?** Your record (729 bets) shows QPL place pools are the "
+        "only structure with positive ROI (+13%), and your one big win — the 27 May "
+        "$25,003 — was QPL bankers compounded in an all-up. This slate multiplies "
+        "that edge and cuts the leaks (straight QIN −26%, exotic boxes −100%).")
+
+    # ── jackpot ticket ───────────────────────────────────────────────────────
+    st.markdown("#### 🎰 Jackpot — QPL All-Up Banker Parlay")
+    jp = res["jackpot"]
+    if jp:
+        jc1, jc2, jc3, jc4 = st.columns(4)
+        jc1.metric("Shape", jp.get("shape_label", "?"))
+        jc2.metric("Units", f"{jp['n_units']}")
+        jc3.metric("Stake", f"${jp['total_stake']:.0f}",
+                   f"${jp['stake_per_unit']:.0f}/unit")
+        jc4.metric("Est. hit", f"{jp.get('est_hit_prob', 0)*100:.1f}%")
+        leg_rows = []
+        for lg in jp["legs_detail"]:
+            leg_rows.append({
+                "Race": f"R{lg['race_no']}",
+                "Banker": f"#{lg['_banker']} {lg['_banker_name']}",
+                "Floats": ", ".join(f"#{x}" for x in lg["_floats"]),
+                "Bank top-3": f"{lg['_banker_place_prob']*100:.0f}%",
+            })
+        st.dataframe(leg_rows, hide_index=True, width='stretch')
+        st.caption(f"Pool **QPL** · legs {', '.join('R'+str(l['race_no']) for l in jp['legs_detail'])}. "
+                   "A leg wins when its banker AND one float both finish top-3.")
+    else:
+        st.warning("Not enough reliable bankers (after excluding rating-FADE horses) "
+                   "to build a parlay for this card.")
+
+    # ── per-race singles ─────────────────────────────────────────────────────
+    st.markdown("#### 🎯 Per-Race QPL Banker Singles")
+    if res["singles"]:
+        rows = []
+        for s in res["singles"]:
+            rows.append({
+                "Race": f"R{s['race_number']}",
+                "Banker": f"#{s['banker']} {s['banker_name']}",
+                "Floats": ", ".join(f"#{x}" for x in s["floats"]),
+                "Stake": f"${s['total_stake']:.0f}",
+                "Bank top-3": f"{s['banker_place_prob']*100:.0f}%",
+                "Cycle": s["cycle_flag"],
+                "Why": s["rationale"],
+            })
+        st.dataframe(rows, hide_index=True, width='stretch')
+    else:
+        st.write("(none)")
+
+    # ── confidence board (all races) ─────────────────────────────────────────
+    with st.expander("📊 Confidence board — every race ranked by banker quality"):
+        board = []
+        for r in sorted(res["race_analyses"], key=lambda x: -x["banker_quality"]):
+            b = r["banker"]
+            board.append({
+                "Race": f"R{r['race_number']}",
+                "Top banker": f"#{b['horse_no']} {b['horse_name']}",
+                "Top-3 %": f"{b['place_prob']*100:.0f}%",
+                "Dominance": f"{r['dominance']:.2f}",
+                "Quality": f"{r['banker_quality']:.2f}",
+                "Cycle": b["cycle_flag"],
+            })
+        st.dataframe(board, hide_index=True, width='stretch')
+
+    # ── log this slate to My Bets ────────────────────────────────────────────
+    st.markdown("#### 📝 Log this slate")
+    already = _bo.already_logged(res)
+    lc1, lc2, lc3 = st.columns([1, 1, 2])
+    with lc1:
+        log_singles = st.checkbox("Singles", value=True, key="bo_log_singles")
+    with lc2:
+        log_jack = st.checkbox("Jackpot all-up", value=True, key="bo_log_jack")
+    with lc3:
+        if already:
+            st.caption("This slate is already in **My Bets** (logged earlier).")
+        if st.button("➕ Add to My Bets", key="bo_log_btn",
+                     disabled=already, width='stretch'):
+            out = _bo.log_slate_to_user_bets(res, include_singles=log_singles,
+                                             include_jackpot=log_jack)
+            if out.get("skipped"):
+                st.info("Already logged — nothing added.")
+            else:
+                st.success(f"Logged {out['logged']} bet(s) to My Bets. The all-up "
+                           "stays OPEN until you reconcile the bookie statement.")
+                st.cache_data.clear()
+
+    # ── live value / drift ───────────────────────────────────────────────────
+    with st.expander("📡 Live value — bankers the market under-rates"):
+        market, src = _bo_market_win_probs(sel_ds, res)
+        if not market:
+            st.caption("No live or SP odds for this meeting yet. Open the "
+                       "**Live (Feed + Odds)** page on race day to populate odds, then "
+                       "value flags appear here.")
+        else:
+            st.caption(f"Market source: **{src}** odds, overround-normalised per race.")
+            flags = _bo.compute_drift_flags(res, market)
+            if flags:
+                for f in flags:
+                    st.success(f["msg"])
+            else:
+                st.caption("No banker currently offers place-value vs the market.")
+
+    # ── backtest — does this slate actually make money? ──────────────────────
+    with st.expander("🧪 Backtest — replay this slate over settled meetings"):
+        st.caption("Replays the optimiser across every meeting that has both a "
+                   "report and settled dividends. Singles settle from QPL "
+                   "dividends; the jackpot via the all-up settler.")
+        if st.button("Run backtest (all goals)", key="bo_bt_btn"):
+            with st.spinner("Replaying April–May…"):
+                bt_rows = []
+                for g in ("grind", "balanced", "upside"):
+                    b = _bo.backtest_optimiser(None, float(bankroll), g)
+                    if b.get("ok"):
+                        bt_rows.append({
+                            "Goal": g,
+                            "Meetings": b["n_meetings"],
+                            "Staked": f"${b['total_stake']:.0f}",
+                            "P/L": f"${b['total_pnl']:+.0f}",
+                            "ROI": f"{b['roi_pct']:+.1f}%",
+                            "Jackpot hits": f"{b['jackpot_hits']}/{b['n_meetings']}",
+                        })
+                st.session_state["bo_bt_rows"] = bt_rows
+        if st.session_state.get("bo_bt_rows"):
+            st.dataframe(st.session_state["bo_bt_rows"], hide_index=True,
+                         width='stretch')
+            st.warning(
+                "**Reality check:** over the settled April–May sample every goal "
+                "currently shows negative ROI and the all-up jackpot rarely lands. "
+                "Treat the jackpot as a small-stake lottery; the durable edge is the "
+                "QPL place bankers. Use **grind** to protect bankroll and lean on the "
+                "Multi Builder's contrarian banker (rank 2–6) tab for the +ROI shape.")
+
+    # ── copy-out ─────────────────────────────────────────────────────────────
+    with st.expander("📋 Plain-text slate (copy to bookie / notes)"):
+        st.code(_bo.format_card(res), language="text")
+
+
+def _bo_market_win_probs(date_compact: str, res: dict) -> tuple[dict, str]:
+    """Market win-prob map {race_no: {horse_no: win_prob_pct}}, overround-
+    normalised. Prefers scraped LIVE odds (cache/live_odds); falls back to the
+    report SP. Returns (map, source_label); ({}, "") when no odds at all."""
+    import bet_optimizer as _bo
+    live = _bo.market_from_live_odds(date_compact)
+    if live:
+        return live, "live"
+    try:
+        meetings = load_available_meetings()
+        mf = next((m for m in meetings if m["date_str"] == date_compact), None)
+        if mf:
+            data = load_meeting_data(mf["file"])
+            sp = _bo.market_from_report_sp(data)
+            if sp:
+                return sp, "SP (report)"
+    except Exception:
+        pass
+    return {}, ""
+
+
+def page_betting():
+    """Unified Betting workspace — the three former betting pages as tabs:
+    the auto Optimizer slate, the filter-driven Model Bets, and the manual
+    Multi Builder. bet_optimizer.py is the shared engine."""
+    st.markdown('<div class="page-title">Betting</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-subtitle">One workspace &middot; auto slate, '
+                'model tickets &amp; manual builder</div>', unsafe_allow_html=True)
+    tab_opt, tab_model, tab_multi = st.tabs([
+        "💡 Optimizer", "🎯 Model Bets", "🧮 Multi Builder",
+    ])
+    with tab_opt:
+        page_bet_optimizer()
+    with tab_model:
+        page_model_bets()
+    with tab_multi:
+        page_multi_builder()
+
+
 def main():
     # ── Sidebar brand header ───────────────────────────────────────────────
     st.sidebar.markdown(
@@ -19714,10 +19942,9 @@ def main():
     # ── Navigation ────────────────────────────────────────────────────────
     NAV_ITEMS = [
         ("Race Day Insight", "🏁 Race Day Insight"),
+        ("Betting",        "💡 Betting"),
         ("Form Guide",     "📖 Form Guide"),
         ("Model Analysis", "📊 Model Analysis"),
-        ("Model Bets",     "🎯 Model Bets"),
-        ("Multi Builder",  "🧮 Multi Builder"),
         ("Data Analysis",  "🔬 Data Analysis"),
         ("Race Lookup",    "🔎 Race Lookup"),
         ("Framework Lab",  "🧪 Framework Lab"),
@@ -19740,6 +19967,8 @@ def main():
         st.session_state["nav_page"] = "Race Day Insight"
     if st.session_state["nav_page"] in ("Live Feed", "Live Odds"):
         st.session_state["nav_page"] = "Live"
+    if st.session_state["nav_page"] in ("Bet Optimizer", "Model Bets", "Multi Builder"):
+        st.session_state["nav_page"] = "Betting"
 
     for page_name, label in NAV_ITEMS:
         is_active = st.session_state["nav_page"] == page_name
@@ -19756,6 +19985,8 @@ def main():
 
     if page == "Race Day Insight":
         page_overview()
+    elif page == "Betting":
+        page_betting()
     elif page == "Model Analysis":
         selected = sidebar_race_day()
         tab_race, tab_compare = st.tabs([
@@ -19787,10 +20018,6 @@ def main():
             page_live_feed()
         with tab_odds:
             page_live_odds()
-    elif page == "Model Bets":
-        page_model_bets()
-    elif page == "Multi Builder":
-        page_multi_builder()
     elif page == "My Bets":
         page_my_bets()
     elif page == "Form Guide":
