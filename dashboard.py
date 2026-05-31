@@ -5060,19 +5060,23 @@ def page_race_day(selected):
 
     active_races = sarr_races if use_sarr else et_races
 
-    # ── Summary metrics ──────────────────────────────────────────────────
+    # ── Compact summary line (replaces the old 4 metric tiles) ───────────
+    # The four metric tiles pushed the actual picks below the fold; collapse
+    # them into one caption so the Top Picks table sits high on the page.
     total_runners = sum(r.get("runners", 0) for r in active_races)
     total_projected = sum(r.get("projected", 0) for r in active_races)
-    cols = st.columns(4)
-    cols[0].metric("Races", len(active_races))
-    cols[1].metric("Total Runners", total_runners)
-    cols[2].metric("Projected", total_projected)
-    cols[3].metric("Venue", data.get("meeting_venue", "?"))
+    _gen = (data.get("generated_at", "") or "")[:16].replace("T", " ")
+    st.caption(
+        f"🏟 **{data.get('meeting_venue', '?')}** · {len(active_races)} races · "
+        f"{total_runners} runners · {total_projected} projected · "
+        f"model {data.get('model_version', 'v3.4.8')}"
+        + (f" · generated {_gen} HKT" if _gen else "")
+    )
 
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
-    # ── Top Picks Summary table (collapsible) ──────────────────────────
-    with st.expander("**TOP PICKS SUMMARY**", expanded=False):
+    # ── Top Picks Summary table (expanded — primary content) ───────────
+    with st.expander("**🏆 TOP PICKS SUMMARY**", expanded=True):
         # Build a quick lookup of SARR top-1 by race # so we can flag
         # ET/SARR agreement (★) in the ET summary rows. Backtest shows
         # races where both models pick the same horse have a 33% Win
@@ -5185,6 +5189,24 @@ def page_race_day(selected):
 
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
 
+    # ── Cross-model agreement set (ET top-1 == SARR top-1) ───────────────
+    # Flag high-confidence races on the tab row (★) and verdict banner.
+    # Backtest: races where both models agree win at ~33% vs ~23% baseline.
+    _agree_set: set = set()
+    if sarr_available:
+        _et_top1: dict = {}
+        for _r in et_races:
+            _p = _r.get("picks") or []
+            if _p:
+                _et_top1[_r.get("race_number")] = (
+                    _p[0].get("horse_no") or _p[0].get("horse_name"))
+        for _r in sarr_races:
+            _p = _r.get("picks") or []
+            if _p:
+                _sid = _p[0].get("horse_no") or _p[0].get("horse_name")
+                if _et_top1.get(_r.get("race_number")) == _sid:
+                    _agree_set.add(_r.get("race_number"))
+
     # ── Race tab selector ────────────────────────────────────────────────
     race_numbers = [r["race_number"] for r in active_races]
     if "rd_active_race" not in st.session_state:
@@ -5271,7 +5293,7 @@ def page_race_day(selected):
     for i, rn in enumerate(race_numbers):
         with tab_cols[i]:
             is_active = st.session_state["rd_active_race"] == rn
-            btn_label = f"R{rn}"
+            btn_label = f"R{rn}★" if rn in _agree_set else f"R{rn}"
             if st.button(btn_label, key=f"rd_tab_{rn}",
                          width='stretch',
                          type="primary" if is_active else "secondary"):
@@ -5280,9 +5302,35 @@ def page_race_day(selected):
                 st.session_state.pop(f"rd_sarr_full_{rn}", None)
                 st.rerun()
 
+    if _agree_set:
+        st.caption("★ on a race tab = ET & SARR agree on the top pick "
+                   "(historically ~33% win rate).")
+
     # ── Render selected race ─────────────────────────────────────────────
     active_rn = st.session_state["rd_active_race"]
     if active_rn:
+        # One-line verdict banner — the "what do I do here" summary so the
+        # key call sits above the dense stats table.
+        _vr = next((r for r in active_races
+                    if r["race_number"] == active_rn), None)
+        _vp = (_vr.get("picks") or []) if _vr else []
+        if _vp:
+            _t = _vp[0]
+            _vb = [f"**R{active_rn}** · {_vr.get('distance', '?')}m · "
+                   f"{'AWT' if _vr.get('is_awt') else 'Turf'}"]
+            if _vr.get("pace"):
+                _vb.append(f"{_vr.get('pace')} pace")
+            _tn = _t.get("horse_name", "?")
+            _tno = _t.get("horse_no", "?")
+            if use_sarr:
+                _vb.append(
+                    f"Top **#{_tno} {_tn}** (SARR {_t.get('sarr', 0):+.3f})")
+            else:
+                _vb.append(
+                    f"Top **#{_tno} {_tn}** (Win {_t.get('win_prob', 0):.0f}%)")
+            if active_rn in _agree_set:
+                _vb.append("★ both models agree (~33% win)")
+            st.info(" · ".join(_vb))
         if use_sarr:
             sarr_race = next((r for r in sarr_races if r["race_number"] == active_rn), None)
             et_race = next((r for r in et_races if r["race_number"] == active_rn), None)
