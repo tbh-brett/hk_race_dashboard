@@ -2337,8 +2337,50 @@ def _render_pace_research_panel(race: dict):
     st.markdown(panel, unsafe_allow_html=True)
 
 
+# Column tooltip text (hover help on the race-card tables). Mirrors the
+# bottom-of-page legend so the explanation lives next to the data.
+_ET_COL_HELP = {
+    "Rk": "Model rank — lower is a stronger pick (1 = best).",
+    "No": "Saddle-cloth number.",
+    "Draw": "Barrier draw (gate position).",
+    "Wt": "Carried weight (lbs).",
+    "Style": "Predicted running style (Leader / On-Pace / Midfield / Closer).",
+    "BB": "In your Blackbook.",
+    "Proj (s)": "Projected finish time (s) — lower = faster.",
+    "Win%": "Estimated win probability — ≥20% is strong.",
+    "Edge": "Model Win% minus market-implied Win% (live odds, de-overround). "
+            "Positive = potential value / overlay.",
+    "ESZ": "Early Speed Z — negative = faster early; ≥1.0 very slow out.",
+    "Fin Sec": "Projected final sectional (s) — lower = stronger finish.",
+    "SSI": "Sectional Speed Index — negative = consistently faster than field.",
+    "Eff Resid": "Effective Residual — negative = runs faster than its rating implies.",
+    "Trial": "Trial performance (++ outstanding … -- very poor).",
+    "Vet": "Vet flag — RED concern, AMB monitor, INF informational.",
+    "Flags": "Model flags (↑IMP improving, U unreliable form, …).",
+    "Jockey": "Jockey.",
+}
+
+_SARR_COL_HELP = {
+    "Rk": "SARR rank — lower is stronger (1 = best).",
+    "No": "Saddle-cloth number.",
+    "Draw": "Barrier draw (gate position).",
+    "Wt": "Carried weight (lbs).",
+    "Style": "Predicted running style.",
+    "BB": "In your Blackbook.",
+    "WPR%": "Win/Place rate — higher = better strike rate.",
+    "ESZ": "Early Speed Z — negative = faster early.",
+    "SARR": "Composite score — negative = outperforms expectations (better).",
+    "FMRP": "Form Residual Performance — negative = form better than rating.",
+    "LSA": "Late Speed Advantage — negative = strong finisher.",
+    "SSI": "Sectional Speed Index — negative = consistently faster.",
+    "Traj": "Trajectory — negative = improving form trend.",
+    "Late Std": "Late-section time SD — lower = more consistent (≤0.20 reliable).",
+    "Jockey": "Jockey.",
+}
+
+
 def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int = 4,
-                     bb_lookup: dict | None = None):
+                     bb_lookup: dict | None = None, odds_lookup: dict | None = None):
     """Render a single race's picks as a terminal-style card with field toggle."""
     picks = race.get("picks", [])
     if not picks:
@@ -2392,6 +2434,8 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
         bb_entry = _bb.get(p["horse_name"].upper())
         esz_val = p.get("early_speed_z", 0) or 0
         ssi_val = p.get("avg_ssi", None)
+        _imp = (odds_lookup or {}).get(p["horse_no"])
+        _edge = (p["win_prob"] - _imp) if _imp is not None else None
         rows.append({
             "Rk": p["rank"],
             "No": p["horse_no"],
@@ -2402,6 +2446,7 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
             "BB": "BB" if bb_entry else "",
             "Proj (s)": f"{p['projected_time']:.2f}",
             "Win%": f"{p['win_prob']:.0f}%",
+            "Edge": f"{_edge:+.0f}%" if _edge is not None else "—",
             "ESZ": round(esz_val, 1) if esz_val != 0 else None,
             "Fin Sec": f"{p['proj_final_sec']:.2f}" if p.get("proj_final_sec") else "—",
             "SSI": round(ssi_val, 2) if ssi_val is not None else None,
@@ -2421,6 +2466,10 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
                 bb_alerts.append((p, bb_entry))
 
     df = pd.DataFrame(rows)
+    # Drop the Edge column entirely when no live odds are available, so it
+    # isn't a column of dashes.
+    if not odds_lookup and "Edge" in df.columns:
+        df = df.drop(columns=["Edge"])
 
     def style_ssi(val):
         try:
@@ -2465,15 +2514,42 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
         elif v <= -0.5: return "color: #22c55e"
         return ""
 
+    def style_effresid(val):
+        try:
+            v = float(str(val).replace("%", ""))
+        except (ValueError, TypeError):
+            return ""
+        if v <= -0.05: return "color: #22c55e; font-weight: bold"
+        elif v <= -0.01: return "color: #22c55e"
+        elif v >= 0.05: return "color: #ef4444; font-weight: bold"
+        elif v >= 0.01: return "color: #ef4444"
+        return ""
+
+    def style_edge(val):
+        try:
+            v = float(str(val).replace("%", ""))
+        except (ValueError, TypeError):
+            return ""
+        if v >= 5: return "color: #22c55e; font-weight: bold"
+        elif v > 0: return "color: #22c55e"
+        elif v <= -5: return "color: #ef4444"
+        return ""
+
     styled = df.style.map(style_ssi, subset=["SSI"]) \
                       .map(style_winprob, subset=["Win%"]) \
                       .map(style_vet, subset=["Vet"]) \
                       .map(style_trial, subset=["Trial"]) \
                       .map(style_esz, subset=["ESZ"]) \
+                      .map(style_effresid, subset=["Eff Resid"]) \
                       .format({"ESZ": lambda v: f"{v:+.1f}" if pd.notna(v) else "—",
                                "SSI": lambda v: f"{v:+.2f}" if pd.notna(v) else "—"}) \
                       .set_properties(**{"text-align": "center"}) \
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
+    if "Edge" in df.columns:
+        styled = styled.map(style_edge, subset=["Edge"])
+
+    col_cfg = {c: st.column_config.Column(help=h)
+               for c, h in _ET_COL_HELP.items() if c in df.columns}
 
     # Unique key per (model, race) so Streamlit's column-reorder state
     # for the SARR table doesn't bleed into the ET table and vice versa.
@@ -2483,6 +2559,7 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
     st.dataframe(
         styled, width='stretch', hide_index=True,
         key=f"rd_et_table_{race['race_number']}",
+        column_config=col_cfg,
         height=_et_h,
     )
 
@@ -2614,9 +2691,18 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
         elif v >= 0.50: return "color: #ef4444"
         return ""
 
+    def _style_ssi(val):
+        try: v = float(val)
+        except (ValueError, TypeError): return ""
+        if v <= -0.30: return "color: #22c55e; font-weight: bold"
+        elif v <= -0.10: return "color: #22c55e"
+        elif v >= 0.30: return "color: #ef4444"
+        return ""
+
     styled = df.style.map(_style_sarr, subset=["SARR"]) \
                       .map(_style_fmrp, subset=["FMRP"]) \
                       .map(_style_lsa_esz, subset=["LSA", "ESZ"]) \
+                      .map(_style_ssi, subset=["SSI"]) \
                       .map(_style_traj, subset=["Traj"]) \
                       .map(_style_wpr, subset=["WPR%"]) \
                       .map(_style_late_std, subset=["Late Std"]) \
@@ -2626,12 +2712,16 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
                       .set_properties(**{"text-align": "center"}) \
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
 
+    _sarr_cfg = {c: st.column_config.Column(help=h)
+                 for c, h in _SARR_COL_HELP.items() if c in df.columns}
+
     # Unique per-(model, race) key — see render_race_card for rationale.
     # Height tuned so all rows fit without an inner scrollbar.
     _sarr_h = 38 + 35 * max(len(rows), 1) + 4
     st.dataframe(
         styled, width='stretch', hide_index=True,
         key=f"rd_sarr_table_{race['race_number']}",
+        column_config=_sarr_cfg,
         height=_sarr_h,
     )
     st.markdown('<hr class="term-divider">', unsafe_allow_html=True)
@@ -4919,6 +5009,18 @@ def page_race_day(selected):
                             if _age_h >= 1 else "card scraped <1 h ago")
             except OSError:
                 pass
+        # ── Consolidated readiness strip (single status line) ──────────
+        _odds_dir = BASE / "cache" / "live_odds" / date_str
+        _odds_n = len(list(_odds_dir.glob("*_R*.json"))) if _odds_dir.exists() else 0
+        _strip = [
+            f"🗓 **{_iso}**",
+            _age_txt,
+            ("SARR ✓" if sarr_available else "SARR ✗"),
+            ("ET ✓" if et_races else "ET ✗"),
+            (f"live odds ✓ ({_odds_n})" if _odds_n else "live odds ✗"),
+        ]
+        st.caption(" &nbsp;·&nbsp; ".join(_strip)
+                   + " &nbsp;·&nbsp; *open controls below to re-scrape / run.*")
         with st.expander("🏁 Race-day controls — re-scrape & run everything",
                          expanded=False):
             rc1, rc2 = st.columns([3, 2])
@@ -5288,7 +5390,25 @@ def page_race_day(selected):
                 index=(0 if use_sarr else 1),
             )
 
-    # Render tab row
+    # Render tab row — made sticky so the R1…Rn selector stays visible while
+    # scrolling a long race card. The marker span lets CSS target *only* the
+    # immediately-following horizontal block (the tab buttons).
+    st.markdown(
+        """
+        <span id="rd-tabbar-anchor"></span>
+        <style>
+        .element-container:has(#rd-tabbar-anchor) + div[data-testid="stHorizontalBlock"] {
+            position: sticky;
+            top: 2.875rem;
+            z-index: 999;
+            background: var(--background-color, #0e1117);
+            padding: 4px 0 6px 0;
+            border-bottom: 1px solid rgba(250,250,250,0.12);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     tab_cols = st.columns(len(race_numbers))
     for i, rn in enumerate(race_numbers):
         with tab_cols[i]:
@@ -5339,7 +5459,13 @@ def page_race_day(selected):
         else:
             race = next((r for r in et_races if r["race_number"] == active_rn), None)
             if race:
-                render_race_card(race, vet_lookup=vet_lookup, show_top=4, bb_lookup=bb_lookup)
+                _odds_lk = _market_implied_winpct(
+                    date_str.replace("-", ""),
+                    _venue_to_code(data.get("meeting_venue", "")),
+                    active_rn,
+                )
+                render_race_card(race, vet_lookup=vet_lookup, show_top=4,
+                                 bb_lookup=bb_lookup, odds_lookup=_odds_lk)
 
     # ── Column acronym legend ────────────────────────────────────────────
     with st.expander("📖 Column Legend & Interpretation Guide"):
@@ -13277,6 +13403,31 @@ def _compute_race_drift(date_compact: str, venue_code: str,
         "last_ts": latest.get("scraped_at", ""),
         "horses": horses,
     }
+
+
+def _market_implied_winpct(date_compact: str, venue_code: str | None,
+                           race_no: int) -> dict:
+    """Return {horse_no: market-implied win % } from the latest live-odds snapshot.
+
+    Implied probabilities are de-overround (normalised so they sum to 100%),
+    so the result is directly comparable to the model's Win%.
+    Empty dict when no live odds are available.
+    """
+    if not (date_compact and venue_code):
+        return {}
+    try:
+        drift = _compute_race_drift(date_compact, venue_code, race_no)
+    except Exception:
+        return {}
+    invs = {}
+    for h in drift.get("horses", []):
+        wl = h.get("win_last")
+        if wl and wl > 0:
+            invs[h["no"]] = 1.0 / wl
+    tot = sum(invs.values())
+    if tot <= 0:
+        return {}
+    return {no: (inv / tot) * 100.0 for no, inv in invs.items()}
 
 
 def _compute_pair_drift(date_compact: str, venue_code: str,
