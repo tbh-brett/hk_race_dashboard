@@ -1,0 +1,766 @@
+{
+  "date": "2026-05-31",
+  "race_number": 11,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "744",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 452,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 441
+    },
+    {
+      "y_top": 452,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 527
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "CALA DEI MORI",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 210,
+          "cy": 106,
+          "x_frac": 0.2923611111111111,
+          "conf": 0.915,
+          "match_score": 0.88,
+          "ocr_text": "Cala Dei Mon",
+          "band_label": "744",
+          "y_in_band": 0.793
+        },
+        {
+          "band_idx": 1,
+          "cx": 247,
+          "cy": 247,
+          "x_frac": 0.34375,
+          "conf": 0.867,
+          "match_score": 0.923,
+          "ocr_text": "Cala Dei Moni",
+          "band_label": "800M",
+          "y_in_band": 0.779
+        },
+        {
+          "band_idx": 2,
+          "cx": 351,
+          "cy": 394,
+          "x_frac": 0.48819444444444443,
+          "conf": 0.977,
+          "match_score": 0.96,
+          "ocr_text": "CalaDei Mori",
+          "band_label": "400M",
+          "y_in_band": 0.76
+        },
+        {
+          "band_idx": 4,
+          "cx": 644,
+          "cy": 538,
+          "x_frac": 0.8944444444444445,
+          "conf": 0.853,
+          "match_score": 0.923,
+          "ocr_text": "Cala Dei Moni",
+          "band_label": null,
+          "y_in_band": 0.573
+        }
+      ],
+      "ocr_texts": [
+        "Cala Dei Mon",
+        "Cala Dei Moni",
+        "CalaDei Mori",
+        "Cala Dei Moni"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.726,
+      "avg_x_frac": 0.505,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CAUSEWAY KING",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 106,
+          "cy": 34,
+          "x_frac": 0.14791666666666667,
+          "conf": 0.995,
+          "match_score": 0.96,
+          "ocr_text": "CausewayKing",
+          "band_label": "744",
+          "y_in_band": 0.198
+        },
+        {
+          "band_idx": 1,
+          "cx": 97,
+          "cy": 229,
+          "x_frac": 0.13506944444444444,
+          "conf": 0.958,
+          "match_score": 1.0,
+          "ocr_text": "Causeway King",
+          "band_label": "800M",
+          "y_in_band": 0.658
+        },
+        {
+          "band_idx": 2,
+          "cx": 174,
+          "cy": 324,
+          "x_frac": 0.2423611111111111,
+          "conf": 0.995,
+          "match_score": 0.917,
+          "ocr_text": "CausewayKin",
+          "band_label": "400M",
+          "y_in_band": 0.293
+        },
+        {
+          "band_idx": 4,
+          "cx": 340,
+          "cy": 471,
+          "x_frac": 0.47291666666666665,
+          "conf": 0.992,
+          "match_score": 0.96,
+          "ocr_text": "CausewayKing",
+          "band_label": null,
+          "y_in_band": 0.127
+        }
+      ],
+      "ocr_texts": [
+        "CausewayKing",
+        "Causeway King",
+        "CausewayKin",
+        "CausewayKing"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.319,
+      "avg_x_frac": 0.25,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CROSSBORDERPEGASUS",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 670,
+          "cy": 101,
+          "x_frac": 0.93125,
+          "conf": 0.93,
+          "match_score": 1.0,
+          "ocr_text": "Crossborderpegasus",
+          "band_label": "744",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 2,
+          "cx": 410,
+          "cy": 288,
+          "x_frac": 0.5694444444444444,
+          "conf": 0.964,
+          "match_score": 1.0,
+          "ocr_text": "Crossborderpegasus",
+          "band_label": "400M",
+          "y_in_band": 0.053
+        },
+        {
+          "band_idx": 4,
+          "cx": 215,
+          "cy": 529,
+          "x_frac": 0.29965277777777777,
+          "conf": 0.95,
+          "match_score": 1.0,
+          "ocr_text": "Crossborderpegasus",
+          "band_label": null,
+          "y_in_band": 0.513
+        }
+      ],
+      "ocr_texts": [
+        "Crossborderpegasus",
+        "Crossborderpegasus",
+        "Crossborderpegasus"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.439,
+      "avg_x_frac": 0.6,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DO YOU JUST",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 446,
+          "cy": 125,
+          "x_frac": 0.6194444444444445,
+          "conf": 0.923,
+          "match_score": 1.0,
+          "ocr_text": "Do You Just",
+          "band_label": "744",
+          "y_in_band": 0.95
+        },
+        {
+          "band_idx": 2,
+          "cx": 297,
+          "cy": 423,
+          "x_frac": 0.4131944444444444,
+          "conf": 0.954,
+          "match_score": 0.952,
+          "ocr_text": "DoYou Just",
+          "band_label": "400M",
+          "y_in_band": 0.953
+        },
+        {
+          "band_idx": 4,
+          "cx": 437,
+          "cy": 540,
+          "x_frac": 0.6076388888888888,
+          "conf": 0.945,
+          "match_score": 0.952,
+          "ocr_text": "Do YouJust",
+          "band_label": null,
+          "y_in_band": 0.587
+        }
+      ],
+      "ocr_texts": [
+        "Do You Just",
+        "DoYou Just",
+        "Do YouJust"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.83,
+      "avg_x_frac": 0.547,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DRAGON FOUR SEAS",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 396,
+          "cy": 101,
+          "x_frac": 0.5506944444444445,
+          "conf": 0.934,
+          "match_score": 0.968,
+          "ocr_text": "DragonFour Seas",
+          "band_label": "744",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 1,
+          "cx": 331,
+          "cy": 175,
+          "x_frac": 0.46076388888888886,
+          "conf": 0.982,
+          "match_score": 0.933,
+          "ocr_text": "DragonFourSeas",
+          "band_label": "800M",
+          "y_in_band": 0.295
+        },
+        {
+          "band_idx": 4,
+          "cx": 512,
+          "cy": 469,
+          "x_frac": 0.7111111111111111,
+          "conf": 0.955,
+          "match_score": 0.815,
+          "ocr_text": "Dragon Four",
+          "band_label": null,
+          "y_in_band": 0.113
+        }
+      ],
+      "ocr_texts": [
+        "DragonFour Seas",
+        "DragonFourSeas",
+        "Dragon Four"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.387,
+      "avg_x_frac": 0.574,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KA YING ATTACK",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 204,
+          "cy": 38,
+          "x_frac": 0.2833333333333333,
+          "conf": 0.863,
+          "match_score": 1.0,
+          "ocr_text": "Ka Ying Attack",
+          "band_label": "744",
+          "y_in_band": 0.231
+        },
+        {
+          "band_idx": 1,
+          "cx": 152,
+          "cy": 233,
+          "x_frac": 0.2111111111111111,
+          "conf": 0.951,
+          "match_score": 0.963,
+          "ocr_text": "Ka YingAttack",
+          "band_label": "800M",
+          "y_in_band": 0.685
+        },
+        {
+          "band_idx": 2,
+          "cx": 91,
+          "cy": 324,
+          "x_frac": 0.12708333333333333,
+          "conf": 0.969,
+          "match_score": 0.923,
+          "ocr_text": "KaYingAttack",
+          "band_label": "400M",
+          "y_in_band": 0.293
+        },
+        {
+          "band_idx": 4,
+          "cx": 108,
+          "cy": 527,
+          "x_frac": 0.15,
+          "conf": 0.964,
+          "match_score": 0.963,
+          "ocr_text": "KaYing Attack",
+          "band_label": null,
+          "y_in_band": 0.5
+        }
+      ],
+      "ocr_texts": [
+        "Ka Ying Attack",
+        "Ka YingAttack",
+        "KaYingAttack",
+        "KaYing Attack"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.427,
+      "avg_x_frac": 0.193,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MAJESTIC VALOUR",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 313,
+          "cy": 105,
+          "x_frac": 0.43506944444444445,
+          "conf": 0.96,
+          "match_score": 0.966,
+          "ocr_text": "MajesticValour",
+          "band_label": "744",
+          "y_in_band": 0.785
+        }
+      ],
+      "ocr_texts": [
+        "MajesticValour"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.785,
+      "avg_x_frac": 0.435,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NEW FUTURE FOLKS",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 482,
+          "cy": 179,
+          "x_frac": 0.6694444444444444,
+          "conf": 0.969,
+          "match_score": 0.968,
+          "ocr_text": "NewFuture Folks",
+          "band_label": "800M",
+          "y_in_band": 0.322
+        }
+      ],
+      "ocr_texts": [
+        "NewFuture Folks"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.322,
+      "avg_x_frac": 0.669,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "SMART GOLF",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "cx": 200,
+          "cy": 242,
+          "x_frac": 0.2777777777777778,
+          "conf": 0.945,
+          "match_score": 0.947,
+          "ocr_text": "SmartGolf",
+          "band_label": "800M",
+          "y_in_band": 0.745
+        }
+      ],
+      "ocr_texts": [
+        "SmartGolf"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.745,
+      "avg_x_frac": 0.278,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TACTICAL HORIZONS",
+      "horse_no": 13,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 462,
+          "cy": 45,
+          "x_frac": 0.6423611111111112,
+          "conf": 0.962,
+          "match_score": 1.0,
+          "ocr_text": "Tactical Horizons",
+          "band_label": "744",
+          "y_in_band": 0.289
+        },
+        {
+          "band_idx": 1,
+          "cx": 366,
+          "cy": 245,
+          "x_frac": 0.5090277777777777,
+          "conf": 0.952,
+          "match_score": 0.941,
+          "ocr_text": "Tactical Honizons",
+          "band_label": "800M",
+          "y_in_band": 0.765
+        },
+        {
+          "band_idx": 2,
+          "cx": 406,
+          "cy": 390,
+          "x_frac": 0.5645833333333333,
+          "conf": 0.93,
+          "match_score": 1.0,
+          "ocr_text": "Tactical Horizons",
+          "band_label": "400M",
+          "y_in_band": 0.733
+        },
+        {
+          "band_idx": 4,
+          "cx": 579,
+          "cy": 528,
+          "x_frac": 0.8041666666666667,
+          "conf": 0.927,
+          "match_score": 1.0,
+          "ocr_text": "Tactical Horizons",
+          "band_label": null,
+          "y_in_band": 0.507
+        }
+      ],
+      "ocr_texts": [
+        "Tactical Horizons",
+        "Tactical Honizons",
+        "Tactical Horizons",
+        "Tactical Horizons"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.574,
+      "avg_x_frac": 0.63,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TANG HEART",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 510,
+          "cy": 100,
+          "x_frac": 0.7086805555555555,
+          "conf": 0.98,
+          "match_score": 0.947,
+          "ocr_text": "TangHeart",
+          "band_label": "744",
+          "y_in_band": 0.744
+        },
+        {
+          "band_idx": 2,
+          "cx": 323,
+          "cy": 294,
+          "x_frac": 0.44930555555555557,
+          "conf": 0.958,
+          "match_score": 1.0,
+          "ocr_text": "Tang Heart",
+          "band_label": "400M",
+          "y_in_band": 0.093
+        },
+        {
+          "band_idx": 4,
+          "cx": 379,
+          "cy": 533,
+          "x_frac": 0.5263888888888889,
+          "conf": 0.946,
+          "match_score": 1.0,
+          "ocr_text": "Tang Heart",
+          "band_label": null,
+          "y_in_band": 0.54
+        }
+      ],
+      "ocr_texts": [
+        "TangHeart",
+        "Tang Heart",
+        "Tang Heart"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.459,
+      "avg_x_frac": 0.561,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THOUSAND SPIRIT",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 257,
+          "cy": 128,
+          "x_frac": 0.3576388888888889,
+          "conf": 0.957,
+          "match_score": 0.933,
+          "ocr_text": "Thousand Spinit",
+          "band_label": "744",
+          "y_in_band": 0.975
+        },
+        {
+          "band_idx": 1,
+          "cx": 303,
+          "cy": 248,
+          "x_frac": 0.42083333333333334,
+          "conf": 0.942,
+          "match_score": 1.0,
+          "ocr_text": "Thousand Spirit",
+          "band_label": "800M",
+          "y_in_band": 0.785
+        },
+        {
+          "band_idx": 2,
+          "cx": 350,
+          "cy": 416,
+          "x_frac": 0.4861111111111111,
+          "conf": 0.946,
+          "match_score": 0.933,
+          "ocr_text": "Thousand Spinit",
+          "band_label": "400M",
+          "y_in_band": 0.907
+        },
+        {
+          "band_idx": 4,
+          "cx": 488,
+          "cy": 537,
+          "x_frac": 0.6784722222222223,
+          "conf": 0.952,
+          "match_score": 1.0,
+          "ocr_text": "Thousand Spirit",
+          "band_label": null,
+          "y_in_band": 0.567
+        }
+      ],
+      "ocr_texts": [
+        "Thousand Spinit",
+        "Thousand Spirit",
+        "Thousand Spinit",
+        "Thousand Spirit"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.808,
+      "avg_x_frac": 0.486,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WINNING BUDDIES",
+      "horse_no": 14,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 576,
+          "cy": 101,
+          "x_frac": 0.8006944444444445,
+          "conf": 0.987,
+          "match_score": 1.0,
+          "ocr_text": "Winning Buddies",
+          "band_label": "744",
+          "y_in_band": 0.752
+        },
+        {
+          "band_idx": 3,
+          "cx": 424,
+          "cy": 434,
+          "x_frac": 0.5895833333333333,
+          "conf": 0.97,
+          "match_score": 1.0,
+          "ocr_text": "Winning Buddies",
+          "band_label": "200M",
+          "y_in_band": 0.182
+        },
+        {
+          "band_idx": 4,
+          "cx": 492,
+          "cy": 559,
+          "x_frac": 0.6840277777777778,
+          "conf": 0.985,
+          "match_score": 0.966,
+          "ocr_text": "WinningBuddies",
+          "band_label": null,
+          "y_in_band": 0.713
+        }
+      ],
+      "ocr_texts": [
+        "Winning Buddies",
+        "Winning Buddies",
+        "WinningBuddies"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.549,
+      "avg_x_frac": 0.691,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "YOUNG EMPEROR",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "cx": 634,
+          "cy": 124,
+          "x_frac": 0.8805555555555555,
+          "conf": 0.996,
+          "match_score": 0.96,
+          "ocr_text": "YoungEmperor",
+          "band_label": "744",
+          "y_in_band": 0.942
+        },
+        {
+          "band_idx": 1,
+          "cx": 388,
+          "cy": 266,
+          "x_frac": 0.5388888888888889,
+          "conf": 0.996,
+          "match_score": 0.96,
+          "ocr_text": "YoungEmperor",
+          "band_label": "800M",
+          "y_in_band": 0.906
+        },
+        {
+          "band_idx": 2,
+          "cx": 408,
+          "cy": 413,
+          "x_frac": 0.5666666666666667,
+          "conf": 0.963,
+          "match_score": 1.0,
+          "ocr_text": "Young Emperor",
+          "band_label": "400M",
+          "y_in_band": 0.887
+        },
+        {
+          "band_idx": 4,
+          "cx": 423,
+          "cy": 562,
+          "x_frac": 0.5881944444444445,
+          "conf": 0.972,
+          "match_score": 0.96,
+          "ocr_text": "YoungEmperor",
+          "band_label": null,
+          "y_in_band": 0.733
+        }
+      ],
+      "ocr_texts": [
+        "YoungEmperor",
+        "YoungEmperor",
+        "Young Emperor",
+        "YoungEmperor"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.867,
+      "avg_x_frac": 0.644,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 93,
+    "matched_horses": 14,
+    "field_size": 15,
+    "coverage": 0.933,
+    "parsed_at": "2026-05-31T15:35:10"
+  }
+}
