@@ -7848,7 +7848,7 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
             ("4/8 Running-position photos",
              [PYTHON, str(BASE / "scrape_hkjc_rp_photos.py"), "--date", date_str]),
             ("5/8 OCR running-position photos → lane JSON",
-             [PYTHON, str(BASE / "parse_rp_photos.py"), "--date", date_str, "--force"]),
+             [PYTHON, str(BASE / "parse_rp_photos.py"), "--date", date_str]),
             ("6/8 Rebuild form guide (with lane data)",
              [PYTHON, str(BASE / "build_form_guide.py"), date_str]),
             ("7/8 Race commentary",
