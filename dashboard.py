@@ -15416,10 +15416,23 @@ def page_my_bets():
             if up is not None:
                 import tempfile
                 import parse_acct_statement as pas
+                # IMPORTANT: use getvalue() (pointer-independent), NOT read().
+                # This block re-runs on every Streamlit rerun (e.g. when the
+                # Preview / Import buttons are clicked). read() consumes the
+                # uploaded buffer, so on the rerun that actually triggers the
+                # import it would return b"" → an empty temp file → "0 blocks"
+                # parsed and nothing imported. getvalue() always returns the
+                # full bytes regardless of the read position.
+                _raw = up.getvalue()
                 with tempfile.NamedTemporaryFile(
                         mode="wb", suffix=".txt", delete=False) as f:
-                    f.write(up.read())
+                    f.write(_raw)
                     tmp_path = Path(f.name)
+                if not _raw:
+                    st.error(
+                        "Uploaded file is empty (0 bytes). Re-select the "
+                        "statement .txt and try again."
+                    )
                 try:
                     cprev, cimp = st.columns([1, 1])
                     with cprev:
@@ -15437,7 +15450,28 @@ def page_my_bets():
                         )
                     if preview:
                         parsed = pas.parse_statement(tmp_path)
-                        st.info(f"Parsed {len(parsed)} bet block(s).")
+                        # Count bet-classified blocks so the user can see if
+                        # any wager failed to parse (and would be silently
+                        # dropped on import).
+                        try:
+                            _blocks = pas._split_blocks(
+                                tmp_path.read_text(encoding="utf-8"))
+                            _n_bet_blocks = sum(
+                                1 for b in _blocks
+                                if pas._classify_block(b) == "bet")
+                        except Exception:
+                            _n_bet_blocks = len(parsed)
+                        _failed = max(0, _n_bet_blocks - len(parsed))
+                        if _failed:
+                            st.warning(
+                                f"Parsed **{len(parsed)}** of "
+                                f"**{_n_bet_blocks}** bet block(s) — "
+                                f"**{_failed}** could not be parsed and would "
+                                "be skipped. Check the statement formatting "
+                                "for those wagers."
+                            )
+                        else:
+                            st.info(f"Parsed {len(parsed)} bet block(s).")
                         if parsed:
                             st.dataframe(
                                 pd.DataFrame(parsed),
