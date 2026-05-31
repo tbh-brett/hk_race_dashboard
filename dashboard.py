@@ -9195,12 +9195,13 @@ def page_results():
 
     # v4.5: per-horse running lane (from running_position_photos OCR).
     try:
-        from lane_utils import load_race_lanes, lane_colour, LANE_BUCKETS, has_lane_data
+        from lane_utils import load_race_lanes, lane_colour, LANE_BUCKETS, has_lane_data, trip_note
         _lane_map = load_race_lanes(selected_dc, int(selected_rn)) or {}
         _has_lanes = bool(_lane_map)
     except Exception:
         _lane_map = {}
         _has_lanes = False
+        trip_note = lambda *a, **k: None
 
     res_rows = []
     for r in runners:
@@ -9247,6 +9248,7 @@ def page_results():
             row["Ground (m)"] = (f"{lane_rec.get('ground_lost_m'):+.1f}"
                                   if isinstance(lane_rec.get("ground_lost_m"), (int, float))
                                   else "—")
+            row["Trip"] = trip_note(lane_rec, _to_int(r.get("place"))) or "—"
         res_rows.append(row)
 
     _res_df = pd.DataFrame(res_rows)
@@ -9282,6 +9284,9 @@ def page_results():
             f"<div style='margin:6px 0 4px 0;font-size:12px;opacity:0.8'>"
             f"<b>Lane</b> (from HKJC running-position photo, x_frac): {_legend_html} "
             f"&nbsp;·&nbsp; <i>Ground</i> = approx. extra metres travelled vs rail over the race."
+            f"&nbsp;·&nbsp; <i>Trip</i> = post-race context: rail-trapped runners that ran poorly "
+            f"have a likely <b>trip excuse</b> (don't downgrade them); lane itself does NOT predict "
+            f"finish (backtest ρ≈-0.03, n=5,178)."
             f"</div>",
             unsafe_allow_html=True,
         )
