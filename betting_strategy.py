@@ -118,6 +118,12 @@ CFG = {
     "vet_flag_pen":       -0.15,
     "ht_overround":       1.175,  # HKJC WIN pool overround, informational only
     "takeout_factor":     0.825,  # QIN/QPL dividend proxy 1 - 17.5%
+    # Market blend (v4.8) — geometric/log-opinion pool of the ET+SARR model
+    # probability with the market-implied probability. Backtest (16 Apr-May
+    # meetings, 159 races): ET+SARR+Market top-1 = 26.4% WIN / 60.4% PLACE,
+    # beating ET+SARR (19.5/54.1), Market-only (22.0/57.9), ET-only (16.4/39.0).
+    # p_blend = normalize(p_model * p_mkt ** w_market_blend).
+    "w_market_blend":     1.0,    # 1.0 best PLACE, ~1.5 best WIN in backtest
     # Banker gates
     "banker_min_pmodel":  0.20,
     "banker_min_gap":     0.04,   # top-1 p_model minus top-2 p_model
@@ -326,14 +332,21 @@ def _lookup_factor_bonus(horse_runner: dict, factor_tbls: dict) -> tuple[float, 
 # ---------------------------------------------------------------------------
 def score_race(et_race: dict, sarr_race: Optional[dict],
                factor_tbls: dict, blackbook: dict,
-               actual_odds_by_no: Optional[dict] = None) -> list[dict]:
+               actual_odds_by_no: Optional[dict] = None,
+               rank_by: str = "score") -> list[dict]:
     """
     Returns a list of runner dicts (one per horse) with scoring fields added.
 
     Each runner has:
         horse_no, horse_name, jockey, trainer, draw, weight,
-        et_rank, sarr_rank, composite, p_model, p_mkt, edge,
+        et_rank, sarr_rank, composite, p_model, p_mkt, p_blend, edge,
         flags, trial_flag, vet_flag, factor_notes, bb_match, bb_tags
+
+    ``rank_by``:
+        * ``"score"`` (default) — sort/rank by the ET+SARR composite ``_score``
+          (legacy behaviour; contrarian banker logic relies on this).
+        * ``"blend"`` — sort/rank by ``p_blend`` (ET+SARR pooled with Market).
+          Only differs when market odds are present.
     """
     et_picks = et_race.get("picks", []) or []
     field = len(et_picks) or et_race.get("runners", 0) or 1
@@ -436,8 +449,32 @@ def score_race(et_race: dict, sarr_race: Optional[dict],
         else:
             r["edge"] = None
 
-    # Sort by composite score descending
-    rows.sort(key=lambda r: r["_score"], reverse=True)
+    # Market blend (v4.8): geometric / log-opinion pool of the ET+SARR model
+    # probability with the market-implied probability. Horses without market
+    # odds fall back to the pure model probability, so the blend degrades
+    # gracefully to p_model when no odds are scraped yet.
+    w_mkt = CFG.get("w_market_blend", 1.0)
+    have_mkt = any(r.get("p_mkt") for r in rows)
+    blend_raw = []
+    for r in rows:
+        pm = r.get("p_mkt")
+        if have_mkt and pm and pm > 0:
+            blend_raw.append(r["p_model"] * (pm ** w_mkt))
+        else:
+            blend_raw.append(r["p_model"])
+    z = sum(blend_raw) or 1.0
+    for r, bv in zip(rows, blend_raw):
+        r["p_blend"] = round(bv / z, 4)
+
+    # blend_rank is always available as an additive field.
+    for i, r in enumerate(sorted(rows, key=lambda r: r["p_blend"],
+                                  reverse=True), 1):
+        r["blend_rank"] = i
+
+    # Primary sort — composite score by default; p_blend when requested.
+    sort_key = (lambda r: r["p_blend"]) if rank_by == "blend" \
+        else (lambda r: r["_score"])
+    rows.sort(key=sort_key, reverse=True)
     for i, r in enumerate(rows, 1):
         r["composite_rank"] = i
     return rows
@@ -1353,7 +1390,8 @@ def build_model_ticket(race: dict, rows: list[dict],
 def build_meeting_tickets(date_compact: str,
                             blackbook: Optional[dict] = None,
                             factor_tbls: Optional[dict] = None,
-                            odds_mode: str = "auto") -> list[dict]:
+                            odds_mode: str = "auto",
+                            rank_by: str = "score") -> list[dict]:
     """Build model tickets for every race on a meeting.
 
     Returns a list of {race_number, race_class, distance, course, ticket,
@@ -1418,7 +1456,7 @@ def build_meeting_tickets(date_compact: str,
                 odds_by, odds_source = {}, "none"
 
         rows = score_race(race, sarr_race, factor_tbls, blackbook,
-                           actual_odds_by_no=odds_by)
+                           actual_odds_by_no=odds_by, rank_by=rank_by)
         ticket = build_model_ticket(race, rows, live_odds=odds_by or None)
         out.append({
             "race_number": rn,

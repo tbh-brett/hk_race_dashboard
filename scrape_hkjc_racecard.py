@@ -370,6 +370,35 @@ def _detect_column_indices(header_row: Tag) -> Dict[str, int]:
     return dict(COL)
 
 
+def _row_is_scratched(row: Tag) -> bool:
+    """Return True when an HKJC racecard <tr> denotes a scratched runner.
+
+    HKJC marks late-scratched horses with strikethrough markup (<s>/<del>/
+    <strike>), an inline 'line-through' text-decoration style, or a row/cell
+    class containing 'scratch'/'withdraw'. Conservative by design: only the
+    explicit markers below trigger exclusion so valid runners are never
+    dropped.
+    """
+    if row.find(["s", "del", "strike"]) is not None:
+        return True
+    for el in [row, *row.find_all(["td", "th", "span", "font", "a"])]:
+        style = (el.get("style") or "").lower()
+        if "line-through" in style:
+            return True
+
+    def _classes(el: Tag) -> str:
+        cls = el.get("class")
+        if not cls:
+            return ""
+        return " ".join(cls).lower() if isinstance(cls, list) else str(cls).lower()
+
+    for el in [row, *row.find_all(["td", "th"])]:
+        c = _classes(el)
+        if "scratch" in c or "withdraw" in c:
+            return True
+    return False
+
+
 def parse_racecard_table(soup: BeautifulSoup, race_meta: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Parse horse data from the HKJC 'starter' or 'racecardlist' table (27 cols).
 
@@ -401,6 +430,17 @@ def parse_racecard_table(soup: BeautifulSoup, race_meta: Dict[str, Any]) -> List
         no_idx = col_idx.get("horse_no", 0)
         horse_no = _safe_int(texts[no_idx] if no_idx < len(texts) else "")
         if horse_no is None or horse_no < 1 or horse_no > 30:
+            continue
+
+        # Skip scratched / withdrawn runners. HKJC keeps a late-scratched
+        # horse in the racecard table but marks it with strikethrough markup
+        # (<s>/<del>/<strike> or an inline 'line-through' style) and/or a
+        # 'scratch'/'WD' class. Excluding these here guarantees a fresh
+        # re-scrape drops them from the field (and lets promoted reserves in
+        # the standby table take their place downstream).
+        if _row_is_scratched(row):
+            log.info("  Skipping scratched runner #%d in R%d",
+                     horse_no, race_meta["race_number"])
             continue
 
         def _get(key: str) -> str:

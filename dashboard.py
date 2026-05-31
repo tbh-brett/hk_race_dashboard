@@ -4899,6 +4899,58 @@ def page_race_day(selected):
         unsafe_allow_html=True,
     )
 
+    # ── One-click race-day control (ALWAYS available) ────────────────────
+    # The stale-card banner below only appears when the card is >12 h old AND
+    # the meeting is today, so it is hidden exactly when a *late* scratching /
+    # reserve swap lands on a freshly-scraped card. This control is always
+    # present so the field can be refreshed on demand, and doubles as the
+    # "run everything when the card is out" one-click button: it re-scrapes the
+    # racecard (dropping scratched horses, pulling in promoted reserves /
+    # replacements), then rebuilds SARR + ET + form guide on the fresh field.
+    if date_str:
+        _iso = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+        _rc = BASE / "racecards" / f"racecard_{date_str}.xlsx"
+        _age_txt = "no racecard on disk"
+        if _rc.exists():
+            try:
+                _age_h = (hkt_now() - hkt_from_ts(_rc.stat().st_mtime)
+                          ).total_seconds() / 3600.0
+                _age_txt = (f"card scraped {int(_age_h)} h ago"
+                            if _age_h >= 1 else "card scraped <1 h ago")
+            except OSError:
+                pass
+        with st.expander("🏁 Race-day controls — re-scrape & run everything",
+                         expanded=False):
+            rc1, rc2 = st.columns([3, 2])
+            with rc1:
+                st.caption(
+                    f"**{_iso}** · {_age_txt}. Use this whenever the card is "
+                    "out or a late scratching / reserve swap is announced — it "
+                    "re-scrapes the live field and rebuilds SARR + ET + form "
+                    "guide in one pass."
+                )
+                _gt = st.text_input("Turf going", value=str(
+                    st.session_state.get("going_turf", "Good")),
+                    key=f"rd_ctl_gt_{date_str}")
+                _ga = st.text_input("AWT going", value=str(
+                    st.session_state.get("going_awt", "Good")),
+                    key=f"rd_ctl_ga_{date_str}")
+            with rc2:
+                if st.button("🔄 Re-scrape & run everything",
+                             key=f"rd_runall_{date_str}",
+                             type="primary", width='stretch'):
+                    try:
+                        st.cache_data.clear()
+                    except Exception:
+                        pass
+                    run_pipeline(_iso, no_cache=True,
+                                 going_turf=_gt or "Good",
+                                 going_awt=_ga or "Good",
+                                 skip_scrape=False)
+                    st.rerun()
+                st.caption("Takes a few minutes. Picks below refresh "
+                           "automatically when it finishes.")
+
     # ── Stale-racecard banner ────────────────────────────────────────────
     # If today's meeting card was scraped >12h ago, late scratchings (e.g.
     # reserves replacing scratched horses) may NOT have propagated. Offer a
@@ -17198,6 +17250,18 @@ def page_model_bets():
                           "the cycle is NOT flagging it as overrated."),
                 )
 
+            blend_market = st.checkbox(
+                "🔀 Show ET + SARR + Market blend pick",
+                value=False, key="mb_blend_market",
+                help=("Adds a column with each race's #1 by a geometric pool "
+                      "of the ET+SARR model probability and the market-implied "
+                      "probability (uses the odds basis selected above). "
+                      "Backtest over 16 Apr–May meetings: ET+SARR+Market top-1 "
+                      "hit 60.4% PLACE / 26.4% WIN vs 54.1% / 19.5% for ET+SARR "
+                      "alone. The proven v4.7 SARR banker is left unchanged — "
+                      "this is an additional signal to weigh, not a replacement."),
+            )
+
             with st.spinner("Building tickets…"):
                 items = build_meeting_tickets(date_str, odds_mode=odds_mode)
             conf_map = _mb_confluence_maps(date_str)
@@ -17272,7 +17336,7 @@ def page_model_bets():
                                   "settled_sp": "🟠 SP",
                                   "none": "⚪ —"}.get(
                                       it.get("odds_source", "none"), "—")
-                    rows.append({
+                    row = {
                         "R": it["race_number"],
                         "Class": str(it.get("race_class") or ""),
                         "Dist": it.get("distance"),
@@ -17287,7 +17351,20 @@ def page_model_bets():
                         "HKD min": t.get("stake_hkd_min", 0),
                         "Overlays": " ".join(markers),
                         "Why": t.get("reason", ""),
-                    })
+                    }
+                    if blend_market:
+                        br = next((r for r in it.get("rows", [])
+                                   if r.get("blend_rank") == 1), None)
+                        if br:
+                            pm = br.get("p_mkt")
+                            row["Blend #1"] = (
+                                f"#{br['horse_no']} {br['horse_name']} "
+                                f"(p {br.get('p_blend', 0):.2f}"
+                                + (f", SP {pm and 1/pm:.1f}" if pm else "")
+                                + ")")
+                        else:
+                            row["Blend #1"] = "—"
+                    rows.append(row)
                 df = pd.DataFrame(rows)
                 # Colour-code Play column via a simple icon prefix
                 play_icons = {
