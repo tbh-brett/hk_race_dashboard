@@ -2342,11 +2342,8 @@ def _render_pace_research_panel(race: dict):
 _ET_COL_HELP = {
     "Rk": "Model rank — lower is a stronger pick (1 = best).",
     "No": "Saddle-cloth number.",
+    "Fin": "Actual finishing position (post-race). 1 = gold, 2–3 = placed.",
     "Draw": "Barrier draw (gate position).",
-    "Wt": "Carried weight (lbs).",
-    "Style": "Predicted running style (Leader / On-Pace / Midfield / Closer).",
-    "BB": "In your Blackbook.",
-    "Proj (s)": "Projected finish time (s) — lower = faster.",
     "Win%": "Estimated win probability — ≥20% is strong.",
     "Edge": "Model Win% minus market-implied Win% (live odds, de-overround). "
             "Positive = potential value / overlay.",
@@ -2363,6 +2360,7 @@ _ET_COL_HELP = {
 _SARR_COL_HELP = {
     "Rk": "SARR rank — lower is stronger (1 = best).",
     "No": "Saddle-cloth number.",
+    "Fin": "Actual finishing position (post-race). 1 = gold, 2–3 = placed.",
     "Draw": "Barrier draw (gate position).",
     "Wt": "Carried weight (lbs).",
     "Style": "Predicted running style.",
@@ -2380,7 +2378,8 @@ _SARR_COL_HELP = {
 
 
 def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int = 4,
-                     bb_lookup: dict | None = None, odds_lookup: dict | None = None):
+                     bb_lookup: dict | None = None, odds_lookup: dict | None = None,
+                     result_lookup: dict | None = None):
     """Render a single race's picks as a terminal-style card with field toggle."""
     picks = race.get("picks", [])
     if not picks:
@@ -2439,6 +2438,8 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
         rows.append({
             "Rk": p["rank"],
             "No": p["horse_no"],
+            "Fin": (str(result_lookup.get(p["horse_no"], "")) or "—")
+                   if result_lookup else "—",
             "Horse": p["horse_name"],
             "Draw": p.get("draw", "—") or "—",
             "Wt": p.get("weight", "—") or "—",
@@ -2470,6 +2471,9 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
     # isn't a column of dashes.
     if not odds_lookup and "Edge" in df.columns:
         df = df.drop(columns=["Edge"])
+    # Drop the Fin (result) column pre-race when no results exist yet.
+    if not result_lookup and "Fin" in df.columns:
+        df = df.drop(columns=["Fin"])
 
     def style_ssi(val):
         try:
@@ -2535,6 +2539,16 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
         elif v <= -5: return "color: #ef4444"
         return ""
 
+    def style_fin(val):
+        s = str(val).strip()
+        if s == "1": return "color: #fbbf24; font-weight: bold"
+        if s in ("2", "3"): return "color: #22c55e; font-weight: bold"
+        try:
+            if int(s) <= 6: return "color: #cbd5e1"
+        except ValueError:
+            return "color: #64748b"
+        return "color: #64748b"
+
     styled = df.style.map(style_ssi, subset=["SSI"]) \
                       .map(style_winprob, subset=["Win%"]) \
                       .map(style_vet, subset=["Vet"]) \
@@ -2547,6 +2561,8 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
     if "Edge" in df.columns:
         styled = styled.map(style_edge, subset=["Edge"])
+    if "Fin" in df.columns:
+        styled = styled.map(style_fin, subset=["Fin"])
 
     col_cfg = {c: st.column_config.Column(help=h)
                for c, h in _ET_COL_HELP.items() if c in df.columns}
@@ -2576,7 +2592,8 @@ def render_race_card(race: dict, vet_lookup: dict | None = None, show_top: int =
 
 
 def render_sarr_race_card(race: dict, et_race: dict | None = None,
-                          bb_lookup: dict | None = None):
+                          bb_lookup: dict | None = None,
+                          result_lookup: dict | None = None):
     """Render a single race's SARR picks as a terminal-style card."""
     picks = race.get("picks", [])
     if not picks:
@@ -2631,6 +2648,8 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
         rows.append({
             "Rk": p["rank"],
             "No": p.get("horse_no", ""),
+            "Fin": (str(result_lookup.get(p.get("horse_no"), "")) or "—")
+                   if result_lookup else "—",
             "Horse": p.get("horse_name", ""),
             "Draw": p.get("draw", "—") or "—",
             "Wt": p.get("weight", "—") or "—",
@@ -2648,6 +2667,8 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
         })
 
     df = pd.DataFrame(rows)
+    if not result_lookup and "Fin" in df.columns:
+        df = df.drop(columns=["Fin"])
 
     def _style_sarr(val):
         try: v = float(val)
@@ -2699,6 +2720,16 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
         elif v >= 0.30: return "color: #ef4444"
         return ""
 
+    def _style_fin(val):
+        s = str(val).strip()
+        if s == "1": return "color: #fbbf24; font-weight: bold"
+        if s in ("2", "3"): return "color: #22c55e; font-weight: bold"
+        try:
+            if int(s) <= 6: return "color: #cbd5e1"
+        except ValueError:
+            return "color: #64748b"
+        return "color: #64748b"
+
     styled = df.style.map(_style_sarr, subset=["SARR"]) \
                       .map(_style_fmrp, subset=["FMRP"]) \
                       .map(_style_lsa_esz, subset=["LSA", "ESZ"]) \
@@ -2712,9 +2743,11 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
                       .set_properties(**{"text-align": "center"}) \
                       .set_properties(subset=["Horse"], **{"text-align": "left", "font-weight": "600"})
 
+    if "Fin" in df.columns:
+        styled = styled.map(_style_fin, subset=["Fin"])
+
     _sarr_cfg = {c: st.column_config.Column(help=h)
                  for c, h in _SARR_COL_HELP.items() if c in df.columns}
-
     # Unique per-(model, race) key — see render_race_card for rationale.
     # Height tuned so all rows fit without an inner scrollbar.
     _sarr_h = 38 + 35 * max(len(rows), 1) + 4
@@ -4981,6 +5014,30 @@ def page_race_day(selected):
     sarr_races = sarr_data.get("races", []) if sarr_data else []
     sarr_available = bool(sarr_races)
 
+    # ── Post-race results lookup (for the per-pick Fin column) ───────────
+    _rd_results_json = _load_results_json(date_str) if date_str else None
+
+    def _rd_result_lk(rn: int) -> dict:
+        """Return {horse_no: finishing_position_str} for race `rn`, or {}."""
+        if not _rd_results_json:
+            return {}
+        for rr in _rd_results_json.get("races", []):
+            try:
+                if int(rr.get("race_number", 0) or 0) != int(rn):
+                    continue
+            except (TypeError, ValueError):
+                continue
+            out = {}
+            for ru in rr.get("runners", []) or []:
+                hn, pos = ru.get("horse_no"), ru.get("place")
+                if hn is not None and pos not in (None, ""):
+                    try:
+                        out[int(hn)] = str(pos)
+                    except (TypeError, ValueError):
+                        pass
+            return out
+        return {}
+
     # ── Page header ──────────────────────────────────────────────────────
     st.markdown(
         f'<div class="page-title">{data["meeting_title"]}</div>'
@@ -5455,7 +5512,8 @@ def page_race_day(selected):
             sarr_race = next((r for r in sarr_races if r["race_number"] == active_rn), None)
             et_race = next((r for r in et_races if r["race_number"] == active_rn), None)
             if sarr_race:
-                render_sarr_race_card(sarr_race, et_race=et_race, bb_lookup=bb_lookup)
+                render_sarr_race_card(sarr_race, et_race=et_race, bb_lookup=bb_lookup,
+                                      result_lookup=_rd_result_lk(active_rn))
         else:
             race = next((r for r in et_races if r["race_number"] == active_rn), None)
             if race:
@@ -5465,7 +5523,8 @@ def page_race_day(selected):
                     active_rn,
                 )
                 render_race_card(race, vet_lookup=vet_lookup, show_top=4,
-                                 bb_lookup=bb_lookup, odds_lookup=_odds_lk)
+                                 bb_lookup=bb_lookup, odds_lookup=_odds_lk,
+                                 result_lookup=_rd_result_lk(active_rn))
 
     # ── Column acronym legend ────────────────────────────────────────────
     with st.expander("📖 Column Legend & Interpretation Guide"):
