@@ -205,26 +205,37 @@ def parse_sectional_table(html: str) -> Dict[str, Dict]:
         if not horse_no:
             continue
 
-        positions, sectiontimes = [], []
+        positions, sectiontimes, subsectiontimes = [], [], []
         for td in tds[3:9]:
             if td.find("img"):
                 positions.append("")
                 sectiontimes.append("")
+                subsectiontimes.append([])
                 continue
             pos = td.select_one("span.f_fl")
             positions.append(pos.get_text(strip=True) if pos else "")
             sec_time = ""
+            subs: List[str] = []
             ps = td.find_all("p")
             if len(ps) >= 2:
                 time_p = ps[1]
+                # The 200m sub-splits (blue, under the last two 400m sectionals)
+                # live in <span> tags inside the time <p>. Capture them into a
+                # parallel field BEFORE stripping, so they no longer leak into
+                # the main sectional column (the historic corruption) and are
+                # available for future analysis.
+                subs = [s.get_text(strip=True) for s in time_p.find_all("span")]
+                subs = [v for v in subs if re.match(r"^\d+\.\d+$", v)]
                 for span in time_p.find_all("span"):
                     span.decompose()
                 sec_time = time_p.get_text(strip=True)
             sectiontimes.append(sec_time)
+            subsectiontimes.append(subs)
 
         results[horse_no] = {
             "positions": positions,
             "sectiontimes": sectiontimes,
+            "subsectiontimes": subsectiontimes,
         }
     return results
 
@@ -263,6 +274,7 @@ def scrape_race(session: requests.Session, date_str: str,
         sect = sectionals.get(r["horse_no"], {})
         r["positions"] = sect.get("positions", [])
         r["sectiontimes"] = sect.get("sectiontimes", [])
+        r["subsectiontimes"] = sect.get("subsectiontimes", [])
         # Parse numeric fields
         try:
             r["horse_no"] = int(r["horse_no"])
