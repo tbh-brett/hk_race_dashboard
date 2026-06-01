@@ -29,9 +29,9 @@ RACECARDS_DIR = BASE / "racecards"
 
 FORM_COLS = [
     "horse_name", "race_date", "race_number", "race_track", "race_course",
-    "going", "race_class", "jockey", "rating", "draw", "running_positions",
-    "place", "lbw", "finish_time_seconds", "distance", "actual_weight",
-    "sectiontimes",
+    "going", "race_class", "jockey", "trainer", "rating", "draw",
+    "running_positions", "place", "lbw", "finish_time_seconds", "distance",
+    "actual_weight", "sectiontimes",
 ]
 
 

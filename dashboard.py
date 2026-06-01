@@ -2087,6 +2087,145 @@ def _vet_display(flag: str) -> str:
     return {"RED": "RED", "AMBER": "AMB", "INFO": "INF"}.get(flag, "-")
 
 
+def _load_vet_full_lookup(date_compact: str) -> dict:
+    """Full vet records per runner: {race_number: {horse_no(int): {...}}}.
+
+    Unlike ``_load_vet_lookup`` (which keeps only the summary flag), this keeps
+    the per-horse ``records`` list (each with date / details / flag / days_ago)
+    so we can surface a vet record that landed on a horse's *previous immediate
+    race* on the race-day highlights strip.
+    """
+    vj = REPORTS / f"vet_report_{date_compact}.json"
+    if not vj.exists():
+        return {}
+    try:
+        with open(vj, "r", encoding="utf-8") as f:
+            vd = json.load(f)
+    except Exception:
+        return {}
+    out: dict = {}
+    for rd in vd.get("races", []):
+        rn = rd.get("race_number")
+        m: dict = {}
+        for h in rd.get("horses", []) or []:
+            try:
+                no = int(h.get("horse_no"))
+            except (TypeError, ValueError):
+                continue
+            m[no] = {
+                "horse_name": h.get("horse_name", ""),
+                "max_flag": h.get("max_flag", ""),
+                "records": h.get("records", []) or [],
+            }
+        out[rn] = m
+    return out
+
+
+def _render_raceday_highlights(race: dict, date_str: str,
+                               fg_cache: dict | None,
+                               vet_full: dict) -> None:
+    """Per-race highlights strip for the Model Analysis page.
+
+    Surfaces two things the user asked to be flagged front-and-centre:
+      • horses that **changed stables** since their last start (current
+        racecard trainer ≠ trainer in the most recent cached run), and
+      • horses that carry a **vet record / injury** dated on or after their
+        **previous immediate race** (from this meeting's vet report).
+    """
+    rn = race.get("race_number")
+    fg_race = None
+    if fg_cache:
+        fg_race = next((r for r in fg_cache.get("races", [])
+                        if r.get("race_number") == rn), None)
+    fg_horses = (fg_race or {}).get("horses", []) or []
+    vet_race = vet_full.get(rn, {}) if vet_full else {}
+
+    stable_changes = []   # (no, name, prev_trainer, cur_trainer)
+    vet_prev = []         # (no, name, flag, details, date, days_ago)
+
+    for h in fg_horses:
+        cur_tr = str(h.get("trainer", "") or "").strip()
+        runs = h.get("runs", []) or []
+        prev_date = None
+        if runs:
+            last = runs[-1]
+            prev_tr = str(last.get("trainer", "") or "").strip()
+            prev_date = str(last.get("date", "") or "")
+            if (cur_tr and prev_tr and cur_tr != "?" and prev_tr != "?"
+                    and cur_tr.upper() != prev_tr.upper()):
+                stable_changes.append(
+                    (h.get("horse_no", "?"), h.get("horse_name", "?"),
+                     prev_tr, cur_tr))
+        # Vet record on / since the previous immediate race
+        try:
+            no = int(h.get("horse_no"))
+        except (TypeError, ValueError):
+            no = None
+        vinfo = vet_race.get(no) if no is not None else None
+        if vinfo and prev_date:
+            relevant = [
+                rec for rec in vinfo.get("records", [])
+                if rec.get("flag") in ("RED", "AMBER")
+                and str(rec.get("date", "")) >= prev_date
+            ]
+            if relevant:
+                rec = relevant[0]
+                vet_prev.append(
+                    (h.get("horse_no", "?"), h.get("horse_name", "?"),
+                     vinfo.get("max_flag") or rec.get("flag"),
+                     str(rec.get("details", "") or ""),
+                     str(rec.get("date", "") or ""),
+                     rec.get("days_ago")))
+
+    if not stable_changes and not vet_prev:
+        return
+
+    chips = []
+    for no, name, prev_tr, cur_tr in stable_changes:
+        chips.append(
+            f'<span title="Stable change: {prev_tr} → {cur_tr}" '
+            f'style="display:inline-block;margin:2px 6px 2px 0;padding:2px 9px;'
+            f'border-radius:11px;background:rgba(212,55,0,0.14);'
+            f'border:1px solid rgba(212,55,0,0.5);color:#ff7a3d;'
+            f'font-size:0.82em;font-weight:700">'
+            f'\u2691 #{no} {str(name).title()} '
+            f'<span style="opacity:0.8;font-weight:600">{prev_tr}→{cur_tr}</span>'
+            f'</span>')
+    for no, name, flag, details, vdate, days_ago in vet_prev:
+        col = "#ef4444" if flag == "RED" else "#f59e0b"
+        bg = "rgba(239,68,68,0.14)" if flag == "RED" else "rgba(245,158,11,0.14)"
+        when = (f"{days_ago}d ago" if isinstance(days_ago, (int, float))
+                else vdate)
+        det = (details[:48] + "…") if len(details) > 49 else details
+        chips.append(
+            f'<span title="{details} ({vdate})" '
+            f'style="display:inline-block;margin:2px 6px 2px 0;padding:2px 9px;'
+            f'border-radius:11px;background:{bg};'
+            f'border:1px solid {col}88;color:{col};'
+            f'font-size:0.82em;font-weight:700">'
+            f'\U0001fa7a #{no} {str(name).title()} · {flag} · {when} '
+            f'<span style="opacity:0.8;font-weight:600">{det}</span>'
+            f'</span>')
+
+    bits = []
+    if stable_changes:
+        bits.append(f"{len(stable_changes)} stable change"
+                    f"{'s' if len(stable_changes) != 1 else ''}")
+    if vet_prev:
+        bits.append(f"{len(vet_prev)} vet/injury last start")
+    st.markdown(
+        f'<div style="margin:2px 0 8px 0;padding:7px 10px;border-radius:8px;'
+        f'background:rgba(255,255,255,0.03);border:1px solid '
+        f'rgba(255,255,255,0.08)">'
+        f'<span style="font-weight:800;color:#a3b3c7;font-size:0.82em;'
+        f'letter-spacing:0.5px">\u2691 RACE HIGHLIGHTS</span> '
+        f'<span style="opacity:0.6;font-size:0.78em">· {" · ".join(bits)}</span>'
+        f'<div style="margin-top:5px">{"".join(chips)}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def render_speed_map(race: dict):
     """Render speed map HTML table above the analysis table."""
     smap = race.get("speed_map")
@@ -5293,6 +5432,46 @@ def page_race_day(selected):
     _set_meeting_ctx(_ctx_iso, data.get("meeting_venue", ""),
                      len(data.get("races", [])))
 
+    # ── DB freshness banner: results scraped but not yet in master DB ─────
+    # The model analysis reads from hkjc.db. If a meeting was scraped but the
+    # DB-append step never ran, those results silently vanish from form lines.
+    try:
+        _pending = _db_pending_meetings()
+    except Exception:
+        _pending = []
+    if _pending:
+        _pb1, _pb2 = st.columns([3, 1])
+        with _pb1:
+            _shown = ", ".join(_pending[-4:]) + (" …" if len(_pending) > 4 else "")
+            st.warning(
+                f"⚠️ **Master DB is {len(_pending)} meeting(s) behind.** "
+                f"Scraped but not yet synced: {_shown}. Form lines & pace for "
+                "these dates won't appear in analysis until you sync."
+            )
+        with _pb2:
+            if st.button("🔄 Sync DB now", key="rd_sync_db_banner",
+                         type="primary", width='stretch'):
+                try:
+                    from db_utils import append_results_to_db as _ap
+                    _tot = 0
+                    with st.spinner("Appending results + rebuilding caches …"):
+                        for _iso in _pending:
+                            _dc = _iso.replace("-", "")
+                            _fp = REPORTS / f"results_{_dc}.json"
+                            if _fp.exists():
+                                _tot += int(_ap(_fp, verbose=False) or 0)
+                        _msgs = _rebuild_caches_after_sync()
+                    try:
+                        st.cache_data.clear()
+                    except Exception:
+                        pass
+                    st.success(
+                        f"Synced {len(_pending)} meeting(s), {_tot} rows. "
+                        + " · ".join(_msgs))
+                    st.rerun()
+                except Exception as _e:
+                    st.error(f"Sync failed: {_e}")
+
     bb = _load_blackbook()
     _bb_expire_stale(bb)
     bb_lookup = _bb_active_lookup(bb)
@@ -5802,6 +5981,15 @@ def page_race_day(selected):
             if active_rn in _agree_set:
                 _vb.append("★ both models agree (~33% win)")
             st.info(" · ".join(_vb))
+
+        # ── Per-race highlights strip: stable changes + vet-on-last-start ─
+        try:
+            _hl_fg = _load_form_guide_cache(_ctx_iso) if _ctx_iso else None
+            _hl_vet = _load_vet_full_lookup(date_str) if date_str else {}
+            _render_raceday_highlights(_vr or {}, date_str, _hl_fg, _hl_vet)
+        except Exception as _hl_err:
+            st.caption(f"_Highlights unavailable: {_hl_err}_")
+
         if use_sarr:
             sarr_race = next((r for r in sarr_races if r["race_number"] == active_rn), None)
             et_race = next((r for r in et_races if r["race_number"] == active_rn), None)
@@ -5819,6 +6007,13 @@ def page_race_day(selected):
                 render_race_card(race, vet_lookup=vet_lookup, show_top=4,
                                  bb_lookup=bb_lookup, odds_lookup=_odds_lk,
                                  result_lookup=_rd_result_lk(active_rn))
+
+        # ── Notable head-to-head + Form Screen (reinstated per race) ─────
+        try:
+            if date_str:
+                _render_form_screen_panel(_vr or {}, date_str)
+        except Exception as _fs_err:
+            st.caption(f"_Form Screen unavailable: {_fs_err}_")
 
     # ── Column acronym legend ────────────────────────────────────────────
     with st.expander("📖 Column Legend & Interpretation Guide"):
@@ -7717,7 +7912,107 @@ def _auto_sync_results_to_db(verbose: bool = False) -> tuple[int, int]:
                 have.add(iso)
         except Exception:
             continue
+    # A freshly-synced past meeting invalidates the pace index and every
+    # upcoming form-guide cache — rebuild them so the new results actually
+    # surface in race-day analysis.
+    if n_meetings:
+        try:
+            _rebuild_caches_after_sync()
+        except Exception:
+            pass
     return (n_meetings, n_rows)
+
+
+def _upcoming_racecard_dates() -> list[str]:
+    """ISO dates of racecards on disk for today or later (upcoming meetings).
+
+    These are the cards whose form lines depend on freshly-synced past
+    results, so their form-guide caches must be rebuilt after a DB sync.
+    """
+    import datetime as _dt
+    today = _dt.date.today()
+    out: list[str] = []
+    rc_dir = BASE / "racecards"
+    if not rc_dir.exists():
+        return out
+    for fp in rc_dir.glob("racecard_*.xlsx"):
+        stem = fp.stem.replace("racecard_", "")
+        if len(stem) != 8 or not stem.isdigit():
+            continue
+        try:
+            d = _dt.date(int(stem[:4]), int(stem[4:6]), int(stem[6:]))
+        except ValueError:
+            continue
+        if d >= today:
+            out.append(f"{stem[:4]}-{stem[4:6]}-{stem[6:]}")
+    return sorted(out)
+
+
+def _rebuild_caches_after_sync() -> list[str]:
+    """Rebuild pace index + upcoming form-guide caches after a DB sync.
+
+    A freshly-synced past meeting changes the form lines of every upcoming
+    racecard, so the pace index and form-guide JSON caches must be rebuilt or
+    the new results won't surface in race-day analysis. Returns short status
+    strings for toasting.
+    """
+    import subprocess as _sp2
+    msgs: list[str] = []
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    try:
+        r = _sp2.run([PYTHON, str(BASE / "build_pace_index.py")],
+                     capture_output=True, text=True, timeout=600,
+                     cwd=str(BASE), env=env)
+        msgs.append("pace ✓" if r.returncode == 0 else "pace ✗")
+    except (OSError, _sp2.TimeoutExpired):
+        msgs.append("pace ✗")
+    for iso in _upcoming_racecard_dates():
+        try:
+            r = _sp2.run([PYTHON, str(BASE / "build_form_guide.py"), iso],
+                         capture_output=True, text=True, timeout=600,
+                         cwd=str(BASE), env=env)
+            msgs.append(f"form {iso} ✓" if r.returncode == 0
+                        else f"form {iso} ✗")
+        except (OSError, _sp2.TimeoutExpired):
+            msgs.append(f"form {iso} ✗")
+        # Form screen (notable mentions + head-to-head) also depends on the
+        # freshly-synced results, so regenerate it for the upcoming card.
+        try:
+            r = _sp2.run([PYTHON, str(BASE / "form_screener.py"),
+                          "--date", iso],
+                         capture_output=True, text=True, timeout=600,
+                         cwd=str(BASE), env=env)
+            msgs.append(f"screen {iso} ✓" if r.returncode == 0
+                        else f"screen {iso} ✗")
+        except (OSError, _sp2.TimeoutExpired):
+            msgs.append(f"screen {iso} ✗")
+    return msgs
+
+
+def _db_pending_meetings() -> list[str]:
+    """ISO dates with a reports/results_*.json that are missing from hkjc.db."""
+    try:
+        from db_utils import read_sqlite
+    except Exception:
+        return []
+    results_dir = BASE / "reports"
+    if not results_dir.exists():
+        return []
+    try:
+        df = read_sqlite("SELECT DISTINCT race_date FROM results")
+        have = {str(d)[:10] for d in df["race_date"].astype(str)}
+    except Exception:
+        have = set()
+    pending: list[str] = []
+    for fp in sorted(results_dir.glob("results_*.json")):
+        stem = fp.stem.replace("results_", "")
+        if len(stem) != 8 or not stem.isdigit():
+            continue
+        iso = f"{stem[:4]}-{stem[4:6]}-{stem[6:]}"
+        if iso not in have:
+            pending.append(iso)
+    return pending
 
 
 def _append_results_to_db(results_path: Path):
@@ -19216,8 +19511,11 @@ def page_race_lookup():
                 _lookup_load_df.clear()
                 _lookup_baselines.clear()
                 if appended:
+                    with st.spinner("Rebuilding pace index + form guides …"):
+                        _msgs = _rebuild_caches_after_sync()
                     st.toast(
-                        f"Synced {appended} meeting(s) — {total} rows.",
+                        f"Synced {appended} meeting(s) — {total} rows. "
+                        + " · ".join(_msgs),
                         icon="✅",
                     )
                 else:
