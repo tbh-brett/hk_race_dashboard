@@ -147,45 +147,8 @@ def has_lane_data(date_compact: str) -> bool:
     return any(folder.glob("R*.json"))
 
 
-def trip_note(lane_rec: Optional[Dict], place: Optional[int]) -> Optional[str]:
-    """Post-race trip context for a single runner, or None if nothing notable.
-
-    Backtest evidence (n=5,178 runs, Jan–May 2026; lane vs finish rho≈-0.03,
-    i.e. lane is NOT a forward predictor). The ONLY robust, directional signal
-    is a TRIP-EXCUSE one, correct only as a *post-race* annotation:
-
-      * rail_all_way win% = 3.0% vs wide_all_way 8.7% (full season).
-      * Within favourites, rail-trapped win 11.4% vs 16.9% base — they
-        underperform their market price because they get held up / no clear run.
-      * 2-wide is the productive lane (9.1% win); horses race wide because they
-        are travelling forward into contention, not because wide "saves" them.
-
-    So we flag rail-trapped horses that ran poorly as having a trip excuse
-    (do NOT downgrade their ability on this run), and note wide horses that
-    still placed as having earned it the hard way. Returns a short tag.
-    """
-    if not lane_rec:
-        return None
-    in_money = place is not None and place <= 3
-    poor = place is not None and place >= 6
-    avg_bucket = lane_rec.get("avg_bucket")
-    rail_trapped = bool(lane_rec.get("rail_all_way")) or avg_bucket == "Rail"
-    wide_all = bool(lane_rec.get("wide_all_way"))
-
-    if rail_trapped and not in_money:
-        # Strongest, most actionable flag — likely held up / no clear run.
-        return "🛤️ Rail-trapped — trip excuse" if poor else "🛤️ Rail-trapped"
-    if rail_trapped and in_money:
-        return "Rail trip, still placed"
-    if wide_all and in_money:
-        return "Wide trip, placed on merit"
-    if wide_all:
-        return "Wide all the way"
-    return None
-
-
 __all__ = [
     "LANE_BUCKETS", "LANE_COLOUR", "LANE_ORDER", "GROUND_LOST_M",
     "GROUND_LOST_BANDS", "classify_lane", "lane_colour",
-    "load_race_lanes", "has_lane_data", "trip_note",
+    "load_race_lanes", "has_lane_data",
 ]

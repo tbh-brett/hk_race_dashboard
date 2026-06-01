@@ -9193,15 +9193,22 @@ def page_results():
     # ── Results table ────────────────────────────────────────────────────
     runners = race.get("runners", [])
 
-    # v4.5: per-horse running lane (from running_position_photos OCR).
-    try:
-        from lane_utils import load_race_lanes, lane_colour, LANE_BUCKETS, has_lane_data, trip_note
-        _lane_map = load_race_lanes(selected_dc, int(selected_rn)) or {}
-        _has_lanes = bool(_lane_map)
-    except Exception:
-        _lane_map = {}
-        _has_lanes = False
-        trip_note = lambda *a, **k: None
+    # ── Finishing speed (final 400m sectional) ───────────────────────
+    # NOTE (Jun 2026): the OCR "lane" (vertical position of a name label in the
+    # running-position photo) turned out to be a label-layout artifact, NOT real
+    # lane — horses 3-wide read as "rail", etc. — with ~zero correlation to finish
+    # (ρ≈-0.03, n=5,178). Lane columns were therefore removed. The photo viewer
+    # and running order (x) remain. The reliable, HKJC-scraped signal for spotting
+    # strong finishers is the final-400m sectional time (always the last entry of
+    # `sectiontimes`, regardless of race distance).
+    def _last_sect(_st):
+        _vals = [s for s in (_st or []) if str(s).strip() not in ("", "-", "---")]
+        try:
+            return float(_vals[-1]) if _vals else None
+        except (TypeError, ValueError):
+            return None
+    _fin_secs = [s for s in (_last_sect(r.get("sectiontimes")) for r in runners) if s]
+    _fin_field_avg = (sum(_fin_secs) / len(_fin_secs)) if _fin_secs else None
 
     res_rows = []
     for r in runners:
@@ -9210,7 +9217,6 @@ def page_results():
         m_rank = model_ranks.get((race["race_number"], hname.upper()), "—")
         positions_list = r.get("positions", [])
         running_pos = "-".join(p for p in positions_list if p) if positions_list else r.get("running_position", "")
-        lane_rec = _lane_map.get(hname.upper(), {}) if _has_lanes else {}
 
         # Numeric coercion for clean sorting in Streamlit header-click
         def _to_float(v):
@@ -9243,12 +9249,10 @@ def page_results():
             "Win Odds": _to_float(r.get("win_odds")),
             "LBW": r.get("lbw", ""),
         }
-        if _has_lanes:
-            row["Lane"] = lane_rec.get("avg_bucket") or "—"
-            row["Ground (m)"] = (f"{lane_rec.get('ground_lost_m'):+.1f}"
-                                  if isinstance(lane_rec.get("ground_lost_m"), (int, float))
-                                  else "—")
-            row["Trip"] = trip_note(lane_rec, _to_int(r.get("place"))) or "—"
+        _last = _last_sect(r.get("sectiontimes"))
+        row["L400m"] = _last
+        row["Fin Δ"] = ((_last - _fin_field_avg)
+                        if (_last is not None and _fin_field_avg) else None)
         res_rows.append(row)
 
     _res_df = pd.DataFrame(res_rows)
@@ -9259,123 +9263,43 @@ def page_results():
         "Wt":       st.column_config.NumberColumn(format="%d"),
         "Draw":     st.column_config.NumberColumn(format="%d"),
         "Win Odds": st.column_config.NumberColumn(format="%.1f"),
+        "L400m":    st.column_config.NumberColumn(
+            "L400m", format="%.2f",
+            help="Final 400m sectional time (seconds). Lower = faster finish."),
+        "Fin Δ":    st.column_config.NumberColumn(
+            "Fin Δ", format="%+.2f",
+            help="This horse's final 400m vs the race field average. Strong "
+                 "negative = exceptional closer (≤ -0.5s historically wins 21% / "
+                 "places 54% / gains +5.5 positions, n=5,495)."),
     }
-    if _has_lanes:
-        _colour_map = {name: col for name, col, _ in LANE_BUCKETS}
-        def _lane_style(val):
-            col = _colour_map.get(val)
-            if not col:
-                return ""
-            return f"background-color:{col}1f;color:{col};font-weight:600"
-        try:
-            _styled = _res_df.style.map(_lane_style, subset=["Lane"])
-            st.dataframe(_styled, width='stretch', hide_index=True,
-                            column_config=_res_col_cfg)
-        except Exception:
-            st.dataframe(_res_df, width='stretch', hide_index=True,
-                            column_config=_res_col_cfg)
-        # Lane legend + per-call breakdown
-        _legend_html = " &nbsp; ".join(
-            f"<span style='display:inline-block;width:10px;height:10px;"
-            f"background:{col};border-radius:2px;vertical-align:middle'></span> "
-            f"<span style='font-size:12px'>{name}</span>"
-            for name, col, _ in LANE_BUCKETS)
-        st.markdown(
-            f"<div style='margin:6px 0 4px 0;font-size:12px;opacity:0.8'>"
-            f"<b>Lane</b> (from HKJC running-position photo, x_frac): {_legend_html} "
-            f"&nbsp;·&nbsp; <i>Ground</i> = approx. extra metres travelled vs rail over the race."
-            f"&nbsp;·&nbsp; <i>Trip</i> = post-race context: rail-trapped runners that ran poorly "
-            f"have a likely <b>trip excuse</b> (don't downgrade them); lane itself does NOT predict "
-            f"finish (backtest ρ≈-0.03, n=5,178)."
-            f"</div>",
-            unsafe_allow_html=True,
-        )
-        # Per-call breakdown for horses with frame data
-        _per_call_rows = []
-        for r in runners:
-            lane_rec = _lane_map.get(r.get("horse_name", "").upper())
-            if not lane_rec or not lane_rec.get("bucket_at"):
-                continue
-            bc = lane_rec["bucket_at"]
-            _per_call_rows.append({
-                "Horse": r.get("horse_name", ""),
-                "800M": bc.get("800M") or "—",
-                "400M": bc.get("400M") or "—",
-                "200M": bc.get("200M") or "—",
-                "Avg": lane_rec.get("avg_bucket") or "—",
-            })
-        if _per_call_rows:
-            with st.expander(f"🛤️ Running lane per call ({len(_per_call_rows)} horses)", expanded=False):
-                _pc_df = pd.DataFrame(_per_call_rows)
-                try:
-                    _pc_styled = _pc_df.style.map(_lane_style,
-                        subset=[c for c in ["800M", "400M", "200M", "Avg"] if c in _pc_df.columns])
-                    st.dataframe(_pc_styled, width='stretch', hide_index=True)
-                except Exception:
-                    st.dataframe(_pc_df, width='stretch', hide_index=True)
-    else:
+    def _fin_style(val):
+        if not isinstance(val, (int, float)):
+            return ""
+        if val <= -0.5:
+            return "background-color:#28a74522;color:#28a745;font-weight:700"
+        if val <= -0.2:
+            return "color:#28a745;font-weight:600"
+        if val >= 0.5:
+            return "color:#d73a49"
+        return ""
+    try:
+        _styled = _res_df.style.map(_fin_style, subset=["Fin Δ"])
+        st.dataframe(_styled, width='stretch', hide_index=True,
+                        column_config=_res_col_cfg)
+    except Exception:
         st.dataframe(_res_df, width='stretch', hide_index=True,
                         column_config=_res_col_cfg)
-        _ocr_path = BASE / "running_position_photos" / selected_dc / f"R{selected_rn}.json"
-        _jpg_path = BASE / "running_position_photos" / selected_dc / f"R{selected_rn}.jpg"
-        if _jpg_path.exists() and _ocr_path.exists():
-            # OCR exists but is a stub — offer an inline re-OCR button
-            _stub = False
-            try:
-                _j = json.loads(_ocr_path.read_text(encoding="utf-8"))
-                if not _j.get("horses") or (_j.get("meta", {}) or {}).get("field_size") == 0:
-                    _stub = True
-            except Exception:
-                _stub = True
-            if _stub:
-                cols = st.columns([3, 1])
-                cols[0].warning(
-                    f"🛤️ Running-lane OCR exists but is empty (stub — created before "
-                    f"results were scraped). Click to regenerate."
-                )
-                if cols[1].button("🔄 Re-run OCR", key=f"reocr_{selected_dc}_{selected_rn}"):
-                    env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
-                    with st.spinner(f"Re-OCR {selected_dc} R{selected_rn}…"):
-                        r = subprocess.run(
-                            [PYTHON, str(BASE / "parse_rp_photos.py"),
-                             "--date", f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}",
-                             "--race", str(selected_rn), "--force"],
-                            env=env, cwd=str(BASE),
-                            capture_output=True, text=True, encoding="utf-8", timeout=120,
-                        )
-                    if r.returncode == 0:
-                        st.success("OCR regenerated — reload page to see lanes.")
-                    else:
-                        st.error(f"OCR failed: {r.stderr[-500:] or r.stdout[-500:]}")
-            else:
-                st.caption(
-                    "🛤️ Running-lane breakdown unavailable — OCR JSON parsed but "
-                    "no horses matched results roster."
-                )
-        elif _jpg_path.exists():
-            cols = st.columns([3, 1])
-            cols[0].info(
-                f"🛤️ Photo exists but OCR not yet generated for R{selected_rn}."
-            )
-            if cols[1].button("📷 Run OCR now", key=f"ocrnow_{selected_dc}_{selected_rn}"):
-                env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
-                with st.spinner(f"OCR {selected_dc} R{selected_rn}…"):
-                    r = subprocess.run(
-                        [PYTHON, str(BASE / "parse_rp_photos.py"),
-                         "--date", f"{selected_dc[:4]}-{selected_dc[4:6]}-{selected_dc[6:]}",
-                         "--race", str(selected_rn)],
-                        env=env, cwd=str(BASE),
-                        capture_output=True, text=True, encoding="utf-8", timeout=120,
-                    )
-                if r.returncode == 0:
-                    st.success("OCR complete — reload page to see lanes.")
-                else:
-                    st.error(f"OCR failed: {r.stderr[-500:] or r.stdout[-500:]}")
-        else:
-            st.caption(
-                "🛤️ Running-lane breakdown unavailable — no running-position photo "
-                f"cached for this race (running_position_photos/{selected_dc}/R{selected_rn}.jpg missing)."
-            )
+    st.markdown(
+        "<div style='margin:6px 0 4px 0;font-size:12px;opacity:0.8'>"
+        "<b>L400m</b> = final 400m sectional (s, lower = faster finish). "
+        "<b>Fin Δ</b> = that horse's last 400m vs the race field average — "
+        "<span style='color:#28a745;font-weight:600'>green</span> = closed faster "
+        "than the field (exceptional finisher at ≤ -0.5s: 21% win / 54% place / "
+        "+5.5 positions gained, n=5,495). Surfaces horses whose run was better "
+        "than the bare finishing position suggests."
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
     _xl_bytes = _results_json_to_excel_bytes(REPORTS / f"results_{selected_dc}.json")
     if _xl_bytes:
