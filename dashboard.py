@@ -12057,6 +12057,404 @@ def _render_trial_blackbook_tab(trials_index: list[dict]):
         st.rerun()
 
 
+@st.dialog("Add note to Blackbook", width="large")
+def _tw_comment_dialog(eid: str, horse_name: str):
+    """Append a dated note to an existing Blackbook entry (Talent Watch)."""
+    bb = _load_blackbook()
+    entry = next((e for e in bb["entries"] if e["id"] == eid), None)
+    if not entry:
+        st.error("Entry not found.")
+        return
+    st.markdown(f"### {horse_name}")
+    st.caption(f"Added {entry.get('added_date', '')} · "
+               f"{entry.get('source_race', '—')} · "
+               f"confidence: {entry.get('confidence', '—')}")
+    if entry.get("reasoning"):
+        st.markdown("**Current notes:**")
+        st.info(entry["reasoning"])
+    with st.form("tw_bb_note_form", clear_on_submit=True):
+        note = st.text_area(
+            "New note *", height=110,
+            placeholder="e.g. Eye-catching trial 31 May — concealed under a "
+                        "hold, watch for first-up improvement next start.")
+        c1, c2 = st.columns(2)
+        with c1:
+            new_conf = st.selectbox(
+                "Update confidence",
+                ["(keep)", "high", "medium", "low"], index=0)
+        with c2:
+            add_tags = st.multiselect(
+                "Add tags", sorted(bb.get("tag_definitions", {}).keys()))
+        submitted = st.form_submit_button("[ Save note ]", type="primary")
+        if submitted:
+            if not note.strip():
+                st.error("Note is required.")
+            else:
+                stamp = date.today().isoformat()
+                merged = (entry.get("reasoning", "").rstrip()
+                          + f"\n\n[{stamp}] {note.strip()}").strip()
+                kw = {"reasoning": merged}
+                if new_conf != "(keep)":
+                    kw["confidence"] = new_conf
+                if add_tags:
+                    kw["tags"] = sorted(set(entry.get("tags", []) + add_tags))
+                _bb_update_entry(bb, eid, **kw)
+                st.toast(f"✓ Note added to {horse_name.upper()}", icon="📝")
+                st.rerun()
+
+
+def _tw_surface_of(course: str) -> str:
+    """Map a trial/race course string to a Blackbook surface label."""
+    return "AWT" if "AWT" in (course or "").upper() else "Turf"
+
+
+def _tw_trial_card_html(e: dict) -> str:
+    """Compact one-line HTML card for a single trial entry (Talent Watch)."""
+    badge = _trial_sentiment_badge(e)
+    name = e.get("horse_name", "?")
+    iso = e.get("date", "")
+    dist = e.get("distance_m", "?")
+    course = e.get("course", "")
+    rp = e.get("running_positions", []) or []
+    pos_str = "-".join(str(p) for p in rp)
+    fp = rp[-1] if rp else "?"
+    n = e.get("n_horses", "?")
+    gear = e.get("gear", "")
+    gear_html = (f' <span style="color:#a78bfa;font-size:0.85em">{gear}</span>'
+                 if gear else "")
+
+    t_flag, t_reason = _trial_time_signal(e)
+    t_raw = e.get("time", "")
+    if t_raw and t_flag == "fast":
+        t_html = (f'<span style="color:#22c55e;font-weight:700" '
+                  f'title="{t_reason}">{t_raw}</span>')
+    elif t_raw and t_flag == "good":
+        t_html = (f'<span style="color:#86efac;font-weight:600" '
+                  f'title="{t_reason}">{t_raw}</span>')
+    elif t_raw and t_flag == "slow":
+        t_html = f'<span style="color:#fca5a5" title="{t_reason}">{t_raw}</span>'
+    else:
+        t_html = str(t_raw)
+
+    if fp == 1:
+        pos_style = "color:#22c55e;font-weight:700"
+    elif isinstance(fp, int) and fp <= 3:
+        pos_style = "color:#3b82f6;font-weight:600"
+    else:
+        pos_style = ""
+
+    vid_html = ""
+    bn = e.get("batch_number", 0)
+    if iso and iso >= "2020-01-01" and bn:
+        dc = iso.replace("-", "")
+        vurl = _hkjc_trial_video_url(dc, int(bn), course)
+        vid_html = (
+            f' <a href="{vurl}" target="_blank" rel="noopener noreferrer" '
+            f'style="color:#1f6feb;font-weight:700;text-decoration:none" '
+            f'title="Watch trial replay">&#9654; replay</a>')
+
+    comment = e.get("comment", "")
+    comment_html = (f'<div style="color:#9ca3af;font-size:0.85em;margin-top:2px">'
+                    f'{comment}</div>' if comment else "")
+
+    return (
+        '<div style="background:#16161f;border-left:3px solid #6366f1;'
+        'padding:6px 10px;border-radius:5px">'
+        f'{badge}<b style="font-size:1.02em">{name}</b> '
+        f'<span style="color:#6b7280;font-size:0.85em">{iso}</span> · '
+        f'{dist}m {course} · '
+        f'pos <span style="{pos_style}">{pos_str}</span> ({fp}/{n}) '
+        f'{t_html}{gear_html}{vid_html}'
+        f'{comment_html}'
+        '</div>'
+    )
+
+
+def _tw_detect_result_standouts(rj: dict) -> list[dict]:
+    """Flag eye-catching performers from a results meeting (Talent Watch).
+
+    Surfaces closers (from the back to the placings), the fastest closing
+    sectional in each race, and big-priced top-3 finishers — i.e. horses
+    whose run was better than the bare result suggests.
+    """
+    def _last_sect(ru):
+        sects = [s for s in (ru.get("sectiontimes") or []) if str(s).strip()]
+        try:
+            return float(sects[-1]) if sects else None
+        except (ValueError, TypeError):
+            return None
+
+    out: list[dict] = []
+    for race in (rj or {}).get("races", []):
+        rn = race.get("race_number")
+        dist = race.get("distance")
+        course = race.get("race_course", "")
+        runners = race.get("runners") or []
+        n = len(runners)
+        valid_close = [v for v in (_last_sect(ru) for ru in runners)
+                       if v is not None]
+        fastest_close = min(valid_close) if valid_close else None
+        for ru in runners:
+            try:
+                place = int(str(ru.get("place", "")).strip())
+            except (ValueError, TypeError):
+                continue
+            reasons: list[str] = []
+            poss = [int(p) for p in (ru.get("positions") or [])
+                    if str(p).strip().isdigit()]
+            early = poss[0] if poss else None
+            sfx = ("st" if place == 1 else "nd" if place == 2
+                   else "rd" if place == 3 else "th")
+            if (early is not None and n >= 6
+                    and early >= max(4, int(round(n * 0.6))) and place <= 3):
+                reasons.append(f"Closed from {early}th to {place}{sfx}")
+            ls = _last_sect(ru)
+            if (ls is not None and fastest_close is not None
+                    and abs(ls - fastest_close) < 1e-6 and place <= 4):
+                reasons.append(f"Fastest last section ({ls:.2f}s)")
+            try:
+                odds = float(str(ru.get("win_odds", "")).strip())
+            except (ValueError, TypeError):
+                odds = None
+            if odds is not None and odds >= 8 and place <= 3:
+                reasons.append(f"Big-odds top-3 (${odds:.0f})")
+            if reasons:
+                out.append({
+                    "race_no": rn, "distance": dist, "course": course,
+                    "horse_no": ru.get("horse_no"),
+                    "horse_name": ru.get("horse_name", ""),
+                    "place": place, "win_odds": ru.get("win_odds", ""),
+                    "jockey": ru.get("jockey", ""), "reasons": reasons,
+                })
+    out.sort(key=lambda d: (d["place"], -len(d["reasons"])))
+    return out
+
+
+def page_talent_watch():
+    """Secondary race-day-insight page: latest trials + result standouts.
+
+    Focuses on raw ability (often unrelated to the immediate card) — spot
+    horses worth following, watch the replay inline, and bank them straight
+    to the Blackbook or annotate an existing selection.
+    """
+    st.markdown('<div class="page-title">🔭 Talent Watch</div>',
+                unsafe_allow_html=True)
+    st.caption("Latest barrier trials & standout race runs — find horses with "
+               "ability before the market does, watch the replay, and add them "
+               "to your Blackbook or comment on existing picks.")
+
+    bb = _load_blackbook()
+    bb_lookup = _bb_active_lookup(bb)
+
+    tab_trials, tab_results, tab_watch = st.tabs(
+        ["🎽 Fresh Trial Watch", "🏆 Result Standouts",
+         f"⭐ Watchlist ({len(bb_lookup)})"])
+
+    # ── TAB 1 · Fresh trial watch ───────────────────────────────────────
+    with tab_trials:
+        avail = load_available_trials()
+        if not avail:
+            st.info("No trial reports found. Scrape trials from the Trials page.")
+        else:
+            c1, c2, c3 = st.columns([1, 1, 1])
+            with c1:
+                lookback = st.slider("Lookback (days)", 7, 60, 21,
+                                     key="tw_trial_lookback")
+            with c2:
+                strong_only = st.checkbox("Only ★★/★ trials", value=True,
+                                          key="tw_trial_strong")
+            with c3:
+                hide_booked = st.checkbox("Hide already-booked", value=False,
+                                          key="tw_trial_hidebooked")
+            cutoff = (date.today() - timedelta(days=lookback)).isoformat()
+
+            cards: list[tuple] = []
+            for meta in avail:
+                iso = meta["date_display"]
+                if iso < cutoff:
+                    continue
+                data = _load_trial_data(str(meta["file"]))
+                for batch in data.get("batches", []):
+                    bn = batch.get("batch_number", 0)
+                    course = batch.get("course", "")
+                    bdist = batch.get("distance_m", 0)
+                    horses = batch.get("horses", []) or []
+                    sorted_fin = sorted(
+                        horses,
+                        key=lambda h: (h["running_positions"][-1]
+                                       if h.get("running_positions") else 999))
+                    top4 = [h.get("horse_name", "") for h in sorted_fin[:4]]
+                    for h in horses:
+                        entry = {
+                            **h, "date": iso, "course": course,
+                            "distance_m": bdist, "batch_number": bn,
+                            "n_horses": batch.get("n_horses", len(horses)),
+                            "overall_time": batch.get("overall_time", ""),
+                            "top4": top4,
+                        }
+                        flag, reasons = _trial_sentiment(entry)
+                        if strong_only and flag not in ("++", "+"):
+                            continue
+                        cards.append((flag, entry, reasons))
+
+            if not cards:
+                st.info("No trials in the selected window match the filter.")
+            else:
+                rank = {"++": 0, "+": 1, "": 2, "-": 3}
+                cards.sort(key=lambda c: c[1]["date"], reverse=True)
+                cards.sort(key=lambda c: rank.get(c[0], 9))
+                n_strong = sum(1 for f, _, _ in cards if f == "++")
+                st.caption(f"**{len(cards)}** trials flagged "
+                           f"(**{n_strong}** very-positive ★★) since {cutoff}.")
+                shown = 0
+                for flag, entry, reasons in cards:
+                    name = entry.get("horse_name", "?")
+                    booked = name.strip().upper() in bb_lookup
+                    if hide_booked and booked:
+                        continue
+                    shown += 1
+                    if shown > 60:
+                        st.caption("… more hidden (narrow the window/filter).")
+                        break
+                    col_card, col_btn = st.columns([5, 1])
+                    with col_card:
+                        st.markdown(_tw_trial_card_html(entry),
+                                    unsafe_allow_html=True)
+                        if reasons:
+                            st.caption("· ".join(reasons))
+                    with col_btn:
+                        key_sfx = f"{name}_{entry.get('date')}_{entry.get('batch_number')}"
+                        if booked:
+                            eid = bb_lookup[name.strip().upper()]["id"]
+                            if st.button("📝 Note", key=f"tw_t_note_{key_sfx}",
+                                         width='stretch'):
+                                _tw_comment_dialog(eid, name)
+                        else:
+                            if st.button("⭐ Add", key=f"tw_t_add_{key_sfx}",
+                                         width='stretch'):
+                                _fg_bb_dialog(
+                                    name,
+                                    f"Trial {entry.get('date')} B{entry.get('batch_number')}",
+                                    entry.get("jockey", ""),
+                                    _tw_surface_of(entry.get("course", "")),
+                                    entry.get("distance_m", ""))
+
+    # ── TAB 2 · Result standouts ────────────────────────────────────────
+    with tab_results:
+        dates = sorted(find_results_dates(), reverse=True)
+        if not dates:
+            st.info("No results found yet.")
+        else:
+            dc = st.selectbox(
+                "Meeting", dates[:10],
+                format_func=lambda d: f"{d[:4]}-{d[4:6]}-{d[6:]}",
+                key="tw_res_date")
+            rj = _load_results_json(dc)
+            if not rj:
+                st.warning("Could not load that results file.")
+            else:
+                venue = rj.get("venue", "")
+                vu = venue.upper()
+                track = "ST" if "SHA" in vu else ("HV" if "HAPPY" in vu else "")
+                date_slash = f"{dc[:4]}/{dc[4:6]}/{dc[6:]}"
+                standouts = _tw_detect_result_standouts(rj)
+                st.caption(f"{venue} · {rj.get('n_races', '?')} races · "
+                           f"**{len(standouts)}** eye-catching runs flagged.")
+                if not standouts:
+                    st.info("No standout runs flagged for this meeting.")
+                for s in standouts:
+                    name = s["horse_name"]
+                    booked = name.strip().upper() in bb_lookup
+                    col_card, col_btn = st.columns([5, 1])
+                    with col_card:
+                        rn = s["race_no"]
+                        vurl = _hkjc_video_url(date_slash, int(rn), track)
+                        place = s["place"]
+                        pcol = ("#22c55e" if place == 1 else
+                                "#3b82f6" if place <= 3 else "#9ca3af")
+                        st.markdown(
+                            f'<div style="background:#16161f;border-left:3px '
+                            f'solid #f59e0b;padding:6px 10px;border-radius:5px">'
+                            f'<b style="font-size:1.02em">{name}</b> '
+                            f'<span style="color:{pcol};font-weight:700">'
+                            f'· {place}{"st" if place==1 else "nd" if place==2 else "rd" if place==3 else "th"}</span> '
+                            f'<span style="color:#6b7280;font-size:0.85em">'
+                            f'R{rn} · {s.get("distance","?")}m · ${s.get("win_odds","?")}</span> '
+                            f'<a href="{vurl}" target="_blank" '
+                            f'rel="noopener noreferrer" '
+                            f'style="color:#1f6feb;font-weight:700;'
+                            f'text-decoration:none" title="Watch race replay">'
+                            f'&#9654; replay</a>'
+                            f'<div style="color:#fbbf24;font-size:0.85em;'
+                            f'margin-top:2px">{" · ".join(s["reasons"])}</div>'
+                            f'</div>', unsafe_allow_html=True)
+                    with col_btn:
+                        key_sfx = f"{name}_{dc}_{s['race_no']}"
+                        if booked:
+                            eid = bb_lookup[name.strip().upper()]["id"]
+                            if st.button("📝 Note", key=f"tw_r_note_{key_sfx}",
+                                         width='stretch'):
+                                _tw_comment_dialog(eid, name)
+                        else:
+                            if st.button("⭐ Add", key=f"tw_r_add_{key_sfx}",
+                                         width='stretch'):
+                                _fg_bb_dialog(
+                                    name,
+                                    f"{dc[:4]}-{dc[4:6]}-{dc[6:]} R{s['race_no']}",
+                                    s.get("jockey", ""),
+                                    _tw_surface_of(s.get("course", "")),
+                                    s.get("distance", ""))
+
+    # ── TAB 3 · Watchlist (active blackbook) ────────────────────────────
+    with tab_watch:
+        active = _bb_active_entries(bb)
+        if not active:
+            st.info("Blackbook is empty. Add horses from the tabs above.")
+        else:
+            active.sort(key=lambda e: ({"high": 0, "medium": 1, "low": 2}
+                                       .get(e.get("confidence"), 3),
+                                       e.get("added_date", "")), reverse=False)
+            trial_idx = _load_all_trial_horse_index()
+            st.caption(f"**{len(active)}** active selections — newest insight "
+                       "first. Click 📝 to annotate.")
+            for e in active:
+                name = e["horse_name"]
+                conf = e.get("confidence", "—")
+                ccol = {"high": "#22c55e", "medium": "#fbbf24",
+                        "low": "#9ca3af"}.get(conf, "#9ca3af")
+                tags = ", ".join(e.get("tags", []) or [])
+                recent_trial = ""
+                tl = trial_idx.get(name.strip().upper())
+                if tl:
+                    tl_sorted = sorted(tl, key=lambda x: x.get("date", ""),
+                                       reverse=True)
+                    rt = tl_sorted[0]
+                    badge = _trial_sentiment_badge(rt)
+                    recent_trial = (f' · latest trial {badge}'
+                                    f'<span style="color:#6b7280;'
+                                    f'font-size:0.85em">{rt.get("date","")}</span>')
+                col_card, col_btn = st.columns([5, 1])
+                with col_card:
+                    st.markdown(
+                        f'<div style="background:#16161f;border-left:3px solid '
+                        f'{ccol};padding:6px 10px;border-radius:5px">'
+                        f'<b style="font-size:1.02em">{name}</b> '
+                        f'<span style="color:{ccol};font-weight:700;'
+                        f'font-size:0.85em">· {conf}</span> '
+                        f'<span style="color:#6b7280;font-size:0.85em">'
+                        f'· {e.get("source_race","—")}</span>'
+                        f'{recent_trial}'
+                        + (f'<span style="color:#a78bfa;font-size:0.82em">'
+                           f' · {tags}</span>' if tags else "")
+                        + f'<div style="color:#9ca3af;font-size:0.85em;'
+                        f'margin-top:2px">{e.get("reasoning","")}</div>'
+                        f'</div>', unsafe_allow_html=True)
+                with col_btn:
+                    if st.button("📝 Note", key=f"tw_w_note_{e['id']}",
+                                 width='stretch'):
+                        _tw_comment_dialog(e["id"], name)
+
+
 def page_trials():
     """Barrier Trials results page."""
     st.markdown('<div class="page-title">Barrier Trials</div>', unsafe_allow_html=True)
@@ -20853,6 +21251,7 @@ def main():
             ("Form Guide",     "📖 Form Guide"),
             ("Model Analysis", "📊 Model Analysis"),
             ("Race Lookup",    "🔎 Race Lookup"),
+            ("Talent Watch",   "🔭 Talent Watch"),
             ("Trials",         "🎽 Trials"),
             ("Fixtures",       "🗓️ Fixtures"),
         ]),
@@ -20946,6 +21345,8 @@ def main():
         page_my_bets()
     elif page == "Form Guide":
         page_form_guide()
+    elif page == "Talent Watch":
+        page_talent_watch()
     elif page == "Trials":
         page_trials()
     elif page == "Fixtures":
