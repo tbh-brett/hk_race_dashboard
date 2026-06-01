@@ -4,6 +4,9 @@ Pools supported
 ---------------
 WIN, PLACE                : selection = single horse number (int)
 QIN, QPL                  : selection = pair (int, int)
+QIN+QPL                   : selection = pair (int, int) — leg wins only if the
+                            pair finishes 1st-2nd (Quinella); pays BOTH the
+                            QIN and QPL dividends (product). Low hit, big payout.
 
 A leg has a list of selections. The total ticket-unit count is
 
@@ -39,8 +42,8 @@ from typing import Iterable
 
 REPORTS = Path(__file__).parent / "reports"
 
-POOLS = ("WIN", "PLACE", "QIN", "QPL")
-PAIR_POOLS = {"QIN", "QPL"}
+POOLS = ("WIN", "PLACE", "QIN", "QPL", "QIN+QPL")
+PAIR_POOLS = {"QIN", "QPL", "QIN+QPL"}
 SINGLE_POOLS = {"WIN", "PLACE"}
 
 SHAPE_PRESETS: dict[str, tuple[int, frozenset[int]]] = {
@@ -160,6 +163,15 @@ def _read_dividends(date_compact: str) -> dict:
 
 
 def _race_div(div_doc: dict, race_no: int, pool: str, sel) -> float:
+    # "QIN+QPL" combined leg: the pair must win the Quinella (finish 1st-2nd),
+    # which also wins the Quinella Place. The leg pays BOTH dividends, re-staked
+    # as a product → dividend_per_10 = (QIN_div/10)·(QPL_div/10)·10.
+    if pool == "QIN+QPL":
+        qin = _race_div(div_doc, race_no, "QIN", sel)
+        qpl = _race_div(div_doc, race_no, "QPL", sel)
+        if qin > 0 and qpl > 0:
+            return qin * qpl / 10.0
+        return 0.0
     if isinstance(sel, tuple):
         target = frozenset(int(x) for x in sel)
     else:
@@ -336,6 +348,13 @@ def _pair_prob(p1: float, p2: float, *, pool: str) -> float:
         pl1 = _place_prob(p1)
         pl2 = _place_prob(p2)
         return max(0.0, min(0.97, 0.92 * pl1 * pl2 + 0.06 * min(pl1, pl2)))
+    if pool == "QIN+QPL":
+        # The pair must finish 1st & 2nd (Quinella). That outcome also
+        # satisfies the Quinella Place (both in the top 3), so QIN ⟹ QPL and
+        # the binding event is the Quinella: P(QIN and QPL) = P(QIN). The
+        # payout, however, multiplies BOTH dividends (see _race_div), giving a
+        # low-hit / jackpot-payout leg.
+        return _pair_prob(p1, p2, pool="QIN")
     raise ValueError(f"_pair_prob unsupported pool {pool}")
 
 

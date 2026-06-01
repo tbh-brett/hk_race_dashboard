@@ -15722,7 +15722,11 @@ def _mb_render_allup_tab():
             index=4, key="mb_au_pool",
             help="WIN/PLACE = single horse per leg. "
                  "QIN/QPL = pair per leg. "
-                 "Composite pools issue two tickets.",
+                 "WIN + PLACE issues two tickets. "
+                 "**QIN + QPL = one combined leg**: the pair must finish "
+                 "1st-2nd (Quinella), which also wins the Quinella Place, so "
+                 "each leg pays BOTH dividends (QIN×QPL). Low hit-rate, "
+                 "jackpot payout — your ‘one big win’ structure.",
         )
     with c2:
         prob_mode = st.selectbox(
@@ -15744,7 +15748,7 @@ def _mb_render_allup_tab():
                                      help="Used by Kelly stake suggestion.")
 
     pools_to_build = (["WIN", "PLACE"] if pool_label == "WIN + PLACE"
-                       else ["QIN", "QPL"] if pool_label == "QIN + QPL"
+                       else ["QIN+QPL"] if pool_label == "QIN + QPL"
                        else [pool_label])
     primary_pool = pools_to_build[0]
     is_pair_pool = primary_pool in PAIR_POOLS
@@ -15847,6 +15851,16 @@ def _mb_render_allup_tab():
                           sarr_p=sl.get(a))
         pb = horse_prob(pick_lookup.get(b), edge_lookup.get(b), prob_mode,
                           sarr_p=sl.get(b))
+        if primary_pool == "QIN+QPL":
+            # Combined leg pays QIN × QPL dividends. Proxy each pool payout
+            # off its own pair probability, then multiply.
+            qp = _pair_prob(pa, pb, pool="QIN")
+            pp = _pair_prob(pa, pb, pool="QPL")
+            if qp <= 0 or pp <= 0:
+                return 1.0
+            qin_pay = (1 / qp) * 0.825
+            qpl_pay = (1 / pp) * 0.825
+            return max(1.0, qin_pay * qpl_pay)
         pp = _pair_prob(pa, pb, pool=primary_pool)
         if pp <= 0:
             return 1.0

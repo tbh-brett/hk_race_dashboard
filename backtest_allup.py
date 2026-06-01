@@ -77,14 +77,22 @@ def run(shape_label: str, mode: str, stake_per_unit: float = 1.0):
                                     stake_per_unit=stake_per_unit)
         qpl = build_all_up_ticket(legs=legs, pool="QPL", sizes=sizes,
                                     stake_per_unit=stake_per_unit)
+        comb = build_all_up_ticket(legs=legs, pool="QIN+QPL", sizes=sizes,
+                                    stake_per_unit=stake_per_unit)
         sQ = settle_all_up_ticket(qin, date)
         sP = settle_all_up_ticket(qpl, date)
+        sC = settle_all_up_ticket(comb, date)
         if not (sQ["settled"] and sP["settled"]):
             continue
         rows_out.append({
             "date": date, "stake": sQ["stake"] + sP["stake"],
             "return": sQ["return"] + sP["return"],
             "qin_hits": sQ["n_hits"], "qpl_hits": sP["n_hits"],
+            # Combined QIN+QPL all-up (the user's "one big win" structure):
+            # each leg must win the Quinella, paying QIN×QPL dividends.
+            "comb_stake": sC["stake"] if sC["settled"] else 0.0,
+            "comb_return": sC["return"] if sC["settled"] else 0.0,
+            "comb_hits": sC["n_hits"] if sC["settled"] else 0,
         })
     return rows_out
 
@@ -103,5 +111,28 @@ if __name__ == "__main__":
             pnl = ret - stake
             roi = pnl / stake * 100 if stake else 0
             tally = " ".join(f"{r['qin_hits']}/{r['qpl_hits']}" for r in rows)
+            print(f"{shape:>6} {mode:>8} {len(rows):5d} "
+                  f"{stake:7.0f} {ret:7.0f} {pnl:+7.0f} {roi:+6.1f}%  {tally}")
+
+    # ── Combined QIN+QPL all-up ("one big win") comparison ──────────────
+    print()
+    print("Combined QIN+QPL all-up (each leg must win the Quinella; "
+          "pays QIN×QPL dividends):")
+    print(f"{'Shape':>6} {'Mode':>8} {'meets':>5} {'stake':>7} {'ret':>7} "
+          f"{'pnl':>7} {'roi':>7}  per-meeting comb_hits/legs")
+    print("-" * 96)
+    for shape in ["3x1", "3x4", "3x7", "4x1", "4x11", "4x15", "5x1", "5x16"]:
+        n_legs = SHAPE_PRESETS[shape][0]
+        for mode in ["model", "market", "blend"]:
+            rows = run(shape, mode)
+            if not rows:
+                continue
+            stake = sum(r["comb_stake"] for r in rows)
+            ret = sum(r["comb_return"] for r in rows)
+            if stake <= 0:
+                continue
+            pnl = ret - stake
+            roi = pnl / stake * 100 if stake else 0
+            tally = " ".join(f"{r['comb_hits']}/{n_legs}" for r in rows)
             print(f"{shape:>6} {mode:>8} {len(rows):5d} "
                   f"{stake:7.0f} {ret:7.0f} {pnl:+7.0f} {roi:+6.1f}%  {tally}")
