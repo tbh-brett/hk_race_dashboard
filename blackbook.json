@@ -4,7 +4,7 @@
       "id": "bb_0001",
       "horse_name": "SAVVY WARRIOR",
       "added_date": "2026-04-03",
-      "expiry_date": "2026-07-02",
+      "expiry_date": "2026-07-19",
       "status": "active",
       "reasoning": "Strong trial prior to race, changed track and distance, track favor front-runners, top 4 finish from position",
       "tags": [
@@ -18,7 +18,16 @@
       },
       "confidence": "medium",
       "source_race": "2026-04-01 R6",
-      "performances": []
+      "performances": [
+        {
+          "date": "2026-06-03",
+          "race_number": 4,
+          "finish": "5",
+          "model_rank": 2,
+          "bb_verdict": "PARTIAL",
+          "notes": "Bled from both nostrils"
+        }
+      ]
     },
     {
       "id": "bb_0002",
@@ -926,7 +935,16 @@
       "confidence": "medium",
       "source_race": "R3 1650m",
       "category": "Post-Race",
-      "performances": []
+      "performances": [
+        {
+          "date": "2026-06-03",
+          "race_number": 4,
+          "finish": "12",
+          "model_rank": 1,
+          "bb_verdict": "MISSED",
+          "notes": "Heart irregularity, retiring"
+        }
+      ]
     },
     {
       "id": "bb_0042",
@@ -2894,6 +2912,128 @@
       "source_race": "2026-06-03 R2",
       "category": "Pre-Race",
       "performances": []
+    },
+    {
+      "id": "bb_0134",
+      "horse_name": "UNSTOPPAPLE",
+      "added_date": "2026-06-01",
+      "expiry_date": "2026-08-30",
+      "status": "active",
+      "reasoning": "Rapid finish from dead last, impressive final sectional 3rd fastest horse final 400, after Prestige Hall",
+      "tags": [
+        "bad_draw",
+        "final_sectional"
+      ],
+      "conditions": {
+        "preferred_distance": [],
+        "preferred_surface": null
+      },
+      "confidence": "medium",
+      "source_race": "2026-05-24 R3",
+      "category": "Pre-Race",
+      "performances": []
+    },
+    {
+      "id": "bb_0135",
+      "horse_name": "HEROIC VANGUARD",
+      "added_date": "2026-06-01",
+      "expiry_date": "2026-08-30",
+      "status": "active",
+      "reasoning": "Dropped dead last from gate 12, ran into traffic early onto the straight, rapid finish when lane cleared",
+      "tags": [
+        "bad_draw",
+        "final_sectional"
+      ],
+      "conditions": {
+        "preferred_distance": [],
+        "preferred_surface": null
+      },
+      "confidence": "medium",
+      "source_race": "2026-05-20 R3",
+      "category": "Pre-Race",
+      "performances": []
+    },
+    {
+      "id": "bb_0136",
+      "horse_name": "WINALOT",
+      "added_date": "2026-06-02",
+      "expiry_date": "2026-08-31",
+      "status": "active",
+      "reasoning": "Trialed well in most of his previous trials, held off Grouper and Tycoon Resources, affected by yielding ground potentially on debut",
+      "tags": [
+        "trial"
+      ],
+      "conditions": {
+        "preferred_distance": [
+          1200
+        ],
+        "preferred_surface": "Turf"
+      },
+      "confidence": "medium",
+      "source_race": "2026-06-03 R3",
+      "category": "Pre-Race",
+      "performances": []
+    },
+    {
+      "id": "bb_0137",
+      "horse_name": "FORZA LEADER",
+      "added_date": "2026-06-04",
+      "expiry_date": "2026-09-02",
+      "status": "active",
+      "reasoning": "Good improvement after a few runs, clocked fastest finish in the race fomr last",
+      "tags": [
+        "improvement",
+        "final_sectional",
+        "bad_draw"
+      ],
+      "conditions": {
+        "preferred_distance": [],
+        "preferred_surface": null
+      },
+      "confidence": "high",
+      "source_race": "2026-06-03 R3",
+      "category": "Pre-Race",
+      "performances": []
+    },
+    {
+      "id": "bb_0138",
+      "horse_name": "GOLDEN EMPIRE",
+      "added_date": "2026-06-04",
+      "expiry_date": "2026-09-02",
+      "status": "active",
+      "reasoning": "Dropped back from a wide draw, chased well from the back whilst staying wide throughout",
+      "tags": [
+        "bad_draw",
+        "profile_change"
+      ],
+      "conditions": {
+        "preferred_distance": [],
+        "preferred_surface": null
+      },
+      "confidence": "medium",
+      "source_race": "2026-06-03 R3",
+      "category": "Pre-Race",
+      "performances": []
+    },
+    {
+      "id": "bb_0139",
+      "horse_name": "THE WAY WE WIN",
+      "added_date": "2026-06-04",
+      "expiry_date": "2026-09-02",
+      "status": "active",
+      "reasoning": "Clocked a better time than Class 4 and 3 races, impressive and resilient towards the end",
+      "tags": [
+        "improvement",
+        "fast_time"
+      ],
+      "conditions": {
+        "preferred_distance": [],
+        "preferred_surface": null
+      },
+      "confidence": "medium",
+      "source_race": "2026-06-03 R1",
+      "category": "Pre-Race",
+      "performances": []
     }
   ],
   "tag_definitions": {
@@ -2917,5 +3057,5 @@
     "fast_time": "Recorded or matched fast overall/sectional time",
     "exceptional_performer": "Flagged by backtest — ran exceptionally well by objective criteria"
   },
-  "next_id": 134
+  "next_id": 140
 }

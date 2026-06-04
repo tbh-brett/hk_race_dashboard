@@ -1,0 +1,637 @@
+{
+  "date": "2026-06-03",
+  "race_number": 7,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "751",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 461,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 445
+    },
+    {
+      "y_top": 461,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 531
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ACE CHAMPION",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "751",
+          "cx": 445,
+          "cy": 37,
+          "x_frac": 0.618,
+          "y_in_band": 0.223,
+          "conf": 0.964,
+          "n_boxes": 1,
+          "ocr_text": "Ace Champion"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 397,
+          "cy": 187,
+          "x_frac": 0.551,
+          "y_in_band": 0.376,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "Ace Champion"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 328,
+          "cy": 329,
+          "x_frac": 0.456,
+          "y_in_band": 0.327,
+          "conf": 0.985,
+          "n_boxes": 1,
+          "ocr_text": "AceChampion"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 147,
+          "cy": 567,
+          "x_frac": 0.204,
+          "y_in_band": 0.752,
+          "conf": 0.957,
+          "n_boxes": 1,
+          "ocr_text": "Ace Champion"
+        }
+      ],
+      "ocr_texts": [
+        "Ace Champion",
+        "Ace Champion",
+        "AceChampion",
+        "Ace Champion"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.418,
+      "avg_x_frac": 0.458,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "AMAZING KID",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "751",
+          "cx": 238,
+          "cy": 109,
+          "x_frac": 0.331,
+          "y_in_band": 0.818,
+          "conf": 0.979,
+          "n_boxes": 1,
+          "ocr_text": "Amazing Kid"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 234,
+          "cy": 252,
+          "x_frac": 0.325,
+          "y_in_band": 0.812,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Amazing Kid"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 254,
+          "cy": 397,
+          "x_frac": 0.353,
+          "y_in_band": 0.78,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Amazing Kid"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 178,
+          "cy": 594,
+          "x_frac": 0.247,
+          "y_in_band": 0.943,
+          "conf": 0.994,
+          "n_boxes": 1,
+          "ocr_text": "AmazingKid"
+        }
+      ],
+      "ocr_texts": [
+        "Amazing Kid",
+        "Amazing Kid",
+        "Amazing Kid",
+        "AmazingKid"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.839,
+      "avg_x_frac": 0.314,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DANCING CLASSICS",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "751",
+          "cx": 420,
+          "cy": 117,
+          "x_frac": 0.583,
+          "y_in_band": 0.884,
+          "conf": 0.977,
+          "n_boxes": 1,
+          "ocr_text": "Dancing Classics"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 388,
+          "cy": 262,
+          "x_frac": 0.539,
+          "y_in_band": 0.879,
+          "conf": 0.966,
+          "n_boxes": 1,
+          "ocr_text": "Dancing Classics"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 414,
+          "cy": 421,
+          "x_frac": 0.575,
+          "y_in_band": 0.94,
+          "conf": 0.986,
+          "n_boxes": 1,
+          "ocr_text": "Dancing Classics"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 284,
+          "cy": 569,
+          "x_frac": 0.394,
+          "y_in_band": 0.766,
+          "conf": 0.976,
+          "n_boxes": 1,
+          "ocr_text": "Dancing Classics"
+        }
+      ],
+      "ocr_texts": [
+        "Dancing Classics",
+        "Dancing Classics",
+        "Dancing Classics",
+        "Dancing Classics"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.867,
+      "avg_x_frac": 0.523,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HAPPY INDEX",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "751",
+          "cx": 522,
+          "cy": 103,
+          "x_frac": 0.725,
+          "y_in_band": 0.769,
+          "conf": 0.933,
+          "n_boxes": 1,
+          "ocr_text": "Happy Index"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 444,
+          "cy": 257,
+          "x_frac": 0.617,
+          "y_in_band": 0.846,
+          "conf": 0.92,
+          "n_boxes": 1,
+          "ocr_text": "Happy Index"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 293,
+          "cy": 594,
+          "x_frac": 0.407,
+          "y_in_band": 0.943,
+          "conf": 0.91,
+          "n_boxes": 1,
+          "ocr_text": "Happy Index"
+        }
+      ],
+      "ocr_texts": [
+        "Happy Index",
+        "Happy Index",
+        "Happy Index"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.852,
+      "avg_x_frac": 0.584,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HARMONY N BLESSED",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "751",
+          "cx": 305,
+          "cy": 126,
+          "x_frac": 0.424,
+          "y_in_band": 0.959,
+          "conf": 0.922,
+          "n_boxes": 1,
+          "ocr_text": "Harmony NBlessed"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 279,
+          "cy": 280,
+          "x_frac": 0.388,
+          "y_in_band": 0.0,
+          "conf": 0.945,
+          "n_boxes": 1,
+          "ocr_text": "Harmony NBlessed"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 346,
+          "cy": 431,
+          "x_frac": 0.481,
+          "y_in_band": 0.032,
+          "conf": 0.987,
+          "n_boxes": 1,
+          "ocr_text": "HamonyNBlessed"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 363,
+          "cy": 579,
+          "x_frac": 0.504,
+          "y_in_band": 0.837,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "HarmonyNBlessed"
+        }
+      ],
+      "ocr_texts": [
+        "Harmony NBlessed",
+        "Harmony NBlessed",
+        "HamonyNBlessed",
+        "HarmonyNBlessed"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.454,
+      "avg_x_frac": 0.45,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "IGOR STRAVINSKY",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "751",
+          "cx": 355,
+          "cy": 37,
+          "x_frac": 0.493,
+          "y_in_band": 0.223,
+          "conf": 0.972,
+          "n_boxes": 1,
+          "ocr_text": "gor Stravinsky"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 335,
+          "cy": 188,
+          "x_frac": 0.465,
+          "y_in_band": 0.383,
+          "conf": 0.941,
+          "n_boxes": 1,
+          "ocr_text": "Igor Stravinsky"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 381,
+          "cy": 321,
+          "x_frac": 0.529,
+          "y_in_band": 0.273,
+          "conf": 0.899,
+          "n_boxes": 1,
+          "ocr_text": "lgor Stravinsky"
+        }
+      ],
+      "ocr_texts": [
+        "gor Stravinsky",
+        "Igor Stravinsky",
+        "lgor Stravinsky"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.293,
+      "avg_x_frac": 0.495,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "JUBILANT WINNER",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 247,
+          "cy": 330,
+          "x_frac": 0.343,
+          "y_in_band": 0.333,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "JubilantWinner"
+        }
+      ],
+      "ocr_texts": [
+        "JubilantWinner"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.333,
+      "avg_x_frac": 0.343,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "KING PROFIT",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 128,
+          "cy": 588,
+          "x_frac": 0.178,
+          "y_in_band": 0.901,
+          "conf": 0.905,
+          "n_boxes": 1,
+          "ocr_text": "KingProfit"
+        }
+      ],
+      "ocr_texts": [
+        "KingProfit"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.901,
+      "avg_x_frac": 0.178,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "POWER KOEPP",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "751",
+          "cx": 139,
+          "cy": 107,
+          "x_frac": 0.193,
+          "y_in_band": 0.802,
+          "conf": 0.938,
+          "n_boxes": 1,
+          "ocr_text": "PowerKoepp"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 116,
+          "cy": 246,
+          "x_frac": 0.161,
+          "y_in_band": 0.772,
+          "conf": 0.985,
+          "n_boxes": 1,
+          "ocr_text": "PowerKoepp"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 136,
+          "cy": 332,
+          "x_frac": 0.189,
+          "y_in_band": 0.347,
+          "conf": 0.985,
+          "n_boxes": 1,
+          "ocr_text": "PowerKoepp"
+        }
+      ],
+      "ocr_texts": [
+        "PowerKoepp",
+        "PowerKoepp",
+        "PowerKoepp"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.638,
+      "avg_x_frac": 0.181,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SUPER JOY N FUN",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "751",
+          "cx": 487,
+          "cy": 125,
+          "x_frac": 0.676,
+          "y_in_band": 0.95,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "SuperJoy NFun"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 390,
+          "cy": 285,
+          "x_frac": 0.542,
+          "y_in_band": 0.033,
+          "conf": 0.956,
+          "n_boxes": 1,
+          "ocr_text": "SuperJoy NFun"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 278,
+          "cy": 442,
+          "x_frac": 0.386,
+          "y_in_band": 0.387,
+          "conf": 0.915,
+          "n_boxes": 1,
+          "ocr_text": "Super Joy N Fun"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 240,
+          "cy": 591,
+          "x_frac": 0.333,
+          "y_in_band": 0.922,
+          "conf": 0.961,
+          "n_boxes": 1,
+          "ocr_text": "SuperJoy NFun"
+        }
+      ],
+      "ocr_texts": [
+        "SuperJoy NFun",
+        "SuperJoy NFun",
+        "Super Joy N Fun",
+        "SuperJoy NFun"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.575,
+      "avg_x_frac": 0.485,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SYMBOL OF STRENGTH",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "751",
+          "cx": 354,
+          "cy": 104,
+          "x_frac": 0.492,
+          "y_in_band": 0.777,
+          "conf": 0.948,
+          "n_boxes": 1,
+          "ocr_text": "Symbol OfStrength"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 320,
+          "cy": 252,
+          "x_frac": 0.444,
+          "y_in_band": 0.812,
+          "conf": 0.953,
+          "n_boxes": 1,
+          "ocr_text": "Symbol OfStrength"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 313,
+          "cy": 410,
+          "x_frac": 0.435,
+          "y_in_band": 0.867,
+          "conf": 0.925,
+          "n_boxes": 1,
+          "ocr_text": "Symbol Of Strength"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 216,
+          "cy": 557,
+          "x_frac": 0.3,
+          "y_in_band": 0.681,
+          "conf": 0.934,
+          "n_boxes": 1,
+          "ocr_text": "Symbol Of Strength"
+        }
+      ],
+      "ocr_texts": [
+        "Symbol OfStrength",
+        "Symbol OfStrength",
+        "Symbol Of Strength",
+        "Symbol Of Strength"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.784,
+      "avg_x_frac": 0.418,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 74,
+    "matched_horses": 11,
+    "field_size": 12,
+    "coverage": 0.917,
+    "parsed_at": "2026-06-04T02:44:06"
+  }
+}

@@ -1,0 +1,521 @@
+{
+  "date": "2026-06-03",
+  "race_number": 9,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "753",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 452,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 441
+    },
+    {
+      "y_top": 452,
+      "y_bot": 485,
+      "label": null,
+      "kind": null,
+      "y_center": 468
+    },
+    {
+      "y_top": 485,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 543
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ALL ROUND WINNER",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "753",
+          "cx": 124,
+          "cy": 114,
+          "x_frac": 0.172,
+          "y_in_band": 0.86,
+          "conf": 0.934,
+          "n_boxes": 1,
+          "ocr_text": "ARound Winner"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 290,
+          "cy": 566,
+          "x_frac": 0.403,
+          "y_in_band": 0.692,
+          "conf": 0.911,
+          "n_boxes": 1,
+          "ocr_text": "Al Round Winner"
+        }
+      ],
+      "ocr_texts": [
+        "ARound Winner",
+        "Al Round Winner"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.777,
+      "avg_x_frac": 0.286,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ANOTHER ZONDA",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 204,
+          "cy": 176,
+          "x_frac": 0.283,
+          "y_in_band": 0.302,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "AnotherZonda"
+        }
+      ],
+      "ocr_texts": [
+        "AnotherZonda"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.302,
+      "avg_x_frac": 0.283,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "CASA ROCHESTER",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 351,
+          "cy": 331,
+          "x_frac": 0.487,
+          "y_in_band": 0.34,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Casa Rochester"
+        }
+      ],
+      "ocr_texts": [
+        "Casa Rochester"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.34,
+      "avg_x_frac": 0.487,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "FIVEFORTWO",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "753",
+          "cx": 306,
+          "cy": 111,
+          "x_frac": 0.425,
+          "y_in_band": 0.835,
+          "conf": 0.973,
+          "n_boxes": 1,
+          "ocr_text": "Fivefortwo"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 245,
+          "cy": 279,
+          "x_frac": 0.34,
+          "y_in_band": 0.993,
+          "conf": 0.975,
+          "n_boxes": 1,
+          "ocr_text": "Fivefortwo"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 246,
+          "cy": 437,
+          "x_frac": 0.342,
+          "y_in_band": 0.318,
+          "conf": 0.977,
+          "n_boxes": 1,
+          "ocr_text": "Fivefortwo"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 194,
+          "cy": 591,
+          "x_frac": 0.269,
+          "y_in_band": 0.906,
+          "conf": 0.981,
+          "n_boxes": 1,
+          "ocr_text": "Fivefortwo"
+        }
+      ],
+      "ocr_texts": [
+        "Fivefortwo",
+        "Fivefortwo",
+        "Fivefortwo",
+        "Fivefortwo"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.763,
+      "avg_x_frac": 0.344,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KEEFY",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 312,
+          "cy": 283,
+          "x_frac": 0.433,
+          "y_in_band": 0.02,
+          "conf": 0.889,
+          "n_boxes": 1,
+          "ocr_text": "Keely"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 421,
+          "cy": 576,
+          "x_frac": 0.585,
+          "y_in_band": 0.778,
+          "conf": 0.883,
+          "n_boxes": 1,
+          "ocr_text": "Keely"
+        }
+      ],
+      "ocr_texts": [
+        "Keely",
+        "Keely"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.398,
+      "avg_x_frac": 0.509,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MISTER DAPPER",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "753",
+          "cx": 202,
+          "cy": 105,
+          "x_frac": 0.281,
+          "y_in_band": 0.785,
+          "conf": 0.975,
+          "n_boxes": 1,
+          "ocr_text": "MisterDapper"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 190,
+          "cy": 269,
+          "x_frac": 0.264,
+          "y_in_band": 0.926,
+          "conf": 0.957,
+          "n_boxes": 1,
+          "ocr_text": "MisterDapper"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 269,
+          "cy": 414,
+          "x_frac": 0.374,
+          "y_in_band": 0.893,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "MisterDapper"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 382,
+          "cy": 563,
+          "x_frac": 0.531,
+          "y_in_band": 0.667,
+          "conf": 0.94,
+          "n_boxes": 1,
+          "ocr_text": "MisterDapper"
+        }
+      ],
+      "ocr_texts": [
+        "MisterDapper",
+        "MisterDapper",
+        "MisterDapper",
+        "MisterDapper"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.818,
+      "avg_x_frac": 0.361,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SMART AVENUE",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "753",
+          "cx": 363,
+          "cy": 110,
+          "x_frac": 0.504,
+          "y_in_band": 0.826,
+          "conf": 0.975,
+          "n_boxes": 1,
+          "ocr_text": "SmartAvenue"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 316,
+          "cy": 260,
+          "x_frac": 0.439,
+          "y_in_band": 0.866,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "SmartAvenue"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 308,
+          "cy": 394,
+          "x_frac": 0.428,
+          "y_in_band": 0.76,
+          "conf": 0.99,
+          "n_boxes": 1,
+          "ocr_text": "martAvenue"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 218,
+          "cy": 567,
+          "x_frac": 0.303,
+          "y_in_band": 0.701,
+          "conf": 0.987,
+          "n_boxes": 1,
+          "ocr_text": "SmartAvenue"
+        }
+      ],
+      "ocr_texts": [
+        "SmartAvenue",
+        "SmartAvenue",
+        "martAvenue",
+        "SmartAvenue"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.788,
+      "avg_x_frac": 0.418,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "STORMI",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "753",
+          "cx": 101,
+          "cy": 36,
+          "x_frac": 0.14,
+          "y_in_band": 0.215,
+          "conf": 0.874,
+          "n_boxes": 1,
+          "ocr_text": "Stormi"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 125,
+          "cy": 176,
+          "x_frac": 0.174,
+          "y_in_band": 0.302,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "Stormi"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 138,
+          "cy": 568,
+          "x_frac": 0.192,
+          "y_in_band": 0.709,
+          "conf": 0.986,
+          "n_boxes": 1,
+          "ocr_text": "Stormi"
+        }
+      ],
+      "ocr_texts": [
+        "Stormi",
+        "Stormi",
+        "Stormi"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.416,
+      "avg_x_frac": 0.17,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WITHOUT COMPARE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 240,
+          "cy": 247,
+          "x_frac": 0.333,
+          "y_in_band": 0.779,
+          "conf": 0.958,
+          "n_boxes": 1,
+          "ocr_text": "Without Compare"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 177,
+          "cy": 327,
+          "x_frac": 0.246,
+          "y_in_band": 0.313,
+          "conf": 0.961,
+          "n_boxes": 1,
+          "ocr_text": "Without Compare"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 111,
+          "cy": 544,
+          "x_frac": 0.154,
+          "y_in_band": 0.504,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "Without Compare"
+        }
+      ],
+      "ocr_texts": [
+        "Without Compare",
+        "Without Compare",
+        "Without Compare"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.532,
+      "avg_x_frac": 0.244,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "YEE CHEONG GLORY",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 391,
+          "cy": 282,
+          "x_frac": 0.543,
+          "y_in_band": 0.013,
+          "conf": 0.934,
+          "n_boxes": 1,
+          "ocr_text": "Yee Cheong Glory"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 507,
+          "cy": 576,
+          "x_frac": 0.704,
+          "y_in_band": 0.778,
+          "conf": 0.959,
+          "n_boxes": 1,
+          "ocr_text": "YeeCheong Glory"
+        }
+      ],
+      "ocr_texts": [
+        "Yee Cheong Glory",
+        "YeeCheong Glory"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.401,
+      "avg_x_frac": 0.625,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 64,
+    "matched_horses": 10,
+    "field_size": 12,
+    "coverage": 0.833,
+    "parsed_at": "2026-06-04T02:44:08"
+  }
+}
