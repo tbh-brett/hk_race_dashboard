@@ -8369,6 +8369,74 @@ def _append_results_to_db(results_path: Path):
                f"(total: {len(combined)} rows)")
 
 
+def _run_commentary_and_formguide(date_str: str) -> None:
+    """Re-run steps 6-7 of the post-race pipeline without touching the DB scrape.
+
+    Safe to call when results are already scraped (no network scraping, no risk
+    of duplicate DB rows).  Runs:
+        - DB belt-and-braces append (idempotent — skips if date already present)
+        - Step 6: build_form_guide.py → cache/form_guide_YYYY-MM-DD.json
+        - Step 7: race_commentary.py  → reports/commentary_YYYYMMDD.json
+    """
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    date_compact = date_str.replace("-", "")
+
+    # Belt-and-braces DB append (idempotent — skips if already in DB).
+    results_json = REPORTS / f"results_{date_compact}.json"
+    if results_json.exists():
+        try:
+            from db_utils import append_results_to_db, read_sqlite
+            df_chk = read_sqlite(
+                f"SELECT COUNT(*) n FROM results WHERE race_date='{date_str}'"
+            )
+            already = int(df_chk.iloc[0, 0]) if not df_chk.empty else 0
+            if already == 0:
+                n_db = append_results_to_db(results_json, verbose=False)
+                if n_db:
+                    st.info(f"DB: appended {n_db} rows for {date_str}")
+            else:
+                st.info(f"DB: {already} rows already present for {date_str} — skipped")
+        except Exception as e:
+            st.warning(f"DB append skipped: {e}")
+    else:
+        st.warning(f"No results JSON found for {date_str} — DB append skipped. "
+                   "Run 'Scrape Results' first.")
+
+    steps = [
+        ("Rebuild form guide (with lane data)",
+         [PYTHON, str(BASE / "build_form_guide.py"), date_str]),
+        ("Race commentary",
+         [PYTHON, str(BASE / "race_commentary.py"), "--date", date_str]),
+    ]
+    progress = st.progress(0.0, text=f"Commentary + form guide for {date_str}…")
+    outputs: list[tuple[str, int, str]] = []
+    for i, (label, cmd) in enumerate(steps, 1):
+        progress.progress((i - 1) / len(steps), text=f"{label}…")
+        try:
+            result = subprocess.run(
+                cmd, env=env, cwd=str(BASE),
+                capture_output=True, text=True, encoding="utf-8", timeout=300,
+            )
+            tail = (result.stdout or "") + ("\n" + result.stderr if result.stderr else "")
+            outputs.append((label, result.returncode, tail[-1500:]))
+        except subprocess.TimeoutExpired as e:
+            outputs.append((label, -1, f"TIMEOUT after {e.timeout}s"))
+        except Exception as e:
+            outputs.append((label, -2, f"EXCEPTION: {e}"))
+    progress.progress(1.0, text="Done.")
+
+    n_ok = sum(1 for _, rc, _ in outputs if rc == 0)
+    if n_ok == len(steps):
+        st.success(f"Commentary + form guide regenerated for {date_str}")
+    else:
+        st.warning(f"Partial: {n_ok}/{len(steps)} steps succeeded")
+    for label, rc, tail in outputs:
+        icon = "✅" if rc == 0 else "❌"
+        with st.expander(f"{icon} {label} (exit {rc})", expanded=(rc != 0)):
+            st.code(tail or "(no output)")
+
+
 def _run_results_scraper(date_str: str, *, full: bool = False):
     """Invoke results scraper from the dashboard.
 
@@ -9566,6 +9634,14 @@ def page_results():
             _load_form_db.clear()
         except Exception:
             pass
+        st.rerun()
+    if st.sidebar.button("[ Re-run Commentary + Form Guide ]", width='stretch',
+                         key="res_btn_rerun_commentary",
+                         help="Re-runs only steps 6-7 (form guide rebuild + commentary) "
+                              "and the DB belt-and-braces append — safe when results "
+                              "are already scraped. No network scraping."):
+        _run_commentary_and_formguide(scrape_date.isoformat())
+        st.cache_data.clear()
         st.rerun()
 
     res_dates = find_results_dates()

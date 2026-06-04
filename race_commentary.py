@@ -260,7 +260,7 @@ def race_narrative(race: Dict, horse_entries: List[Dict],
     excuses: List[str] = []
     for h in horse_entries:
         tags = set(h.get("tags", []))
-        if "wide_no_cover" in tags or ("wide_all_way" in tags and h.get("place", 99) >= 7):
+        if "wide_no_cover" in tags or ("wide_all_way" in tags and (h.get("place") or 99) >= 7):
             excuses.append(f"{h['horse_name'].title()} (P{h.get('place','?')}) wide no cover")
         elif "no_clear_run" in tags:
             excuses.append(f"{h['horse_name'].title()} (P{h.get('place','?')}) denied clear running")
