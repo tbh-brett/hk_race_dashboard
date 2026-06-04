@@ -166,6 +166,48 @@ def _run_commentary_lookup(date_dc: str, race_no: int, horse_name: str) -> dict:
     cm = _load_commentary(date_dc)
     return cm.get((int(race_no), horse_name.upper()), {})
 
+
+def _load_commentary_races(date_dc: str) -> dict:
+    """Load the *full* commentary_YYYYMMDD.json as {race_number: race_dict}.
+
+    Unlike ``_load_commentary`` (which flattens to per-horse short/tags for the
+    form-guide cell), this preserves the race-level ``narrative``,
+    ``blackbook_suggestions`` and the complete per-horse objects so the Results
+    page can render the post-race commentary view."""
+    path = REPORTS / f"commentary_{date_dc}.json"
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return {r.get("race_number"): r for r in raw.get("races", [])}
+
+
+def _commentary_tag_chips(tags, polarity_score=None) -> str:
+    """Render a horse's commentary tags as small coloured chips.
+
+    Colour follows polarity: ``+`` (trip/excuse → forgive) green, ``-``
+    (keen/bled/weakened) red, neutral grey. ``polarity_score`` (signed int from
+    race_commentary.py) tints the whole group when individual polarity is
+    unknown."""
+    if not tags:
+        return ""
+    if isinstance(polarity_score, (int, float)) and polarity_score > 0:
+        bg, fg = "#13351f", "#3fb950"
+    elif isinstance(polarity_score, (int, float)) and polarity_score < 0:
+        bg, fg = "#3a1416", "#f85149"
+    else:
+        bg, fg = "#21262d", "#9da7b3"
+    chips = "".join(
+        f'<span style="display:inline-block;background:{bg};color:{fg};'
+        f'border-radius:8px;padding:1px 7px;margin:1px 3px 1px 0;'
+        f'font-size:10px;font-weight:600;white-space:nowrap">'
+        f'{str(t).replace("_", " ")}</span>'
+        for t in tags
+    )
+    return chips
+
 # ── Playwright browser pre-install (Streamlit Cloud has no post-install hook) ─
 def _ensure_playwright_chromium():
     """Install Playwright Chromium once per container boot (cached in session).
@@ -2226,6 +2268,179 @@ def _render_raceday_highlights(race: dict, date_str: str,
     )
 
 
+@st.cache_data(show_spinner=False)
+def _load_mutual_picks(date_compact: str) -> dict:
+    """Load model-agreed (ET ∩ SARR) picks for a meeting, keyed by race_no.
+
+    Source: ``reports/mutual_<date>.json`` (built by ``build_mutual_picks.py``).
+    Each race carries ``et_picks`` / ``sarr_picks`` (top-3 label strings) and
+    ``mutual_horses`` (the intersection, with per-engine ranks).
+    """
+    try:
+        p = REPORTS / f"mutual_{date_compact}.json"
+        if not p.exists():
+            return {}
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return {r.get("race_number"): r for r in data.get("races", [])}
+    except Exception:
+        return {}
+
+
+def _render_model_confluence(race: dict, date_compact: str):
+    """Per-race cross-engine signal strip for the Model Analysis page.
+
+    Surfaces the three signals the user previously had to open the Race Day
+    Insight tab for:
+      • Ensemble picks — ET top-3 and SARR top-3 side by side.
+      • Model-agreed   — horses both engines rank top-3 (mutual), ★-flagged.
+      • Rating signals — horse_cycle flags (PRIMED / DROPPER / WATCH / FADE)
+                         for any runner in this race.
+    Display-only; nothing here feeds the model.
+    """
+    rn = race.get("race_number")
+    if rn is None:
+        return
+    mrec = (_load_mutual_picks(date_compact) or {}).get(rn) or {}
+    et_picks = mrec.get("et_picks") or []
+    sarr_picks = mrec.get("sarr_picks") or []
+    mutual_horses = mrec.get("mutual_horses") or []
+
+    # Rating-cycle flags for runners in this race.
+    cyc_rows = []
+    place_rows = []
+    try:
+        _conf = _mb_confluence_maps(date_compact) or {}
+        cmap = _conf.get("cycle", {})
+        pmap = _conf.get("place", {})
+        for pick in (race.get("picks") or []):
+            nm = str(pick.get("horse_name", "")).strip().upper()
+            flag = cmap.get((rn, nm))
+            if flag in ("PRIMED", "EARLY_DROPPER", "WATCH", "FADE_OVERRATED"):
+                cyc_rows.append((pick.get("horse_no", "?"),
+                                 pick.get("horse_name", ""), flag))
+            _pf = pmap.get((rn, nm))
+            if _pf and _pf.get("form") in ("HOT", "WARM"):
+                place_rows.append((pick.get("horse_no", "?"),
+                                   pick.get("horse_name", ""), _pf))
+    except Exception:
+        pass
+
+    if not (et_picks or sarr_picks or mutual_horses or cyc_rows or place_rows):
+        return
+
+    flag_disp = {
+        "PRIMED": ("#22c55e", "🟢 PRIMED"),
+        "EARLY_DROPPER": ("#38bdf8", "🫒 DROPPER"),
+        "WATCH": ("#f59e0b", "🟡 WATCH"),
+        "FADE_OVERRATED": ("#ef4444", "🔴 FADE"),
+    }
+
+    # Agreed (mutual) horse names for ★ highlighting in the pick lists.
+    agreed = {str(m.get("horse_name", "")).strip().upper()
+              for m in mutual_horses}
+
+    def _pick_chip(label: str) -> str:
+        nm = (label.split(" ", 1)[1].strip().upper()
+              if " " in label else label.upper())
+        star = '<span style="color:#fbbf24">★</span> ' if nm in agreed else ""
+        return (f'<span style="display:inline-block;margin:2px 5px 2px 0;'
+                f'padding:2px 8px;border-radius:11px;'
+                f'background:rgba(255,255,255,0.05);'
+                f'border:1px solid rgba(255,255,255,0.12);'
+                f'font-size:0.82em">{star}{label}</span>')
+
+    cols_html = []
+    if et_picks:
+        cols_html.append(
+            '<div style="display:inline-block;vertical-align:top;'
+            'margin-right:18px">'
+            '<div style="font-size:0.74em;font-weight:700;color:#60a5fa;'
+            'letter-spacing:0.5px;margin-bottom:3px">ET TOP 3</div>'
+            + "".join(_pick_chip(p) for p in et_picks) + '</div>')
+    if sarr_picks:
+        cols_html.append(
+            '<div style="display:inline-block;vertical-align:top;'
+            'margin-right:18px">'
+            '<div style="font-size:0.74em;font-weight:700;color:#c084fc;'
+            'letter-spacing:0.5px;margin-bottom:3px">SARR TOP 3</div>'
+            + "".join(_pick_chip(p) for p in sarr_picks) + '</div>')
+
+    agree_html = ""
+    if mutual_horses:
+        chips = []
+        for m in mutual_horses:
+            chips.append(
+                f'<span style="display:inline-block;margin:2px 5px 2px 0;'
+                f'padding:2px 9px;border-radius:11px;'
+                f'background:rgba(251,191,36,0.12);'
+                f'border:1px solid rgba(251,191,36,0.5);color:#fbbf24;'
+                f'font-size:0.82em;font-weight:700">'
+                f'★ #{m.get("horse_no","?")} {m.get("horse_name","")} '
+                f'<span style="opacity:0.7;font-weight:600">'
+                f'ET#{m.get("et_rank","?")}·SARR#{m.get("sarr_rank","?")}</span>'
+                f'</span>')
+        agree_html = (
+            '<div style="margin-top:6px">'
+            '<span style="font-size:0.74em;font-weight:700;color:#fbbf24;'
+            'letter-spacing:0.5px;margin-right:6px">AGREED</span>'
+            + "".join(chips) + '</div>')
+
+    cyc_html = ""
+    if cyc_rows:
+        chips = []
+        for no, nm, flag in cyc_rows:
+            col, lbl = flag_disp.get(flag, ("#9ca3af", flag))
+            chips.append(
+                f'<span style="display:inline-block;margin:2px 5px 2px 0;'
+                f'padding:2px 9px;border-radius:11px;'
+                f'background:{col}22;border:1px solid {col}88;color:{col};'
+                f'font-size:0.82em;font-weight:700">'
+                f'{lbl} · #{no} {nm}</span>')
+        cyc_html = (
+            '<div style="margin-top:6px">'
+            '<span style="font-size:0.74em;font-weight:700;color:#a3b3c7;'
+            'letter-spacing:0.5px;margin-right:6px">RATING CYCLE</span>'
+            + "".join(chips) + '</div>')
+
+    place_html = ""
+    if place_rows:
+        chips = []
+        for no, nm, pf in place_rows:
+            hot = pf.get("form") == "HOT"
+            col = "#22c55e" if hot else "#84cc16"
+            lbl = "🔥 HOT" if hot else "📈 WARM"
+            t3 = pf.get("top3")
+            st_ = pf.get("starts")
+            frame = (f' <span style="opacity:0.7;font-weight:600">'
+                     f'{t3}/{st_} top-3</span>'
+                     if t3 is not None and st_ else "")
+            chips.append(
+                f'<span style="display:inline-block;margin:2px 5px 2px 0;'
+                f'padding:2px 9px;border-radius:11px;'
+                f'background:{col}22;border:1px solid {col}88;color:{col};'
+                f'font-size:0.82em;font-weight:700">'
+                f'{lbl} · #{no} {nm}{frame}</span>')
+        place_html = (
+            '<div style="margin-top:6px">'
+            '<span style="font-size:0.74em;font-weight:700;color:#a3b3c7;'
+            'letter-spacing:0.5px;margin-right:6px" '
+            'title="Recent competitive places (not just wins) — contextual '
+            'place-form overlay from the rating cycle">PLACE FORM</span>'
+            + "".join(chips) + '</div>')
+
+    st.markdown(
+        '<div style="margin:2px 0 10px 0;padding:8px 11px;border-radius:8px;'
+        'background:rgba(96,165,250,0.05);'
+        'border:1px solid rgba(96,165,250,0.18)">'
+        '<span style="font-weight:800;color:#9cc0ff;font-size:0.82em;'
+        'letter-spacing:0.5px">⚖️ CROSS-ENGINE CONFLUENCE</span>'
+        '<div style="margin-top:6px">' + "".join(cols_html) + '</div>'
+        + agree_html + cyc_html + place_html +
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def render_speed_map(race: dict):
     """Render speed map HTML table above the analysis table."""
     smap = race.get("speed_map")
@@ -2235,35 +2450,76 @@ def render_speed_map(race: dict):
     n_cols = smap["n_cols"]
     n_rows = smap["n_rows"]
 
-    # ── Render-time rail compression ──────────────────────────────────
-    # Horses in the same column should settle on the rail in transit when
-    # inner rows are vacant. The upstream row assignment occasionally leaves
-    # a gap at rail (row 1) while placing horses at W2/WIDE — when that
-    # happens, pack horses toward the rail without changing their relative
-    # lateral order. This is a visual-only pass; per-horse advantages,
-    # beneficiary reasons, etc. are untouched.
-    by_col: dict[int, list[dict]] = {}
-    for h in smap["grid"]:
-        by_col.setdefault(h["col"], []).append(h)
-
     dist = race["distance"]
     race_course = race.get("race_course", "")
     is_straight = dist == 1000 and str(race_course).upper() in ("ST", "SHA TIN")
 
+    # ── Render-time placement (visual-only) ───────────────────────────
+    # The upstream grid packing assigns the lateral row by draw-RANK *within*
+    # each pace column and can shuffle horses between columns on collision,
+    # which produces two well-known artefacts: inside-drawn horses (gate 1-4)
+    # shown several lanes off the rail, and front-runners drawn into the back
+    # columns. Here we re-derive cell positions for DISPLAY ONLY from the
+    # per-horse signals the grid already carries:
+    #   • column (front ⇄ back) = early-speed-z band — lowest ESZ (most early
+    #     speed) sits at FRONT (rightmost column), highest ESZ at the BACK.
+    #   • row    (rail ⇄ wide)  = ABSOLUTE draw band — lowest draw on the RAIL
+    #     (row 1), highest draw on WIDE; reversed on the ST 1000m straight.
+    # Per-horse advantages, beneficiary flags and colours are untouched.
+    horses = list(smap["grid"])
+    field = len(horses)
+
+    def _esz_val(h):
+        try:
+            return float(h.get("esz"))
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _draw_val(h):
+        try:
+            return int(h.get("draw"))
+        except (TypeError, ValueError):
+            return 99
+
+    def _draw_key(h):
+        # HV conceded-weight horses settle on the rail regardless of gate.
+        conceded = "conceded" in (h.get("notes") or "").lower()
+        d = _draw_val(h)
+        if is_straight:
+            return (0 if conceded else 1, -d)
+        return (0 if conceded else 1, d)
+
+    # Column band by early speed (front-to-back), spread across all columns.
+    col_of: dict[int, int] = {}
+    for i, h in enumerate(sorted(horses, key=_esz_val)):
+        band = (i * n_cols) // field if field else 0          # 0 = fastest
+        col_of[id(h)] = max(1, min(n_cols, n_cols - band))    # fastest → FRONT
+
+    # Row band by absolute draw (rail-to-wide), spread across all rows.
+    row_of: dict[int, int] = {}
+    for i, h in enumerate(sorted(horses, key=_draw_key)):
+        band = (i * n_rows) // field if field else 0          # 0 = innermost
+        row_of[id(h)] = max(1, min(n_rows, band + 1))         # innermost → RAIL
+
+    # Place into the grid. Within each pace column lay the horses out rail→wide
+    # in DRAW order (lowest draw nearest the rail), honouring each runner's
+    # global draw band wherever the column has room. This keeps inside-drawn
+    # runners off the wide lanes, gives every horse a distinct cell, and never
+    # reorders the front/back columns.
     grid = {}
-    for col, col_horses in by_col.items():
-        # Sort for display: hv_conceded horses (identified by "conceded" in notes)
-        # keep RAIL priority; all others sort by draw — small draw = RAIL (inside)
-        # for normal tracks, large draw = RAIL only at ST 1000m straight.
-        def _disp_sort(h, _straight=is_straight):
-            if "conceded" in (h.get("notes") or "").lower():
-                return (0, 0)
-            d = h.get("draw", 99)
-            return (1, -d) if _straight else (1, d)
-        col_horses.sort(key=_disp_sort)
-        for idx, h in enumerate(col_horses):
-            display_row = min(idx + 1, n_rows)
-            grid[(col, display_row)] = h
+    cols_horses: dict[int, list[dict]] = {}
+    for h in horses:
+        cols_horses.setdefault(col_of[id(h)], []).append(h)
+    for col, chs in cols_horses.items():
+        chs.sort(key=_draw_key)                       # rail-most (+ conceded) first
+        k = len(chs)
+        lo = 1                                         # next free row from the rail
+        for i, h in enumerate(chs):
+            remaining = k - i - 1
+            upper = max(lo, n_rows - remaining)        # leave room for the rest
+            row = min(n_rows, max(lo, min(row_of[id(h)], upper)))
+            grid[(col, row)] = h
+            lo = row + 1
     pace = race.get("pace", "Normal")
 
     # Row labels
@@ -5990,6 +6246,15 @@ def page_race_day(selected):
         except Exception as _hl_err:
             st.caption(f"_Highlights unavailable: {_hl_err}_")
 
+        # ── Cross-engine confluence: mutual/ensemble picks + rating cycle ─
+        # Surfaces the model-agreed picks, ET/SARR ensemble top-3 and the
+        # rating-cycle flags inline so studying a race no longer requires
+        # switching to the Race Day Insight tab.
+        try:
+            _render_model_confluence(_vr or {}, date_str.replace("-", ""))
+        except Exception as _cf_err:
+            st.caption(f"_Confluence unavailable: {_cf_err}_")
+
         if use_sarr:
             sarr_race = next((r for r in sarr_races if r["race_number"] == active_rn), None)
             et_race = next((r for r in et_races if r["race_number"] == active_rn), None)
@@ -9506,6 +9771,16 @@ def page_results():
     _fin_field_avg = (sum(_fin_secs) / len(_fin_secs)) if _fin_secs else None
 
     res_rows = []
+    # ── Running-lane context (restored Jun 2026, display-only) ───────────
+    # OCR'd from the HKJC running-position photos. NOTE: the lane read is an
+    # approximation (label-layout artifact; ~zero correlation to finish), so it
+    # is shown purely as race-reading context — never fed into the model.
+    _lane_map = {}
+    try:
+        from lane_utils import load_race_lanes as _load_race_lanes
+        _lane_map = _load_race_lanes(selected_dc, int(selected_rn)) or {}
+    except Exception:
+        _lane_map = {}
     for r in runners:
         hname = r.get("horse_name", "")
         in_bb = hname.upper() in bb_names
@@ -9529,6 +9804,13 @@ def page_results():
             except (TypeError, ValueError):
                 return None
 
+        _lane_rec = _lane_map.get(hname.upper()) or {}
+        _lane_bucket = _lane_rec.get("avg_bucket") or ""
+        _lane_gl = _lane_rec.get("ground_lost_m")
+        _lane_disp = _lane_bucket
+        if _lane_bucket and isinstance(_lane_gl, (int, float)) and abs(_lane_gl) >= 1:
+            _lane_disp = f"{_lane_bucket} ({_lane_gl:+.0f}m)"
+
         row = {
             "Place": _to_int(r.get("place")),
             "No": _to_int(r.get("horse_no")),
@@ -9540,6 +9822,7 @@ def page_results():
             "Wt": _to_int(r.get("actual_weight")),
             "Draw": _to_int(r.get("draw")),
             "Running Pos": running_pos,
+            "Lane~": _lane_disp,
             "Finish Time": r.get("finish_time", ""),
             "Win Odds": _to_float(r.get("win_odds")),
             "LBW": r.get("lbw", ""),
@@ -9558,6 +9841,13 @@ def page_results():
         "Wt":       st.column_config.NumberColumn(format="%d"),
         "Draw":     st.column_config.NumberColumn(format="%d"),
         "Win Odds": st.column_config.NumberColumn(format="%.1f"),
+        "Lane~":    st.column_config.TextColumn(
+            "Lane~",
+            help="Approximate running lane (rail / 2-wide / 3-wide / 4+ wide) "
+                 "OCR'd from the HKJC running-position photo, with metres of "
+                 "extra ground in brackets. Context only — it is an approximation "
+                 "(label-layout artifact, ~zero correlation to finish) and is "
+                 "NOT used by the model."),
         "L400m":    st.column_config.NumberColumn(
             "L400m", format="%.2f",
             help="Final 400m sectional time (seconds). Lower = faster finish."),
@@ -9591,10 +9881,105 @@ def page_results():
         "<span style='color:#28a745;font-weight:600'>green</span> = closed faster "
         "than the field (exceptional finisher at ≤ -0.5s: 21% win / 54% place / "
         "+5.5 positions gained, n=5,495). Surfaces horses whose run was better "
-        "than the bare finishing position suggests."
+        "than the bare finishing position suggests. "
+        "<b>Lane~</b> = approximate running lane from the position photo "
+        "(context only, not a model input)."
         "</div>",
         unsafe_allow_html=True,
     )
+
+    # ── Race Commentary (scraped + interpreted + tagged) ─────────────────
+    # Restored Jun 2026: race_commentary.py (step 7/8 of the post-race pipeline)
+    # writes reports/commentary_YYYYMMDD.json — race narrative, per-horse
+    # blurbs/tags/polarity and blackbook (trip-excuse) suggestions. Surface it
+    # here so the read of the race lives alongside the result, not in another tab.
+    _cmt_races = _load_commentary_races(selected_dc)
+    _cmt_race = _cmt_races.get(selected_rn)
+    if _cmt_race:
+        _c_horses = _cmt_race.get("horses", []) or []
+        _c_tagged = [h for h in _c_horses if (h.get("short") or h.get("tags")
+                                              or h.get("incident_text"))]
+        _c_bb = _cmt_race.get("blackbook_suggestions", []) or []
+        _c_narr = (_cmt_race.get("narrative") or "").strip()
+        with st.expander(
+            f"📝 Race Commentary — R{selected_rn} "
+            f"({len(_c_tagged)} horse{'s' if len(_c_tagged) != 1 else ''} noted)",
+            expanded=bool(_c_tagged or _c_narr),
+        ):
+            if _c_narr:
+                st.markdown(
+                    f"<div style='font-size:13px;line-height:1.5;"
+                    f"margin-bottom:10px;opacity:0.92'>{_c_narr}</div>",
+                    unsafe_allow_html=True,
+                )
+            if _c_tagged:
+                _rows = []
+                for h in sorted(_c_tagged,
+                                key=lambda x: (x.get("place") or 99)):
+                    _pl = h.get("place") or "—"
+                    _hn = h.get("horse_name", "")
+                    _short = h.get("short") or ""
+                    _chips = _commentary_tag_chips(
+                        h.get("tags"), h.get("polarity_score"))
+                    _inc = (h.get("incident_text") or "").strip()
+                    _inc_html = (
+                        f"<div style='font-size:11px;opacity:0.6;margin-top:2px'>"
+                        f"{_inc}</div>" if _inc else "")
+                    _rows.append(
+                        f"<tr>"
+                        f"<td style='text-align:center;font-weight:700;"
+                        f"padding:4px 8px;vertical-align:top'>{_pl}</td>"
+                        f"<td style='padding:4px 8px;vertical-align:top'>"
+                        f"<span style='font-weight:600'>{_hn}</span>"
+                        f"{_inc_html}</td>"
+                        f"<td style='padding:4px 8px;vertical-align:top;"
+                        f"font-size:12px'>{_short}</td>"
+                        f"<td style='padding:4px 8px;vertical-align:top'>"
+                        f"{_chips}</td>"
+                        f"</tr>"
+                    )
+                st.markdown(
+                    "<table style='width:100%;border-collapse:collapse;"
+                    "font-size:12px'>"
+                    "<thead><tr style='border-bottom:1px solid #30363d;"
+                    "text-align:left;opacity:0.7'>"
+                    "<th style='padding:4px 8px'>Pl</th>"
+                    "<th style='padding:4px 8px'>Horse</th>"
+                    "<th style='padding:4px 8px'>Comment</th>"
+                    "<th style='padding:4px 8px'>Tags</th>"
+                    "</tr></thead><tbody>"
+                    + "".join(_rows) +
+                    "</tbody></table>",
+                    unsafe_allow_html=True,
+                )
+            if _c_bb:
+                _bb_items = "".join(
+                    f"<li style='margin:2px 0;font-size:12px'>"
+                    f"<span style='font-weight:600'>{b.get('horse_name','')}</span> "
+                    f"<span style='color:"
+                    f"{'#3fb950' if b.get('polarity') == '+' else '#f85149' if b.get('polarity') == '-' else '#9da7b3'}'>"
+                    f"[{b.get('tag','')}]</span> "
+                    f"<span style='opacity:0.8'>{b.get('reason','')}</span>"
+                    f"<span style='opacity:0.5'> (finished {b.get('place','—')})</span>"
+                    f"</li>"
+                    for b in _c_bb
+                )
+                st.markdown(
+                    "<div style='margin-top:10px;font-size:12px'>"
+                    "<div style='font-weight:600;opacity:0.8;margin-bottom:2px'>"
+                    "📓 Blackbook suggestions (trip excuses to forgive)</div>"
+                    f"<ul style='margin:0;padding-left:18px'>{_bb_items}</ul>"
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
+            if not (_c_tagged or _c_narr or _c_bb):
+                st.caption("No notable trouble/incidents flagged for this race.")
+    else:
+        st.caption(
+            f"📝 No commentary file for this meeting. Run the full post-race "
+            f"pipeline (step 7/8 → `race_commentary.py`) to generate "
+            f"`reports/commentary_{selected_dc}.json`."
+        )
 
     _xl_bytes = _results_json_to_excel_bytes(REPORTS / f"results_{selected_dc}.json")
     if _xl_bytes:
@@ -10997,7 +11382,10 @@ def page_form_guide():
                     f'<a class="vid-link" href="{vurl}" target="_blank" '
                     f'rel="noopener noreferrer" title="Watch replay">&#9654;</a>'
                 )
-                comment_cell = _run_commentary_lookup(dc, rnum, hname).get("short", "") or ""
+                comment_cell = _run_commentary_lookup(dc, rnum, hname)
+                _c_short = comment_cell.get("short", "") or ""
+                _c_chips = _commentary_tag_chips(comment_cell.get("tags"))
+                comment_cell = (_c_short + (" " if _c_short and _c_chips else "") + _c_chips)
 
             # v4.5: lane cell — coloured dot + 800/400/200 mini-track
             lane_avg = dr.get("lane_avg")
@@ -18355,6 +18743,7 @@ def _mb_confluence_maps(date_compact: str) -> dict:
     """
     cycle_map: dict = {}
     short_map: dict = {}
+    place_map: dict = {}
     try:
         from horse_cycle import load_or_build_card_cycle
         payload = load_or_build_card_cycle(date_compact)
@@ -18363,6 +18752,14 @@ def _mb_confluence_maps(date_compact: str) -> dict:
             nm = str(h.get("horse_name", "")).strip().upper()
             if rn and nm:
                 cycle_map[(rn, nm)] = h.get("primary_flag")
+                _pf = h.get("place_form")
+                if _pf:
+                    place_map[(rn, nm)] = {
+                        "form": _pf,
+                        "top3": h.get("recent_top3"),
+                        "starts": h.get("recent_starts"),
+                        "score": h.get("recent_place_score"),
+                    }
     except Exception:
         pass
     try:
@@ -18375,7 +18772,7 @@ def _mb_confluence_maps(date_compact: str) -> dict:
                     short_map[(rn, nm)] = True
     except Exception:
         pass
-    return {"cycle": cycle_map, "short": short_map}
+    return {"cycle": cycle_map, "short": short_map, "place": place_map}
 
 
 def _mb_confluence_for(it: dict, conf_map: dict) -> dict:

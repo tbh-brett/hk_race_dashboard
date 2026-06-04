@@ -64,6 +64,15 @@ class HorseCycle:
     cycle_state: str                # at_peak / overrated / approaching / at_band / below_band / unknown
     primary_flag: str               # PRIMED / EARLY_DROPPER / FADE_OVERRATED / WATCH / NEUTRAL / NO_DATA
     note: str                       # human-readable summary
+    # Recent PLACE/competitive-form overlay (credits strong runs without a win).
+    # Wins drive the rating band above; this scores how well the horse has been
+    # *performing* lately (placings, beaten-lengths) so consistent placers that
+    # have not won still surface a signal.
+    recent_starts: int = 0
+    recent_top3: int = 0
+    recent_place_score: float = 0.0
+    place_form: str = ""            # HOT / WARM / ""
+    place_note: str = ""
     # Stable overlay (filled by analyse_card)
     stable_mode: str = "unknown"    # championship / elite / mid / survival / new / visiting
     combined_tier: str = ""         # A/B/C grading after combining cycle + stable
@@ -90,6 +99,62 @@ def load_horse_history(con: sqlite3.Connection, horse_id: str,
 
 
 # ── Per-horse classifier ─────────────────────────────────────────────────
+PLACE_LOOKBACK = 6      # recent starts considered for the place-form overlay
+
+
+def _score_place_form(hist: pd.DataFrame) -> dict:
+    """Contextual recent-form score that credits competitive PLACES.
+
+    Wins set the rating band elsewhere; this scores *how well* a horse has been
+    running lately using finishing position + beaten-lengths the cycle DB
+    already carries. A horse that keeps hitting the frame (or finishing within a
+    length) without winning still earns a positive signal — the "contextualised
+    places" the rating cycle previously ignored.
+    """
+    empty = {"starts": 0, "top3": 0, "score": 0.0, "form": "", "note": ""}
+    if hist is None or hist.empty:
+        return empty
+    recent = hist.tail(PLACE_LOOKBACK)
+    places = pd.to_numeric(recent.get("place_num"), errors="coerce")
+    if "lbw" in recent.columns:
+        lbws = pd.to_numeric(recent["lbw"], errors="coerce")
+    else:
+        lbws = pd.Series([None] * len(recent), index=recent.index)
+    starts = int(places.notna().sum())
+    top3 = 0
+    score = 0.0
+    for p, l in zip(places.tolist(), lbws.tolist()):
+        if p is None or pd.isna(p):
+            continue
+        p = int(p)
+        lb = float(l) if (l is not None and not pd.isna(l)) else None
+        if p <= 3:
+            top3 += 1
+        if p == 1:
+            continue                      # wins handled by the rating band
+        if p == 2:
+            score += 1.0
+        elif p == 3:
+            score += 0.7
+        elif p <= 5 and lb is not None and lb <= 2.0:
+            score += 0.4                  # close-up midfield finish
+        elif lb is not None and lb <= 1.0:
+            score += 0.5                  # beaten under a length anywhere
+        elif p >= 8 and lb is not None and lb > 5.0:
+            score -= 0.3                  # well beaten
+    score = round(score, 2)
+    if score >= 1.5:
+        form = "HOT"
+    elif score >= 0.7:
+        form = "WARM"
+    else:
+        form = ""
+    note = (f"{top3} top-3 in last {starts} (place-form {score:+.1f})"
+            if form else "")
+    return {"starts": starts, "top3": top3, "score": score,
+            "form": form, "note": note}
+
+
 def classify_horse(hist: pd.DataFrame, *, horse_id: str, horse_name: str,
                    trainer: str, race_number: int, today_venue: str,
                    today_surface: str, today_distance: int,
@@ -206,6 +271,13 @@ def classify_horse(hist: pd.DataFrame, *, horse_id: str, horse_name: str,
         note = (f"Cycle: {cycle_state}, band {bref} (max {bmax}), "
                 f"course-dist match: {course_dist_match}")
 
+    # Recent place/competitive-form overlay (informational; does not override
+    # the win-band primary flag, but flags consistent placers running into form).
+    pf = _score_place_form(hist)
+    if pf["form"] and pf["note"]:
+        note = f"{note} · {pf['form']} place-form: {pf['note']}" if note \
+            else f"{pf['form']} place-form: {pf['note']}"
+
     return HorseCycle(
         horse_id=horse_id, horse_name=horse_name, trainer=trainer,
         race_number=race_number, today_venue=today_venue,
@@ -221,6 +293,9 @@ def classify_horse(hist: pd.DataFrame, *, horse_id: str, horse_name: str,
         rating_trend_declining=rating_trend_declining,
         rating_drop_last_n=rating_drop_last_n,
         cycle_state=cycle_state, primary_flag=primary_flag, note=note,
+        recent_starts=pf["starts"], recent_top3=pf["top3"],
+        recent_place_score=pf["score"], place_form=pf["form"],
+        place_note=pf["note"],
     )
 
 

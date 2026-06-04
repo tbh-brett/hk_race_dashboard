@@ -61,8 +61,14 @@ VENUE_MAP = {
 # "3 CONCORDE STAR +" or "11 SMILING EMPEROR" (may or may not end with '+')
 SELECTION_RE = re.compile(r"^(\d{1,2})\s+([^+]+?)\s*\+?\s*$")
 MONEY_RE = re.compile(r"^\$([\d,]+(?:\.\d+)?)$")
+# Flexi-bet stake line, e.g. "$1.5625/192" → unit stake $1.5625 across 192 combos.
+# The leading dollar value is the per-combo (unit) stake; the trailing integer
+# is the combination count. We capture the unit stake.
+FLEXI_MONEY_RE = re.compile(r"^\$([\d,]+(?:\.\d+)?)\s*/\s*\d+$")
 DATE_RE = re.compile(r"^(\d{2})/(\d{2})/(\d{4})\s+(\d{2}:\d{2})$")
 RACE_RE = re.compile(r"^Race\s+(\d+)$", re.IGNORECASE)
+# All-Up formula / shape line, e.g. "3X4", "2X1", "6 X 63"
+ALL_UP_FORMULA_RE = re.compile(r"^(\d+)\s*[xX]\s*(\d+)$")
 
 # Bet-type keywords we recognise (substring, lowercase). Order matters for the
 # longest-match-first detection in `_detect_bet_type_line`.
@@ -84,6 +90,7 @@ BET_TYPE_KEYWORDS = (
     "trifecta",
     "double trio",
     "six up",
+    "all up",
 )
 SUBTYPE_KEYWORDS = ("multi-banker", "multi banker")
 DEBUG_PARSE = False  # toggled by `--debug` on the CLI; emits skip diagnostics
@@ -94,6 +101,27 @@ def _parse_money(s: str) -> Optional[float]:
     if not m:
         return None
     return float(m.group(1).replace(",", ""))
+
+
+def _money_value(s: str) -> Optional[float]:
+    """Dollar value of a plain ($60.00) or flexi ($1.5625/192) money line.
+
+    For a flexi-bet line the captured value is the per-combo (unit) stake.
+    """
+    s = s.strip()
+    m = MONEY_RE.match(s)
+    if m:
+        return float(m.group(1).replace(",", ""))
+    m = FLEXI_MONEY_RE.match(s)
+    if m:
+        return float(m.group(1).replace(",", ""))
+    return None
+
+
+def _is_money_line(s: str) -> bool:
+    """True for plain ($60.00) or flexi ($1.5625/192) money lines."""
+    s = s.strip()
+    return bool(MONEY_RE.match(s) or FLEXI_MONEY_RE.match(s))
 
 
 def _split_blocks(text: str) -> list[list[str]]:
@@ -114,7 +142,7 @@ def _split_blocks(text: str) -> list[list[str]]:
 
 
 def _classify_block(block: list[str]) -> str:
-    """'bet' | 'header' | 'balance' | 'footer' | 'unknown'."""
+    """'bet' | 'header' | 'balance' | 'footer' | 'cash' | 'unknown'."""
     joined = "\n".join(block)
     if "Account Records" in joined:
         return "header"
@@ -122,6 +150,13 @@ def _classify_block(block: list[str]) -> str:
         return "balance"
     if "- End -" in joined:
         return "footer"
+    # Cash movements (deposits / withdrawals / transfers) carry a date line
+    # but are NOT wagers — classify them explicitly so they are cleanly
+    # ignored and never counted as "failed to parse".
+    low = joined.lower()
+    if ("deposit" in low or "withdrawal" in low or "withdraw" in low
+            or "transfer" in low):
+        return "cash"
     if any(DATE_RE.match(ln.strip()) for ln in block):
         return "bet"
     return "unknown"
@@ -151,6 +186,124 @@ def _detect_bet_type_line(lines: list[str]) -> tuple[Optional[int], str, str]:
                     sub_type = lines[j].strip()
             return idx, bet_type, sub_type
     return None, "", ""
+
+
+def _parse_all_up_legs(lines: list[str], ref_no: str, placed_at: str,
+                       meeting_date: str, venue: str,
+                       bet_type_line: str) -> Optional[dict]:
+    """Parse a multi-race All-Up block into a single all-up record.
+
+    Layout (one leg per ``Race N`` section; each leg may be a box or a
+    banker leg)::
+
+        All Up Quinella - Quinella Place
+        3X4                         ← formula / shape line
+        Race 5
+        6 HIGHLAND RAHY             ← banker (one horse before "Banker with")
+        Banker with
+        2 ARMOR GOLDEN EAGLE +
+        5 EMBRACES +
+        9 ALL ROUND WINNER
+        Race 6
+        ...
+        $1                          ← per-combo stake
+        $324.00                     ← total debit
+        $25003.00                   ← total credit (realised return)
+
+    Returns a parsed dict with ``is_all_up=True`` and ``all_up_legs`` (a list
+    of ``{race_number, banker, selections}`` dicts) or ``None`` if malformed.
+    """
+    # Locate the formula / shape line (e.g. "3X4").
+    formula = ""
+    formula_idx = None
+    for i, ln in enumerate(lines):
+        m = ALL_UP_FORMULA_RE.match(ln.strip())
+        if m:
+            formula = ln.strip().upper().replace(" ", "")
+            formula_idx = i
+            break
+
+    start = (formula_idx + 1) if formula_idx is not None else 0
+    raw_legs: list[dict] = []
+    cur: Optional[dict] = None
+    stakes: list[float] = []
+
+    for i in range(start, len(lines)):
+        s = lines[i].strip()
+        if not s:
+            continue
+        rm = RACE_RE.match(s)
+        if rm:
+            if cur is not None:
+                raw_legs.append(cur)
+            cur = {"race_number": int(rm.group(1)),
+                   "pre": [], "post": [], "banker_seen": False}
+            continue
+        if _is_money_line(s):
+            v = _money_value(s)
+            if v is not None:
+                stakes.append(v)
+            continue
+        if s.lower().startswith("banker with"):
+            if cur is not None:
+                cur["banker_seen"] = True
+            continue
+        sm = SELECTION_RE.match(s)
+        if sm and cur is not None:
+            hn = int(sm.group(1))
+            (cur["post"] if cur["banker_seen"] else cur["pre"]).append(hn)
+    if cur is not None:
+        raw_legs.append(cur)
+
+    legs: list[dict] = []
+    for L in raw_legs:
+        if L["banker_seen"] and L["pre"] and L["post"]:
+            banker = L["pre"][-1]
+            sels = L["post"]
+        else:
+            banker = None
+            sels = L["pre"] + L["post"]
+        if not sels:
+            continue
+        legs.append({"race_number": L["race_number"],
+                     "banker": banker, "selections": sels})
+
+    if len(legs) < 2:
+        if DEBUG_PARSE:
+            print(f"[skip] all-up had <2 valid legs; ref={ref_no!r}")
+        return None
+    if len(stakes) < 2:
+        if DEBUG_PARSE:
+            print(f"[skip] all-up missing stakes; ref={ref_no!r}")
+        return None
+
+    per_combo_stake = stakes[0]
+    total_debit = stakes[1]
+    total_credit = stakes[2] if len(stakes) >= 3 else 0.0
+
+    flat: list[int] = []
+    for L in legs:
+        if L["banker"] is not None:
+            flat.append(L["banker"])
+        flat.extend(L["selections"])
+
+    return {
+        "bookie_ref": ref_no,
+        "placed_at": placed_at,
+        "meeting_date": meeting_date,
+        "venue": venue,
+        "race_number": legs[0]["race_number"],
+        "bet_type_text": bet_type_line,
+        "is_all_up": True,
+        "all_up_formula": formula,
+        "all_up_legs": legs,
+        "banker": None,
+        "selections": flat,
+        "multi_legs": None,
+        "per_combo_stake": per_combo_stake,
+        "total_debit": total_debit,
+        "total_credit": total_credit,
+    }
 
 
 def _parse_bet_block(block: list[str]) -> Optional[dict]:
@@ -220,7 +373,14 @@ def _parse_bet_block(block: list[str]) -> Optional[dict]:
     if is_multi_banker:
         bet_type_line = f"{bet_type_line} {sub_type_line}".strip()
 
-    # Race N — first RACE_RE match AFTER bet-type / sub-type
+    # ── All-Up (cross-race parlay) detection ───────────────────────────
+    # An All-Up block carries a formula/shape line (e.g. "3X4") immediately
+    # below the bet-type and then one "Race N" section per leg. These must
+    # be parsed as a single multi-race ticket, NOT a single-race bet.
+    if "all up" in bet_type_line.lower() or "all-up" in bet_type_line.lower():
+        return _parse_all_up_legs(
+            lines, ref_no, placed_at, meeting_date, venue, bet_type_line,
+        )
     search_start = bt_idx + (2 if is_multi_banker else 1)
     race_idx = None
     for i in range(search_start, len(lines)):
@@ -248,7 +408,7 @@ def _parse_bet_block(block: list[str]) -> Optional[dict]:
             if not stripped:
                 i += 1
                 continue
-            if MONEY_RE.match(stripped):
+            if _is_money_line(stripped):
                 break
             if stripped.lower().startswith("banker with"):
                 if cur_leg:
@@ -286,7 +446,7 @@ def _parse_bet_block(block: list[str]) -> Optional[dict]:
                 banker_seen = True
                 i += 1
                 continue
-            if MONEY_RE.match(stripped):
+            if _is_money_line(stripped):
                 break
             m = SELECTION_RE.match(stripped)
             if m:
@@ -319,7 +479,7 @@ def _parse_bet_block(block: list[str]) -> Optional[dict]:
     while i < n:
         stripped = lines[i].strip()
         if stripped:
-            v = _parse_money(stripped)
+            v = _money_value(stripped)
             if v is not None:
                 stakes.append(v)
         i += 1
@@ -357,6 +517,52 @@ def _expand_to_user_bet_records(parsed: dict) -> list[dict]:
     bt_text = parsed["bet_type_text"].lower()
     banker = parsed.get("banker")
     records: list[dict] = []
+
+    # ── All-Up (cross-race parlay) ─────────────────────────────────────
+    # Emit a SINGLE ALLUP_* record at the full debit. All-Up settlement
+    # trusts the bookie credit (HKJC only publishes per-leg dividends), so
+    # we must NOT split the bundle the way single-race QIN/QPL is split.
+    if parsed.get("is_all_up"):
+        if "win" in bt_text and "place" in bt_text:
+            code = "ALLUP_WP"
+        elif "quinella" in bt_text:
+            code = "ALLUP_QQP"
+        elif "win" in bt_text:
+            code = "ALLUP_WIN"
+        elif "place" in bt_text:
+            code = "ALLUP_PLACE"
+        else:
+            code = "ALLUP_OTHER"
+        legs = parsed.get("all_up_legs") or []
+        leg_desc = " / ".join(
+            "R{}{}".format(
+                L["race_number"],
+                (" bank " + str(L["banker"]) if L.get("banker") else "")
+                + " w/ " + ",".join(str(h) for h in L["selections"]),
+            )
+            for L in legs
+        )
+        return [{
+            "meeting_date": parsed["meeting_date"],
+            "venue": parsed["venue"],
+            "race_number": parsed["race_number"],
+            "bet_type": code,
+            "selections": parsed["selections"],
+            "banker": None,
+            "legs": legs,
+            "stake_hkd": parsed["total_debit"],
+            "notes": f"Imported from bookie statement (ref {parsed['bookie_ref']}). "
+                     f"All-Up {parsed.get('all_up_formula', '')} "
+                     f"[{leg_desc}]. "
+                     f"Debit ${parsed['total_debit']}, "
+                     f"credit ${parsed['total_credit']}.",
+            "all_up_formula": parsed.get("all_up_formula", ""),
+            "_bookie_ref": parsed["bookie_ref"],
+            "_bookie_bet_type_text": parsed["bet_type_text"],
+            "_bookie_total_debit": parsed["total_debit"],
+            "_bookie_total_credit": parsed["total_credit"],
+            "_bookie_placed_at": parsed["placed_at"],
+        }]
 
     # Determine emitted bet-type codes
     if "quinella - quinella place" in bt_text or "quinella-quinella place" in bt_text:
@@ -432,7 +638,7 @@ def parse_statement(path: Path, *, debug: bool = False) -> list[dict]:
     """
     global DEBUG_PARSE
     DEBUG_PARSE = debug
-    text = path.read_text(encoding="utf-8")
+    text = path.read_text(encoding="utf-8-sig")
     out = []
     skipped = 0
     for block in _split_blocks(text):
@@ -550,6 +756,11 @@ def import_statement(path: Path, *, debug: bool = False,
             )
             continue
         for rec in records:
+            # Forward bookie metadata + all-up formula so the settler can
+            # use them (ALLUP_* settles from _bookie_total_credit; single
+            # races store them for audit only).
+            extra = {k: v for k, v in rec.items()
+                     if k.startswith("_bookie") or k == "all_up_formula"}
             user_bets.submit_bet(
                 meeting_date=rec["meeting_date"],
                 venue=rec["venue"],
@@ -560,6 +771,7 @@ def import_statement(path: Path, *, debug: bool = False,
                 stake_hkd=rec["stake_hkd"],
                 notes=rec["notes"],
                 legs=rec.get("legs"),
+                **extra,
             )
             inserted += 1
             inserted_details.append({
