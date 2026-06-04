@@ -1,0 +1,691 @@
+{
+  "date": "2026-06-03",
+  "race_number": 1,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "745",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 489,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 459
+    },
+    {
+      "y_top": 489,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 545
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "CASA LEGEND",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "745",
+          "cx": 406,
+          "cy": 112,
+          "x_frac": 0.564,
+          "y_in_band": 0.843,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "Casa Legend"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 305,
+          "cy": 348,
+          "x_frac": 0.424,
+          "y_in_band": 0.452,
+          "conf": 0.958,
+          "n_boxes": 2,
+          "ocr_text": "Casa Legend"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 330,
+          "cy": 594,
+          "x_frac": 0.458,
+          "y_in_band": 0.929,
+          "conf": 0.929,
+          "n_boxes": 1,
+          "ocr_text": "Casa Legend"
+        }
+      ],
+      "ocr_texts": [
+        "Casa Legend",
+        "Casa Legend",
+        "Casa Legend",
+        "Casa Legend"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.739,
+      "avg_x_frac": 0.482,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FAMILY FORTUNE",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "745",
+          "cx": 346,
+          "cy": 51,
+          "x_frac": 0.481,
+          "y_in_band": 0.339,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "amilyFortune"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 249,
+          "cy": 193,
+          "x_frac": 0.346,
+          "y_in_band": 0.416,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "Family Fortune"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 179,
+          "cy": 326,
+          "x_frac": 0.249,
+          "y_in_band": 0.307,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "FamilyFortune"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 107,
+          "cy": 566,
+          "x_frac": 0.149,
+          "y_in_band": 0.681,
+          "conf": 0.94,
+          "n_boxes": 1,
+          "ocr_text": "FamilyFortune"
+        }
+      ],
+      "ocr_texts": [
+        "amilyFortune",
+        "Family Fortune",
+        "FamilyFortune",
+        "FamilyFortune"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.434,
+      "avg_x_frac": 0.308,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HAPPY BUDDIES",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 269,
+          "cy": 255,
+          "x_frac": 0.374,
+          "y_in_band": 0.832,
+          "conf": 0.896,
+          "n_boxes": 1,
+          "ocr_text": "Happy Buddies"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 260,
+          "cy": 328,
+          "x_frac": 0.361,
+          "y_in_band": 0.32,
+          "conf": 0.934,
+          "n_boxes": 1,
+          "ocr_text": "Happy Buddies"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 433,
+          "cy": 543,
+          "x_frac": 0.601,
+          "y_in_band": 0.478,
+          "conf": 0.927,
+          "n_boxes": 1,
+          "ocr_text": "Happy Buddies"
+        }
+      ],
+      "ocr_texts": [
+        "Happy Buddies",
+        "Happy Buddies",
+        "Happy Buddies"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.54,
+      "avg_x_frac": 0.446,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MANYTHANKS FOREVER",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 140,
+          "cy": 193,
+          "x_frac": 0.194,
+          "y_in_band": 0.417,
+          "conf": 0.988,
+          "n_boxes": 2,
+          "ocr_text": "ManythanksForever"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 163,
+          "cy": 412,
+          "x_frac": 0.226,
+          "y_in_band": 0.88,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "ManythanksForever"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 295,
+          "cy": 554,
+          "x_frac": 0.41,
+          "y_in_band": 0.575,
+          "conf": 0.981,
+          "n_boxes": 1,
+          "ocr_text": "ManythanksForever"
+        }
+      ],
+      "ocr_texts": [
+        "ManythanksForever",
+        "ManythanksForever",
+        "ManythanksForever",
+        "ManythanksForever"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.621,
+      "avg_x_frac": 0.277,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MASTER OF HUMOR",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "745",
+          "cx": 500,
+          "cy": 111,
+          "x_frac": 0.694,
+          "y_in_band": 0.835,
+          "conf": 0.928,
+          "n_boxes": 1,
+          "ocr_text": "Master Of Humor"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 460,
+          "cy": 261,
+          "x_frac": 0.639,
+          "y_in_band": 0.872,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "MasterOf Humor"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 474,
+          "cy": 397,
+          "x_frac": 0.658,
+          "y_in_band": 0.78,
+          "conf": 0.933,
+          "n_boxes": 1,
+          "ocr_text": "Master OtHumor"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 563,
+          "cy": 559,
+          "x_frac": 0.782,
+          "y_in_band": 0.619,
+          "conf": 0.972,
+          "n_boxes": 1,
+          "ocr_text": "MasterOfHumor"
+        }
+      ],
+      "ocr_texts": [
+        "Master Of Humor",
+        "MasterOf Humor",
+        "Master OtHumor",
+        "MasterOfHumor"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.775,
+      "avg_x_frac": 0.694,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PRINCE ALEX",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "745",
+          "cx": 337,
+          "cy": 114,
+          "x_frac": 0.468,
+          "y_in_band": 0.86,
+          "conf": 0.963,
+          "n_boxes": 1,
+          "ocr_text": "Prince Alex"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 252,
+          "cy": 348,
+          "x_frac": 0.35,
+          "y_in_band": 0.456,
+          "conf": 0.929,
+          "n_boxes": 2,
+          "ocr_text": "Prince Alex"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 330,
+          "cy": 576,
+          "x_frac": 0.458,
+          "y_in_band": 0.77,
+          "conf": 0.978,
+          "n_boxes": 1,
+          "ocr_text": "PrinceAlex"
+        }
+      ],
+      "ocr_texts": [
+        "Prince Alex",
+        "Prince Alex",
+        "Prince Alex",
+        "PrinceAlex"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.699,
+      "avg_x_frac": 0.426,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SETANTA",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 330,
+          "cy": 195,
+          "x_frac": 0.458,
+          "y_in_band": 0.43,
+          "conf": 0.99,
+          "n_boxes": 1,
+          "ocr_text": "Setanta"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 304,
+          "cy": 320,
+          "x_frac": 0.422,
+          "y_in_band": 0.267,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "Setanta"
+        }
+      ],
+      "ocr_texts": [
+        "Setanta",
+        "Setanta"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.35,
+      "avg_x_frac": 0.44,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SMART TRIO",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "745",
+          "cx": 148,
+          "cy": 114,
+          "x_frac": 0.206,
+          "y_in_band": 0.86,
+          "conf": 0.913,
+          "n_boxes": 1,
+          "ocr_text": "Smart Trio"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 213,
+          "cy": 258,
+          "x_frac": 0.296,
+          "y_in_band": 0.852,
+          "conf": 0.978,
+          "n_boxes": 1,
+          "ocr_text": "SmartTrio"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 384,
+          "cy": 547,
+          "x_frac": 0.533,
+          "y_in_band": 0.513,
+          "conf": 0.906,
+          "n_boxes": 1,
+          "ocr_text": "Smart Trio"
+        }
+      ],
+      "ocr_texts": [
+        "Smart Trio",
+        "SmartTrio",
+        "Smart Trio"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.745,
+      "avg_x_frac": 0.343,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TELECOM POWER",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 373,
+          "cy": 284,
+          "x_frac": 0.518,
+          "y_in_band": 0.027,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "Telecom Power"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 299,
+          "cy": 437,
+          "x_frac": 0.415,
+          "y_in_band": 0.119,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "TelecomPowe"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 194,
+          "cy": 574,
+          "x_frac": 0.269,
+          "y_in_band": 0.752,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "TelecomPower"
+        }
+      ],
+      "ocr_texts": [
+        "Telecom Power",
+        "TelecomPowe",
+        "TelecomPower"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.297,
+      "avg_x_frac": 0.401,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE WAY WE WIN",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "745",
+          "cx": 129,
+          "cy": 50,
+          "x_frac": 0.179,
+          "y_in_band": 0.331,
+          "conf": 0.922,
+          "n_boxes": 1,
+          "ocr_text": "The Way We Win"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 103,
+          "cy": 189,
+          "x_frac": 0.143,
+          "y_in_band": 0.389,
+          "conf": 0.964,
+          "n_boxes": 1,
+          "ocr_text": "The Way We Win"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 86,
+          "cy": 326,
+          "x_frac": 0.119,
+          "y_in_band": 0.307,
+          "conf": 0.913,
+          "n_boxes": 1,
+          "ocr_text": "The Way We Win"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 133,
+          "cy": 543,
+          "x_frac": 0.185,
+          "y_in_band": 0.478,
+          "conf": 0.927,
+          "n_boxes": 1,
+          "ocr_text": "The Way We Win"
+        }
+      ],
+      "ocr_texts": [
+        "The Way We Win",
+        "The Way We Win",
+        "The Way We Win",
+        "The Way We Win"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.377,
+      "avg_x_frac": 0.156,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WAH MAY WAI WAI",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 184,
+          "cy": 194,
+          "x_frac": 0.256,
+          "y_in_band": 0.423,
+          "conf": 0.934,
+          "n_boxes": 1,
+          "ocr_text": "WahMay Wai Wai"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 164,
+          "cy": 387,
+          "x_frac": 0.228,
+          "y_in_band": 0.713,
+          "conf": 0.93,
+          "n_boxes": 1,
+          "ocr_text": "Wah MayWai Wai"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 221,
+          "cy": 550,
+          "x_frac": 0.307,
+          "y_in_band": 0.54,
+          "conf": 0.936,
+          "n_boxes": 1,
+          "ocr_text": "Wah May Wai Wai"
+        }
+      ],
+      "ocr_texts": [
+        "WahMay Wai Wai",
+        "Wah MayWai Wai",
+        "Wah May Wai Wai"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.558,
+      "avg_x_frac": 0.264,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ZETTA FORCE",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 381,
+          "cy": 261,
+          "x_frac": 0.529,
+          "y_in_band": 0.872,
+          "conf": 0.89,
+          "n_boxes": 1,
+          "ocr_text": "ZeltaForce"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 345,
+          "cy": 403,
+          "x_frac": 0.479,
+          "y_in_band": 0.82,
+          "conf": 0.935,
+          "n_boxes": 1,
+          "ocr_text": "Zetta Force"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 377,
+          "cy": 570,
+          "x_frac": 0.524,
+          "y_in_band": 0.717,
+          "conf": 0.911,
+          "n_boxes": 1,
+          "ocr_text": "ZeltaForce"
+        }
+      ],
+      "ocr_texts": [
+        "ZeltaForce",
+        "Zetta Force",
+        "ZeltaForce"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.803,
+      "avg_x_frac": 0.51,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 87,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-06-04T02:44:00"
+  }
+}
