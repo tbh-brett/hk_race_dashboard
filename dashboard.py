@@ -4308,8 +4308,24 @@ def _top_h2h_pairs(fs_race: dict, today_iso: str = "",
         r["today_b_draw"] = tb.get("draw")
         r["today_a_weight"] = ta.get("weight")
         r["today_b_weight"] = tb.get("weight")
-    # Recency-weighted importance first, then raw meeting count, then recency.
-    out.sort(key=lambda r: (round(r["importance"], 3), r["n"], r["last_date"]),
+        # Compute weight swing vs last meeting: |Δ(A−B gap)|.
+        # Bigger swing = bigger reversal of conditions = more notable.
+        ws = 0
+        last_m = r["meetings"][0] if r["meetings"] else {}
+        def _wi(v):
+            try: return int(float(v))
+            except (TypeError, ValueError): return None
+        la_w = _wi(last_m.get("a_weight"))
+        lb_w = _wi(last_m.get("b_weight"))
+        ta_w = _wi(r["today_a_weight"])
+        tb_w = _wi(r["today_b_weight"])
+        if None not in (la_w, lb_w, ta_w, tb_w):
+            ws = abs((ta_w - tb_w) - (la_w - lb_w))
+        r["weight_swing"] = ws
+    # Primary: weight swing (bigger = more notable first).
+    # Secondary: recency-weighted importance, then meeting count, then recency.
+    out.sort(key=lambda r: (r["weight_swing"], round(r["importance"], 3),
+                            r["n"], r["last_date"]),
              reverse=True)
     return out if top_n is None else out[:top_n]
 
@@ -4376,6 +4392,15 @@ def _fmt_h2h_pair(p: dict) -> str:
                     f'color:#fbbf24;margin-top:1px">Δ today: '
                     f'{" · ".join(diffs)}</div>')
 
+    # Weight-swing badge: shown when swing ≥ 4lb (notable shift in conditions).
+    ws = p.get("weight_swing", 0) or 0
+    ws_badge = ""
+    if ws >= 4:
+        ws_col = "#ef4444" if ws >= 8 else "#f97316" if ws >= 6 else "#fbbf24"
+        ws_badge = (f' <span style="background:{ws_col};color:#0b0b0b;'
+                    f'padding:0 5px;border-radius:5px;font-size:0.70em;'
+                    f'font-weight:800;margin-left:4px">⚖ {ws}lb swing</span>')
+
     return (
         f'<div style="padding:4px 0;border-left:3px solid {col};'
         f'padding-left:8px;margin-bottom:5px">'
@@ -4384,6 +4409,7 @@ def _fmt_h2h_pair(p: dict) -> str:
         f'<span style="font-weight:700">{b}</span>'
         f' <span style="opacity:0.6;font-size:0.82em">'
         f'· {p["n"]} mtg{"s" if p["n"] != 1 else ""}</span>'
+        f'{ws_badge}'
         f'<div style="font-size:0.78em;opacity:0.78">{lead}</div>'
         f'{ctx}</div>')
 
