@@ -1,0 +1,569 @@
+{
+  "date": "2026-06-07",
+  "race_number": 10,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "763",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "BEAUTY BOLT",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "763",
+          "cx": 509,
+          "cy": 101,
+          "x_frac": 0.707,
+          "y_in_band": 0.752,
+          "conf": 0.925,
+          "n_boxes": 1,
+          "ocr_text": "Beauty Bolt"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 533,
+          "cy": 274,
+          "x_frac": 0.74,
+          "y_in_band": 0.96,
+          "conf": 0.964,
+          "n_boxes": 1,
+          "ocr_text": "BeautyBolt"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 320,
+          "cy": 516,
+          "x_frac": 0.444,
+          "y_in_band": 0.497,
+          "conf": 0.938,
+          "n_boxes": 2,
+          "ocr_text": "Beauty Bolt"
+        }
+      ],
+      "ocr_texts": [
+        "Beauty Bolt",
+        "BeautyBolt",
+        "Beauty Bolt",
+        "Beauty Bolt"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.738,
+      "avg_x_frac": 0.631,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GLOWING PRAISES",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 381,
+          "cy": 177,
+          "x_frac": 0.529,
+          "y_in_band": 0.309,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "GlowingPraises"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 245,
+          "cy": 547,
+          "x_frac": 0.34,
+          "y_in_band": 0.68,
+          "conf": 0.994,
+          "n_boxes": 1,
+          "ocr_text": "GlowingPraises"
+        }
+      ],
+      "ocr_texts": [
+        "GlowingPraises",
+        "GlowingPraises"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.495,
+      "avg_x_frac": 0.434,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HOT DELIGHT",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "763",
+          "cx": 396,
+          "cy": 122,
+          "x_frac": 0.55,
+          "y_in_band": 0.926,
+          "conf": 0.973,
+          "n_boxes": 1,
+          "ocr_text": "HotDelight"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 409,
+          "cy": 266,
+          "x_frac": 0.568,
+          "y_in_band": 0.906,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "HotDelight"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 181,
+          "cy": 423,
+          "x_frac": 0.251,
+          "y_in_band": 0.953,
+          "conf": 0.884,
+          "n_boxes": 1,
+          "ocr_text": "Hot Delight"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 103,
+          "cy": 593,
+          "x_frac": 0.143,
+          "y_in_band": 0.948,
+          "conf": 0.874,
+          "n_boxes": 1,
+          "ocr_text": "Hot Delight"
+        }
+      ],
+      "ocr_texts": [
+        "HotDelight",
+        "HotDelight",
+        "Hot Delight",
+        "Hot Delight"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.932,
+      "avg_x_frac": 0.388,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KAHOLO ANGEL",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 473,
+          "cy": 171,
+          "x_frac": 0.657,
+          "y_in_band": 0.268,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "KaholoAngel"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 296,
+          "cy": 322,
+          "x_frac": 0.411,
+          "y_in_band": 0.28,
+          "conf": 0.956,
+          "n_boxes": 1,
+          "ocr_text": "Kaholo Angel"
+        }
+      ],
+      "ocr_texts": [
+        "KaholoAngel",
+        "Kaholo Angel"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.274,
+      "avg_x_frac": 0.536,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "MAGIC CONTROL",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "763",
+          "cx": 295,
+          "cy": 102,
+          "x_frac": 0.41,
+          "y_in_band": 0.76,
+          "conf": 0.905,
+          "n_boxes": 1,
+          "ocr_text": "Magic Control"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 287,
+          "cy": 236,
+          "x_frac": 0.399,
+          "y_in_band": 0.705,
+          "conf": 0.966,
+          "n_boxes": 1,
+          "ocr_text": "Magic Control"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 177,
+          "cy": 402,
+          "x_frac": 0.246,
+          "y_in_band": 0.813,
+          "conf": 0.969,
+          "n_boxes": 1,
+          "ocr_text": "Magic Control"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 129,
+          "cy": 569,
+          "x_frac": 0.179,
+          "y_in_band": 0.808,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "agic Control"
+        }
+      ],
+      "ocr_texts": [
+        "Magic Control",
+        "Magic Control",
+        "Magic Control",
+        "agic Control"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.772,
+      "avg_x_frac": 0.307,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PAKISTAN LEGACY",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "763",
+          "cx": 260,
+          "cy": 125,
+          "x_frac": 0.361,
+          "y_in_band": 0.95,
+          "conf": 0.964,
+          "n_boxes": 1,
+          "ocr_text": "Pakistan Legacy"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 347,
+          "cy": 246,
+          "x_frac": 0.482,
+          "y_in_band": 0.772,
+          "conf": 0.947,
+          "n_boxes": 1,
+          "ocr_text": "Pakistan Legacy"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 232,
+          "cy": 413,
+          "x_frac": 0.322,
+          "y_in_band": 0.887,
+          "conf": 0.99,
+          "n_boxes": 1,
+          "ocr_text": "PakistanLegacy"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 282,
+          "cy": 570,
+          "x_frac": 0.392,
+          "y_in_band": 0.814,
+          "conf": 0.969,
+          "n_boxes": 1,
+          "ocr_text": "Pakistan Legacy"
+        }
+      ],
+      "ocr_texts": [
+        "Pakistan Legacy",
+        "Pakistan Legacy",
+        "PakistanLegacy",
+        "Pakistan Legacy"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.856,
+      "avg_x_frac": 0.388,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PUBLIC ATTENTION",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "763",
+          "cx": 213,
+          "cy": 103,
+          "x_frac": 0.296,
+          "y_in_band": 0.769,
+          "conf": 0.937,
+          "n_boxes": 1,
+          "ocr_text": "PublicAttent"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 184,
+          "cy": 243,
+          "x_frac": 0.256,
+          "y_in_band": 0.752,
+          "conf": 0.939,
+          "n_boxes": 1,
+          "ocr_text": "PublicAttention"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 180,
+          "cy": 570,
+          "x_frac": 0.25,
+          "y_in_band": 0.814,
+          "conf": 0.921,
+          "n_boxes": 1,
+          "ocr_text": "PublicAltention"
+        }
+      ],
+      "ocr_texts": [
+        "PublicAttent",
+        "PublicAttention",
+        "PublicAltention"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.778,
+      "avg_x_frac": 0.267,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RISING FORCE",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 161,
+          "cy": 329,
+          "x_frac": 0.224,
+          "y_in_band": 0.327,
+          "conf": 0.996,
+          "n_boxes": 1,
+          "ocr_text": "RisingForce"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 183,
+          "cy": 547,
+          "x_frac": 0.254,
+          "y_in_band": 0.68,
+          "conf": 0.995,
+          "n_boxes": 1,
+          "ocr_text": "singForce"
+        }
+      ],
+      "ocr_texts": [
+        "RisingForce",
+        "singForce"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.503,
+      "avg_x_frac": 0.239,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WE ARE HERO",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "763",
+          "cx": 426,
+          "cy": 101,
+          "x_frac": 0.592,
+          "y_in_band": 0.752,
+          "conf": 0.986,
+          "n_boxes": 1,
+          "ocr_text": "WeAreHero"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 436,
+          "cy": 244,
+          "x_frac": 0.606,
+          "y_in_band": 0.758,
+          "conf": 0.933,
+          "n_boxes": 1,
+          "ocr_text": "We Are Hero"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 357,
+          "cy": 414,
+          "x_frac": 0.496,
+          "y_in_band": 0.893,
+          "conf": 0.837,
+          "n_boxes": 1,
+          "ocr_text": "We Are Hero"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 400,
+          "cy": 538,
+          "x_frac": 0.556,
+          "y_in_band": 0.628,
+          "conf": 0.93,
+          "n_boxes": 1,
+          "ocr_text": "We Are He"
+        }
+      ],
+      "ocr_texts": [
+        "WeAreHero",
+        "We Are Hero",
+        "We Are Hero",
+        "We Are He"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.754,
+      "avg_x_frac": 0.565,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "YOUNG CHAMPION",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "763",
+          "cx": 568,
+          "cy": 92,
+          "x_frac": 0.789,
+          "y_in_band": 0.678,
+          "conf": 0.974,
+          "n_boxes": 1,
+          "ocr_text": "Young Champion"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 480,
+          "cy": 266,
+          "x_frac": 0.667,
+          "y_in_band": 0.906,
+          "conf": 0.984,
+          "n_boxes": 1,
+          "ocr_text": "Young Champion"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 212,
+          "cy": 514,
+          "x_frac": 0.294,
+          "y_in_band": 0.49,
+          "conf": 0.99,
+          "n_boxes": 2,
+          "ocr_text": "YoungChampion"
+        }
+      ],
+      "ocr_texts": [
+        "Young Champion",
+        "Young Champion",
+        "YoungChampion",
+        "Young Champion"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.691,
+      "avg_x_frac": 0.582,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 74,
+    "matched_horses": 10,
+    "field_size": 12,
+    "coverage": 0.833,
+    "parsed_at": "2026-06-08T02:12:47"
+  }
+}

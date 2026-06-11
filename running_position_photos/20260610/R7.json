@@ -1,0 +1,435 @@
+{
+  "date": "2026-06-10",
+  "race_number": 7,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "771",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "AUDACIOUS PURSUIT",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 201,
+          "cy": 190,
+          "x_frac": 0.279,
+          "y_in_band": 0.396,
+          "conf": 0.963,
+          "n_boxes": 1,
+          "ocr_text": "Audacious Pursuit"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 255,
+          "cy": 563,
+          "x_frac": 0.354,
+          "y_in_band": 0.773,
+          "conf": 0.964,
+          "n_boxes": 1,
+          "ocr_text": "Audacious Pursuit"
+        }
+      ],
+      "ocr_texts": [
+        "Audacious Pursuit",
+        "Audacious Pursuit"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.585,
+      "avg_x_frac": 0.317,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FALLON",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 301,
+          "cy": 563,
+          "x_frac": 0.418,
+          "y_in_band": 0.773,
+          "conf": 0.993,
+          "n_boxes": 1,
+          "ocr_text": "Fallon"
+        }
+      ],
+      "ocr_texts": [
+        "Fallon"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.773,
+      "avg_x_frac": 0.418,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FANTASTIC FUN",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 131,
+          "cy": 190,
+          "x_frac": 0.182,
+          "y_in_band": 0.396,
+          "conf": 0.966,
+          "n_boxes": 1,
+          "ocr_text": "FantasticFun"
+        }
+      ],
+      "ocr_texts": [
+        "FantasticFun"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.396,
+      "avg_x_frac": 0.182,
+      "wide_frames": 0,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FORTUNATE SON",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 253,
+          "cy": 267,
+          "x_frac": 0.351,
+          "y_in_band": 0.913,
+          "conf": 0.975,
+          "n_boxes": 1,
+          "ocr_text": "Fortunate Son"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 222,
+          "cy": 427,
+          "x_frac": 0.308,
+          "y_in_band": 0.98,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "Fortunate Son"
+        }
+      ],
+      "ocr_texts": [
+        "Fortunate Son",
+        "Fortunate Son"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.946,
+      "avg_x_frac": 0.33,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GLITTERING LEGEND",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 277,
+          "cy": 189,
+          "x_frac": 0.385,
+          "y_in_band": 0.389,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "Glittering Legend"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 239,
+          "cy": 326,
+          "x_frac": 0.332,
+          "y_in_band": 0.307,
+          "conf": 0.984,
+          "n_boxes": 1,
+          "ocr_text": "GlitteringLegend"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 177,
+          "cy": 563,
+          "x_frac": 0.246,
+          "y_in_band": 0.773,
+          "conf": 0.86,
+          "n_boxes": 1,
+          "ocr_text": "Glitering Legend"
+        }
+      ],
+      "ocr_texts": [
+        "Glittering Legend",
+        "GlitteringLegend",
+        "Glitering Legend"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.478,
+      "avg_x_frac": 0.324,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LE ZONDA",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 134,
+          "cy": 596,
+          "x_frac": 0.186,
+          "y_in_band": 0.965,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "Le Zonda"
+        }
+      ],
+      "ocr_texts": [
+        "Le Zonda"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.965,
+      "avg_x_frac": 0.186,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NOISY BOY",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 183,
+          "cy": 257,
+          "x_frac": 0.254,
+          "y_in_band": 0.846,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "NoisyBoy"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 254,
+          "cy": 403,
+          "x_frac": 0.353,
+          "y_in_band": 0.82,
+          "conf": 0.946,
+          "n_boxes": 1,
+          "ocr_text": "Noisy Boy"
+        }
+      ],
+      "ocr_texts": [
+        "NoisyBoy",
+        "Noisy Boy"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.833,
+      "avg_x_frac": 0.303,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SHAMUS STORM",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "771",
+          "cx": 389,
+          "cy": 125,
+          "x_frac": 0.54,
+          "y_in_band": 0.95,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "Shamus Storm"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 356,
+          "cy": 278,
+          "x_frac": 0.494,
+          "y_in_band": 0.987,
+          "conf": 0.968,
+          "n_boxes": 1,
+          "ocr_text": "Shamus Storm"
+        }
+      ],
+      "ocr_texts": [
+        "Shamus Storm",
+        "Shamus Storm"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.969,
+      "avg_x_frac": 0.517,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SUPER UNICORN",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "771",
+          "cx": 345,
+          "cy": 99,
+          "x_frac": 0.479,
+          "y_in_band": 0.736,
+          "conf": 0.927,
+          "n_boxes": 1,
+          "ocr_text": "Super Unicorn"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 318,
+          "cy": 255,
+          "x_frac": 0.442,
+          "y_in_band": 0.832,
+          "conf": 0.922,
+          "n_boxes": 1,
+          "ocr_text": "Super Unicon"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 287,
+          "cy": 425,
+          "x_frac": 0.399,
+          "y_in_band": 0.967,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "SuperUnicom"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 310,
+          "cy": 586,
+          "x_frac": 0.431,
+          "y_in_band": 0.907,
+          "conf": 0.974,
+          "n_boxes": 1,
+          "ocr_text": "SuperUnicom"
+        }
+      ],
+      "ocr_texts": [
+        "Super Unicorn",
+        "Super Unicon",
+        "SuperUnicom",
+        "SuperUnicom"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.862,
+      "avg_x_frac": 0.437,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE AUSPICIOUS",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 352,
+          "cy": 188,
+          "x_frac": 0.489,
+          "y_in_band": 0.383,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "The Auspicious"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 301,
+          "cy": 318,
+          "x_frac": 0.418,
+          "y_in_band": 0.253,
+          "conf": 0.967,
+          "n_boxes": 1,
+          "ocr_text": "The Auspicious"
+        }
+      ],
+      "ocr_texts": [
+        "The Auspicious",
+        "The Auspicious"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.318,
+      "avg_x_frac": 0.453,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 48,
+    "matched_horses": 10,
+    "field_size": 13,
+    "coverage": 0.769,
+    "parsed_at": "2026-06-11T01:08:32"
+  }
+}

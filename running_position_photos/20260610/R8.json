@@ -1,0 +1,600 @@
+{
+  "date": "2026-06-10",
+  "race_number": 8,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "772",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ALL OUT FOR SIX",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "772",
+          "cx": 121,
+          "cy": 99,
+          "x_frac": 0.168,
+          "y_in_band": 0.736,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "AllOut ForSix"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 131,
+          "cy": 190,
+          "x_frac": 0.182,
+          "y_in_band": 0.396,
+          "conf": 0.944,
+          "n_boxes": 1,
+          "ocr_text": "AllOut ForSix"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 204,
+          "cy": 327,
+          "x_frac": 0.283,
+          "y_in_band": 0.313,
+          "conf": 0.966,
+          "n_boxes": 1,
+          "ocr_text": "AllOutForSix"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 246,
+          "cy": 557,
+          "x_frac": 0.342,
+          "y_in_band": 0.738,
+          "conf": 0.968,
+          "n_boxes": 1,
+          "ocr_text": "AllOutForSix"
+        }
+      ],
+      "ocr_texts": [
+        "AllOut ForSix",
+        "AllOut ForSix",
+        "AllOutForSix",
+        "AllOutForSix"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.546,
+      "avg_x_frac": 0.244,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "AURIO",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 553,
+          "cy": 184,
+          "x_frac": 0.768,
+          "y_in_band": 0.356,
+          "conf": 0.98,
+          "n_boxes": 1,
+          "ocr_text": "Aurio"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 493,
+          "cy": 322,
+          "x_frac": 0.685,
+          "y_in_band": 0.28,
+          "conf": 0.933,
+          "n_boxes": 1,
+          "ocr_text": "Aurio"
+        }
+      ],
+      "ocr_texts": [
+        "Aurio",
+        "Aurio"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.319,
+      "avg_x_frac": 0.728,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CHATEAUNEUF",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "772",
+          "cx": 401,
+          "cy": 19,
+          "x_frac": 0.557,
+          "y_in_band": 0.074,
+          "conf": 0.98,
+          "n_boxes": 1,
+          "ocr_text": "Chateauneuf"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 395,
+          "cy": 188,
+          "x_frac": 0.549,
+          "y_in_band": 0.383,
+          "conf": 0.935,
+          "n_boxes": 1,
+          "ocr_text": "Chateauneuf"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 417,
+          "cy": 400,
+          "x_frac": 0.579,
+          "y_in_band": 0.8,
+          "conf": 0.975,
+          "n_boxes": 1,
+          "ocr_text": "Chateauneuf"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 401,
+          "cy": 539,
+          "x_frac": 0.557,
+          "y_in_band": 0.634,
+          "conf": 0.949,
+          "n_boxes": 1,
+          "ocr_text": "Chateauneuf"
+        }
+      ],
+      "ocr_texts": [
+        "Chateauneuf",
+        "Chateauneuf",
+        "Chateauneuf",
+        "Chateauneuf"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.472,
+      "avg_x_frac": 0.561,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FRIENDS OF SHAJING",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "772",
+          "cx": 341,
+          "cy": 35,
+          "x_frac": 0.474,
+          "y_in_band": 0.207,
+          "conf": 0.97,
+          "n_boxes": 1,
+          "ocr_text": "FriendsOfShajing"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 396,
+          "cy": 291,
+          "x_frac": 0.55,
+          "y_in_band": 0.073,
+          "conf": 0.888,
+          "n_boxes": 1,
+          "ocr_text": "Friends Of Shajing"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 311,
+          "cy": 516,
+          "x_frac": 0.431,
+          "y_in_band": 0.502,
+          "conf": 0.961,
+          "n_boxes": 2,
+          "ocr_text": "Friends Of Shajing"
+        }
+      ],
+      "ocr_texts": [
+        "FriendsOfShajing",
+        "Friends Of Shajing",
+        "Friends Of Shajing",
+        "FriendsOf Shajing"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.265,
+      "avg_x_frac": 0.483,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GREATER BAE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 430,
+          "cy": 520,
+          "x_frac": 0.597,
+          "y_in_band": 0.526,
+          "conf": 0.945,
+          "n_boxes": 2,
+          "ocr_text": "Greater Bae"
+        }
+      ],
+      "ocr_texts": [
+        "Greater Bae",
+        "Greater Bae"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.526,
+      "avg_x_frac": 0.597,
+      "wide_frames": 0,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GUMMY GUMMY",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 403,
+          "cy": 507,
+          "x_frac": 0.56,
+          "y_in_band": 0.449,
+          "conf": 0.992,
+          "n_boxes": 2,
+          "ocr_text": "GummyGummy"
+        }
+      ],
+      "ocr_texts": [
+        "GummyGummy",
+        "GummyGummy"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.449,
+      "avg_x_frac": 0.56,
+      "wide_frames": 0,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "REFUSETOBEENGLISH",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 410,
+          "cy": 324,
+          "x_frac": 0.569,
+          "y_in_band": 0.293,
+          "conf": 0.937,
+          "n_boxes": 1,
+          "ocr_text": "Refusetobeenglish"
+        }
+      ],
+      "ocr_texts": [
+        "Refusetobeenglish"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.293,
+      "avg_x_frac": 0.569,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "SHANGHAI WARRIOR",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "772",
+          "cx": 234,
+          "cy": 109,
+          "x_frac": 0.325,
+          "y_in_band": 0.818,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "Shanghai Warrior"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 341,
+          "cy": 269,
+          "x_frac": 0.474,
+          "y_in_band": 0.926,
+          "conf": 0.933,
+          "n_boxes": 1,
+          "ocr_text": "Shanghai Warrior"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 418,
+          "cy": 422,
+          "x_frac": 0.581,
+          "y_in_band": 0.947,
+          "conf": 0.963,
+          "n_boxes": 1,
+          "ocr_text": "Shanghai Warrior"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 375,
+          "cy": 561,
+          "x_frac": 0.521,
+          "y_in_band": 0.762,
+          "conf": 0.966,
+          "n_boxes": 1,
+          "ocr_text": "Shanghai Warrior"
+        }
+      ],
+      "ocr_texts": [
+        "Shanghai Warrior",
+        "Shanghai Warrior",
+        "Shanghai Warrior",
+        "Shanghai Warrior"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.863,
+      "avg_x_frac": 0.475,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SPICY GOLD",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 563,
+          "cy": 293,
+          "x_frac": 0.782,
+          "y_in_band": 0.087,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "Spicy Gold"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 696,
+          "cy": 443,
+          "x_frac": 0.967,
+          "y_in_band": 0.076,
+          "conf": 0.987,
+          "n_boxes": 1,
+          "ocr_text": "SpicyGold"
+        }
+      ],
+      "ocr_texts": [
+        "Spicy Gold",
+        "SpicyGold"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.081,
+      "avg_x_frac": 0.876,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "SZERYNG",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "772",
+          "cx": 287,
+          "cy": 29,
+          "x_frac": 0.399,
+          "y_in_band": 0.157,
+          "conf": 0.995,
+          "n_boxes": 1,
+          "ocr_text": "Szeryng"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 288,
+          "cy": 260,
+          "x_frac": 0.4,
+          "y_in_band": 0.866,
+          "conf": 0.948,
+          "n_boxes": 1,
+          "ocr_text": "Szeryng"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 272,
+          "cy": 393,
+          "x_frac": 0.378,
+          "y_in_band": 0.753,
+          "conf": 0.985,
+          "n_boxes": 1,
+          "ocr_text": "Szeryng"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 186,
+          "cy": 549,
+          "x_frac": 0.258,
+          "y_in_band": 0.692,
+          "conf": 0.995,
+          "n_boxes": 1,
+          "ocr_text": "Szeryng"
+        }
+      ],
+      "ocr_texts": [
+        "Szeryng",
+        "Szeryng",
+        "Szeryng",
+        "Szeryng"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.614,
+      "avg_x_frac": 0.358,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TELECOM FIGHTERS",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 205,
+          "cy": 189,
+          "x_frac": 0.285,
+          "y_in_band": 0.389,
+          "conf": 0.943,
+          "n_boxes": 1,
+          "ocr_text": "TelecomFigh"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 277,
+          "cy": 327,
+          "x_frac": 0.385,
+          "y_in_band": 0.313,
+          "conf": 0.986,
+          "n_boxes": 1,
+          "ocr_text": "TelecomFighters"
+        }
+      ],
+      "ocr_texts": [
+        "TelecomFigh",
+        "TelecomFighters"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.35,
+      "avg_x_frac": 0.336,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TYCOON RESOURCES",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 167,
+          "cy": 260,
+          "x_frac": 0.232,
+          "y_in_band": 0.866,
+          "conf": 0.973,
+          "n_boxes": 1,
+          "ocr_text": "Tycoon Resources"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 163,
+          "cy": 390,
+          "x_frac": 0.226,
+          "y_in_band": 0.733,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Tycoon Resources"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 120,
+          "cy": 540,
+          "x_frac": 0.167,
+          "y_in_band": 0.64,
+          "conf": 0.983,
+          "n_boxes": 1,
+          "ocr_text": "Tycoon Resources"
+        }
+      ],
+      "ocr_texts": [
+        "Tycoon Resources",
+        "Tycoon Resources",
+        "Tycoon Resources"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.746,
+      "avg_x_frac": 0.208,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 71,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-06-11T01:08:33"
+  }
+}
