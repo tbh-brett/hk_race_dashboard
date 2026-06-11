@@ -1,0 +1,597 @@
+{
+  "date": "2026-06-10",
+  "race_number": 5,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "769",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ABSOLUTE AWAKENED",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 361,
+          "cy": 263,
+          "x_frac": 0.501,
+          "y_in_band": 0.886,
+          "conf": 0.94,
+          "n_boxes": 1,
+          "ocr_text": "Absolute Awakened"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 476,
+          "cy": 431,
+          "x_frac": 0.661,
+          "y_in_band": 0.006,
+          "conf": 0.894,
+          "n_boxes": 1,
+          "ocr_text": "Absolute Awakened"
+        }
+      ],
+      "ocr_texts": [
+        "Absolute Awakened",
+        "Absolute Awakened"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.457,
+      "avg_x_frac": 0.579,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "BLAZING BEAM",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "769",
+          "cx": 494,
+          "cy": 109,
+          "x_frac": 0.686,
+          "y_in_band": 0.818,
+          "conf": 0.964,
+          "n_boxes": 1,
+          "ocr_text": "Blazing Beam"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 587,
+          "cy": 238,
+          "x_frac": 0.815,
+          "y_in_band": 0.718,
+          "conf": 0.974,
+          "n_boxes": 1,
+          "ocr_text": "BlazingBeam"
+        }
+      ],
+      "ocr_texts": [
+        "Blazing Beam",
+        "BlazingBeam"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.768,
+      "avg_x_frac": 0.751,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CELESTIAL STRIDER",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 522,
+          "cy": 177,
+          "x_frac": 0.725,
+          "y_in_band": 0.309,
+          "conf": 0.959,
+          "n_boxes": 1,
+          "ocr_text": "Celestial Strider"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 642,
+          "cy": 320,
+          "x_frac": 0.892,
+          "y_in_band": 0.267,
+          "conf": 0.914,
+          "n_boxes": 1,
+          "ocr_text": "Celestial Strider"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 663,
+          "cy": 547,
+          "x_frac": 0.921,
+          "y_in_band": 0.68,
+          "conf": 0.915,
+          "n_boxes": 1,
+          "ocr_text": "Celestial Stnider"
+        }
+      ],
+      "ocr_texts": [
+        "Celestial Strider",
+        "Celestial Strider",
+        "Celestial Stnider"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.417,
+      "avg_x_frac": 0.844,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DECISION LINK",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 207,
+          "cy": 266,
+          "x_frac": 0.287,
+          "y_in_band": 0.906,
+          "conf": 0.924,
+          "n_boxes": 1,
+          "ocr_text": "DecisionLink"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 272,
+          "cy": 413,
+          "x_frac": 0.378,
+          "y_in_band": 0.887,
+          "conf": 0.856,
+          "n_boxes": 1,
+          "ocr_text": "DecisionLink"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 260,
+          "cy": 570,
+          "x_frac": 0.361,
+          "y_in_band": 0.814,
+          "conf": 0.984,
+          "n_boxes": 1,
+          "ocr_text": "DecisionLink"
+        }
+      ],
+      "ocr_texts": [
+        "DecisionLink",
+        "DecisionLink",
+        "DecisionLink"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.867,
+      "avg_x_frac": 0.342,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FAST SPEED",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 366,
+          "cy": 321,
+          "x_frac": 0.508,
+          "y_in_band": 0.273,
+          "conf": 0.945,
+          "n_boxes": 1,
+          "ocr_text": "Fast Speed"
+        }
+      ],
+      "ocr_texts": [
+        "Fast Speed"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.273,
+      "avg_x_frac": 0.508,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "FATAL BLOW",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 141,
+          "cy": 257,
+          "x_frac": 0.196,
+          "y_in_band": 0.846,
+          "conf": 0.914,
+          "n_boxes": 1,
+          "ocr_text": "Fatal Blow"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 234,
+          "cy": 390,
+          "x_frac": 0.325,
+          "y_in_band": 0.733,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "Fatal Blow"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 383,
+          "cy": 552,
+          "x_frac": 0.532,
+          "y_in_band": 0.709,
+          "conf": 0.844,
+          "n_boxes": 1,
+          "ocr_text": "FatalBliow"
+        }
+      ],
+      "ocr_texts": [
+        "Fatal Blow",
+        "Fatal Blow",
+        "FatalBliow"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.764,
+      "avg_x_frac": 0.346,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GENERAL REDWOOD",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 218,
+          "cy": 246,
+          "x_frac": 0.303,
+          "y_in_band": 0.772,
+          "conf": 0.933,
+          "n_boxes": 1,
+          "ocr_text": "General Redwood"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 253,
+          "cy": 320,
+          "x_frac": 0.351,
+          "y_in_band": 0.267,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "GeneralRedwood"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 261,
+          "cy": 547,
+          "x_frac": 0.362,
+          "y_in_band": 0.68,
+          "conf": 0.936,
+          "n_boxes": 1,
+          "ocr_text": "General Redwood"
+        }
+      ],
+      "ocr_texts": [
+        "General Redwood",
+        "GeneralRedwood",
+        "General Redwood"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.567,
+      "avg_x_frac": 0.339,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RED BRICK WARRIOR",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 349,
+          "cy": 187,
+          "x_frac": 0.485,
+          "y_in_band": 0.376,
+          "conf": 0.901,
+          "n_boxes": 1,
+          "ocr_text": "Red Brick Warrion"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 329,
+          "cy": 571,
+          "x_frac": 0.457,
+          "y_in_band": 0.82,
+          "conf": 0.943,
+          "n_boxes": 1,
+          "ocr_text": "Red Brick Warrior"
+        }
+      ],
+      "ocr_texts": [
+        "Red Brick Warrion",
+        "Red Brick Warrior"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.603,
+      "avg_x_frac": 0.471,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "STURDY RUBY",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 295,
+          "cy": 247,
+          "x_frac": 0.41,
+          "y_in_band": 0.779,
+          "conf": 0.932,
+          "n_boxes": 1,
+          "ocr_text": "Sturdy Ruby"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 343,
+          "cy": 416,
+          "x_frac": 0.476,
+          "y_in_band": 0.907,
+          "conf": 0.949,
+          "n_boxes": 1,
+          "ocr_text": "Sturdy Ruby"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 156,
+          "cy": 570,
+          "x_frac": 0.217,
+          "y_in_band": 0.814,
+          "conf": 0.9,
+          "n_boxes": 1,
+          "ocr_text": "Sturdy Ruby"
+        }
+      ],
+      "ocr_texts": [
+        "Sturdy Ruby",
+        "Sturdy Ruby",
+        "Sturdy Ruby"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.834,
+      "avg_x_frac": 0.37,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE AZURE",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "769",
+          "cx": 440,
+          "cy": 44,
+          "x_frac": 0.611,
+          "y_in_band": 0.281,
+          "conf": 0.957,
+          "n_boxes": 1,
+          "ocr_text": "The Azure"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 418,
+          "cy": 246,
+          "x_frac": 0.581,
+          "y_in_band": 0.772,
+          "conf": 0.946,
+          "n_boxes": 1,
+          "ocr_text": "The Azure"
+        }
+      ],
+      "ocr_texts": [
+        "The Azure",
+        "The Azure"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.525,
+      "avg_x_frac": 0.596,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VIVA FIRECRACKER",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 115,
+          "cy": 188,
+          "x_frac": 0.16,
+          "y_in_band": 0.383,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "Viva Firecracker"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 134,
+          "cy": 390,
+          "x_frac": 0.186,
+          "y_in_band": 0.733,
+          "conf": 0.948,
+          "n_boxes": 1,
+          "ocr_text": "VivaFirecracker"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 137,
+          "cy": 547,
+          "x_frac": 0.19,
+          "y_in_band": 0.68,
+          "conf": 0.977,
+          "n_boxes": 1,
+          "ocr_text": "VivaFirecracker"
+        }
+      ],
+      "ocr_texts": [
+        "Viva Firecracker",
+        "VivaFirecracker",
+        "VivaFirecracker"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.598,
+      "avg_x_frac": 0.179,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "YOUNG BRAVO",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "769",
+          "cx": 414,
+          "cy": 113,
+          "x_frac": 0.575,
+          "y_in_band": 0.851,
+          "conf": 0.996,
+          "n_boxes": 1,
+          "ocr_text": "YoungBravo"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 465,
+          "cy": 254,
+          "x_frac": 0.646,
+          "y_in_band": 0.826,
+          "conf": 0.997,
+          "n_boxes": 1,
+          "ocr_text": "YoungBravo"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 545,
+          "cy": 410,
+          "x_frac": 0.757,
+          "y_in_band": 0.867,
+          "conf": 0.995,
+          "n_boxes": 1,
+          "ocr_text": "YoungBravo"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 541,
+          "cy": 566,
+          "x_frac": 0.751,
+          "y_in_band": 0.791,
+          "conf": 0.997,
+          "n_boxes": 1,
+          "ocr_text": "YoungBravo"
+        }
+      ],
+      "ocr_texts": [
+        "YoungBravo",
+        "YoungBravo",
+        "YoungBravo",
+        "YoungBravo"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.834,
+      "avg_x_frac": 0.682,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 68,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-06-11T01:08:30"
+  }
+}
