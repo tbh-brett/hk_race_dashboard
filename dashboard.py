@@ -1466,6 +1466,7 @@ def _gh_persist_pipeline_outputs(date_str: str, model: str) -> tuple[int, int, l
         (REPORTS / f"vet_report_{dc}.json",                     f"reports/vet_report_{dc}.json"),
         (REPORTS / f"mutual_{dc}.json",                         f"reports/mutual_{dc}.json"),
         (REPORTS / f"pace_v2_{dc}.json",                        f"reports/pace_v2_{dc}.json"),
+        (REPORTS / f"form_screen_{dc}.json",                    f"reports/form_screen_{dc}.json"),
     ]
     pushed = 0
     missing = 0
@@ -3401,6 +3402,28 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                            f"{res_p2.returncode})")
         except Exception as _e:
             st.warning(f"⚠ [post] pace_v2 inference failed: {_e}")
+
+        # 3) Form screener — always run explicitly for the current meeting
+        # (not deferred to _rebuild_caches_after_sync, which only fires when
+        # new past-results are synced and silently skips when the DB is
+        # already up to date, leaving form_screen_<dc>.json unwritten).
+        try:
+            res_fs = subprocess.run(
+                [PYTHON, str(BASE / "form_screener.py"), "--date", date_str],
+                env=env, cwd=str(BASE),
+                capture_output=True, text=True, encoding="utf-8",
+                timeout=300,
+            )
+            fs_json = REPORTS / f"form_screen_{dc}.json"
+            if res_fs.returncode == 0 and fs_json.exists():
+                st.success(f"✓ [post] Form screen → form_screen_{dc}.json")
+            else:
+                st.warning(
+                    f"⚠ [post] form screener failed (exit {res_fs.returncode})"
+                    + (f": {(res_fs.stderr or res_fs.stdout or '')[-200:]}"
+                       if res_fs.returncode != 0 else ""))
+        except Exception as _e:
+            st.warning(f"⚠ [post] form screener failed: {_e}")
 
     # ── Persist artifacts back to GitHub on Streamlit Cloud ─────────
     # Streamlit Cloud's filesystem is ephemeral — anything written by the
