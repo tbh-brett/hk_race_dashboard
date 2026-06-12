@@ -1,9 +1,11 @@
 {
   "date": "20260408",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 9,
   "n_mutual_total": 9,
+  "n_triple_total": 4,
   "races": [
     {
       "race_number": 1,
@@ -17,8 +19,15 @@
         "#11 CHILL MASTER",
         "#7 THOUSAND CUPS"
       ],
+      "fuse_picks": [
+        "#9 REWARDING TWINKLE",
+        "#2 LEGENDARY IMPACT",
+        "#4 CONCORDE STAR"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 2,
@@ -32,15 +41,23 @@
         "#1 BEAUTY VIVA",
         "#10 YIU CHEUNG VICTORY"
       ],
+      "fuse_picks": [
+        "#6 CELTIC TIMES",
+        "#5 FORTUNE STAR",
+        "#12 VIVACIOUS WIN"
+      ],
       "mutual_horses": [
         {
           "horse_no": 10,
           "horse_name": "YIU CHEUNG VICTORY",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 3,
@@ -54,8 +71,15 @@
         "#12 HAPPY UNITED",
         "#11 GOLDEN FRIENDSHIP"
       ],
+      "fuse_picks": [
+        "#1 SUPERB KING",
+        "#12 HAPPY UNITED",
+        "#2 BEAUTY THUNDER"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 4,
@@ -69,15 +93,23 @@
         "#8 INCANTO STAR",
         "#12 MADE FOR LIFE"
       ],
+      "fuse_picks": [
+        "#2 MIGHTY STEED",
+        "#7 GOLDEN BRILLIANT",
+        "#12 MADE FOR LIFE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 8,
           "horse_name": "INCANTO STAR",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 5,
@@ -91,15 +123,23 @@
         "#2 MONARCH COUNTY",
         "#5 BRIGHT DAY"
       ],
+      "fuse_picks": [
+        "#11 SAME TO YOU",
+        "#4 FIND MY LOVE",
+        "#6 FREE PONY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "MONARCH COUNTY",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 6,
@@ -113,21 +153,38 @@
         "#5 HAPPY BRETHREN",
         "#11 GAMEPLAYER ELITE"
       ],
+      "fuse_picks": [
+        "#1 CROSSBORDERDUDE",
+        "#5 HAPPY BRETHREN",
+        "#6 LUCKY MCQUEEN"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "CROSSBORDERDUDE",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 11,
           "horse_name": "GAMEPLAYER ELITE",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "CROSSBORDERDUDE",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 7,
@@ -141,21 +198,45 @@
         "#1 SILVERY BREEZE",
         "#8 STORMI"
       ],
+      "fuse_picks": [
+        "#2 SKY VINO",
+        "#10 LUCKY TWIN STARS",
+        "#8 STORMI"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "SKY VINO",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 8,
           "horse_name": "STORMI",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "SKY VINO",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 8,
+          "horse_name": "STORMI",
+          "et_rank": 1,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 8,
@@ -169,8 +250,15 @@
         "#6 GUMMY GUMMY",
         "#8 SPICY GOLD"
       ],
+      "fuse_picks": [
+        "#10 SPIRIT OF PEACE",
+        "#12 THRIVING BROTHERS",
+        "#6 GUMMY GUMMY"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 9,
@@ -184,21 +272,38 @@
         "#10 KING OF FIGHTERS",
         "#4 MIGHTY COMMANDER"
       ],
+      "fuse_picks": [
+        "#1 SIGHT HERMOSO",
+        "#3 RED SEA",
+        "#12 MEOWTH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "SIGHT HERMOSO",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 4,
           "horse_name": "MIGHTY COMMANDER",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "SIGHT HERMOSO",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     }
   ]
 }

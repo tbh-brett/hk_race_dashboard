@@ -1,9 +1,11 @@
 {
   "date": "20260503",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 11,
   "n_mutual_total": 12,
+  "n_triple_total": 8,
   "races": [
     {
       "race_number": 1,
@@ -17,21 +19,38 @@
         "#9 CALL TO COMMAND",
         "#2 AUTUMN VIBES"
       ],
+      "fuse_picks": [
+        "#14 SUPREME WINNER",
+        "#11 KING ALLOY",
+        "#5 MAJESTIC DELIGHT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 5,
           "horse_name": "MAJESTIC DELIGHT",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         },
         {
           "horse_no": 9,
           "horse_name": "CALL TO COMMAND",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 5,
+          "horse_name": "MAJESTIC DELIGHT",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -45,15 +64,31 @@
         "#7 ONESHOT",
         "#11 TOP THRONE"
       ],
+      "fuse_picks": [
+        "#11 TOP THRONE",
+        "#10 LEADING DRAGON",
+        "#1 MASTER LUCKY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 10,
           "horse_name": "LEADING DRAGON",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 10,
+          "horse_name": "LEADING DRAGON",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 3,
@@ -67,15 +102,31 @@
         "#3 WINNING MACHINE",
         "#13 PANDA LEGEND"
       ],
+      "fuse_picks": [
+        "#9 YEE CHEONG RAIDER",
+        "#12 REWARDING TWINKLE",
+        "#3 WINNING MACHINE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 9,
           "horse_name": "YEE CHEONG RAIDER",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 9,
+          "horse_name": "YEE CHEONG RAIDER",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 4,
@@ -89,15 +140,31 @@
         "#12 INCREDIBLE MOMENT",
         "#14 SUNNY Q"
       ],
+      "fuse_picks": [
+        "#13 RIDING HIGH",
+        "#4 GRAND PATCH",
+        "#1 CALL ME SPARKLE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 13,
           "horse_name": "RIDING HIGH",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 13,
+          "horse_name": "RIDING HIGH",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 5,
@@ -111,15 +178,23 @@
         "#2 GALLANT DESIGN",
         "#13 COME FAST FAY FAY"
       ],
+      "fuse_picks": [
+        "#2 GALLANT DESIGN",
+        "#6 JUBILANT STAR",
+        "#5 HAPPY BRETHREN"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "CIRCUIT FIERY",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 6,
@@ -133,8 +208,15 @@
         "#5 NAUTICAL FORCE",
         "#6 FORTUNE BOY"
       ],
+      "fuse_picks": [
+        "#5 NAUTICAL FORCE",
+        "#7 ROMANTIC THOR",
+        "#3 GENTLEMEN LEGACY"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 7,
@@ -148,8 +230,15 @@
         "#8 VOLCANIC SPARK",
         "#1 CHARITY TOGETHER"
       ],
+      "fuse_picks": [
+        "#2 MR COOL",
+        "#1 CHARITY TOGETHER",
+        "#6 AMAZING GAZE"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 8,
@@ -163,15 +252,31 @@
         "#2 STORMY GROVE",
         "#9 MAX QUE"
       ],
+      "fuse_picks": [
+        "#9 MAX QUE",
+        "#2 STORMY GROVE",
+        "#8 SKY JEWELLERY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 9,
           "horse_name": "MAX QUE",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 9,
+          "horse_name": "MAX QUE",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 9,
@@ -185,15 +290,23 @@
         "#9 SHAMUS STORM",
         "#10 MIGHTY STRENGTH"
       ],
+      "fuse_picks": [
+        "#9 SHAMUS STORM",
+        "#1 AERODYNAMICS",
+        "#8 ENTHUSIUM"
+      ],
       "mutual_horses": [
         {
           "horse_no": 10,
           "horse_name": "MIGHTY STRENGTH",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 10,
@@ -207,21 +320,38 @@
         "#6 FORTUNE LINK",
         "#13 KING OF FIGHTERS"
       ],
+      "fuse_picks": [
+        "#14 BABY SAKURA",
+        "#6 FORTUNE LINK",
+        "#8 QUANTUM LEGEND"
+      ],
       "mutual_horses": [
         {
           "horse_no": 6,
           "horse_name": "FORTUNE LINK",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 13,
           "horse_name": "KING OF FIGHTERS",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 6,
+          "horse_name": "FORTUNE LINK",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 11,
@@ -235,21 +365,45 @@
         "#6 MY MARS",
         "#4 TURQUOISE VELOCITY"
       ],
+      "fuse_picks": [
+        "#6 MY MARS",
+        "#2 SMART GOLF",
+        "#14 ALMIGHTY LIGHTNING"
+      ],
       "mutual_horses": [
         {
           "horse_no": 6,
           "horse_name": "MY MARS",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         },
         {
           "horse_no": 14,
           "horse_name": "ALMIGHTY LIGHTNING",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 6,
+          "horse_name": "MY MARS",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 14,
+          "horse_name": "ALMIGHTY LIGHTNING",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     }
   ]
 }

@@ -39,7 +39,7 @@ from pathlib import Path
 
 BASE = Path(__file__).parent
 REPORTS = BASE / "reports"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def _load(p: Path) -> dict | None:
@@ -89,13 +89,17 @@ def build_mutual_for_date(date_compact: str, top_n: int = 3,
     (or None if either report is missing)."""
     et_path = _et_report_path(date_compact)
     sarr_path = REPORTS / f"race_day_report_{date_compact}_SARR.json"
+    fuse_path = REPORTS / f"race_day_report_{date_compact}_FUSE.json"
     et = _load(et_path) if et_path else None
     sarr = _load(sarr_path)
+    fuse = _load(fuse_path)
     if not et or not sarr:
         return None
 
     et_by_rn = {int(r["race_number"]): r for r in et.get("races", []) if "race_number" in r}
     sarr_by_rn = {int(r["race_number"]): r for r in sarr.get("races", []) if "race_number" in r}
+    fuse_by_rn = {int(r["race_number"]): r for r in (fuse or {}).get("races", [])
+                  if "race_number" in r}
 
     races_out: list[dict] = []
     for rn in sorted(et_by_rn):
@@ -105,13 +109,19 @@ def build_mutual_for_date(date_compact: str, top_n: int = 3,
             continue
         et_top = _picks_by_rank(et_race, top_n)
         sarr_top = _picks_by_rank(sarr_race, top_n)
+        fuse_race = fuse_by_rn.get(rn)
+        fuse_top = _picks_by_rank(fuse_race, top_n) if fuse_race else []
         et_keys = {p["horse_no"] for p in et_top if p["horse_no"] is not None}
         sarr_keys = {p["horse_no"] for p in sarr_top if p["horse_no"] is not None}
+        fuse_keys = {p["horse_no"] for p in fuse_top if p["horse_no"] is not None}
         mutual_keys = et_keys & sarr_keys
 
         et_rank_lookup = {p["horse_no"]: p["rank"] for p in et_top}
         sarr_rank_lookup = {p["horse_no"]: p["rank"] for p in sarr_top}
+        fuse_rank_lookup = {p["horse_no"]: p["rank"] for p in fuse_top}
         name_lookup = {p["horse_no"]: p["horse_name"] for p in et_top}
+        for p in fuse_top:
+            name_lookup.setdefault(p["horse_no"], p["horse_name"])
 
         mutual_horses = [
             {
@@ -119,24 +129,41 @@ def build_mutual_for_date(date_compact: str, top_n: int = 3,
                 "horse_name": name_lookup.get(hn, ""),
                 "et_rank":    et_rank_lookup.get(hn),
                 "sarr_rank":  sarr_rank_lookup.get(hn),
+                "fuse_rank":  fuse_rank_lookup.get(hn),
             }
             for hn in sorted(mutual_keys)
+        ]
+        triple_keys = mutual_keys & fuse_keys if fuse_keys else set()
+        triple_horses = [
+            {
+                "horse_no":   hn,
+                "horse_name": name_lookup.get(hn, ""),
+                "et_rank":    et_rank_lookup.get(hn),
+                "sarr_rank":  sarr_rank_lookup.get(hn),
+                "fuse_rank":  fuse_rank_lookup.get(hn),
+            }
+            for hn in sorted(triple_keys)
         ]
 
         races_out.append({
             "race_number":   rn,
             "et_picks":      [f"#{p['horse_no']} {p['horse_name']}" for p in et_top],
             "sarr_picks":    [f"#{p['horse_no']} {p['horse_name']}" for p in sarr_top],
+            "fuse_picks":    [f"#{p['horse_no']} {p['horse_name']}" for p in fuse_top],
             "mutual_horses": mutual_horses,
             "mutual_size":   len(mutual_horses),
+            "triple_horses": triple_horses,
+            "triple_size":   len(triple_horses),
         })
 
     payload = {
         "date":            date_compact,
         "schema_version":  SCHEMA_VERSION,
         "top_n":           top_n,
+        "has_fuse":        bool(fuse),
         "n_races":         len(races_out),
         "n_mutual_total":  sum(r["mutual_size"] for r in races_out),
+        "n_triple_total":  sum(r["triple_size"] for r in races_out),
         "races":           races_out,
     }
 

@@ -1,9 +1,11 @@
 {
   "date": "20260613",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 11,
   "n_mutual_total": 15,
+  "n_triple_total": 8,
   "races": [
     {
       "race_number": 1,
@@ -17,21 +19,38 @@
         "#7 QUANTUM WUKONG",
         "#4 SHARP PLANET"
       ],
+      "fuse_picks": [
+        "#2 DRAGON GENERATION",
+        "#6 JEDI SPURS",
+        "#1 CHANCHENG SPARKLE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "CHANCHENG SPARKLE",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         },
         {
           "horse_no": 7,
           "horse_name": "QUANTUM WUKONG",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "CHANCHENG SPARKLE",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -45,15 +64,23 @@
         "#9 VIVA CHALEUR",
         "#3 ROBOT KNIGHT"
       ],
+      "fuse_picks": [
+        "#3 ROBOT KNIGHT",
+        "#7 THE ALL ROUNDER",
+        "#6 CRAZY TREASURE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 9,
           "horse_name": "VIVA CHALEUR",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 3,
@@ -67,8 +94,15 @@
         "#9 FRANCIS MEYNELL",
         "#11 MIGHTY FIGHTER"
       ],
+      "fuse_picks": [
+        "#9 FRANCIS MEYNELL",
+        "#5 CALL ME SPARKLE",
+        "#11 MIGHTY FIGHTER"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 4,
@@ -82,15 +116,23 @@
         "#6 ABSOLUTE HONOUR",
         "#10 PRESTIGE RICKY"
       ],
+      "fuse_picks": [
+        "#6 ABSOLUTE HONOUR",
+        "#12 SMART FAT CAT",
+        "#14 ON THE LASH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 10,
           "horse_name": "PRESTIGE RICKY",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 5,
@@ -104,21 +146,45 @@
         "#5 ONE MAN SHOW",
         "#1 JUICY DRAGON"
       ],
+      "fuse_picks": [
+        "#1 JUICY DRAGON",
+        "#5 ONE MAN SHOW",
+        "#7 MEGA CAPTAIN"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "JUICY DRAGON",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         },
         {
           "horse_no": 5,
           "horse_name": "ONE MAN SHOW",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "JUICY DRAGON",
+          "et_rank": 1,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 5,
+          "horse_name": "ONE MAN SHOW",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 6,
@@ -132,21 +198,38 @@
         "#11 GORGEOUS VICTORY",
         "#6 ROMANTIC LAOS"
       ],
+      "fuse_picks": [
+        "#9 VOYAGE BOSS",
+        "#11 GORGEOUS VICTORY",
+        "#1 MEANINGFUL DRAGON"
+      ],
       "mutual_horses": [
         {
           "horse_no": 6,
           "horse_name": "ROMANTIC LAOS",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 9,
           "horse_name": "VOYAGE BOSS",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 9,
+          "horse_name": "VOYAGE BOSS",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 7,
@@ -160,21 +243,45 @@
         "#6 LUCRATIVE EIGHT",
         "#1 ISLAND BUDDY"
       ],
+      "fuse_picks": [
+        "#3 SUPERB SPIRIT",
+        "#6 LUCRATIVE EIGHT",
+        "#1 ISLAND BUDDY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "ISLAND BUDDY",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         },
         {
           "horse_no": 3,
           "horse_name": "SUPERB SPIRIT",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "ISLAND BUDDY",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        },
+        {
+          "horse_no": 3,
+          "horse_name": "SUPERB SPIRIT",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 8,
@@ -188,27 +295,45 @@
         "#7 BEAUTY ALLIANCE",
         "#2 SOLEIL FIGHTER"
       ],
+      "fuse_picks": [
+        "#8 MIGHTY MASTS",
+        "#3 PACKING ANGEL",
+        "#7 BEAUTY ALLIANCE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "SOLEIL FIGHTER",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 5,
           "horse_name": "MAX QUE",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         },
         {
           "horse_no": 7,
           "horse_name": "BEAUTY ALLIANCE",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 7,
+          "horse_name": "BEAUTY ALLIANCE",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 9,
@@ -222,15 +347,31 @@
         "#3 TURQUOISE VELOCITY",
         "#6 MIGHTY COMMANDER"
       ],
+      "fuse_picks": [
+        "#2 BLAZING WIND",
+        "#11 NOTTHESILLYONE",
+        "#1 VICTORY SKY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "VICTORY SKY",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "VICTORY SKY",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 10,
@@ -244,8 +385,15 @@
         "#1 STEPS AHEAD",
         "#8 BIG RETURN"
       ],
+      "fuse_picks": [
+        "#8 BIG RETURN",
+        "#2 ENDUED",
+        "#11 COMPLETE UNKNOWN"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 11,
@@ -259,15 +407,23 @@
         "#9 PERFECTDAY",
         "#7 AEROVOLANIC"
       ],
+      "fuse_picks": [
+        "#7 AEROVOLANIC",
+        "#14 CONRAD PATCH",
+        "#12 BABY SAKURA"
+      ],
       "mutual_horses": [
         {
           "horse_no": 9,
           "horse_name": "PERFECTDAY",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     }
   ]
 }

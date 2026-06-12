@@ -110,6 +110,7 @@ CFG = {
     "softmax_tau":        0.38,   # lower = more concentrated; higher = flatter
     "w_et":               0.35,
     "w_sarr":             0.25,
+    "w_fuse":             0.55,   # FUSE rank bonus in composite (strongest engine)
     "w_mutual_top3":      0.15,
     "w_factor":           0.20,
     "w_blackbook":        0.05,
@@ -165,10 +166,12 @@ def load_meeting(date_compact: str) -> dict:
     if not et_path.exists():
         et_path = REPORTS / f"race_day_report_{date_compact}_v3.4.8.json"
     sarr_path = REPORTS / f"race_day_report_{date_compact}_SARR.json"
+    fuse_path = REPORTS / f"race_day_report_{date_compact}_FUSE.json"
     res_path  = REPORTS / f"results_{date_compact}.json"
     return {
         "et":        _load_json(et_path),
         "sarr":      _load_json(sarr_path),
+        "fuse":      _load_json(fuse_path),
         "results":   _load_json(res_path),
         "live_odds": _load_live_odds(date_compact),
         "date_compact": date_compact,
@@ -333,7 +336,8 @@ def _lookup_factor_bonus(horse_runner: dict, factor_tbls: dict) -> tuple[float, 
 def score_race(et_race: dict, sarr_race: Optional[dict],
                factor_tbls: dict, blackbook: dict,
                actual_odds_by_no: Optional[dict] = None,
-               rank_by: str = "score") -> list[dict]:
+               rank_by: str = "score",
+               fuse_race: Optional[dict] = None) -> list[dict]:
     """
     Returns a list of runner dicts (one per horse) with scoring fields added.
 
@@ -436,6 +440,41 @@ def score_race(et_race: dict, sarr_race: Optional[dict],
     probs = _softmax([r["_score"] for r in rows], CFG["softmax_tau"])
     for r, p in zip(rows, probs):
         r["p_model"] = round(p, 4)
+
+    # FUSE override (v5.0): when the FUSE report exists, its calibrated
+    # win probability replaces the rank-softmax heuristic as p_model —
+    # Jan–Jun 2026 walk-forward: FUSE top-1 29.9% win / 61.4% place vs
+    # composite-softmax ≈22%. Top-2/top-3 heads ride along for the
+    # quinella / place maths downstream (decision_engine).
+    fuse_by_no = {}
+    for fp_ in ((fuse_race or {}).get("picks") or []):
+        try:
+            fuse_by_no[int(fp_.get("horse_no"))] = fp_
+        except (TypeError, ValueError):
+            continue
+    if fuse_by_no:
+        hit = 0
+        for r in rows:
+            fp_ = fuse_by_no.get(r["horse_no"])
+            if fp_ and fp_.get("p_win"):
+                r["p_model"] = float(fp_["p_win"])
+                r["fuse_rank"] = fp_.get("rank")
+                if fp_.get("p_top2"):
+                    r["p_top2_fuse"] = float(fp_["p_top2"])
+                if fp_.get("p_top3"):
+                    r["p_top3_fuse"] = float(fp_["p_top3"])
+                hit += 1
+        if hit:
+            z = sum(r["p_model"] for r in rows) or 1.0
+            for r in rows:
+                r["p_model"] = round(r["p_model"] / z, 4)
+            # composite picks up the FUSE opinion so banker/leg selection
+            # (sorted by _score) reflects the strongest engine.
+            for r in rows:
+                fr_ = r.get("fuse_rank")
+                if fr_:
+                    r["_score"] += CFG.get("w_fuse", 0.55) * _rank_score(
+                        fr_, field)
 
     # Market probs
     odds_by_no = actual_odds_by_no or {}
@@ -1420,6 +1459,8 @@ def build_meeting_tickets(date_compact: str,
         return []
     sarr_by_no = {r["race_number"]: r
                    for r in (meet["sarr"]["races"] if meet["sarr"] else [])}
+    fuse_by_no_race = {r["race_number"]: r
+                       for r in (meet.get("fuse") or {}).get("races", [])}
     res_by_no = {r["race_number"]: r
                   for r in (meet["results"]["races"]
                               if meet["results"] else [])}
@@ -1456,7 +1497,8 @@ def build_meeting_tickets(date_compact: str,
                 odds_by, odds_source = {}, "none"
 
         rows = score_race(race, sarr_race, factor_tbls, blackbook,
-                           actual_odds_by_no=odds_by, rank_by=rank_by)
+                           actual_odds_by_no=odds_by, rank_by=rank_by,
+                           fuse_race=fuse_by_no_race.get(rn))
         ticket = build_model_ticket(race, rows, live_odds=odds_by or None)
         out.append({
             "race_number": rn,
@@ -1466,6 +1508,7 @@ def build_meeting_tickets(date_compact: str,
             "ticket": ticket,
             "rows": rows,
             "odds_source": odds_source,
+            "fuse_used": rn in fuse_by_no_race,
         })
     return out
 

@@ -1,9 +1,11 @@
 {
   "date": "20260401",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 9,
   "n_mutual_total": 15,
+  "n_triple_total": 9,
   "races": [
     {
       "race_number": 1,
@@ -17,27 +19,45 @@
         "#10 CHEER FOR SOUTH",
         "#9 DOUBLE BINGO"
       ],
+      "fuse_picks": [
+        "#3 ONLY U",
+        "#6 MACANESE MASTER",
+        "#11 TAIHANG SCENERY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "ONLY U",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 9,
           "horse_name": "DOUBLE BINGO",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 10,
           "horse_name": "CHEER FOR SOUTH",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "ONLY U",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -51,8 +71,15 @@
         "#6 HAPPYDEARHAPPYDEER",
         "#3 CELESTIAL HARMONY"
       ],
+      "fuse_picks": [
+        "#3 CELESTIAL HARMONY",
+        "#8 HAILTOTHEVICTORS",
+        "#14 ALL EYES ON ME"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 3,
@@ -66,15 +93,23 @@
         "#4 NEVER PETER OUT",
         "#3 GOOD LUCK BABE"
       ],
+      "fuse_picks": [
+        "#13 NIGHT PUROSANGUE",
+        "#4 NEVER PETER OUT",
+        "#11 LAKESHORE HERO"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "SUPREME AGILITY",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 4,
@@ -88,21 +123,38 @@
         "#12 NO OTHER CHOICE",
         "#3 FLOWING RICHES"
       ],
+      "fuse_picks": [
+        "#11 SWAGGER BRO",
+        "#3 FLOWING RICHES",
+        "#12 NO OTHER CHOICE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "SPEEDY SMARTIE",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         },
         {
           "horse_no": 12,
           "horse_name": "NO OTHER CHOICE",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 12,
+          "horse_name": "NO OTHER CHOICE",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 5,
@@ -116,21 +168,45 @@
         "#2 CALIFORNIA STAR",
         "#6 OCEAN IMPACT"
       ],
+      "fuse_picks": [
+        "#5 HAPPY UNIVERSE",
+        "#7 SHANGHAI STYLE",
+        "#2 CALIFORNIA STAR"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "CALIFORNIA STAR",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 3
         },
         {
           "horse_no": 5,
           "horse_name": "HAPPY UNIVERSE",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "CALIFORNIA STAR",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 3
+        },
+        {
+          "horse_no": 5,
+          "horse_name": "HAPPY UNIVERSE",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 6,
@@ -144,15 +220,31 @@
         "#3 ONE MAN SHOW",
         "#8 ACE POWER"
       ],
+      "fuse_picks": [
+        "#3 ONE MAN SHOW",
+        "#9 JUICY DRAGON",
+        "#1 TOURBILLON GOLFER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "ONE MAN SHOW",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "ONE MAN SHOW",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 7,
@@ -166,15 +258,31 @@
         "#11 CONRAD THE GREAT",
         "#1 IGOR STRAVINSKY"
       ],
+      "fuse_picks": [
+        "#6 GOOD CHAP",
+        "#2 NOTTHESILLYONE",
+        "#11 CONRAD THE GREAT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "NOTTHESILLYONE",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "NOTTHESILLYONE",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 8,
@@ -188,21 +296,45 @@
         "#6 MR ENERGIA",
         "#7 BLAZING WIND"
       ],
+      "fuse_picks": [
+        "#4 VICTORY SKY",
+        "#1 ROMANTIC SON",
+        "#7 BLAZING WIND"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "VICTORY SKY",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 7,
           "horse_name": "BLAZING WIND",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "VICTORY SKY",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 7,
+          "horse_name": "BLAZING WIND",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 9,
@@ -216,27 +348,45 @@
         "#2 TALENTS AMBITION",
         "#8 ENDEARED"
       ],
+      "fuse_picks": [
+        "#2 TALENTS AMBITION",
+        "#9 NEZHA",
+        "#12 PACKING FIGHTER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "TALENTS AMBITION",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         },
         {
           "horse_no": 3,
           "horse_name": "DRAGON AIR FORCE",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         },
         {
           "horse_no": 8,
           "horse_name": "ENDEARED",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "TALENTS AMBITION",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     }
   ]
 }

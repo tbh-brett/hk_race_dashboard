@@ -1,9 +1,11 @@
 {
   "date": "20260513",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 9,
   "n_mutual_total": 9,
+  "n_triple_total": 5,
   "races": [
     {
       "race_number": 1,
@@ -17,15 +19,23 @@
         "#5 TELECOM POWER",
         "#11 DRAGON SUNRISE"
       ],
+      "fuse_picks": [
+        "#11 DRAGON SUNRISE",
+        "#5 TELECOM POWER",
+        "#10 SMILING EMPEROR"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "PODIUM",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 2,
@@ -39,21 +49,38 @@
         "#12 NEBRASKAN",
         "#2 CHARMING BABE"
       ],
+      "fuse_picks": [
+        "#12 NEBRASKAN",
+        "#8 FORERUNNER",
+        "#7 BLASTED TALENT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "CHARMING BABE",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 12,
           "horse_name": "NEBRASKAN",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 12,
+          "horse_name": "NEBRASKAN",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 3,
@@ -67,21 +94,45 @@
         "#4 ALL ROUND WINNER",
         "#1 FIVEFORTWO"
       ],
+      "fuse_picks": [
+        "#7 ROMANTIC GLADIATOR",
+        "#4 ALL ROUND WINNER",
+        "#1 FIVEFORTWO"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "ALL ROUND WINNER",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 7,
           "horse_name": "ROMANTIC GLADIATOR",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "ALL ROUND WINNER",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 7,
+          "horse_name": "ROMANTIC GLADIATOR",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 4,
@@ -95,8 +146,15 @@
         "#2 ROMANTIC LAOS",
         "#10 DASHING MAURISON"
       ],
+      "fuse_picks": [
+        "#10 DASHING MAURISON",
+        "#3 MEGA MASTERMIND",
+        "#1 MIGHTY STEED"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 5,
@@ -110,8 +168,15 @@
         "#6 THE AUSPICIOUS",
         "#4 CHINA WIN"
       ],
+      "fuse_picks": [
+        "#4 CHINA WIN",
+        "#8 ACE WAR",
+        "#9 SO YOU WILL"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 6,
@@ -125,8 +190,15 @@
         "#12 VIVA FIRECRACKER",
         "#9 INCANTO STAR"
       ],
+      "fuse_picks": [
+        "#12 VIVA FIRECRACKER",
+        "#10 RUN RUN TIMING",
+        "#8 PRECISION HOPE"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 7,
@@ -140,21 +212,38 @@
         "#10 JOLLY COMPANION",
         "#11 LEADING AGILITY"
       ],
+      "fuse_picks": [
+        "#9 JUMBO BLESSING",
+        "#12 WINNING NOW",
+        "#6 VIGOR EYE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 6,
           "horse_name": "VIGOR EYE",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         },
         {
           "horse_no": 11,
           "horse_name": "LEADING AGILITY",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 6,
+          "horse_name": "VIGOR EYE",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 8,
@@ -168,15 +257,31 @@
         "#2 AURIO",
         "#4 SOVEREIGN FUND"
       ],
+      "fuse_picks": [
+        "#2 AURIO",
+        "#10 SOMELOVEFROMABOVE",
+        "#1 SON PAK FU"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "AURIO",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "AURIO",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 9,
@@ -190,15 +295,23 @@
         "#9 PACKING ANGEL",
         "#4 SOLEIL FIGHTER"
       ],
+      "fuse_picks": [
+        "#11 LO RIDER",
+        "#10 BEAUTY ALLIANCE",
+        "#9 PACKING ANGEL"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "HELENE FEELING",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     }
   ]
 }

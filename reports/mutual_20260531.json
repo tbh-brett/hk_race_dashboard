@@ -1,9 +1,11 @@
 {
   "date": "20260531",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 11,
-  "n_mutual_total": 18,
+  "n_mutual_total": 17,
+  "n_triple_total": 10,
   "races": [
     {
       "race_number": 1,
@@ -17,21 +19,38 @@
         "#1 SPICE BAG",
         "#14 TALENTS CHAMPION"
       ],
+      "fuse_picks": [
+        "#9 EVER WEALTH",
+        "#12 RISING WORLD",
+        "#6 SHARP PLANET"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "SPICE BAG",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 9,
           "horse_name": "EVER WEALTH",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 9,
+          "horse_name": "EVER WEALTH",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -45,24 +64,37 @@
         "#4 THE ALL OUT",
         "#14 QUICK MONEY"
       ],
+      "fuse_picks": [
+        "#10 STORM MIRROR",
+        "#1 LOOKING BRIGHT",
+        "#3 ONESHOT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "THE ALL OUT",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 3,
       "et_picks": [
+        "#4 FUN N FUN TOGETHER",
+        "#1 PAPAYA BROSE",
+        "#7 HAPPY SMILE"
+      ],
+      "sarr_picks": [
         "#1 PAPAYA BROSE",
         "#4 FUN N FUN TOGETHER",
         "#7 HAPPY SMILE"
       ],
-      "sarr_picks": [
+      "fuse_picks": [
         "#1 PAPAYA BROSE",
         "#4 FUN N FUN TOGETHER",
         "#7 HAPPY SMILE"
@@ -71,23 +103,50 @@
         {
           "horse_no": 1,
           "horse_name": "PAPAYA BROSE",
-          "et_rank": 1,
-          "sarr_rank": 1
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 4,
           "horse_name": "FUN N FUN TOGETHER",
-          "et_rank": 2,
-          "sarr_rank": 2
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 7,
           "horse_name": "HAPPY SMILE",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "PAPAYA BROSE",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 4,
+          "horse_name": "FUN N FUN TOGETHER",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 7,
+          "horse_name": "HAPPY SMILE",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 3
     },
     {
       "race_number": 4,
@@ -101,15 +160,23 @@
         "#4 A TIME FOR US",
         "#1 SPEEDY SMARTIE"
       ],
+      "fuse_picks": [
+        "#5 DANCING BLAZE",
+        "#7 OLDTOWN",
+        "#2 MALPENSA"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "SPEEDY SMARTIE",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 5,
@@ -123,21 +190,38 @@
         "#8 AEROINVINCIBLE",
         "#13 KING DANCE"
       ],
+      "fuse_picks": [
+        "#5 CIRCUIT CHAMPION",
+        "#13 KING DANCE",
+        "#10 RED MAESTRO"
+      ],
       "mutual_horses": [
         {
           "horse_no": 8,
           "horse_name": "AEROINVINCIBLE",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 13,
           "horse_name": "KING DANCE",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 13,
+          "horse_name": "KING DANCE",
+          "et_rank": 1,
+          "sarr_rank": 3,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 6,
@@ -151,15 +235,23 @@
         "#10 OCEAN IMPACT",
         "#13 STAR BROSE"
       ],
+      "fuse_picks": [
+        "#6 SUPER GOLDENDRAGON",
+        "#4 DOUBLE WIN",
+        "#3 ENTHRALLED"
+      ],
       "mutual_horses": [
         {
           "horse_no": 13,
           "horse_name": "STAR BROSE",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 7,
@@ -173,21 +265,45 @@
         "#7 SKY JEWELLERY",
         "#5 LIGHT YEARS CHARM"
       ],
+      "fuse_picks": [
+        "#7 SKY JEWELLERY",
+        "#6 WINNING OVATION",
+        "#4 BEAUTY JOY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 6,
           "horse_name": "WINNING OVATION",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         },
         {
           "horse_no": 7,
           "horse_name": "SKY JEWELLERY",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 6,
+          "horse_name": "WINNING OVATION",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 7,
+          "horse_name": "SKY JEWELLERY",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 8,
@@ -201,21 +317,38 @@
         "#12 LUCKY MAN",
         "#2 INVICTUS DRAGON"
       ],
+      "fuse_picks": [
+        "#6 GALLANT DESIGN",
+        "#2 INVICTUS DRAGON",
+        "#14 GORGEOUS VICTORY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "INVICTUS DRAGON",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 2
         },
         {
           "horse_no": 12,
           "horse_name": "LUCKY MAN",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "INVICTUS DRAGON",
+          "et_rank": 1,
+          "sarr_rank": 3,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 9,
@@ -229,15 +362,31 @@
         "#6 INVINCIBLE SHIELD",
         "#1 RAGING BLIZZARD"
       ],
+      "fuse_picks": [
+        "#8 CRIMSON FLASH",
+        "#1 RAGING BLIZZARD",
+        "#7 PATCH OF STARS"
+      ],
       "mutual_horses": [
         {
           "horse_no": 7,
           "horse_name": "PATCH OF STARS",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 7,
+          "horse_name": "PATCH OF STARS",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 10,
@@ -251,43 +400,61 @@
         "#3 ENDUED",
         "#14 TURIN CHAMPIONS"
       ],
+      "fuse_picks": [
+        "#11 TRINITY TREASURE",
+        "#5 AMAZING PARTNERS",
+        "#14 TURIN CHAMPIONS"
+      ],
       "mutual_horses": [
         {
           "horse_no": 7,
           "horse_name": "FAMILY JEWEL",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 11,
       "et_picks": [
-        "#3 GOLD PATCH",
         "#2 SMART GOLF",
-        "#1 CROSSBORDERPEGASUS"
+        "#1 CROSSBORDERPEGASUS",
+        "#6 DO YOU JUST"
       ],
       "sarr_picks": [
         "#1 CROSSBORDERPEGASUS",
         "#3 GOLD PATCH",
         "#4 KA YING ATTACK"
       ],
+      "fuse_picks": [
+        "#1 CROSSBORDERPEGASUS",
+        "#7 DRAGON FOUR SEAS",
+        "#3 CALA DEI MORI"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "CROSSBORDERPEGASUS",
-          "et_rank": 3,
-          "sarr_rank": 1
-        },
-        {
-          "horse_no": 3,
-          "horse_name": "GOLD PATCH",
-          "et_rank": 1,
-          "sarr_rank": 2
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "CROSSBORDERPEGASUS",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     }
   ]
 }

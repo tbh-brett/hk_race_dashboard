@@ -1,9 +1,11 @@
 {
   "date": "20260610",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 9,
   "n_mutual_total": 15,
+  "n_triple_total": 10,
   "races": [
     {
       "race_number": 1,
@@ -17,15 +19,31 @@
         "#2 KYRUS TREASURE",
         "#11 GOLD TACK"
       ],
+      "fuse_picks": [
+        "#1 KINGLY DEMEANOR",
+        "#7 PERFECT PAIRING",
+        "#2 KYRUS TREASURE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "KINGLY DEMEANOR",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "KINGLY DEMEANOR",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -39,21 +57,30 @@
         "#7 PRECISION HOPE",
         "#4 VERY GRATEFUL"
       ],
+      "fuse_picks": [
+        "#1 LEGEND WINNER",
+        "#11 OUR LUCKY GLORY",
+        "#5 NOBLE PURSUIT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "VERY GRATEFUL",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 7,
           "horse_name": "PRECISION HOPE",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 3,
@@ -67,21 +94,38 @@
         "#6 MEGA AWESOME",
         "#9 JOLLY COMPANION"
       ],
+      "fuse_picks": [
+        "#3 BULLISH NOVA",
+        "#10 SILVER SPURS",
+        "#8 HOLMES A COURT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "BULLISH NOVA",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 9,
           "horse_name": "JOLLY COMPANION",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "BULLISH NOVA",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 4,
@@ -95,21 +139,45 @@
         "#3 GRAND NOVA",
         "#2 WINNING MONEY"
       ],
+      "fuse_picks": [
+        "#10 JUMBO BLESSING",
+        "#3 GRAND NOVA",
+        "#2 WINNING MONEY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "WINNING MONEY",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         },
         {
           "horse_no": 3,
           "horse_name": "GRAND NOVA",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "WINNING MONEY",
+          "et_rank": 1,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        },
+        {
+          "horse_no": 3,
+          "horse_name": "GRAND NOVA",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 5,
@@ -123,21 +191,38 @@
         "#1 GENERAL REDWOOD",
         "#2 YOUNG BRAVO"
       ],
+      "fuse_picks": [
+        "#5 DECISION LINK",
+        "#8 FATAL BLOW",
+        "#12 VIVA FIRECRACKER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "GENERAL REDWOOD",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 5,
           "horse_name": "DECISION LINK",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 5,
+          "horse_name": "DECISION LINK",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 6,
@@ -151,21 +236,45 @@
         "#3 ELEGANT LIFE",
         "#8 LIVE WIRE"
       ],
+      "fuse_picks": [
+        "#2 SUPERB KING",
+        "#3 ELEGANT LIFE",
+        "#8 LIVE WIRE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "SUPERB KING",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 3,
           "horse_name": "ELEGANT LIFE",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "SUPERB KING",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 3,
+          "horse_name": "ELEGANT LIFE",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 7,
@@ -179,15 +288,31 @@
         "#3 THE AUSPICIOUS",
         "#2 GLITTERING LEGEND"
       ],
+      "fuse_picks": [
+        "#3 THE AUSPICIOUS",
+        "#8 ACE WAR",
+        "#10 AUDACIOUS PURSUIT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "THE AUSPICIOUS",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "THE AUSPICIOUS",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 8,
@@ -201,15 +326,31 @@
         "#12 REFUSETOBEENGLISH",
         "#3 CHATEAUNEUF"
       ],
+      "fuse_picks": [
+        "#8 TYCOON RESOURCES",
+        "#10 FRIENDS OF SHAJING",
+        "#12 REFUSETOBEENGLISH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 8,
           "horse_name": "TYCOON RESOURCES",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 8,
+          "horse_name": "TYCOON RESOURCES",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 9,
@@ -223,21 +364,38 @@
         "#1 FLYING WROTE",
         "#11 TARGET AUDIENCE"
       ],
+      "fuse_picks": [
+        "#11 TARGET AUDIENCE",
+        "#6 STORMING DRAGON",
+        "#2 LIFELINE EXPRESS"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "FLYING WROTE",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 6,
           "horse_name": "STORMING DRAGON",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 6,
+          "horse_name": "STORMING DRAGON",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     }
   ]
 }

@@ -1463,6 +1463,7 @@ def _gh_persist_pipeline_outputs(date_str: str, model: str) -> tuple[int, int, l
         (REPORTS / f"race_day_report_{dc}_{model}.json",        f"reports/race_day_report_{dc}_{model}.json"),
         (REPORTS / f"race_day_analysis_{dc}_{model}.txt",       f"reports/race_day_analysis_{dc}_{model}.txt"),
         (REPORTS / f"race_day_report_{dc}_SARR.json",           f"reports/race_day_report_{dc}_SARR.json"),
+        (REPORTS / f"race_day_report_{dc}_FUSE.json",           f"reports/race_day_report_{dc}_FUSE.json"),
         (REPORTS / f"vet_report_{dc}.json",                     f"reports/vet_report_{dc}.json"),
         (REPORTS / f"mutual_{dc}.json",                         f"reports/mutual_{dc}.json"),
         (REPORTS / f"pace_v2_{dc}.json",                        f"reports/pace_v2_{dc}.json"),
@@ -2270,6 +2271,26 @@ def _render_raceday_highlights(race: dict, date_str: str,
 
 
 @st.cache_data(show_spinner=False)
+def _load_fuse_report(date_compact: str, _mtime: float = 0.0) -> dict:
+    """Load the FUSE model report (reports/race_day_report_<dc>_FUSE.json)."""
+    try:
+        p = REPORTS / f"race_day_report_{date_compact}_FUSE.json"
+        if not p.exists():
+            return {}
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _fuse_report_mtime(date_compact: str) -> float:
+    p = REPORTS / f"race_day_report_{date_compact}_FUSE.json"
+    try:
+        return p.stat().st_mtime
+    except OSError:
+        return 0.0
+
+
+@st.cache_data(show_spinner=False)
 def _load_mutual_picks(date_compact: str) -> dict:
     """Load model-agreed (ET ∩ SARR) picks for a meeting, keyed by race_no.
 
@@ -2304,7 +2325,9 @@ def _render_model_confluence(race: dict, date_compact: str):
     mrec = (_load_mutual_picks(date_compact) or {}).get(rn) or {}
     et_picks = mrec.get("et_picks") or []
     sarr_picks = mrec.get("sarr_picks") or []
+    fuse_picks = mrec.get("fuse_picks") or []
     mutual_horses = mrec.get("mutual_horses") or []
+    triple_horses = mrec.get("triple_horses") or []
 
     # Rating-cycle flags for runners in this race.
     cyc_rows = []
@@ -2326,7 +2349,8 @@ def _render_model_confluence(race: dict, date_compact: str):
     except Exception:
         pass
 
-    if not (et_picks or sarr_picks or mutual_horses or cyc_rows or place_rows):
+    if not (et_picks or sarr_picks or fuse_picks or mutual_horses
+            or cyc_rows or place_rows):
         return
 
     flag_disp = {
@@ -2339,6 +2363,8 @@ def _render_model_confluence(race: dict, date_compact: str):
     # Agreed (mutual) horse names for ★ highlighting in the pick lists.
     agreed = {str(m.get("horse_name", "")).strip().upper()
               for m in mutual_horses}
+    tripled = {str(m.get("horse_name", "")).strip().upper()
+               for m in triple_horses}
 
     def _pick_chip(label: str) -> str:
         nm = (label.split(" ", 1)[1].strip().upper()
@@ -2365,25 +2391,44 @@ def _render_model_confluence(race: dict, date_compact: str):
             '<div style="font-size:0.74em;font-weight:700;color:#c084fc;'
             'letter-spacing:0.5px;margin-bottom:3px">SARR TOP 3</div>'
             + "".join(_pick_chip(p) for p in sarr_picks) + '</div>')
+    if fuse_picks:
+        cols_html.append(
+            '<div style="display:inline-block;vertical-align:top;'
+            'margin-right:18px">'
+            '<div style="font-size:0.74em;font-weight:700;color:#34d399;'
+            'letter-spacing:0.5px;margin-bottom:3px">FUSE TOP 3</div>'
+            + "".join(_pick_chip(p) for p in fuse_picks) + '</div>')
 
     agree_html = ""
     if mutual_horses:
         chips = []
         for m in mutual_horses:
+            nm_u = str(m.get("horse_name", "")).strip().upper()
+            is3 = nm_u in tripled
+            fr = m.get("fuse_rank")
+            rk_bits = f'ET#{m.get("et_rank","?")}·SARR#{m.get("sarr_rank","?")}'
+            if fr:
+                rk_bits += f'·FUSE#{fr}'
+            col_bg = "rgba(52,211,153,0.16)" if is3 else "rgba(251,191,36,0.12)"
+            col_bd = "rgba(52,211,153,0.65)" if is3 else "rgba(251,191,36,0.5)"
+            col_fg = "#34d399" if is3 else "#fbbf24"
+            star = "★★★" if is3 else "★"
             chips.append(
                 f'<span style="display:inline-block;margin:2px 5px 2px 0;'
                 f'padding:2px 9px;border-radius:11px;'
-                f'background:rgba(251,191,36,0.12);'
-                f'border:1px solid rgba(251,191,36,0.5);color:#fbbf24;'
+                f'background:{col_bg};'
+                f'border:1px solid {col_bd};color:{col_fg};'
                 f'font-size:0.82em;font-weight:700">'
-                f'★ #{m.get("horse_no","?")} {m.get("horse_name","")} '
+                f'{star} #{m.get("horse_no","?")} {m.get("horse_name","")} '
                 f'<span style="opacity:0.7;font-weight:600">'
-                f'ET#{m.get("et_rank","?")}·SARR#{m.get("sarr_rank","?")}</span>'
+                f'{rk_bits}</span>'
                 f'</span>')
         agree_html = (
             '<div style="margin-top:6px">'
             '<span style="font-size:0.74em;font-weight:700;color:#fbbf24;'
-            'letter-spacing:0.5px;margin-right:6px">AGREED</span>'
+            'letter-spacing:0.5px;margin-right:6px" '
+            'title="★ = ET∩SARR top-3 · ★★★ = all three engines agree">'
+            'AGREED</span>'
             + "".join(chips) + '</div>')
 
     cyc_html = ""
@@ -3365,8 +3410,33 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
     # reports so the dashboard's read paths don't need to recompute live.
     et_json_now = REPORTS / f"race_day_report_{dc}_{model}.json"
     sarr_json_now = REPORTS / f"race_day_report_{dc}_SARR.json"
+
+    # 0) FUSE model — needs only the racecard + DB history (runs even when
+    #    ET/SARR failed). Trains fresh on all results < meeting date and
+    #    anchors on the latest live-odds snapshots when present.
+    if racecard_xlsx.exists():
+        try:
+            with st.spinner("[post] FUSE model training + inference…"):
+                res_fu = subprocess.run(
+                    [PYTHON, str(BASE / "fuse_raceday.py"),
+                     "--date", dc, "--going", going_turf,
+                     "--going-awt", going_awt],
+                    env=env, cwd=str(BASE),
+                    capture_output=True, text=True, encoding="utf-8",
+                    timeout=600,
+                )
+            fuse_json = REPORTS / f"race_day_report_{dc}_FUSE.json"
+            if res_fu.returncode == 0 and fuse_json.exists():
+                st.success(f"✓ [post] FUSE report → {fuse_json.name}")
+            else:
+                st.warning(
+                    f"⚠ [post] FUSE failed (exit {res_fu.returncode})"
+                    + f": {(res_fu.stderr or res_fu.stdout or '')[-200:]}")
+        except Exception as _e:
+            st.warning(f"⚠ [post] FUSE model failed: {_e}")
+
     if et_json_now.exists() and sarr_json_now.exists():
-        # 1) Mutual picks (ET ∩ SARR top-3)
+        # 1) Mutual picks (ET ∩ SARR top-3, + FUSE ranks when available)
         try:
             res_mut = subprocess.run(
                 [PYTHON, str(BASE / "build_mutual_picks.py"),
@@ -5208,6 +5278,84 @@ def page_overview():
 
     st.markdown("---")
 
+    # ── FUSE model board (always visible — flagship engine) ────────────
+    st.markdown("### 🧬 FUSE Model Board")
+    st.caption(
+        "FUSE = leak-free LightGBM over the full results DB, anchored on live "
+        "odds when available. Jan–Jun 2026 walk-forward: **29.9% win / 61.4% "
+        "place** on top pick, 27.5% quinella in box-3 — strongest single "
+        "engine. ⚡ = positive edge vs market."
+    )
+
+    fuse_rep = _load_fuse_report(dstr, _fuse_report_mtime(dstr))
+    if not fuse_rep:
+        st.info(
+            f"FUSE report not found for this meeting. Generate with "
+            f"`python fuse_raceday.py --date {dstr}` or re-run the Model "
+            f"Analysis pipeline."
+        )
+    else:
+        _fr_races = fuse_rep.get("races", [])
+        rows_html = []
+        for fr in _fr_races:
+            rn = fr.get("race_number")
+            picks = (fr.get("picks") or [])[:3]
+            chip_bits = []
+            for p in picks:
+                edge = p.get("edge")
+                pos_edge = edge is not None and edge >= 0.02
+                col = "#34d399" if p.get("rank") == 1 else "#9cc0ff"
+                bolt = (' <span style="color:#fbbf24">⚡</span>'
+                        if pos_edge else "")
+                odds_s = (f' <span style="opacity:0.55">@{p["win_odds"]:.1f}</span>'
+                          if p.get("win_odds") else "")
+                chip_bits.append(
+                    f'<span style="display:inline-block;margin:2px 6px 2px 0;'
+                    f'padding:2px 9px;border-radius:11px;'
+                    f'background:rgba(255,255,255,0.05);'
+                    f'border:1px solid {col}55;font-size:0.86em">'
+                    f'<b style="color:{col}">#{p.get("horse_no","?")}</b> '
+                    f'{p.get("horse_name","")} '
+                    f'<span style="opacity:0.75">{(p.get("p_win") or 0)*100:.0f}%'
+                    f'</span>{odds_s}{bolt}</span>')
+            qp = (fr.get("quinella_pairs") or [])[:2]
+            q_bits = [
+                f'<span style="display:inline-block;margin:2px 6px 2px 0;'
+                f'padding:2px 8px;border-radius:10px;'
+                f'background:rgba(52,211,153,0.08);'
+                f'border:1px solid rgba(52,211,153,0.35);font-size:0.84em">'
+                f'{q["a"]}–{q["b"]} <span style="opacity:0.65">'
+                f'{q["p"]*100:.1f}% · fair {q["fair_odds"]:.0f}</span></span>'
+                for q in qp]
+            anchored = ("🟢" if fr.get("odds_anchored")
+                        else '<span style="opacity:0.45">⚪</span>')
+            rows_html.append(
+                f'<tr style="border-bottom:1px solid rgba(128,128,128,0.12)">'
+                f'<td style="padding:6px 8px;font-weight:800;'
+                f'white-space:nowrap">R{rn} {anchored}</td>'
+                f'<td style="padding:6px 8px">{"".join(chip_bits)}</td>'
+                f'<td style="padding:6px 8px;white-space:nowrap">'
+                f'{"".join(q_bits)}</td>'
+                f'</tr>')
+        st.markdown(
+            '<table style="width:100%;border-collapse:collapse;font-size:0.92em">'
+            '<thead><tr style="border-bottom:2px solid rgba(128,128,128,0.3)">'
+            '<th style="text-align:left;padding:6px">Race</th>'
+            '<th style="text-align:left;padding:6px">FUSE top 3 (win prob)</th>'
+            '<th style="text-align:left;padding:6px">Quinella pairs</th>'
+            '</tr></thead><tbody>'
+            + "".join(rows_html)
+            + '</tbody></table>'
+            '<div style="margin-top:6px;font-size:0.78em;opacity:0.6">'
+            f'🟢 = live-odds anchored · ⚪ = fundamentals only · '
+            f'⚡ = model prob ≥ market +2pp · trained on '
+            f'{fuse_rep.get("n_train", 0):,} runner-starts · generated '
+            f'{fuse_rep.get("generated_at_hkt", "?")} HKT</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
+
     # ── Cross-race rollup (collapsible for decluttered race-day view) ──
     show_rollup = st.toggle(
         "Show cross-race rollup (blackbook · mutual picks · factor edges · trials)",
@@ -5398,89 +5546,6 @@ def page_overview():
                     st.caption(f"No mutual top-4 picks between ET and SARR for R{sel}.")
     else:
         st.caption("SARR analysis not available for this meeting.")
-
-    st.markdown("---")
-
-    # ── Section 2b: Factor-edge picks from historical analysis ─────────
-    st.markdown("### 🔬 Factor Edges Today")
-    st.caption(
-        "Independent data-analysis signal (jockey / trainer / pedigree / "
-        "form-context IVs from `reports/factor_analysis_tables.json`). "
-        "Uses current season by default. See the **Data Analysis** page for full tables."
-    )
-
-    fe_window = st.radio(
-        "Reference window",
-        options=["current_season_25_26", "last_90d", "all_time"],
-        format_func=lambda s: {"current_season_25_26": "Current season",
-                               "last_90d": "Last 90 days",
-                               "all_time": "All-time"}[s],
-        index=0, horizontal=True, key="overview_fe_window",
-    )
-
-    edges = _factor_edges_for_meeting(
-        dstr, fe_window,
-        str(meeting_info["file"]),
-        meeting_info["file"].stat().st_mtime if meeting_info["file"].exists() else 0.0,
-        FACTOR_TABLES_PATH.stat().st_mtime if FACTOR_TABLES_PATH.exists() else 0.0,
-        6,
-    )
-    if not edges:
-        if not FACTOR_TABLES_PATH.exists():
-            st.info(
-                "Factor analysis tables not found. Run "
-                "`python factor_model_analysis.py` or use the Regenerate "
-                "button on the Data Analysis page."
-            )
-        else:
-            st.caption("No runners with qualifying factor edges on today's card.")
-    else:
-        edges.sort(key=lambda e: (-e["score"], e["race"], e.get("rank") or 99))
-        rows_html = []
-        for e in edges:
-            if e["tier"] == "green":
-                bg = "rgba(34,197,94,0.14)"; name_c = "#22c55e"
-            elif e["tier"] == "amber":
-                bg = "rgba(245,158,11,0.12)"; name_c = "#f59e0b"
-            else:
-                bg = "transparent"; name_c = "inherit"
-            sig_html = " · ".join(
-                f'<span style="color:{c};font-weight:600">{label}</span>'
-                for label, c, _ in e["signals"]
-            )
-            rk_str = f"#{e['rank']}" if e.get("rank") else "—"
-            hno = f"({e['horse_no']})" if e.get("horse_no") not in ("", None) else ""
-            pedigree = " · ".join(x for x in [e["sire"], e["dam_sire"]] if x)
-            rows_html.append(
-                f'<tr style="background:{bg}">'
-                f'<td style="padding:5px 8px;font-weight:700">R{e["race"]}</td>'
-                f'<td style="padding:5px 8px;text-align:center;opacity:0.7">{rk_str}</td>'
-                f'<td style="padding:5px 8px;color:{name_c};font-weight:700">'
-                f'{e["horse"]} <span style="opacity:0.55;font-weight:400">{hno}</span></td>'
-                f'<td style="padding:5px 8px;opacity:0.85">{e["jockey"]} / {e["trainer"] or "?"}</td>'
-                f'<td style="padding:5px 8px;opacity:0.6;font-size:0.85em">{pedigree}</td>'
-                f'<td style="padding:5px 8px;text-align:right;font-weight:700">{e["score"]:+.2f}</td>'
-                f'<td style="padding:5px 8px;font-size:0.9em">{sig_html}</td>'
-                f'</tr>'
-            )
-        st.markdown(
-            '<table style="width:100%;border-collapse:collapse;font-size:0.92em">'
-            '<thead><tr style="border-bottom:2px solid rgba(128,128,128,0.3)">'
-            '<th style="text-align:left;padding:6px">Race</th>'
-            '<th style="text-align:center;padding:6px">Rk</th>'
-            '<th style="text-align:left;padding:6px">Horse</th>'
-            '<th style="text-align:left;padding:6px">Jky / Trn</th>'
-            '<th style="text-align:left;padding:6px">Sire · Dam-sire</th>'
-            '<th style="text-align:right;padding:6px">Edge</th>'
-            '<th style="text-align:left;padding:6px">Signals</th>'
-            '</tr></thead><tbody>'
-            + "".join(rows_html)
-            + '</tbody></table>'
-            '<div style="margin-top:6px;font-size:0.78em;opacity:0.6">'
-            '🟢 3+ positive signals &amp; score ≥ 1.6 &nbsp; 🟡 score ≥ 0.9 &nbsp; · '
-            'Thresholds: Jky IV ≥ 1.5, Trn IV ≥ 1.2, J×T IV ≥ 2.0 (N≥15), Sire@dist IV ≥ 1.6</div>',
-            unsafe_allow_html=True,
-        )
 
     st.markdown("---")
 
@@ -7439,22 +7504,34 @@ def page_model_comparison():
             # Persistent path — preferred
             mut_d = _json.loads(mut_p.read_text(encoding="utf-8"))
             import pandas as _pd
+            has_fuse = bool(mut_d.get("has_fuse"))
             rows_out = []
             for r in mut_d.get("races", []):
+                triple_nos = {m.get("horse_no")
+                              for m in r.get("triple_horses", [])}
                 disp = ", ".join(
-                    f"{m.get('horse_no')} {m.get('horse_name','')}".strip()
+                    (("★" if m.get("horse_no") in triple_nos else "")
+                     + f"{m.get('horse_no')} {m.get('horse_name','')}").strip()
                     for m in r.get("mutual_horses", [])
                 ) if r.get("mutual_horses") else "—"
-                rows_out.append({
+                row = {
                     "Race": r.get("race_number"),
                     "ET top-3": ", ".join(str(x) for x in r.get("et_picks", [])),
                     "SARR top-3": ", ".join(str(x) for x in r.get("sarr_picks", [])),
-                    "Mutual size": r.get("mutual_size", 0),
-                    "Mutual picks": disp,
-                })
+                }
+                if has_fuse:
+                    row["FUSE top-3"] = ", ".join(
+                        str(x) for x in r.get("fuse_picks", []))
+                row["Mutual size"] = r.get("mutual_size", 0)
+                if has_fuse:
+                    row["3-way"] = r.get("triple_size", 0)
+                row["Mutual picks"] = disp
+                rows_out.append(row)
             if rows_out:
                 df_t = _pd.DataFrame(rows_out)
                 def _style(row):
+                    if row.get("3-way", 0):
+                        return ["background-color: #1f4a38; color: #a7f3d0"] * len(row)
                     size = row["Mutual size"]
                     if size >= 3:
                         return ["background-color: #2d5a2d; color: white"] * len(row)
@@ -7464,9 +7541,13 @@ def page_model_comparison():
                 st.dataframe(df_t.style.apply(_style, axis=1),
                              width='stretch', hide_index=True)
                 n_high = sum(1 for r in rows_out if r["Mutual size"] >= 2)
+                n_triple = sum(1 for r in rows_out if r.get("3-way", 0))
                 st.caption(
                     f"📌 **{n_high}** high-conviction races "
-                    f"(mutual size ≥ 2). Source: persisted `mutual_{d_input}.json` "
+                    f"(mutual size ≥ 2)"
+                    + (f" · **{n_triple}** races with 3-way ET∩SARR∩FUSE "
+                       f"agreement (★, green rows)" if has_fuse else "")
+                    + f". Source: persisted `mutual_{d_input}.json` "
                     f"({mut_d.get('n_mutual_total','?')} total mutual picks)."
                 )
             else:
@@ -19032,6 +19113,19 @@ def page_model_bets():
                     "Odds basis · " + " · ".join(
                         f"{src_lbl.get(k, k)}: {v}" for k, v in
                         sorted(src_counts.items())))
+                n_fuse = sum(1 for it in items if it.get("fuse_used"))
+                if n_fuse:
+                    st.caption(
+                        f"🧬 **FUSE probabilities active** for {n_fuse}/"
+                        f"{len(items)} races — banker selection, edge and "
+                        f"quinella/place maths use the FUSE model's calibrated "
+                        f"win / top-2 / top-3 heads (Jan–Jun walk-forward: "
+                        f"29.9% win, 61.4% place on top pick).")
+                else:
+                    st.caption(
+                        "⚠ No FUSE report for this meeting — tickets fall "
+                        "back to the legacy ET+SARR composite. Generate via "
+                        "the Model Analysis pipeline.")
                 if odds_mode == "prerace" and src_counts.get("none"):
                     st.info(
                         f"{src_counts['none']} race(s) have no live odds "

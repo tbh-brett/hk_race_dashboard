@@ -1,9 +1,11 @@
 {
   "date": "20260509",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 11,
   "n_mutual_total": 16,
+  "n_triple_total": 8,
   "races": [
     {
       "race_number": 1,
@@ -17,27 +19,37 @@
         "#9 SECRET INGREDIENT",
         "#4 SILVERY KNIGHT"
       ],
+      "fuse_picks": [
+        "#1 ALMIGHTY WARRIOR",
+        "#7 GAUDIUM MAGNUM",
+        "#6 EVER WEALTH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "SILVERY KNIGHT",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 9,
           "horse_name": "SECRET INGREDIENT",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 10,
           "horse_name": "TALENTS CHAMPION",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 2,
@@ -51,21 +63,38 @@
         "#1 NORTHERN FIRE BALL",
         "#5 WARRIORS DREAM"
       ],
+      "fuse_picks": [
+        "#8 SPIRITED STEED",
+        "#1 NORTHERN FIRE BALL",
+        "#2 MATZDEN"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "NORTHERN FIRE BALL",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 7,
           "horse_name": "QUARTZ LEGEND",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "NORTHERN FIRE BALL",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 3,
@@ -79,8 +108,15 @@
         "#2 FIGHT TIME",
         "#8 SUPERB GUY"
       ],
+      "fuse_picks": [
+        "#13 TEAM HAPPY",
+        "#8 SUPERB GUY",
+        "#6 GENERAL SMART"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 4,
@@ -94,21 +130,45 @@
         "#4 MASTER PAYMENT",
         "#6 GRAND NOVA"
       ],
+      "fuse_picks": [
+        "#7 RAPID PHANTOM",
+        "#4 MASTER PAYMENT",
+        "#6 GRAND NOVA"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "MASTER PAYMENT",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 6,
           "horse_name": "GRAND NOVA",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "MASTER PAYMENT",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 6,
+          "horse_name": "GRAND NOVA",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 5,
@@ -122,27 +182,52 @@
         "#9 BROWNNEEDSFURTHER",
         "#2 POSITIVE SMILE"
       ],
+      "fuse_picks": [
+        "#6 GROUPER",
+        "#9 BROWNNEEDSFURTHER",
+        "#3 FLASHING FIGHTER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "POSITIVE SMILE",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 3,
           "horse_name": "FLASHING FIGHTER",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         },
         {
           "horse_no": 9,
           "horse_name": "BROWNNEEDSFURTHER",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "FLASHING FIGHTER",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        },
+        {
+          "horse_no": 9,
+          "horse_name": "BROWNNEEDSFURTHER",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 6,
@@ -156,8 +241,15 @@
         "#13 THE CONCENTRATION",
         "#8 SUPER DRAGON"
       ],
+      "fuse_picks": [
+        "#8 SUPER DRAGON",
+        "#6 INVICTUS DRAGON",
+        "#11 DECISION LINK"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 7,
@@ -171,8 +263,15 @@
         "#4 TURIN CHAMPIONS",
         "#5 AUDACIOUS PURSUIT"
       ],
+      "fuse_picks": [
+        "#8 LUCKY YEAR",
+        "#12 RED BRICK WARRIOR",
+        "#9 VICTOR SUPREME"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 8,
@@ -186,21 +285,38 @@
         "#11 THRIVING BROTHERS",
         "#4 CHILL BUDDY"
       ],
+      "fuse_picks": [
+        "#4 CHILL BUDDY",
+        "#10 SPICY STANDARD",
+        "#3 GOLD PATCH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "GOLD PATCH",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         },
         {
           "horse_no": 11,
           "horse_name": "THRIVING BROTHERS",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "GOLD PATCH",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 9,
@@ -214,21 +330,38 @@
         "#7 STRAIGHT TO GLORY",
         "#1 FAST RESPONDER"
       ],
+      "fuse_picks": [
+        "#5 EVER LUCK",
+        "#12 LIGHTNESS OF MUSIC",
+        "#3 METRO POWER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "FAST RESPONDER",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 5,
           "horse_name": "EVER LUCK",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 5,
+          "horse_name": "EVER LUCK",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 10,
@@ -242,15 +375,31 @@
         "#5 SMART AVENUE",
         "#2 BLAZING WUKONG"
       ],
+      "fuse_picks": [
+        "#4 AMAZING PARTNERS",
+        "#5 SMART AVENUE",
+        "#14 WITHALLMYFAITH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 5,
           "horse_name": "SMART AVENUE",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 5,
+          "horse_name": "SMART AVENUE",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 11,
@@ -264,15 +413,23 @@
         "#4 PATCH OF STARS",
         "#11 HOT DELIGHT"
       ],
+      "fuse_picks": [
+        "#6 BULB GENERAL",
+        "#11 HOT DELIGHT",
+        "#2 CRIMSON FLASH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "PATCH OF STARS",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     }
   ]
 }

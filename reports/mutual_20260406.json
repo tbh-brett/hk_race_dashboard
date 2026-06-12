@@ -1,9 +1,11 @@
 {
   "date": "20260406",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 11,
   "n_mutual_total": 19,
+  "n_triple_total": 15,
   "races": [
     {
       "race_number": 1,
@@ -17,15 +19,31 @@
         "#2 SUPER SIXTY",
         "#11 STAR PERFORMER"
       ],
+      "fuse_picks": [
+        "#1 ALMIGHTY LIGHTNING",
+        "#11 STAR PERFORMER",
+        "#12 ZOUPER FELLOW"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "ALMIGHTY LIGHTNING",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "ALMIGHTY LIGHTNING",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -39,21 +57,38 @@
         "#2 ICONICAL",
         "#8 KING ALLOY"
       ],
+      "fuse_picks": [
+        "#14 SUPREME WINNER",
+        "#5 MAJESTIC DELIGHT",
+        "#8 KING ALLOY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "ICONICAL",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 5,
           "horse_name": "MAJESTIC DELIGHT",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 5,
+          "horse_name": "MAJESTIC DELIGHT",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 3,
@@ -67,15 +102,31 @@
         "#1 MR COOL",
         "#6 KYRUS TREASURE"
       ],
+      "fuse_picks": [
+        "#1 MR COOL",
+        "#8 SMART FAT CAT",
+        "#4 LUCKY YEAR"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "MR COOL",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "MR COOL",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 4,
@@ -89,21 +140,38 @@
         "#1 GALLANT EPOCH",
         "#3 ROBOT STAR"
       ],
+      "fuse_picks": [
+        "#2 LUCKY RANGER",
+        "#8 CALIFORNIA BAY",
+        "#1 GALLANT EPOCH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "LUCKY RANGER",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 3,
           "horse_name": "ROBOT STAR",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "LUCKY RANGER",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 5,
@@ -117,27 +185,52 @@
         "#14 RIDING HIGH",
         "#12 COME FAST FAY FAY"
       ],
+      "fuse_picks": [
+        "#7 SUPERB SPIRIT",
+        "#1 MR INCREDIBLE",
+        "#12 COME FAST FAY FAY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "MR INCREDIBLE",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         },
         {
           "horse_no": 12,
           "horse_name": "COME FAST FAY FAY",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         },
         {
           "horse_no": 14,
           "horse_name": "RIDING HIGH",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "MR INCREDIBLE",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 12,
+          "horse_name": "COME FAST FAY FAY",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 6,
@@ -151,21 +244,38 @@
         "#1 GLOWING PRAISES",
         "#5 ALPHA STRIKE"
       ],
+      "fuse_picks": [
+        "#1 GLOWING PRAISES",
+        "#8 LOOKING BRIGHT",
+        "#5 ALPHA STRIKE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "GLOWING PRAISES",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         },
         {
           "horse_no": 4,
           "horse_name": "FAST RESPONDER",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "GLOWING PRAISES",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 7,
@@ -179,27 +289,59 @@
         "#2 HELIOS EXPRESS",
         "#4 TOMODACHI KOKOROE"
       ],
+      "fuse_picks": [
+        "#1 KA YING RISING",
+        "#2 HELIOS EXPRESS",
+        "#4 TOMODACHI KOKOROE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "KA YING RISING",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 2,
           "horse_name": "HELIOS EXPRESS",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 4,
           "horse_name": "TOMODACHI KOKOROE",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "KA YING RISING",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 2,
+          "horse_name": "HELIOS EXPRESS",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 4,
+          "horse_name": "TOMODACHI KOKOROE",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 3
     },
     {
       "race_number": 8,
@@ -213,15 +355,31 @@
         "#8 HAROLD WIN",
         "#6 THE RED HARE"
       ],
+      "fuse_picks": [
+        "#6 THE RED HARE",
+        "#10 PACKING GLORY",
+        "#4 FIT FOR BEAUTY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 10,
           "horse_name": "PACKING GLORY",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 10,
+          "horse_name": "PACKING GLORY",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 9,
@@ -235,15 +393,31 @@
         "#8 MY WISH",
         "#11 CHANCHENG GLORY"
       ],
+      "fuse_picks": [
+        "#1 VOYAGE BUBBLE",
+        "#7 CAP FERRAT",
+        "#14 STUNNING PEACH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "VOYAGE BUBBLE",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "VOYAGE BUBBLE",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 10,
@@ -257,21 +431,45 @@
         "#4 WINNING OVATION",
         "#5 DROMBEG BANNER"
       ],
+      "fuse_picks": [
+        "#8 SIX PACK",
+        "#4 WINNING OVATION",
+        "#3 JOHANNES BRAHMS"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "WINNING OVATION",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 8,
           "horse_name": "SIX PACK",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "WINNING OVATION",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 8,
+          "horse_name": "SIX PACK",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 11,
@@ -285,15 +483,31 @@
         "#10 THE AUSPICIOUS",
         "#3 LIVEANDLETLIVE"
       ],
+      "fuse_picks": [
+        "#7 SMART AVENUE",
+        "#6 FORTUNE BOY",
+        "#3 LIVEANDLETLIVE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 6,
           "horse_name": "FORTUNE BOY",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 6,
+          "horse_name": "FORTUNE BOY",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     }
   ]
 }

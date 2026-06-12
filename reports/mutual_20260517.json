@@ -1,9 +1,11 @@
 {
   "date": "20260517",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 11,
   "n_mutual_total": 19,
+  "n_triple_total": 11,
   "races": [
     {
       "race_number": 1,
@@ -17,8 +19,15 @@
         "#8 ALL ARE MINE",
         "#3 MATSU VICTOR"
       ],
+      "fuse_picks": [
+        "#8 ALL ARE MINE",
+        "#9 PERFECT PAIRING",
+        "#10 ROSEWOOD FLEETFOOT"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 2,
@@ -32,15 +41,31 @@
         "#13 COMET RADIANCE",
         "#14 LAHORE"
       ],
+      "fuse_picks": [
+        "#8 KINGDOM",
+        "#1 RUN RUN SUNRISE",
+        "#14 LAHORE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "RUN RUN SUNRISE",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "RUN RUN SUNRISE",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 3,
@@ -54,27 +79,37 @@
         "#11 DOUBLE BINGO",
         "#10 HAPPY BOYS"
       ],
+      "fuse_picks": [
+        "#9 TRIUMPHANT WARRIOR",
+        "#4 MAJESTIC DELIGHT",
+        "#5 NO OTHER CHOICE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 7,
           "horse_name": "CALL TO COMMAND",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         },
         {
           "horse_no": 10,
           "horse_name": "HAPPY BOYS",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 11,
           "horse_name": "DOUBLE BINGO",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 4,
@@ -88,27 +123,52 @@
         "#4 NAVAS G",
         "#10 BETTER AND BETTER"
       ],
+      "fuse_picks": [
+        "#1 PAPAYA BROSE",
+        "#4 NAVAS G",
+        "#11 LITTLE MONSTER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "PAPAYA BROSE",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 4,
           "horse_name": "NAVAS G",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 10,
           "horse_name": "BETTER AND BETTER",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "PAPAYA BROSE",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 4,
+          "horse_name": "NAVAS G",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 5,
@@ -122,21 +182,45 @@
         "#4 GOLDENTRONICMIGHTY",
         "#7 SUPERB SPIRIT"
       ],
+      "fuse_picks": [
+        "#3 LUCRATIVE EIGHT",
+        "#7 SUPERB SPIRIT",
+        "#6 DANCING BLAZE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "LUCRATIVE EIGHT",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 7,
           "horse_name": "SUPERB SPIRIT",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "LUCRATIVE EIGHT",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 7,
+          "horse_name": "SUPERB SPIRIT",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 6,
@@ -150,21 +234,45 @@
         "#10 THUNDER KIT",
         "#2 CELESTIAL HERO"
       ],
+      "fuse_picks": [
+        "#2 CELESTIAL HERO",
+        "#6 KING EQUINE",
+        "#10 THUNDER KIT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "CELESTIAL HERO",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         },
         {
           "horse_no": 10,
           "horse_name": "THUNDER KIT",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "CELESTIAL HERO",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 10,
+          "horse_name": "THUNDER KIT",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 7,
@@ -178,21 +286,30 @@
         "#4 SOLID CAR",
         "#10 DUKE OF ORANGE"
       ],
+      "fuse_picks": [
+        "#4 SOLID CAR",
+        "#2 FORZA TORO",
+        "#1 RUN RUN SMART"
+      ],
       "mutual_horses": [
         {
           "horse_no": 10,
           "horse_name": "DUKE OF ORANGE",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 12,
           "horse_name": "NINJA DERBY",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 8,
@@ -206,15 +323,31 @@
         "#8 GRAND TURBO",
         "#5 ABSOLUTE HONOUR"
       ],
+      "fuse_picks": [
+        "#5 ABSOLUTE HONOUR",
+        "#14 ROMANTIC FANTASY",
+        "#4 VERMILION TEMPEST"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "VERMILION TEMPEST",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "VERMILION TEMPEST",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 9,
@@ -228,15 +361,23 @@
         "#7 PROUD BOX",
         "#11 ACE"
       ],
+      "fuse_picks": [
+        "#7 PROUD BOX",
+        "#11 ACE",
+        "#10 VOYAGE BOSS"
+      ],
       "mutual_horses": [
         {
           "horse_no": 12,
           "horse_name": "STAR FIGURE",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 10,
@@ -250,21 +391,38 @@
         "#8 CHILL EASY",
         "#4 CITY GOLD BANNER"
       ],
+      "fuse_picks": [
+        "#8 CHILL EASY",
+        "#2 WINDLORD",
+        "#9 DARYL FLASH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "MR ENERGIA",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         },
         {
           "horse_no": 8,
           "horse_name": "CHILL EASY",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 8,
+          "horse_name": "CHILL EASY",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 11,
@@ -278,21 +436,45 @@
         "#3 BRILLIANT EXPRESS",
         "#7 ALL'S WELL"
       ],
+      "fuse_picks": [
+        "#8 HAPPY BOSS",
+        "#12 WITHOUT RHYME",
+        "#3 BRILLIANT EXPRESS"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "BRILLIANT EXPRESS",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 3
         },
         {
           "horse_no": 8,
           "horse_name": "HAPPY BOSS",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "BRILLIANT EXPRESS",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 3
+        },
+        {
+          "horse_no": 8,
+          "horse_name": "HAPPY BOSS",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     }
   ]
 }

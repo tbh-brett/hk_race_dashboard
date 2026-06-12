@@ -1,9 +1,11 @@
 {
   "date": "20260603",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 9,
   "n_mutual_total": 15,
+  "n_triple_total": 12,
   "races": [
     {
       "race_number": 1,
@@ -17,15 +19,31 @@
         "#9 WAH MAY WAI WAI",
         "#4 PRINCE ALEX"
       ],
+      "fuse_picks": [
+        "#9 WAH MAY WAI WAI",
+        "#3 FAMILY FORTUNE",
+        "#2 SETANTA"
+      ],
       "mutual_horses": [
         {
           "horse_no": 9,
           "horse_name": "WAH MAY WAI WAI",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 9,
+          "horse_name": "WAH MAY WAI WAI",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -39,15 +57,31 @@
         "#2 ALWAYS MY FOLKS",
         "#10 EXCEED THE WISH"
       ],
+      "fuse_picks": [
+        "#2 ALWAYS MY FOLKS",
+        "#6 CALL TO COMMAND",
+        "#9 CHILL MASTER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "ALWAYS MY FOLKS",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "ALWAYS MY FOLKS",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 3,
@@ -61,21 +95,38 @@
         "#7 FORERUNNER",
         "#2 BEAUTY GLORY"
       ],
+      "fuse_picks": [
+        "#2 BEAUTY GLORY",
+        "#3 CAPTAIN LINK",
+        "#1 YOUNG ARROW"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "BEAUTY GLORY",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         },
         {
           "horse_no": 7,
           "horse_name": "FORERUNNER",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "BEAUTY GLORY",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 4,
@@ -89,21 +140,45 @@
         "#6 DASHING MAURISON",
         "#8 SAVVY WARRIOR"
       ],
+      "fuse_picks": [
+        "#10 RUN RUN TIMING",
+        "#8 SAVVY WARRIOR",
+        "#6 DASHING MAURISON"
+      ],
       "mutual_horses": [
         {
           "horse_no": 8,
           "horse_name": "SAVVY WARRIOR",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 2
         },
         {
           "horse_no": 10,
           "horse_name": "RUN RUN TIMING",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 8,
+          "horse_name": "SAVVY WARRIOR",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 10,
+          "horse_name": "RUN RUN TIMING",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 5,
@@ -117,27 +192,59 @@
         "#7 BROWNNEEDSFURTHER",
         "#11 LOVING VIBES"
       ],
+      "fuse_picks": [
+        "#11 LOVING VIBES",
+        "#7 BROWNNEEDSFURTHER",
+        "#5 GEORGIAN SIGMA"
+      ],
       "mutual_horses": [
         {
           "horse_no": 5,
           "horse_name": "GEORGIAN SIGMA",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         },
         {
           "horse_no": 7,
           "horse_name": "BROWNNEEDSFURTHER",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 11,
           "horse_name": "LOVING VIBES",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 5,
+          "horse_name": "GEORGIAN SIGMA",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        },
+        {
+          "horse_no": 7,
+          "horse_name": "BROWNNEEDSFURTHER",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 11,
+          "horse_name": "LOVING VIBES",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 3
     },
     {
       "race_number": 6,
@@ -151,21 +258,45 @@
         "#7 NEBRASKAN",
         "#4 MEOWTH"
       ],
+      "fuse_picks": [
+        "#1 THE HEIR",
+        "#4 MEOWTH",
+        "#7 NEBRASKAN"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "THE HEIR",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 7,
           "horse_name": "NEBRASKAN",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "THE HEIR",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 7,
+          "horse_name": "NEBRASKAN",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 7,
@@ -179,21 +310,38 @@
         "#10 ACE CHAMPION",
         "#7 KING PROFIT"
       ],
+      "fuse_picks": [
+        "#8 DANCING CLASSICS",
+        "#10 ACE CHAMPION",
+        "#7 KING PROFIT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "JUBILANT WINNER",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         },
         {
           "horse_no": 7,
           "horse_name": "KING PROFIT",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 7,
+          "horse_name": "KING PROFIT",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 8,
@@ -207,21 +355,38 @@
         "#7 BEAUTY ALLIANCE",
         "#9 ARMOR GOLDEN EAGLE"
       ],
+      "fuse_picks": [
+        "#6 SILVERY BREEZE",
+        "#3 PACKING ANGEL",
+        "#7 BEAUTY ALLIANCE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 6,
           "horse_name": "SILVERY BREEZE",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 9,
           "horse_name": "ARMOR GOLDEN EAGLE",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 6,
+          "horse_name": "SILVERY BREEZE",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 9,
@@ -235,8 +400,15 @@
         "#2 MISTER DAPPER",
         "#10 STORMI"
       ],
+      "fuse_picks": [
+        "#3 FIVEFORTWO",
+        "#1 SMART AVENUE",
+        "#4 WITHOUT COMPARE"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     }
   ]
 }

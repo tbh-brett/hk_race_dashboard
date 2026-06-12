@@ -1,9 +1,11 @@
 {
   "date": "20260506",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 9,
   "n_mutual_total": 12,
+  "n_triple_total": 7,
   "races": [
     {
       "race_number": 1,
@@ -17,15 +19,31 @@
         "#11 GO GO GO",
         "#1 HAILTOTHEVICTORS"
       ],
+      "fuse_picks": [
+        "#2 SMART CITY",
+        "#1 HAILTOTHEVICTORS",
+        "#4 MEGA FORCE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "HAILTOTHEVICTORS",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "HAILTOTHEVICTORS",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -39,21 +57,30 @@
         "#2 HAPPY ACTION",
         "#8 MACANESE MASTER"
       ],
+      "fuse_picks": [
+        "#11 BRILLIANT FIRE",
+        "#9 ROBOT KNIGHT",
+        "#8 MACANESE MASTER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "HAPPY ACTION",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 10,
           "horse_name": "VIVA CHALEUR",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 3,
@@ -67,21 +94,45 @@
         "#12 LAKESHORE HERO",
         "#3 SIGHT DREAMER"
       ],
+      "fuse_picks": [
+        "#12 LAKESHORE HERO",
+        "#4 CLOUD NINE",
+        "#7 JUICY DRAGON"
+      ],
       "mutual_horses": [
         {
           "horse_no": 7,
           "horse_name": "JUICY DRAGON",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         },
         {
           "horse_no": 12,
           "horse_name": "LAKESHORE HERO",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 7,
+          "horse_name": "JUICY DRAGON",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        },
+        {
+          "horse_no": 12,
+          "horse_name": "LAKESHORE HERO",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 4,
@@ -95,15 +146,23 @@
         "#5 GLORIOUS SUCCESS",
         "#9 YODA'S CHOICE"
       ],
+      "fuse_picks": [
+        "#5 GLORIOUS SUCCESS",
+        "#7 THE LION KING",
+        "#1 HAPPY UNIVERSE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 10,
           "horse_name": "FIREFOOT",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 5,
@@ -117,15 +176,31 @@
         "#2 LIGHT YEARS GLORY",
         "#10 CALIFORNIA BAY"
       ],
+      "fuse_picks": [
+        "#1 TOURBILLON GOLFER",
+        "#2 LIGHT YEARS GLORY",
+        "#5 MEGA AWESOME"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "TOURBILLON GOLFER",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "TOURBILLON GOLFER",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 6,
@@ -139,15 +214,31 @@
         "#3 CALIFORNIA STAR",
         "#6 NEVER PETER OUT"
       ],
+      "fuse_picks": [
+        "#8 SHOTGUN",
+        "#11 BULL ATTITUDE",
+        "#13 NIGHT PUROSANGUE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 11,
           "horse_name": "BULL ATTITUDE",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 11,
+          "horse_name": "BULL ATTITUDE",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 7,
@@ -161,21 +252,30 @@
         "#5 HAPPY SHOOTER",
         "#11 CONRAD THE GREAT"
       ],
+      "fuse_picks": [
+        "#3 FUN N FUN TOGETHER",
+        "#7 BIGTIME GENERATION",
+        "#5 HAPPY SHOOTER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "NATURAL HIGH",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         },
         {
           "horse_no": 11,
           "horse_name": "CONRAD THE GREAT",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 8,
@@ -189,8 +289,15 @@
         "#11 NEZHA",
         "#5 DRAGON AIR FORCE"
       ],
+      "fuse_picks": [
+        "#14 SUPREME AGILITY",
+        "#11 NEZHA",
+        "#1 TALENTS AMBITION"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 9,
@@ -204,21 +311,45 @@
         "#7 BLAZING WIND",
         "#11 TARGET AUDIENCE"
       ],
+      "fuse_picks": [
+        "#2 VICTORY SKY",
+        "#11 TARGET AUDIENCE",
+        "#3 GALACTIC VOYAGE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "VICTORY SKY",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 11,
           "horse_name": "TARGET AUDIENCE",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "VICTORY SKY",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 11,
+          "horse_name": "TARGET AUDIENCE",
+          "et_rank": 1,
+          "sarr_rank": 3,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 2
     }
   ]
 }

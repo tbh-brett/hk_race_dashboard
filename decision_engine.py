@@ -200,6 +200,20 @@ def estimate_decimal_odds_for_play(ticket: dict, divs_for_race: dict,
     return None
 
 
+def _p_topn(h: dict, n: int) -> float:
+    """P(horse finishes top-n). Prefers the FUSE model's dedicated top-2 /
+    top-3 heads (calibrated, race-normalized); falls back to the classic
+    p_win multiplier approximation (×1.9 / ×2.5)."""
+    p_win = h.get("p_model") or 0.0
+    if n == 2:
+        v = h.get("p_top2_fuse")
+        return float(v) if v else min(0.95, p_win * 1.9)
+    if n == 3:
+        v = h.get("p_top3_fuse")
+        return float(v) if v else min(0.97, p_win * 2.5)
+    return p_win
+
+
 def estimate_p_for_play(ticket: dict, market_probs: dict[int, float]) -> tuple[float, float]:
     """Return (p_model, p_market) appropriate to the play.
 
@@ -212,7 +226,7 @@ def estimate_p_for_play(ticket: dict, market_probs: dict[int, float]) -> tuple[f
     p_model = banker.get("p_model") or 0.0
     p_mkt = market_probs.get(banker.get("horse_no"), 0.0) if banker else 0.0
     if play == "PLACE":
-        p_model = min(0.95, p_model * 2.5)
+        p_model = _p_topn(banker, 3)
         p_mkt = min(0.95, p_mkt * 2.5) if p_mkt > 0 else p_mkt
     elif play == "FCT":
         # Banker 1st × leg 2nd (ordered). Approximate as p_b * p_l/(1-p_b)
@@ -228,11 +242,11 @@ def estimate_p_for_play(ticket: dict, market_probs: dict[int, float]) -> tuple[f
         legs = ticket.get("legs") or []
         if len(legs) == 1:
             leg = legs[0]
-            p_l = leg.get("p_model") or 0.0
             p_l_mkt = market_probs.get(leg.get("horse_no", -1), 0.0)
             mult = 1.9 if play == "QIN_BANKER" else 2.5
-            p_b_topN = min(0.95, p_model * mult)
-            p_l_topN = min(0.95, p_l * mult)
+            topn = 2 if play == "QIN_BANKER" else 3
+            p_b_topN = _p_topn(banker, topn)
+            p_l_topN = _p_topn(leg, topn)
             p_model = p_b_topN * p_l_topN
             p_b_mkt_topN = min(0.95, p_mkt * mult) if p_mkt else 0.0
             p_l_mkt_topN = min(0.95, p_l_mkt * mult) if p_l_mkt else 0.0
@@ -311,13 +325,12 @@ def _emit_qin_qpl_legs(
     if not sp_b or p_b is None:
         return
     p_market_b = market_probs.get(banker["horse_no"], 0.0) or (1.0 / sp_b)
-    # P(banker top-N) approximations
-    p_b_top2 = min(0.95, shrink_probability(p_b, p_market_b,
-                                              n_observed=n_observed,
-                                              k_prior=shrinkage_k) * 1.9)
-    p_b_top3 = min(0.97, shrink_probability(p_b, p_market_b,
-                                              n_observed=n_observed,
-                                              k_prior=shrinkage_k) * 2.5)
+    # P(banker top-N) — FUSE heads when present, else multiplier approximation
+    _shr = shrink_probability(p_b, p_market_b, n_observed=n_observed,
+                              k_prior=shrinkage_k)
+    _shr_ratio = _shr / max(p_b, 1e-6)
+    p_b_top2 = min(0.95, _p_topn(banker, 2) * _shr_ratio)
+    p_b_top3 = min(0.97, _p_topn(banker, 3) * _shr_ratio)
 
     # Per-leg conditional probs + dividend estimates
     leg_horses = []
@@ -331,10 +344,9 @@ def _emit_qin_qpl_legs(
         leg_horses.append(l["horse_no"])
         leg_horse_names.append(l.get("horse_name", str(l["horse_no"])))
         sp_l = l.get("win_odds") or sp_b
-        p_l = l.get("p_model") or 0.10
-        # Top-2/top-3 probs for the leg horse
-        p_l_top2 = min(0.95, p_l * 1.9)
-        p_l_top3 = min(0.97, p_l * 2.5)
+        # Top-2/top-3 probs for the leg horse — FUSE heads when present
+        p_l_top2 = _p_topn(l, 2)
+        p_l_top3 = _p_topn(l, 3)
         qin_p_any += p_l_top2 / n
         qpl_p_any += p_l_top3 / n
         # Dividend per $10 — classic approximation

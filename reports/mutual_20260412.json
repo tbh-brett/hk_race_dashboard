@@ -1,9 +1,11 @@
 {
   "date": "20260412",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 11,
   "n_mutual_total": 17,
+  "n_triple_total": 11,
   "races": [
     {
       "race_number": 1,
@@ -13,8 +15,15 @@
         "#2 PERFECT ONE",
         "#3 SILVERY KNIGHT"
       ],
+      "fuse_picks": [
+        "#1 KA YING GRATEFUL",
+        "#6 TALENTS CHAMPION",
+        "#2 PERFECT ONE"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 2,
@@ -28,8 +37,15 @@
         "#12 HE WAS ME",
         "#8 DASH"
       ],
+      "fuse_picks": [
+        "#9 WINNING MACHINE",
+        "#13 MR GOOD VIBES",
+        "#10 YEE CHEONG RAIDER"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 3,
@@ -43,8 +59,15 @@
         "#11 HARRY'S HERO",
         "#12 CASA LEGEND"
       ],
+      "fuse_picks": [
+        "#10 GOLD TACK",
+        "#6 GENERAL SMART",
+        "#5 BLING BLING GENIUS"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 4,
@@ -58,15 +81,31 @@
         "#3 TOP TIME",
         "#7 INVICTUS DRAGON"
       ],
+      "fuse_picks": [
+        "#7 INVICTUS DRAGON",
+        "#2 HAPPY BOSS",
+        "#6 MASSIVE GLORY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 7,
           "horse_name": "INVICTUS DRAGON",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 7,
+          "horse_name": "INVICTUS DRAGON",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 5,
@@ -80,21 +119,38 @@
         "#3 CONRAD PATCH",
         "#2 VICTOR THE RAPID"
       ],
+      "fuse_picks": [
+        "#4 CALL ME SPARKLE",
+        "#5 FLASHING FIGHTER",
+        "#1 SPICY STANDARD"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "CONRAD PATCH",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 4,
           "horse_name": "CALL ME SPARKLE",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "CALL ME SPARKLE",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 6,
@@ -108,27 +164,52 @@
         "#2 ELITE GOLF",
         "#10 LEADING DRAGON"
       ],
+      "fuse_picks": [
+        "#1 BABY SAKURA",
+        "#2 ELITE GOLF",
+        "#5 FLYING SNIPER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "BABY SAKURA",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 2,
           "horse_name": "ELITE GOLF",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 10,
           "horse_name": "LEADING DRAGON",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "BABY SAKURA",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 2,
+          "horse_name": "ELITE GOLF",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 7,
@@ -142,21 +223,38 @@
         "#11 JUST FOLLOW ME",
         "#2 RUN RUN SMART"
       ],
+      "fuse_picks": [
+        "#9 SHOTGUN",
+        "#10 SUPER DRAGON",
+        "#7 PRESIDENT PEGASUS"
+      ],
       "mutual_horses": [
         {
           "horse_no": 9,
           "horse_name": "SHOTGUN",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 11,
           "horse_name": "JUST FOLLOW ME",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 9,
+          "horse_name": "SHOTGUN",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 8,
@@ -170,27 +268,52 @@
         "#4 ENDUED",
         "#1 MISTER DAPPER"
       ],
+      "fuse_picks": [
+        "#7 AMAZING PARTNERS",
+        "#4 ENDUED",
+        "#12 WITHALLMYFAITH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "MISTER DAPPER",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 4,
           "horse_name": "ENDUED",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 7,
           "horse_name": "AMAZING PARTNERS",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "ENDUED",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 7,
+          "horse_name": "AMAZING PARTNERS",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 9,
@@ -204,21 +327,38 @@
         "#9 PRAY FOR JUSTICE",
         "#11 POSITIVE SMILE"
       ],
+      "fuse_picks": [
+        "#9 PRAY FOR JUSTICE",
+        "#3 CHARMING LEGEND",
+        "#1 ENDEARED"
+      ],
       "mutual_horses": [
         {
           "horse_no": 9,
           "horse_name": "PRAY FOR JUSTICE",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         },
         {
           "horse_no": 11,
           "horse_name": "POSITIVE SMILE",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 9,
+          "horse_name": "PRAY FOR JUSTICE",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 10,
@@ -232,21 +372,38 @@
         "#5 CHILL BUDDY",
         "#12 YEE CHEONG GLORY"
       ],
+      "fuse_picks": [
+        "#2 SMART GOLF",
+        "#12 YEE CHEONG GLORY",
+        "#6 TURQUOISE VELOCITY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "SMART GOLF",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 5,
           "horse_name": "CHILL BUDDY",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "SMART GOLF",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 11,
@@ -260,21 +417,45 @@
         "#12 PAKISTAN LEGACY",
         "#9 RISING FORCE"
       ],
+      "fuse_picks": [
+        "#9 RISING FORCE",
+        "#11 GALACTIC VOYAGE",
+        "#12 PAKISTAN LEGACY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 9,
           "horse_name": "RISING FORCE",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         },
         {
           "horse_no": 11,
           "horse_name": "GALACTIC VOYAGE",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 9,
+          "horse_name": "RISING FORCE",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 11,
+          "horse_name": "GALACTIC VOYAGE",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 2
     }
   ]
 }

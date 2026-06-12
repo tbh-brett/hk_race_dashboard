@@ -1,9 +1,11 @@
 {
   "date": "20260524",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 11,
   "n_mutual_total": 13,
+  "n_triple_total": 8,
   "races": [
     {
       "race_number": 1,
@@ -17,8 +19,15 @@
         "#1 FLYING AMANI",
         "#2 YOUNG HORIZON"
       ],
+      "fuse_picks": [
+        "#1 FLYING AMANI",
+        "#6 SOARING BRONCO",
+        "#13 HARRY'S HERO"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 2,
@@ -32,15 +41,31 @@
         "#8 HAPPY PROMISE",
         "#10 JUST FOLLOW ME"
       ],
+      "fuse_picks": [
+        "#2 NYX GLUCK",
+        "#14 COME FAST FAY FAY",
+        "#11 GORGEOUS VICTORY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "NYX GLUCK",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "NYX GLUCK",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 3,
@@ -54,21 +79,45 @@
         "#5 MEGA CAPTAIN",
         "#3 FLOWING RICHES"
       ],
+      "fuse_picks": [
+        "#4 GROUPER",
+        "#12 RIDING HIGH",
+        "#5 MEGA CAPTAIN"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "GROUPER",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 5,
           "horse_name": "MEGA CAPTAIN",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "GROUPER",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 5,
+          "horse_name": "MEGA CAPTAIN",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 4,
@@ -82,21 +131,38 @@
         "#4 GENIUS BABY",
         "#7 MEGA AWESOME"
       ],
+      "fuse_picks": [
+        "#3 PACKING KING",
+        "#8 LEADING DRAGON",
+        "#14 SUNNY Q"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "GENIUS BABY",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 8,
           "horse_name": "LEADING DRAGON",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 8,
+          "horse_name": "LEADING DRAGON",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 5,
@@ -110,15 +176,23 @@
         "#1 LUCKY TWIN STARS",
         "#5 BRIGHT INHERITANCE"
       ],
+      "fuse_picks": [
+        "#9 BEST WORLD",
+        "#7 JOLLY BRILLIANT",
+        "#2 BIG RETURN"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "LUCKY TWIN STARS",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 6,
@@ -132,8 +206,15 @@
         "#1 EIGHTY LIGHT YEARS",
         "#12 TIME TO FIRE"
       ],
+      "fuse_picks": [
+        "#14 VIEW ALL THINGS",
+        "#5 MONARCH COUNTY",
+        "#2 TOP TIME"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 7,
@@ -147,15 +228,23 @@
         "#12 MIGHTY STRENGTH",
         "#13 SUPER UNICORN"
       ],
+      "fuse_picks": [
+        "#7 ENTHUSIUM",
+        "#12 MIGHTY STRENGTH",
+        "#11 THE GOLDEN KNIGHT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 13,
           "horse_name": "SUPER UNICORN",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 8,
@@ -169,15 +258,31 @@
         "#9 ROMANTIC THOR",
         "#5 NUMBERS"
       ],
+      "fuse_picks": [
+        "#1 ROMANTIC WARRIOR",
+        "#2 DEEP MONSTER",
+        "#6 KA YING GENERATION"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "ROMANTIC WARRIOR",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "ROMANTIC WARRIOR",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 9,
@@ -191,15 +296,31 @@
         "#7 MIGHTY MASTS",
         "#9 GALACTIC VOYAGE"
       ],
+      "fuse_picks": [
+        "#5 SIX PACK",
+        "#7 MIGHTY MASTS",
+        "#4 BEAUTY BOLT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 7,
           "horse_name": "MIGHTY MASTS",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 7,
+          "horse_name": "MIGHTY MASTS",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 10,
@@ -213,21 +334,38 @@
         "#9 ELITE GOLF",
         "#7 STAR RISE"
       ],
+      "fuse_picks": [
+        "#5 MY MARS",
+        "#2 MICKLEY",
+        "#10 ENDURANCE EXPRESS"
+      ],
       "mutual_horses": [
         {
           "horse_no": 5,
           "horse_name": "MY MARS",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 9,
           "horse_name": "ELITE GOLF",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 5,
+          "horse_name": "MY MARS",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 11,
@@ -241,21 +379,38 @@
         "#4 WITHOUT COMPARE",
         "#6 THE RED HARE"
       ],
+      "fuse_picks": [
+        "#7 BABY SAKURA",
+        "#5 FIT FOR BEAUTY",
+        "#14 VICTOR THE RAPID"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "WITHOUT COMPARE",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 7,
           "horse_name": "BABY SAKURA",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 7,
+          "horse_name": "BABY SAKURA",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     }
   ]
 }

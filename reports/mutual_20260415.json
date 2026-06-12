@@ -1,9 +1,11 @@
 {
   "date": "20260415",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 9,
   "n_mutual_total": 11,
+  "n_triple_total": 6,
   "races": [
     {
       "race_number": 1,
@@ -17,15 +19,31 @@
         "#3 LUCKY GENERATIONS",
         "#1 COUNTRY DANCER"
       ],
+      "fuse_picks": [
+        "#5 MACANESE MASTER",
+        "#12 BINGO BABE",
+        "#6 ALWAYS MY FOLKS"
+      ],
       "mutual_horses": [
         {
           "horse_no": 5,
           "horse_name": "MACANESE MASTER",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 5,
+          "horse_name": "MACANESE MASTER",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -39,8 +57,15 @@
         "#1 FLOOF",
         "#4 EXCEED THE WISH"
       ],
+      "fuse_picks": [
+        "#9 DRAGON SUNRISE",
+        "#10 WAH MAY WAI WAI",
+        "#4 EXCEED THE WISH"
+      ],
       "mutual_horses": [],
-      "mutual_size": 0
+      "mutual_size": 0,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 3,
@@ -54,21 +79,30 @@
         "#10 RUN RUN TIMING",
         "#7 RED BRICK WARRIOR"
       ],
+      "fuse_picks": [
+        "#1 FANTASTIC FUN",
+        "#4 TAKE ACTION",
+        "#11 VIVA FIRECRACKER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 7,
           "horse_name": "RED BRICK WARRIOR",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 10,
           "horse_name": "RUN RUN TIMING",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 4,
@@ -82,15 +116,23 @@
         "#3 NOBLE PURSUIT",
         "#7 CAN'T GO WONG"
       ],
+      "fuse_picks": [
+        "#1 ENTHRALLED",
+        "#11 ROMANTIC FANTASY",
+        "#3 NOBLE PURSUIT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "HARMONY GALAXY",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 5,
@@ -104,15 +146,31 @@
         "#4 DO YOUR PART",
         "#1 BEAUTY ALLIANCE"
       ],
+      "fuse_picks": [
+        "#1 BEAUTY ALLIANCE",
+        "#3 WROTE A NEW PAGE",
+        "#4 DO YOUR PART"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "DO YOUR PART",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "DO YOUR PART",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 6,
@@ -126,15 +184,31 @@
         "#8 QUARTZ LEGEND",
         "#4 TEAM TEAM FOLKS"
       ],
+      "fuse_picks": [
+        "#8 QUARTZ LEGEND",
+        "#4 TEAM TEAM FOLKS",
+        "#2 NORTHERN FIRE BALL"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "TEAM TEAM FOLKS",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "TEAM TEAM FOLKS",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 7,
@@ -148,27 +222,52 @@
         "#3 MASTER LUCKY",
         "#6 THE HEIR"
       ],
+      "fuse_picks": [
+        "#5 RAINBOW SEVEN",
+        "#7 FATAL BLOW",
+        "#6 THE HEIR"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "MASTER LUCKY",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 5,
           "horse_name": "RAINBOW SEVEN",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 6,
           "horse_name": "THE HEIR",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 5,
+          "horse_name": "RAINBOW SEVEN",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 6,
+          "horse_name": "THE HEIR",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 8,
@@ -182,15 +281,23 @@
         "#2 KEEFY",
         "#10 RAGGA BOMB"
       ],
+      "fuse_picks": [
+        "#8 ARMOR GOLDEN EAGLE",
+        "#11 ALL ROUND WINNER",
+        "#10 RAGGA BOMB"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "KEEFY",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 9,
@@ -204,15 +311,31 @@
         "#1 SYMBOL OF STRENGTH",
         "#12 SOMELOVEFROMABOVE"
       ],
+      "fuse_picks": [
+        "#12 SOMELOVEFROMABOVE",
+        "#9 STRAIGHT TO GLORY",
+        "#1 SYMBOL OF STRENGTH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 12,
           "horse_name": "SOMELOVEFROMABOVE",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 12,
+          "horse_name": "SOMELOVEFROMABOVE",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     }
   ]
 }

@@ -1,9 +1,11 @@
 {
   "date": "20260422",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 9,
   "n_mutual_total": 16,
+  "n_triple_total": 9,
   "races": [
     {
       "race_number": 1,
@@ -17,27 +19,52 @@
         "#6 HAPPY BOYS",
         "#8 TEAM HAPPY"
       ],
+      "fuse_picks": [
+        "#8 TEAM HAPPY",
+        "#4 NEBRASKAN",
+        "#5 THOUSAND CUPS"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "NEBRASKAN",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         },
         {
           "horse_no": 6,
           "horse_name": "HAPPY BOYS",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 8,
           "horse_name": "TEAM HAPPY",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "NEBRASKAN",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 8,
+          "horse_name": "TEAM HAPPY",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 2,
@@ -51,27 +78,52 @@
         "#6 DOUBLE BINGO",
         "#8 VERBIER"
       ],
+      "fuse_picks": [
+        "#8 VERBIER",
+        "#6 DOUBLE BINGO",
+        "#2 SOARING BRONCO"
+      ],
       "mutual_horses": [
         {
           "horse_no": 6,
           "horse_name": "DOUBLE BINGO",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 7,
           "horse_name": "PODIUM",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         },
         {
           "horse_no": 8,
           "horse_name": "VERBIER",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 6,
+          "horse_name": "DOUBLE BINGO",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 8,
+          "horse_name": "VERBIER",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 3,
@@ -85,15 +137,31 @@
         "#9 YIU CHEUNG VICTORY",
         "#4 FORTUNE STAR"
       ],
+      "fuse_picks": [
+        "#4 FORTUNE STAR",
+        "#5 SHOOTING TO TOP",
+        "#6 STAR ELEGANCE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "FORTUNE STAR",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "FORTUNE STAR",
+          "et_rank": 1,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 4,
@@ -107,15 +175,23 @@
         "#9 LEADING AGILITY",
         "#10 YEUX DE LIFELINE"
       ],
+      "fuse_picks": [
+        "#3 GEORGIAN SIGMA",
+        "#6 VIGOR EYE",
+        "#11 SOLAR RIVER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 9,
           "horse_name": "LEADING AGILITY",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 5,
@@ -129,21 +205,38 @@
         "#1 SPEEDY SMARTIE",
         "#12 WINNING CHAMPION"
       ],
+      "fuse_picks": [
+        "#11 THUNDER PRINCE",
+        "#9 LOVING VIBES",
+        "#8 LITTLE MONSTER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "SPEEDY SMARTIE",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         },
         {
           "horse_no": 11,
           "horse_name": "THUNDER PRINCE",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 11,
+          "horse_name": "THUNDER PRINCE",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 6,
@@ -157,21 +250,38 @@
         "#6 GRAND NOVA",
         "#5 DAY DAY VICTORY"
       ],
+      "fuse_picks": [
+        "#4 BEAUTY SHOW",
+        "#6 GRAND NOVA",
+        "#7 HARMONY FIRE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "BEAUTY SHOW",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 5,
           "horse_name": "DAY DAY VICTORY",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "BEAUTY SHOW",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 7,
@@ -185,15 +295,23 @@
         "#11 SPARKLING FELLOW",
         "#10 SKY CAP"
       ],
+      "fuse_picks": [
+        "#5 BUNTA BABY",
+        "#10 SKY CAP",
+        "#11 SPARKLING FELLOW"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "HORSEPOWER",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 8,
@@ -207,15 +325,23 @@
         "#2 HIGHLAND RAHY",
         "#1 LIVEANDLETLIVE"
       ],
+      "fuse_picks": [
+        "#11 ACE WAR",
+        "#3 CHINA WIN",
+        "#5 SO YOU WILL"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "HIGHLAND RAHY",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 9,
@@ -229,21 +355,45 @@
         "#1 AURIO",
         "#9 JUBILANT WINNER"
       ],
+      "fuse_picks": [
+        "#1 AURIO",
+        "#11 WITHOUT RHYME",
+        "#12 PACKING GLORY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "AURIO",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         },
         {
           "horse_no": 12,
           "horse_name": "PACKING GLORY",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "AURIO",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 12,
+          "horse_name": "PACKING GLORY",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     }
   ]
 }

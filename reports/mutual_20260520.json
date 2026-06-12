@@ -1,9 +1,11 @@
 {
   "date": "20260520",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 9,
   "n_mutual_total": 17,
+  "n_triple_total": 11,
   "races": [
     {
       "race_number": 1,
@@ -17,15 +19,31 @@
         "#1 HEROIC MASTER",
         "#3 MAJESTIC DELIGHT"
       ],
+      "fuse_picks": [
+        "#7 KING ALLOY",
+        "#11 TAIHANG SCENERY",
+        "#3 MAJESTIC DELIGHT"
+      ],
       "mutual_horses": [
         {
           "horse_no": 7,
           "horse_name": "KING ALLOY",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 7,
+          "horse_name": "KING ALLOY",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -39,21 +57,38 @@
         "#10 VIVACIOUS WIN",
         "#5 THE ABSOLUTE"
       ],
+      "fuse_picks": [
+        "#10 VIVACIOUS WIN",
+        "#11 BULL ATTITUDE",
+        "#5 THE ABSOLUTE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "GLORIOUS JOURNEY",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         },
         {
           "horse_no": 10,
           "horse_name": "VIVACIOUS WIN",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 10,
+          "horse_name": "VIVACIOUS WIN",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 3,
@@ -67,21 +102,45 @@
         "#9 LEGEND STAR",
         "#5 FREE PONY"
       ],
+      "fuse_picks": [
+        "#4 GEORGIAN SIGMA",
+        "#5 FREE PONY",
+        "#6 LIVE WIRE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "GEORGIAN SIGMA",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 5,
           "horse_name": "FREE PONY",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "GEORGIAN SIGMA",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 5,
+          "horse_name": "FREE PONY",
+          "et_rank": 1,
+          "sarr_rank": 3,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 4,
@@ -95,15 +154,31 @@
         "#12 OUR LUCKY GLORY",
         "#2 RAGGA BOMB"
       ],
+      "fuse_picks": [
+        "#8 DECISION LINK",
+        "#6 FORTUNE STAR",
+        "#11 BLAZING BEAM"
+      ],
       "mutual_horses": [
         {
           "horse_no": 8,
           "horse_name": "DECISION LINK",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 8,
+          "horse_name": "DECISION LINK",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 5,
@@ -117,27 +192,52 @@
         "#10 BITS SUPERSTAR",
         "#4 BEAUTY SHOW"
       ],
+      "fuse_picks": [
+        "#4 BEAUTY SHOW",
+        "#2 TYCOON RESOURCES",
+        "#12 HAPPY UNITED"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "TYCOON RESOURCES",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         },
         {
           "horse_no": 4,
           "horse_name": "BEAUTY SHOW",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 1
         },
         {
           "horse_no": 10,
           "horse_name": "BITS SUPERSTAR",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "TYCOON RESOURCES",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 4,
+          "horse_name": "BEAUTY SHOW",
+          "et_rank": 3,
+          "sarr_rank": 3,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 6,
@@ -151,27 +251,52 @@
         "#3 SUPERB KING",
         "#5 THE HEIR"
       ],
+      "fuse_picks": [
+        "#8 THUNDER PRINCE",
+        "#3 SUPERB KING",
+        "#7 FATAL BLOW"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "SUPERB KING",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         },
         {
           "horse_no": 5,
           "horse_name": "THE HEIR",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 8,
           "horse_name": "THUNDER PRINCE",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "SUPERB KING",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 8,
+          "horse_name": "THUNDER PRINCE",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 7,
@@ -185,15 +310,23 @@
         "#8 CALIFORNIA MOXIE",
         "#3 LOVERO"
       ],
+      "fuse_picks": [
+        "#3 LOVERO",
+        "#5 DO YOUR PART",
+        "#12 WIN METHOD"
+      ],
       "mutual_horses": [
         {
           "horse_no": 8,
           "horse_name": "CALIFORNIA MOXIE",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 8,
@@ -207,27 +340,52 @@
         "#7 STORMING DRAGON",
         "#6 FLYING WROTE"
       ],
+      "fuse_picks": [
+        "#3 GIANT BALLON",
+        "#2 CHATEAUNEUF",
+        "#7 STORMING DRAGON"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "GIANT BALLON",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 6,
           "horse_name": "FLYING WROTE",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         },
         {
           "horse_no": 7,
           "horse_name": "STORMING DRAGON",
           "et_rank": 2,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "GIANT BALLON",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 7,
+          "horse_name": "STORMING DRAGON",
+          "et_rank": 2,
+          "sarr_rank": 2,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 9,
@@ -241,15 +399,23 @@
         "#10 GENEVA",
         "#12 GLOWING PRAISES"
       ],
+      "fuse_picks": [
+        "#12 GLOWING PRAISES",
+        "#11 TURQUOISE VELOCITY",
+        "#1 BOTTOMUPTOGETHER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 9,
           "horse_name": "SIGHT HERMOSO",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     }
   ]
 }

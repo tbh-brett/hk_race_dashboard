@@ -1,9 +1,11 @@
 {
   "date": "20260429",
-  "schema_version": 1,
+  "schema_version": 2,
   "top_n": 3,
+  "has_fuse": true,
   "n_races": 9,
   "n_mutual_total": 16,
+  "n_triple_total": 13,
   "races": [
     {
       "race_number": 1,
@@ -17,15 +19,31 @@
         "#7 PERFECT PAIRING",
         "#5 FAMILY FORTUNE"
       ],
+      "fuse_picks": [
+        "#7 PERFECT PAIRING",
+        "#4 DASHING MAURISON",
+        "#6 KASA PAPA"
+      ],
       "mutual_horses": [
         {
           "horse_no": 7,
           "horse_name": "PERFECT PAIRING",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 7,
+          "horse_name": "PERFECT PAIRING",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -39,21 +57,45 @@
         "#9 KING GLORIOSO",
         "#6 THE PERFECT MATCH"
       ],
+      "fuse_picks": [
+        "#4 HONEST WITNESS",
+        "#9 KING GLORIOSO",
+        "#6 THE PERFECT MATCH"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "HONEST WITNESS",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 6,
           "horse_name": "THE PERFECT MATCH",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "HONEST WITNESS",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 6,
+          "horse_name": "THE PERFECT MATCH",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 3,
@@ -67,15 +109,23 @@
         "#9 STAR BROSE",
         "#5 DOUBLE WIN"
       ],
+      "fuse_picks": [
+        "#9 STAR BROSE",
+        "#11 ROMANTIC FANTASY",
+        "#8 JOYFUL PROSPERITY"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "SERANGOON",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [],
+      "triple_size": 0
     },
     {
       "race_number": 4,
@@ -89,27 +139,59 @@
         "#5 ACE POWER",
         "#3 FIND MY LOVE"
       ],
+      "fuse_picks": [
+        "#1 CROSSBORDERDUDE",
+        "#5 ACE POWER",
+        "#3 FIND MY LOVE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "CROSSBORDERDUDE",
           "et_rank": 3,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 3,
           "horse_name": "FIND MY LOVE",
           "et_rank": 2,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         },
         {
           "horse_no": 5,
           "horse_name": "ACE POWER",
           "et_rank": 1,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "CROSSBORDERDUDE",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 3,
+          "horse_name": "FIND MY LOVE",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        },
+        {
+          "horse_no": 5,
+          "horse_name": "ACE POWER",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 3
     },
     {
       "race_number": 5,
@@ -123,27 +205,59 @@
         "#2 SUPERB KING",
         "#5 THUNDER PRINCE"
       ],
+      "fuse_picks": [
+        "#2 SUPERB KING",
+        "#8 GAMEPLAYER ELITE",
+        "#5 THUNDER PRINCE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "SUPERB KING",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 1
         },
         {
           "horse_no": 5,
           "horse_name": "THUNDER PRINCE",
           "et_rank": 1,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": 3
         },
         {
           "horse_no": 8,
           "horse_name": "GAMEPLAYER ELITE",
           "et_rank": 2,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 3
+      "mutual_size": 3,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "SUPERB KING",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 5,
+          "horse_name": "THUNDER PRINCE",
+          "et_rank": 1,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        },
+        {
+          "horse_no": 8,
+          "horse_name": "GAMEPLAYER ELITE",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 3
     },
     {
       "race_number": 6,
@@ -157,15 +271,31 @@
         "#3 BEAUTY VIVA",
         "#9 JUSTIFYING"
       ],
+      "fuse_picks": [
+        "#4 ANOTHER ZONDA",
+        "#10 VIVACIOUS WIN",
+        "#9 JUSTIFYING"
+      ],
       "mutual_horses": [
         {
           "horse_no": 10,
           "horse_name": "VIVACIOUS WIN",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 10,
+          "horse_name": "VIVACIOUS WIN",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 7,
@@ -179,21 +309,38 @@
         "#10 CANDLELIGHT DINNER",
         "#8 GLOWING PRAISES"
       ],
+      "fuse_picks": [
+        "#2 COLOURFUL KING",
+        "#8 GLOWING PRAISES",
+        "#1 STELLAR EXPRESS"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "COLOURFUL KING",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 10,
           "horse_name": "CANDLELIGHT DINNER",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "COLOURFUL KING",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 8,
@@ -207,21 +354,38 @@
         "#8 EMBRACE ABERDEEN",
         "#6 FLYING WROTE"
       ],
+      "fuse_picks": [
+        "#4 GIANT BALLON",
+        "#12 MEOWTH",
+        "#2 HAPPY INDEX"
+      ],
       "mutual_horses": [
         {
           "horse_no": 4,
           "horse_name": "GIANT BALLON",
           "et_rank": 1,
-          "sarr_rank": 1
+          "sarr_rank": 1,
+          "fuse_rank": 1
         },
         {
           "horse_no": 6,
           "horse_name": "FLYING WROTE",
           "et_rank": 3,
-          "sarr_rank": 3
+          "sarr_rank": 3,
+          "fuse_rank": null
         }
       ],
-      "mutual_size": 2
+      "mutual_size": 2,
+      "triple_horses": [
+        {
+          "horse_no": 4,
+          "horse_name": "GIANT BALLON",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 9,
@@ -235,15 +399,31 @@
         "#10 VIVA GRACIOUSNESS",
         "#12 WITHALLMYFAITH"
       ],
+      "fuse_picks": [
+        "#12 WITHALLMYFAITH",
+        "#10 VIVA GRACIOUSNESS",
+        "#1 SOLID WIN"
+      ],
       "mutual_horses": [
         {
           "horse_no": 10,
           "horse_name": "VIVA GRACIOUSNESS",
           "et_rank": 3,
-          "sarr_rank": 2
+          "sarr_rank": 2,
+          "fuse_rank": 2
         }
       ],
-      "mutual_size": 1
+      "mutual_size": 1,
+      "triple_horses": [
+        {
+          "horse_no": 10,
+          "horse_name": "VIVA GRACIOUSNESS",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        }
+      ],
+      "triple_size": 1
     }
   ]
 }
