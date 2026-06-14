@@ -1,0 +1,796 @@
+{
+  "date": "2026-06-13",
+  "race_number": 6,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "779",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "AKERMANIS GOLD",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 372,
+          "cy": 112,
+          "x_frac": 0.517,
+          "y_in_band": 0.843,
+          "conf": 0.979,
+          "n_boxes": 1,
+          "ocr_text": "AkermanisGold"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 435,
+          "cy": 499,
+          "x_frac": 0.604,
+          "y_in_band": 0.399,
+          "conf": 0.95,
+          "n_boxes": 2,
+          "ocr_text": "AkermanisGold"
+        }
+      ],
+      "ocr_texts": [
+        "AkermanisGold",
+        "AkermanisGold",
+        "Akermanis Gold"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.624,
+      "avg_x_frac": 0.56,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "AMO ERGO SUM",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 259,
+          "cy": 29,
+          "x_frac": 0.36,
+          "y_in_band": 0.157,
+          "conf": 0.916,
+          "n_boxes": 1,
+          "ocr_text": "Amo Ergo Sum"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 232,
+          "cy": 182,
+          "x_frac": 0.322,
+          "y_in_band": 0.342,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "Amo Ergo Sum"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 257,
+          "cy": 320,
+          "x_frac": 0.357,
+          "y_in_band": 0.267,
+          "conf": 0.953,
+          "n_boxes": 1,
+          "ocr_text": "Amo Ergo Sum"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 339,
+          "cy": 533,
+          "x_frac": 0.471,
+          "y_in_band": 0.599,
+          "conf": 0.948,
+          "n_boxes": 1,
+          "ocr_text": "Amo Ergo Sum"
+        }
+      ],
+      "ocr_texts": [
+        "Amo Ergo Sum",
+        "Amo Ergo Sum",
+        "Amo Ergo Sum",
+        "Amo Ergo Sum"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.343,
+      "avg_x_frac": 0.377,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CORNERSTONE",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 432,
+          "cy": 103,
+          "x_frac": 0.6,
+          "y_in_band": 0.769,
+          "conf": 0.905,
+          "n_boxes": 1,
+          "ocr_text": "Cornerstone"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 386,
+          "cy": 269,
+          "x_frac": 0.536,
+          "y_in_band": 0.926,
+          "conf": 0.99,
+          "n_boxes": 1,
+          "ocr_text": "Comerstone"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 386,
+          "cy": 410,
+          "x_frac": 0.536,
+          "y_in_band": 0.867,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "Comerstone"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 535,
+          "cy": 545,
+          "x_frac": 0.743,
+          "y_in_band": 0.669,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Comerstone"
+        }
+      ],
+      "ocr_texts": [
+        "Cornerstone",
+        "Comerstone",
+        "Comerstone",
+        "Comerstone"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.809,
+      "avg_x_frac": 0.603,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GHORGAN",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 218,
+          "cy": 102,
+          "x_frac": 0.303,
+          "y_in_band": 0.76,
+          "conf": 0.994,
+          "n_boxes": 1,
+          "ocr_text": "Ghorgan"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 225,
+          "cy": 252,
+          "x_frac": 0.312,
+          "y_in_band": 0.812,
+          "conf": 0.995,
+          "n_boxes": 1,
+          "ocr_text": "Ghorgan"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 266,
+          "cy": 379,
+          "x_frac": 0.369,
+          "y_in_band": 0.66,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "Ghorgan"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 293,
+          "cy": 540,
+          "x_frac": 0.407,
+          "y_in_band": 0.64,
+          "conf": 0.985,
+          "n_boxes": 1,
+          "ocr_text": "Ghorgan"
+        }
+      ],
+      "ocr_texts": [
+        "Ghorgan",
+        "Ghorgan",
+        "Ghorgan",
+        "Ghorgan"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.718,
+      "avg_x_frac": 0.348,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GORGEOUS VICTORY",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 309,
+          "cy": 102,
+          "x_frac": 0.429,
+          "y_in_band": 0.76,
+          "conf": 0.946,
+          "n_boxes": 1,
+          "ocr_text": "GorgeousVictory"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 276,
+          "cy": 266,
+          "x_frac": 0.383,
+          "y_in_band": 0.906,
+          "conf": 0.927,
+          "n_boxes": 1,
+          "ocr_text": "GorgeousVictory"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 202,
+          "cy": 413,
+          "x_frac": 0.281,
+          "y_in_band": 0.887,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "Gorgeous Victory"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 133,
+          "cy": 569,
+          "x_frac": 0.185,
+          "y_in_band": 0.808,
+          "conf": 0.963,
+          "n_boxes": 1,
+          "ocr_text": "GorgeousVictory"
+        }
+      ],
+      "ocr_texts": [
+        "GorgeousVictory",
+        "GorgeousVictory",
+        "Gorgeous Victory",
+        "GorgeousVictory"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.84,
+      "avg_x_frac": 0.318,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MEANINGFUL DRAGON",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 142,
+          "cy": 105,
+          "x_frac": 0.197,
+          "y_in_band": 0.785,
+          "conf": 0.935,
+          "n_boxes": 1,
+          "ocr_text": "Meaningful Dragon"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 152,
+          "cy": 251,
+          "x_frac": 0.211,
+          "y_in_band": 0.805,
+          "conf": 0.894,
+          "n_boxes": 1,
+          "ocr_text": "Meaningful Dragon"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 121,
+          "cy": 385,
+          "x_frac": 0.168,
+          "y_in_band": 0.7,
+          "conf": 0.975,
+          "n_boxes": 1,
+          "ocr_text": "Meaningful Dragon"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 119,
+          "cy": 543,
+          "x_frac": 0.165,
+          "y_in_band": 0.657,
+          "conf": 0.93,
+          "n_boxes": 1,
+          "ocr_text": "Meaningtul Dragon"
+        }
+      ],
+      "ocr_texts": [
+        "Meaningful Dragon",
+        "Meaningful Dragon",
+        "Meaningful Dragon",
+        "Meaningtul Dragon"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.736,
+      "avg_x_frac": 0.185,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PERIDOT",
+      "horse_no": 13,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 570,
+          "cy": 112,
+          "x_frac": 0.792,
+          "y_in_band": 0.843,
+          "conf": 0.986,
+          "n_boxes": 1,
+          "ocr_text": "Peridot"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 487,
+          "cy": 292,
+          "x_frac": 0.676,
+          "y_in_band": 0.08,
+          "conf": 0.968,
+          "n_boxes": 1,
+          "ocr_text": "Peridot"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 548,
+          "cy": 513,
+          "x_frac": 0.761,
+          "y_in_band": 0.482,
+          "conf": 0.953,
+          "n_boxes": 2,
+          "ocr_text": "Peridot"
+        }
+      ],
+      "ocr_texts": [
+        "Peridot",
+        "Peridot",
+        "Peridot",
+        "Peridot"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.471,
+      "avg_x_frac": 0.743,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "POLAR PATCH",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 205,
+          "cy": 125,
+          "x_frac": 0.285,
+          "y_in_band": 0.95,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "PolarPatch"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 205,
+          "cy": 275,
+          "x_frac": 0.285,
+          "y_in_band": 0.966,
+          "conf": 0.945,
+          "n_boxes": 1,
+          "ocr_text": "Polar Patch"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 225,
+          "cy": 387,
+          "x_frac": 0.313,
+          "y_in_band": 0.713,
+          "conf": 0.959,
+          "n_boxes": 1,
+          "ocr_text": "PolarPatch"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 282,
+          "cy": 565,
+          "x_frac": 0.392,
+          "y_in_band": 0.785,
+          "conf": 0.981,
+          "n_boxes": 1,
+          "ocr_text": "PolarPatch"
+        }
+      ],
+      "ocr_texts": [
+        "PolarPatch",
+        "Polar Patch",
+        "PolarPatch",
+        "PolarPatch"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.854,
+      "avg_x_frac": 0.319,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PRESTIGE SUPERIOR",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 679,
+          "cy": 109,
+          "x_frac": 0.943,
+          "y_in_band": 0.818,
+          "conf": 0.955,
+          "n_boxes": 1,
+          "ocr_text": "Prestige Superior"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 538,
+          "cy": 292,
+          "x_frac": 0.747,
+          "y_in_band": 0.08,
+          "conf": 0.982,
+          "n_boxes": 1,
+          "ocr_text": "Prestige Superior"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 565,
+          "cy": 442,
+          "x_frac": 0.785,
+          "y_in_band": 0.07,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "Prestige Superior"
+        }
+      ],
+      "ocr_texts": [
+        "Prestige Superior",
+        "Prestige Superior",
+        "Prestige Superior"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.32,
+      "avg_x_frac": 0.824,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ROMANTIC LAOS",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 339,
+          "cy": 30,
+          "x_frac": 0.471,
+          "y_in_band": 0.165,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "RomanticLaos"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 335,
+          "cy": 263,
+          "x_frac": 0.465,
+          "y_in_band": 0.886,
+          "conf": 0.956,
+          "n_boxes": 1,
+          "ocr_text": "Romantic Laos"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 335,
+          "cy": 404,
+          "x_frac": 0.465,
+          "y_in_band": 0.827,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "Romantic Laos"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 389,
+          "cy": 565,
+          "x_frac": 0.54,
+          "y_in_band": 0.785,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "RomanticLaos"
+        }
+      ],
+      "ocr_texts": [
+        "RomanticLaos",
+        "Romantic Laos",
+        "Romantic Laos",
+        "RomanticLaos"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.661,
+      "avg_x_frac": 0.485,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SUNDAY'S SERENADE",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 508,
+          "cy": 109,
+          "x_frac": 0.706,
+          "y_in_band": 0.818,
+          "conf": 0.969,
+          "n_boxes": 1,
+          "ocr_text": "Sunday'sSerenade"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 424,
+          "cy": 291,
+          "x_frac": 0.589,
+          "y_in_band": 0.073,
+          "conf": 0.949,
+          "n_boxes": 1,
+          "ocr_text": "Sunday'sSerenade"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 464,
+          "cy": 511,
+          "x_frac": 0.645,
+          "y_in_band": 0.474,
+          "conf": 0.969,
+          "n_boxes": 2,
+          "ocr_text": "Sunday's Serenade"
+        }
+      ],
+      "ocr_texts": [
+        "Sunday'sSerenade",
+        "Sunday'sSerenade",
+        "Sunday'sSerenade",
+        "Sunday's Serenade"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.458,
+      "avg_x_frac": 0.647,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SYNERGY EXPRESS",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 289,
+          "cy": 126,
+          "x_frac": 0.401,
+          "y_in_band": 0.959,
+          "conf": 0.984,
+          "n_boxes": 1,
+          "ocr_text": "SynergyExpress"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 283,
+          "cy": 358,
+          "x_frac": 0.393,
+          "y_in_band": 0.521,
+          "conf": 0.967,
+          "n_boxes": 2,
+          "ocr_text": "Synergy Express"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 591,
+          "cy": 557,
+          "x_frac": 0.821,
+          "y_in_band": 0.738,
+          "conf": 0.969,
+          "n_boxes": 1,
+          "ocr_text": "Synergy Express"
+        }
+      ],
+      "ocr_texts": [
+        "SynergyExpress",
+        "Synergy Express",
+        "Synergy Express",
+        "Synergy Express"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.741,
+      "avg_x_frac": 0.538,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VOYAGE BOSS",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "779",
+          "cx": 105,
+          "cy": 29,
+          "x_frac": 0.146,
+          "y_in_band": 0.157,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Voyage Boss"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 119,
+          "cy": 185,
+          "x_frac": 0.165,
+          "y_in_band": 0.362,
+          "conf": 0.956,
+          "n_boxes": 1,
+          "ocr_text": "Voyage Boss"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 135,
+          "cy": 319,
+          "x_frac": 0.188,
+          "y_in_band": 0.26,
+          "conf": 0.963,
+          "n_boxes": 1,
+          "ocr_text": "Voyage Boss"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 193,
+          "cy": 538,
+          "x_frac": 0.268,
+          "y_in_band": 0.628,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Voyage Boss"
+        }
+      ],
+      "ocr_texts": [
+        "Voyage Boss",
+        "Voyage Boss",
+        "Voyage Boss",
+        "Voyage Boss"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.352,
+      "avg_x_frac": 0.192,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 103,
+    "matched_horses": 13,
+    "field_size": 14,
+    "coverage": 0.929,
+    "parsed_at": "2026-06-14T05:29:13"
+  }
+}
