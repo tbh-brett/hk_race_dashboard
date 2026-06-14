@@ -1,0 +1,669 @@
+{
+  "date": "2026-06-13",
+  "race_number": 9,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "782",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "AURORA PATCH",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 124,
+          "cy": 127,
+          "x_frac": 0.172,
+          "y_in_band": 0.967,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "AuroraPatch"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 180,
+          "cy": 378,
+          "x_frac": 0.25,
+          "y_in_band": 0.653,
+          "conf": 0.964,
+          "n_boxes": 1,
+          "ocr_text": "Aurora Patch"
+        }
+      ],
+      "ocr_texts": [
+        "AuroraPatch",
+        "Aurora Patch"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.812,
+      "avg_x_frac": 0.211,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "BLAZING WIND",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 237,
+          "cy": 127,
+          "x_frac": 0.329,
+          "y_in_band": 0.967,
+          "conf": 0.97,
+          "n_boxes": 1,
+          "ocr_text": "Blazing Wind"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 235,
+          "cy": 261,
+          "x_frac": 0.326,
+          "y_in_band": 0.872,
+          "conf": 0.934,
+          "n_boxes": 1,
+          "ocr_text": "Blazing Wind"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 234,
+          "cy": 380,
+          "x_frac": 0.325,
+          "y_in_band": 0.667,
+          "conf": 0.955,
+          "n_boxes": 1,
+          "ocr_text": "Blazing Wind"
+        }
+      ],
+      "ocr_texts": [
+        "Blazing Wind",
+        "Blazing Wind",
+        "Blazing Wind"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.836,
+      "avg_x_frac": 0.327,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GRAND EAGLE",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 427,
+          "cy": 104,
+          "x_frac": 0.593,
+          "y_in_band": 0.777,
+          "conf": 0.94,
+          "n_boxes": 1,
+          "ocr_text": "Grand Eagle"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 492,
+          "cy": 249,
+          "x_frac": 0.683,
+          "y_in_band": 0.792,
+          "conf": 0.947,
+          "n_boxes": 1,
+          "ocr_text": "Grand Eagle"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 509,
+          "cy": 390,
+          "x_frac": 0.707,
+          "y_in_band": 0.733,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "GrandEagle"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 615,
+          "cy": 551,
+          "x_frac": 0.854,
+          "y_in_band": 0.703,
+          "conf": 0.957,
+          "n_boxes": 1,
+          "ocr_text": "Grand Eagle"
+        }
+      ],
+      "ocr_texts": [
+        "Grand Eagle",
+        "Grand Eagle",
+        "GrandEagle",
+        "Grand Eagle"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.751,
+      "avg_x_frac": 0.71,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LUCKY PLANET",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 254,
+          "cy": 47,
+          "x_frac": 0.353,
+          "y_in_band": 0.306,
+          "conf": 0.944,
+          "n_boxes": 1,
+          "ocr_text": "Lucky Planet"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 434,
+          "cy": 188,
+          "x_frac": 0.603,
+          "y_in_band": 0.383,
+          "conf": 0.978,
+          "n_boxes": 1,
+          "ocr_text": "uckyPlane"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 611,
+          "cy": 324,
+          "x_frac": 0.849,
+          "y_in_band": 0.293,
+          "conf": 0.937,
+          "n_boxes": 1,
+          "ocr_text": "Lucky Plane"
+        }
+      ],
+      "ocr_texts": [
+        "Lucky Planet",
+        "uckyPlane",
+        "Lucky Plane"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.328,
+      "avg_x_frac": 0.601,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MIGHTY COMMANDER",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 517,
+          "cy": 50,
+          "x_frac": 0.718,
+          "y_in_band": 0.331,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "Mighty Commander"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 481,
+          "cy": 274,
+          "x_frac": 0.668,
+          "y_in_band": 0.96,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Mighty Commander"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 338,
+          "cy": 442,
+          "x_frac": 0.469,
+          "y_in_band": 0.07,
+          "conf": 0.966,
+          "n_boxes": 1,
+          "ocr_text": "Mighty Commander"
+        }
+      ],
+      "ocr_texts": [
+        "Mighty Commander",
+        "Mighty Commander",
+        "Mighty Commander"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.455,
+      "avg_x_frac": 0.618,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MR ENERGIA",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 449,
+          "cy": 48,
+          "x_frac": 0.624,
+          "y_in_band": 0.314,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "MrEnergia"
+        }
+      ],
+      "ocr_texts": [
+        "MrEnergia"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.314,
+      "avg_x_frac": 0.624,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "MUST GO",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 425,
+          "cy": 128,
+          "x_frac": 0.59,
+          "y_in_band": 0.975,
+          "conf": 0.928,
+          "n_boxes": 1,
+          "ocr_text": "Must Go"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 396,
+          "cy": 251,
+          "x_frac": 0.55,
+          "y_in_band": 0.805,
+          "conf": 0.941,
+          "n_boxes": 1,
+          "ocr_text": "Must Go"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 361,
+          "cy": 398,
+          "x_frac": 0.501,
+          "y_in_band": 0.787,
+          "conf": 0.986,
+          "n_boxes": 1,
+          "ocr_text": "MustGo"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 265,
+          "cy": 564,
+          "x_frac": 0.368,
+          "y_in_band": 0.779,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "Must Go"
+        }
+      ],
+      "ocr_texts": [
+        "Must Go",
+        "Must Go",
+        "MustGo",
+        "Must Go"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.835,
+      "avg_x_frac": 0.502,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NOTTHESILLYONE",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 181,
+          "cy": 127,
+          "x_frac": 0.251,
+          "y_in_band": 0.967,
+          "conf": 0.977,
+          "n_boxes": 1,
+          "ocr_text": "Notthesilyone"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 425,
+          "cy": 543,
+          "x_frac": 0.59,
+          "y_in_band": 0.657,
+          "conf": 0.899,
+          "n_boxes": 1,
+          "ocr_text": "Nothesillyone"
+        }
+      ],
+      "ocr_texts": [
+        "Notthesilyone",
+        "Nothesillyone"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.818,
+      "avg_x_frac": 0.413,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PI LEGEND",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 320,
+          "cy": 127,
+          "x_frac": 0.444,
+          "y_in_band": 0.967,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "PiLegend"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 326,
+          "cy": 259,
+          "x_frac": 0.453,
+          "y_in_band": 0.859,
+          "conf": 0.915,
+          "n_boxes": 1,
+          "ocr_text": "PiLegend"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 224,
+          "cy": 404,
+          "x_frac": 0.311,
+          "y_in_band": 0.827,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "PiLegend"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 125,
+          "cy": 562,
+          "x_frac": 0.174,
+          "y_in_band": 0.767,
+          "conf": 0.922,
+          "n_boxes": 1,
+          "ocr_text": "PiLegend"
+        }
+      ],
+      "ocr_texts": [
+        "PiLegend",
+        "PiLegend",
+        "PiLegend",
+        "PiLegend"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.856,
+      "avg_x_frac": 0.346,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TURQUOISE VELOCITY",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 125,
+          "cy": 50,
+          "x_frac": 0.174,
+          "y_in_band": 0.331,
+          "conf": 0.977,
+          "n_boxes": 1,
+          "ocr_text": "Turquoise Velocity"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 115,
+          "cy": 378,
+          "x_frac": 0.16,
+          "y_in_band": 0.653,
+          "conf": 0.966,
+          "n_boxes": 1,
+          "ocr_text": "Turquoise Velocity"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 151,
+          "cy": 539,
+          "x_frac": 0.21,
+          "y_in_band": 0.634,
+          "conf": 0.974,
+          "n_boxes": 1,
+          "ocr_text": "Turquoise Velocity"
+        }
+      ],
+      "ocr_texts": [
+        "Turquoise Velocity",
+        "Turquoise Velocity",
+        "Turquoise Velocity"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.539,
+      "avg_x_frac": 0.181,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VICTORY SKY",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 343,
+          "cy": 47,
+          "x_frac": 0.476,
+          "y_in_band": 0.306,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "VictorySky"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 440,
+          "cy": 244,
+          "x_frac": 0.611,
+          "y_in_band": 0.758,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "Victory Sky"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 383,
+          "cy": 375,
+          "x_frac": 0.532,
+          "y_in_band": 0.633,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "Victory Sky"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 290,
+          "cy": 542,
+          "x_frac": 0.403,
+          "y_in_band": 0.651,
+          "conf": 0.949,
+          "n_boxes": 1,
+          "ocr_text": "Victory Sky"
+        }
+      ],
+      "ocr_texts": [
+        "VictorySky",
+        "Victory Sky",
+        "Victory Sky",
+        "Victory Sky"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.584,
+      "avg_x_frac": 0.505,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VULCANUS",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "782",
+          "cx": 379,
+          "cy": 127,
+          "x_frac": 0.526,
+          "y_in_band": 0.967,
+          "conf": 0.981,
+          "n_boxes": 1,
+          "ocr_text": "Vulcanus"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 396,
+          "cy": 275,
+          "x_frac": 0.55,
+          "y_in_band": 0.966,
+          "conf": 0.968,
+          "n_boxes": 1,
+          "ocr_text": "Vulcanus"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 354,
+          "cy": 421,
+          "x_frac": 0.492,
+          "y_in_band": 0.94,
+          "conf": 0.924,
+          "n_boxes": 1,
+          "ocr_text": "Vulcanus"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 394,
+          "cy": 572,
+          "x_frac": 0.547,
+          "y_in_band": 0.826,
+          "conf": 0.895,
+          "n_boxes": 1,
+          "ocr_text": "ulcanus"
+        }
+      ],
+      "ocr_texts": [
+        "Vulcanus",
+        "Vulcanus",
+        "Vulcanus",
+        "ulcanus"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.927,
+      "avg_x_frac": 0.529,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 81,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-06-14T05:29:17"
+  }
+}
