@@ -1,0 +1,632 @@
+{
+  "date": "2026-06-13",
+  "race_number": 2,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "775",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ALWAYS FLUKE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "775",
+          "cx": 316,
+          "cy": 113,
+          "x_frac": 0.439,
+          "y_in_band": 0.851,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "Always Fluke"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 248,
+          "cy": 253,
+          "x_frac": 0.344,
+          "y_in_band": 0.819,
+          "conf": 0.993,
+          "n_boxes": 1,
+          "ocr_text": "AlwaysFluke"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 161,
+          "cy": 404,
+          "x_frac": 0.224,
+          "y_in_band": 0.827,
+          "conf": 0.969,
+          "n_boxes": 1,
+          "ocr_text": "AlwaysFluke"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 149,
+          "cy": 548,
+          "x_frac": 0.207,
+          "y_in_band": 0.686,
+          "conf": 0.987,
+          "n_boxes": 1,
+          "ocr_text": "AlwaysFluke"
+        }
+      ],
+      "ocr_texts": [
+        "Always Fluke",
+        "AlwaysFluke",
+        "AlwaysFluke",
+        "AlwaysFluke"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.795,
+      "avg_x_frac": 0.303,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "AQUAMAN",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 553,
+          "cy": 135,
+          "x_frac": 0.768,
+          "y_in_band": 0.027,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "Aquaman"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 482,
+          "cy": 285,
+          "x_frac": 0.669,
+          "y_in_band": 0.033,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "Aquaman"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 400,
+          "cy": 510,
+          "x_frac": 0.556,
+          "y_in_band": 0.465,
+          "conf": 0.994,
+          "n_boxes": 2,
+          "ocr_text": "Aquaman"
+        }
+      ],
+      "ocr_texts": [
+        "Aquaman",
+        "Aquaman",
+        "Aquaman",
+        "Aquaman"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.175,
+      "avg_x_frac": 0.664,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "COUNTRY DANCER",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "775",
+          "cx": 436,
+          "cy": 45,
+          "x_frac": 0.606,
+          "y_in_band": 0.289,
+          "conf": 0.975,
+          "n_boxes": 1,
+          "ocr_text": "CountryDancer"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 335,
+          "cy": 252,
+          "x_frac": 0.465,
+          "y_in_band": 0.812,
+          "conf": 0.981,
+          "n_boxes": 1,
+          "ocr_text": "Country Dancer"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 161,
+          "cy": 428,
+          "x_frac": 0.224,
+          "y_in_band": 0.987,
+          "conf": 0.958,
+          "n_boxes": 1,
+          "ocr_text": "Country Dancer"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 120,
+          "cy": 574,
+          "x_frac": 0.167,
+          "y_in_band": 0.837,
+          "conf": 0.917,
+          "n_boxes": 1,
+          "ocr_text": "Country Dancer"
+        }
+      ],
+      "ocr_texts": [
+        "CountryDancer",
+        "Country Dancer",
+        "Country Dancer",
+        "Country Dancer"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.729,
+      "avg_x_frac": 0.369,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CRAZY TREASURE",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 409,
+          "cy": 135,
+          "x_frac": 0.568,
+          "y_in_band": 0.027,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "Crazy Treasure"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 320,
+          "cy": 508,
+          "x_frac": 0.444,
+          "y_in_band": 0.451,
+          "conf": 0.969,
+          "n_boxes": 2,
+          "ocr_text": "Crazy Treasure"
+        }
+      ],
+      "ocr_texts": [
+        "Crazy Treasure",
+        "Crazy Treasure",
+        "CrazyTreasure"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.239,
+      "avg_x_frac": 0.506,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HANDSOME BLOND",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "775",
+          "cx": 278,
+          "cy": 46,
+          "x_frac": 0.386,
+          "y_in_band": 0.298,
+          "conf": 0.985,
+          "n_boxes": 1,
+          "ocr_text": "Handsome Blond"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 360,
+          "cy": 411,
+          "x_frac": 0.5,
+          "y_in_band": 0.873,
+          "conf": 0.982,
+          "n_boxes": 1,
+          "ocr_text": "Handsome Blond"
+        }
+      ],
+      "ocr_texts": [
+        "Handsome Blond",
+        "Handsome Blond"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.585,
+      "avg_x_frac": 0.443,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MONEY TYCOON",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 492,
+          "cy": 135,
+          "x_frac": 0.683,
+          "y_in_band": 0.027,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "Money Tycoon"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 419,
+          "cy": 420,
+          "x_frac": 0.582,
+          "y_in_band": 0.933,
+          "conf": 0.956,
+          "n_boxes": 1,
+          "ocr_text": "Money Tycoon"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 571,
+          "cy": 566,
+          "x_frac": 0.793,
+          "y_in_band": 0.791,
+          "conf": 0.927,
+          "n_boxes": 1,
+          "ocr_text": "Money Tycoon"
+        }
+      ],
+      "ocr_texts": [
+        "Money Tycoon",
+        "Money Tycoon",
+        "Money Tycoon"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.582,
+      "avg_x_frac": 0.685,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ROBOT KNIGHT",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "775",
+          "cx": 170,
+          "cy": 45,
+          "x_frac": 0.236,
+          "y_in_band": 0.289,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "Robot Knight"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 217,
+          "cy": 178,
+          "x_frac": 0.301,
+          "y_in_band": 0.315,
+          "conf": 0.966,
+          "n_boxes": 1,
+          "ocr_text": "Robot Knight"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 230,
+          "cy": 398,
+          "x_frac": 0.319,
+          "y_in_band": 0.787,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "Robot Knight"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 339,
+          "cy": 470,
+          "x_frac": 0.471,
+          "y_in_band": 0.233,
+          "conf": 0.987,
+          "n_boxes": 1,
+          "ocr_text": "RobotKnigh"
+        }
+      ],
+      "ocr_texts": [
+        "Robot Knight",
+        "Robot Knight",
+        "Robot Knight",
+        "RobotKnigh"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.404,
+      "avg_x_frac": 0.333,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE ALL ROUNDER",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "775",
+          "cx": 389,
+          "cy": 113,
+          "x_frac": 0.54,
+          "y_in_band": 0.851,
+          "conf": 0.949,
+          "n_boxes": 1,
+          "ocr_text": "The All Rounder"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 353,
+          "cy": 275,
+          "x_frac": 0.49,
+          "y_in_band": 0.966,
+          "conf": 0.922,
+          "n_boxes": 1,
+          "ocr_text": "The All Rounder"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 253,
+          "cy": 427,
+          "x_frac": 0.351,
+          "y_in_band": 0.98,
+          "conf": 0.916,
+          "n_boxes": 1,
+          "ocr_text": "The Al Rounder"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 221,
+          "cy": 575,
+          "x_frac": 0.307,
+          "y_in_band": 0.843,
+          "conf": 0.952,
+          "n_boxes": 1,
+          "ocr_text": "The AllRounder"
+        }
+      ],
+      "ocr_texts": [
+        "The All Rounder",
+        "The All Rounder",
+        "The Al Rounder",
+        "The AllRounder"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.909,
+      "avg_x_frac": 0.422,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VERBIER",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "775",
+          "cx": 206,
+          "cy": 123,
+          "x_frac": 0.286,
+          "y_in_band": 0.934,
+          "conf": 0.832,
+          "n_boxes": 1,
+          "ocr_text": "Verbier"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 183,
+          "cy": 249,
+          "x_frac": 0.254,
+          "y_in_band": 0.792,
+          "conf": 0.908,
+          "n_boxes": 1,
+          "ocr_text": "/erbier"
+        }
+      ],
+      "ocr_texts": [
+        "Verbier",
+        "/erbier"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.86,
+      "avg_x_frac": 0.269,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VIVA CHALEUR",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "775",
+          "cx": 111,
+          "cy": 113,
+          "x_frac": 0.154,
+          "y_in_band": 0.851,
+          "conf": 0.936,
+          "n_boxes": 1,
+          "ocr_text": "Viva Chaleur"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 129,
+          "cy": 178,
+          "x_frac": 0.179,
+          "y_in_band": 0.315,
+          "conf": 0.969,
+          "n_boxes": 1,
+          "ocr_text": "Viva Chaleur"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 222,
+          "cy": 471,
+          "x_frac": 0.308,
+          "y_in_band": 0.238,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "Viva Chaleur"
+        }
+      ],
+      "ocr_texts": [
+        "Viva Chaleur",
+        "Viva Chaleur",
+        "Viva Chaleur"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.465,
+      "avg_x_frac": 0.214,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VON BAER",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "775",
+          "cx": 258,
+          "cy": 126,
+          "x_frac": 0.358,
+          "y_in_band": 0.959,
+          "conf": 0.985,
+          "n_boxes": 1,
+          "ocr_text": "VonBaer"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 295,
+          "cy": 275,
+          "x_frac": 0.41,
+          "y_in_band": 0.966,
+          "conf": 0.958,
+          "n_boxes": 1,
+          "ocr_text": "VonBaer"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 306,
+          "cy": 418,
+          "x_frac": 0.425,
+          "y_in_band": 0.92,
+          "conf": 0.901,
+          "n_boxes": 1,
+          "ocr_text": "Von Baer"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 520,
+          "cy": 557,
+          "x_frac": 0.722,
+          "y_in_band": 0.738,
+          "conf": 0.994,
+          "n_boxes": 1,
+          "ocr_text": "VonBaer"
+        }
+      ],
+      "ocr_texts": [
+        "VonBaer",
+        "VonBaer",
+        "Von Baer",
+        "VonBaer"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.894,
+      "avg_x_frac": 0.481,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 81,
+    "matched_horses": 11,
+    "field_size": 12,
+    "coverage": 0.917,
+    "parsed_at": "2026-06-14T05:29:07"
+  }
+}
