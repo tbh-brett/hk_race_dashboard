@@ -1,0 +1,544 @@
+{
+  "date": "2026-06-21",
+  "race_number": 7,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "791",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "COPARTNER PRANCE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "791",
+          "cx": 118,
+          "cy": 34,
+          "x_frac": 0.164,
+          "y_in_band": 0.198,
+          "conf": 0.928,
+          "n_boxes": 1,
+          "ocr_text": "Copartner Prancel"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 217,
+          "cy": 327,
+          "x_frac": 0.301,
+          "y_in_band": 0.313,
+          "conf": 0.922,
+          "n_boxes": 1,
+          "ocr_text": "CoparnerPranceu"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 313,
+          "cy": 484,
+          "x_frac": 0.435,
+          "y_in_band": 0.314,
+          "conf": 0.931,
+          "n_boxes": 1,
+          "ocr_text": "CopartnerPrance"
+        }
+      ],
+      "ocr_texts": [
+        "Copartner Prancel",
+        "CoparnerPranceu",
+        "CopartnerPrance"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.275,
+      "avg_x_frac": 0.3,
+      "wide_frames": 0,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "CRIMSON FLASH",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "791",
+          "cx": 543,
+          "cy": 102,
+          "x_frac": 0.754,
+          "y_in_band": 0.76,
+          "conf": 0.945,
+          "n_boxes": 1,
+          "ocr_text": "Crimson Flash"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 441,
+          "cy": 267,
+          "x_frac": 0.613,
+          "y_in_band": 0.913,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "Crimson Flash"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 336,
+          "cy": 501,
+          "x_frac": 0.466,
+          "y_in_band": 0.414,
+          "conf": 0.987,
+          "n_boxes": 2,
+          "ocr_text": "CrimsonFlash"
+        }
+      ],
+      "ocr_texts": [
+        "Crimson Flash",
+        "Crimson Flash",
+        "CrimsonFlash",
+        "Crimson Flash"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.693,
+      "avg_x_frac": 0.609,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GALAXY PATCH",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "791",
+          "cx": 586,
+          "cy": 33,
+          "x_frac": 0.814,
+          "y_in_band": 0.19,
+          "conf": 0.897,
+          "n_boxes": 1,
+          "ocr_text": "alaxyPatch"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 374,
+          "cy": 248,
+          "x_frac": 0.519,
+          "y_in_band": 0.785,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "GalaxyPatch"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 269,
+          "cy": 422,
+          "x_frac": 0.374,
+          "y_in_band": 0.947,
+          "conf": 0.99,
+          "n_boxes": 1,
+          "ocr_text": "GalaxyPatch"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 150,
+          "cy": 564,
+          "x_frac": 0.208,
+          "y_in_band": 0.779,
+          "conf": 0.901,
+          "n_boxes": 1,
+          "ocr_text": "ilaxyPatch"
+        }
+      ],
+      "ocr_texts": [
+        "alaxyPatch",
+        "GalaxyPatch",
+        "GalaxyPatch",
+        "ilaxyPatch"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.685,
+      "avg_x_frac": 0.477,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LITTLE PARADISE",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "791",
+          "cx": 364,
+          "cy": 105,
+          "x_frac": 0.506,
+          "y_in_band": 0.785,
+          "conf": 0.88,
+          "n_boxes": 1,
+          "ocr_text": "Litle Paradise"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 252,
+          "cy": 274,
+          "x_frac": 0.35,
+          "y_in_band": 0.96,
+          "conf": 0.913,
+          "n_boxes": 1,
+          "ocr_text": "LitleParadise"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 177,
+          "cy": 425,
+          "x_frac": 0.246,
+          "y_in_band": 0.967,
+          "conf": 0.931,
+          "n_boxes": 1,
+          "ocr_text": "LimleParadise"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 108,
+          "cy": 543,
+          "x_frac": 0.15,
+          "y_in_band": 0.657,
+          "conf": 0.94,
+          "n_boxes": 1,
+          "ocr_text": "Little Paradise"
+        }
+      ],
+      "ocr_texts": [
+        "Litle Paradise",
+        "LitleParadise",
+        "LimleParadise",
+        "Little Paradise"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.842,
+      "avg_x_frac": 0.31,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LUCKY WITH YOU",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "791",
+          "cx": 164,
+          "cy": 99,
+          "x_frac": 0.228,
+          "y_in_band": 0.736,
+          "conf": 0.924,
+          "n_boxes": 1,
+          "ocr_text": "Lucky WithYou"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 110,
+          "cy": 251,
+          "x_frac": 0.153,
+          "y_in_band": 0.805,
+          "conf": 0.967,
+          "n_boxes": 1,
+          "ocr_text": "Lucky WithYou"
+        }
+      ],
+      "ocr_texts": [
+        "Lucky WithYou",
+        "Lucky WithYou"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.771,
+      "avg_x_frac": 0.19,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PATCH OF THETA",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 374,
+          "cy": 561,
+          "x_frac": 0.519,
+          "y_in_band": 0.762,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "PatchOf Theta"
+        }
+      ],
+      "ocr_texts": [
+        "PatchOf Theta"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.762,
+      "avg_x_frac": 0.519,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RAGING BLIZZARD",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "791",
+          "cx": 386,
+          "cy": 34,
+          "x_frac": 0.536,
+          "y_in_band": 0.198,
+          "conf": 0.949,
+          "n_boxes": 1,
+          "ocr_text": "Raging Blizzard"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 300,
+          "cy": 317,
+          "x_frac": 0.417,
+          "y_in_band": 0.247,
+          "conf": 0.902,
+          "n_boxes": 1,
+          "ocr_text": "Raging Bizzard"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 354,
+          "cy": 537,
+          "x_frac": 0.492,
+          "y_in_band": 0.622,
+          "conf": 0.948,
+          "n_boxes": 1,
+          "ocr_text": "Raging Blizzard"
+        }
+      ],
+      "ocr_texts": [
+        "Raging Blizzard",
+        "Raging Bizzard",
+        "Raging Blizzard"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.357,
+      "avg_x_frac": 0.483,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SIX PACK",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "791",
+          "cx": 458,
+          "cy": 101,
+          "x_frac": 0.636,
+          "y_in_band": 0.752,
+          "conf": 0.882,
+          "n_boxes": 1,
+          "ocr_text": "SixPac"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 208,
+          "cy": 565,
+          "x_frac": 0.289,
+          "y_in_band": 0.785,
+          "conf": 0.98,
+          "n_boxes": 1,
+          "ocr_text": "SixPack"
+        }
+      ],
+      "ocr_texts": [
+        "SixPac",
+        "SixPack"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.769,
+      "avg_x_frac": 0.453,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TOMODACHI KOKOROE",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "791",
+          "cx": 253,
+          "cy": 97,
+          "x_frac": 0.351,
+          "y_in_band": 0.719,
+          "conf": 0.953,
+          "n_boxes": 1,
+          "ocr_text": "Tomodachi Kokorce"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 246,
+          "cy": 252,
+          "x_frac": 0.342,
+          "y_in_band": 0.812,
+          "conf": 0.941,
+          "n_boxes": 1,
+          "ocr_text": "Tomodachi Kokoroe"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 290,
+          "cy": 549,
+          "x_frac": 0.403,
+          "y_in_band": 0.692,
+          "conf": 0.966,
+          "n_boxes": 1,
+          "ocr_text": "Tomodachi Kokoroe"
+        }
+      ],
+      "ocr_texts": [
+        "Tomodachi Kokorce",
+        "Tomodachi Kokoroe",
+        "Tomodachi Kokoroe"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.74,
+      "avg_x_frac": 0.366,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WINNING OVATION",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "791",
+          "cx": 231,
+          "cy": 120,
+          "x_frac": 0.321,
+          "y_in_band": 0.909,
+          "conf": 0.973,
+          "n_boxes": 1,
+          "ocr_text": "Winning Ovation"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 171,
+          "cy": 261,
+          "x_frac": 0.237,
+          "y_in_band": 0.872,
+          "conf": 0.959,
+          "n_boxes": 1,
+          "ocr_text": "Winning Ovation"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 199,
+          "cy": 404,
+          "x_frac": 0.276,
+          "y_in_band": 0.827,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "Winning Ovation"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 226,
+          "cy": 543,
+          "x_frac": 0.314,
+          "y_in_band": 0.657,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "WinningOvation"
+        }
+      ],
+      "ocr_texts": [
+        "Winning Ovation",
+        "Winning Ovation",
+        "Winning Ovation",
+        "WinningOvation"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.815,
+      "avg_x_frac": 0.287,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 68,
+    "matched_horses": 10,
+    "field_size": 10,
+    "coverage": 1.0,
+    "parsed_at": "2026-06-21T17:27:38"
+  }
+}
