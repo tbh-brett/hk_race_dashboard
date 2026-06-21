@@ -1,0 +1,528 @@
+{
+  "date": "2026-06-21",
+  "race_number": 1,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "785",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "BUSTLING CITY",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "785",
+          "cx": 124,
+          "cy": 117,
+          "x_frac": 0.172,
+          "y_in_band": 0.884,
+          "conf": 0.946,
+          "n_boxes": 1,
+          "ocr_text": "BustlingCity"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 103,
+          "cy": 274,
+          "x_frac": 0.143,
+          "y_in_band": 0.96,
+          "conf": 0.901,
+          "n_boxes": 1,
+          "ocr_text": "Busting City"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 92,
+          "cy": 428,
+          "x_frac": 0.128,
+          "y_in_band": 0.987,
+          "conf": 0.968,
+          "n_boxes": 1,
+          "ocr_text": "Busting City"
+        }
+      ],
+      "ocr_texts": [
+        "BustlingCity",
+        "Busting City",
+        "Busting City"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.944,
+      "avg_x_frac": 0.148,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CAVAMAZING",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "785",
+          "cx": 334,
+          "cy": 16,
+          "x_frac": 0.464,
+          "y_in_band": 0.05,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "cavamazing"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 301,
+          "cy": 172,
+          "x_frac": 0.418,
+          "y_in_band": 0.275,
+          "conf": 0.979,
+          "n_boxes": 1,
+          "ocr_text": "Cavamazing"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 274,
+          "cy": 327,
+          "x_frac": 0.381,
+          "y_in_band": 0.313,
+          "conf": 0.926,
+          "n_boxes": 1,
+          "ocr_text": "Cavamazing"
+        }
+      ],
+      "ocr_texts": [
+        "cavamazing",
+        "Cavamazing",
+        "Cavamazing"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.212,
+      "avg_x_frac": 0.421,
+      "wide_frames": 0,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "COMET RADIANCE",
+      "horse_no": 13,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "785",
+          "cx": 198,
+          "cy": 104,
+          "x_frac": 0.275,
+          "y_in_band": 0.777,
+          "conf": 0.961,
+          "n_boxes": 1,
+          "ocr_text": "Comet Radiance"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 180,
+          "cy": 256,
+          "x_frac": 0.25,
+          "y_in_band": 0.839,
+          "conf": 0.945,
+          "n_boxes": 1,
+          "ocr_text": "Comet Radiance"
+        }
+      ],
+      "ocr_texts": [
+        "Comet Radiance",
+        "Comet Radiance"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.808,
+      "avg_x_frac": 0.263,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HERO MASTERMIND",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 290,
+          "cy": 146,
+          "x_frac": 0.403,
+          "y_in_band": 0.101,
+          "conf": 0.972,
+          "n_boxes": 1,
+          "ocr_text": "Hero Mastermind"
+        }
+      ],
+      "ocr_texts": [
+        "Hero Mastermind"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.101,
+      "avg_x_frac": 0.403,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "INVICTUS",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 160,
+          "cy": 146,
+          "x_frac": 0.222,
+          "y_in_band": 0.101,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "Invictus"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 156,
+          "cy": 281,
+          "x_frac": 0.217,
+          "y_in_band": 0.007,
+          "conf": 0.917,
+          "n_boxes": 1,
+          "ocr_text": "nvictus"
+        }
+      ],
+      "ocr_texts": [
+        "Invictus",
+        "nvictus"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.055,
+      "avg_x_frac": 0.22,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "NOBLE SUPERIOR",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "785",
+          "cx": 175,
+          "cy": 125,
+          "x_frac": 0.243,
+          "y_in_band": 0.95,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "Noble Superior"
+        }
+      ],
+      "ocr_texts": [
+        "Noble Superior"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.95,
+      "avg_x_frac": 0.243,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PERFECT TRIUMPH",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "785",
+          "cx": 399,
+          "cy": 116,
+          "x_frac": 0.554,
+          "y_in_band": 0.876,
+          "conf": 0.92,
+          "n_boxes": 1,
+          "ocr_text": "PerectTriumph"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 455,
+          "cy": 565,
+          "x_frac": 0.632,
+          "y_in_band": 0.785,
+          "conf": 0.915,
+          "n_boxes": 1,
+          "ocr_text": "Perlect Triumph"
+        }
+      ],
+      "ocr_texts": [
+        "PerectTriumph",
+        "Perlect Triumph"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.831,
+      "avg_x_frac": 0.593,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PRIME WINISTER",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 422,
+          "cy": 172,
+          "x_frac": 0.586,
+          "y_in_band": 0.275,
+          "conf": 0.952,
+          "n_boxes": 1,
+          "ocr_text": "Prime Winister"
+        }
+      ],
+      "ocr_texts": [
+        "Prime Winister"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.275,
+      "avg_x_frac": 0.586,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "RAPID PHANTOM",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "785",
+          "cx": 262,
+          "cy": 103,
+          "x_frac": 0.364,
+          "y_in_band": 0.769,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "Rapid Phantom"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 159,
+          "cy": 174,
+          "x_frac": 0.221,
+          "y_in_band": 0.289,
+          "conf": 0.958,
+          "n_boxes": 1,
+          "ocr_text": "Rapid Phantom"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 119,
+          "cy": 404,
+          "x_frac": 0.165,
+          "y_in_band": 0.827,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "Rapid Phantom"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 91,
+          "cy": 562,
+          "x_frac": 0.126,
+          "y_in_band": 0.767,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "RapidPhantom"
+        }
+      ],
+      "ocr_texts": [
+        "Rapid Phantom",
+        "Rapid Phantom",
+        "Rapid Phantom",
+        "RapidPhantom"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.663,
+      "avg_x_frac": 0.219,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RUBY THRIVE",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 227,
+          "cy": 145,
+          "x_frac": 0.315,
+          "y_in_band": 0.094,
+          "conf": 0.949,
+          "n_boxes": 1,
+          "ocr_text": "Ruby Thrive"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 200,
+          "cy": 439,
+          "x_frac": 0.278,
+          "y_in_band": 0.052,
+          "conf": 0.961,
+          "n_boxes": 1,
+          "ocr_text": "Ruby Thrive"
+        }
+      ],
+      "ocr_texts": [
+        "Ruby Thrive",
+        "Ruby Thrive"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.073,
+      "avg_x_frac": 0.296,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "SPEEDY POWER",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 409,
+          "cy": 141,
+          "x_frac": 0.568,
+          "y_in_band": 0.067,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "Speedy Power"
+        }
+      ],
+      "ocr_texts": [
+        "Speedy Power"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.067,
+      "avg_x_frac": 0.568,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "VICTORY CHAMPION",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "785",
+          "cx": 334,
+          "cy": 111,
+          "x_frac": 0.464,
+          "y_in_band": 0.835,
+          "conf": 0.952,
+          "n_boxes": 1,
+          "ocr_text": "Victory Champion"
+        }
+      ],
+      "ocr_texts": [
+        "Victory Champion"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.835,
+      "avg_x_frac": 0.464,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VIEW ALL THINGS",
+      "horse_no": 14,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 358,
+          "cy": 174,
+          "x_frac": 0.497,
+          "y_in_band": 0.289,
+          "conf": 0.905,
+          "n_boxes": 1,
+          "ocr_text": "VewAll Things"
+        }
+      ],
+      "ocr_texts": [
+        "VewAll Things"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.289,
+      "avg_x_frac": 0.497,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 61,
+    "matched_horses": 13,
+    "field_size": 14,
+    "coverage": 0.929,
+    "parsed_at": "2026-06-21T17:27:29"
+  }
+}
