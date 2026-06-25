@@ -1,0 +1,712 @@
+{
+  "date": "2026-06-24",
+  "race_number": 2,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "797",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 473,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 451
+    },
+    {
+      "y_top": 473,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 537
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ALL ARE MINE",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 452,
+          "cy": 240,
+          "x_frac": 0.628,
+          "y_in_band": 0.732,
+          "conf": 0.901,
+          "n_boxes": 1,
+          "ocr_text": "All Are Mine"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 118,
+          "cy": 567,
+          "x_frac": 0.164,
+          "y_in_band": 0.729,
+          "conf": 0.939,
+          "n_boxes": 1,
+          "ocr_text": "AllAreMine"
+        }
+      ],
+      "ocr_texts": [
+        "All Are Mine",
+        "AllAreMine"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.73,
+      "avg_x_frac": 0.391,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "IRON LEGION",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "797",
+          "cx": 88,
+          "cy": 43,
+          "x_frac": 0.122,
+          "y_in_band": 0.273,
+          "conf": 0.953,
+          "n_boxes": 1,
+          "ocr_text": "ron Legion"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 113,
+          "cy": 171,
+          "x_frac": 0.157,
+          "y_in_band": 0.268,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "ronLegion"
+        }
+      ],
+      "ocr_texts": [
+        "ron Legion",
+        "ronLegion"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.27,
+      "avg_x_frac": 0.14,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "MATSU VICTOR",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 397,
+          "cy": 247,
+          "x_frac": 0.551,
+          "y_in_band": 0.779,
+          "conf": 0.947,
+          "n_boxes": 1,
+          "ocr_text": "Matsu Victor"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 336,
+          "cy": 416,
+          "x_frac": 0.467,
+          "y_in_band": 0.907,
+          "conf": 0.944,
+          "n_boxes": 1,
+          "ocr_text": "Matsu Victor"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 448,
+          "cy": 575,
+          "x_frac": 0.622,
+          "y_in_band": 0.791,
+          "conf": 0.888,
+          "n_boxes": 1,
+          "ocr_text": "Matsu Victor"
+        }
+      ],
+      "ocr_texts": [
+        "Matsu Victor",
+        "Matsu Victor",
+        "Matsu Victor"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.826,
+      "avg_x_frac": 0.545,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MEGA FORCE",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "797",
+          "cx": 556,
+          "cy": 50,
+          "x_frac": 0.772,
+          "y_in_band": 0.331,
+          "conf": 0.996,
+          "n_boxes": 1,
+          "ocr_text": "MegaForce"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 501,
+          "cy": 245,
+          "x_frac": 0.696,
+          "y_in_band": 0.765,
+          "conf": 0.957,
+          "n_boxes": 1,
+          "ocr_text": "Mega Force"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 397,
+          "cy": 432,
+          "x_frac": 0.551,
+          "y_in_band": 0.047,
+          "conf": 0.981,
+          "n_boxes": 1,
+          "ocr_text": "MegaForce"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 498,
+          "cy": 584,
+          "x_frac": 0.692,
+          "y_in_band": 0.86,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "MegaForce"
+        }
+      ],
+      "ocr_texts": [
+        "MegaForce",
+        "Mega Force",
+        "MegaForce",
+        "MegaForce"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.496,
+      "avg_x_frac": 0.678,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ORIENTAL SURPRISE",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "797",
+          "cx": 379,
+          "cy": 115,
+          "x_frac": 0.526,
+          "y_in_band": 0.868,
+          "conf": 0.796,
+          "n_boxes": 1,
+          "ocr_text": "小皇能Onental Surprise"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 324,
+          "cy": 246,
+          "x_frac": 0.45,
+          "y_in_band": 0.772,
+          "conf": 0.98,
+          "n_boxes": 1,
+          "ocr_text": "Oriental Surprise"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 197,
+          "cy": 398,
+          "x_frac": 0.274,
+          "y_in_band": 0.787,
+          "conf": 0.923,
+          "n_boxes": 1,
+          "ocr_text": "Onental Surprise"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 184,
+          "cy": 557,
+          "x_frac": 0.256,
+          "y_in_band": 0.651,
+          "conf": 0.931,
+          "n_boxes": 1,
+          "ocr_text": "Oriental Surprise"
+        }
+      ],
+      "ocr_texts": [
+        "小皇能Onental Surprise",
+        "Oriental Surprise",
+        "Onental Surprise",
+        "Oriental Surprise"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.766,
+      "avg_x_frac": 0.372,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "POWER SUMMIT",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "797",
+          "cx": 466,
+          "cy": 115,
+          "x_frac": 0.647,
+          "y_in_band": 0.868,
+          "conf": 0.949,
+          "n_boxes": 1,
+          "ocr_text": "Power Summit"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 342,
+          "cy": 269,
+          "x_frac": 0.475,
+          "y_in_band": 0.926,
+          "conf": 0.968,
+          "n_boxes": 1,
+          "ocr_text": "Power Summit"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 308,
+          "cy": 439,
+          "x_frac": 0.428,
+          "y_in_band": 0.209,
+          "conf": 0.855,
+          "n_boxes": 1,
+          "ocr_text": "Power Summitl"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 380,
+          "cy": 585,
+          "x_frac": 0.528,
+          "y_in_band": 0.868,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "PowerSummit"
+        }
+      ],
+      "ocr_texts": [
+        "Power Summit",
+        "Power Summit",
+        "Power Summitl",
+        "PowerSummit"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.733,
+      "avg_x_frac": 0.522,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SMART CITY",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "797",
+          "cx": 306,
+          "cy": 112,
+          "x_frac": 0.425,
+          "y_in_band": 0.843,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "SmartCity"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 256,
+          "cy": 245,
+          "x_frac": 0.356,
+          "y_in_band": 0.765,
+          "conf": 0.9,
+          "n_boxes": 1,
+          "ocr_text": "Smart City"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 510,
+          "cy": 559,
+          "x_frac": 0.708,
+          "y_in_band": 0.667,
+          "conf": 0.973,
+          "n_boxes": 1,
+          "ocr_text": "SmartCity"
+        }
+      ],
+      "ocr_texts": [
+        "SmartCity",
+        "Smart City",
+        "SmartCity"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.758,
+      "avg_x_frac": 0.5,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SMILING EMPEROR",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "797",
+          "cx": 533,
+          "cy": 127,
+          "x_frac": 0.74,
+          "y_in_band": 0.967,
+          "conf": 0.925,
+          "n_boxes": 1,
+          "ocr_text": "Smiling Emperor"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 376,
+          "cy": 292,
+          "x_frac": 0.522,
+          "y_in_band": 0.08,
+          "conf": 0.976,
+          "n_boxes": 1,
+          "ocr_text": "SmilingEmperor"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 250,
+          "cy": 444,
+          "x_frac": 0.347,
+          "y_in_band": 0.326,
+          "conf": 0.893,
+          "n_boxes": 1,
+          "ocr_text": "SmilingEmperor"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 277,
+          "cy": 585,
+          "x_frac": 0.385,
+          "y_in_band": 0.868,
+          "conf": 0.912,
+          "n_boxes": 1,
+          "ocr_text": "SmilngEmperor"
+        }
+      ],
+      "ocr_texts": [
+        "Smiling Emperor",
+        "SmilingEmperor",
+        "SmilingEmperor",
+        "SmilngEmperor"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.555,
+      "avg_x_frac": 0.501,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SPANGLE FORTUNE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "797",
+          "cx": 356,
+          "cy": 48,
+          "x_frac": 0.494,
+          "y_in_band": 0.314,
+          "conf": 0.936,
+          "n_boxes": 1,
+          "ocr_text": "Spangle Fortur"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 374,
+          "cy": 176,
+          "x_frac": 0.519,
+          "y_in_band": 0.302,
+          "conf": 0.913,
+          "n_boxes": 1,
+          "ocr_text": "Spangle Fortune"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 313,
+          "cy": 331,
+          "x_frac": 0.435,
+          "y_in_band": 0.34,
+          "conf": 0.979,
+          "n_boxes": 1,
+          "ocr_text": "Spangle Fortune"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 379,
+          "cy": 560,
+          "x_frac": 0.526,
+          "y_in_band": 0.674,
+          "conf": 0.968,
+          "n_boxes": 1,
+          "ocr_text": "Spangle Fortune"
+        }
+      ],
+      "ocr_texts": [
+        "Spangle Fortur",
+        "Spangle Fortune",
+        "Spangle Fortune",
+        "Spangle Fortune"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.41,
+      "avg_x_frac": 0.493,
+      "wide_frames": 1,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE WAY WE WIN",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "797",
+          "cx": 245,
+          "cy": 48,
+          "x_frac": 0.34,
+          "y_in_band": 0.314,
+          "conf": 0.939,
+          "n_boxes": 1,
+          "ocr_text": "The Way We Win"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 298,
+          "cy": 176,
+          "x_frac": 0.414,
+          "y_in_band": 0.302,
+          "conf": 0.928,
+          "n_boxes": 1,
+          "ocr_text": "The Way We Win"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 374,
+          "cy": 321,
+          "x_frac": 0.519,
+          "y_in_band": 0.273,
+          "conf": 0.907,
+          "n_boxes": 1,
+          "ocr_text": "The Way We Win"
+        }
+      ],
+      "ocr_texts": [
+        "The Way We Win",
+        "The Way We Win",
+        "The Way We Win"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.297,
+      "avg_x_frac": 0.423,
+      "wide_frames": 0,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "WINDICATOR FAMILY",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "797",
+          "cx": 179,
+          "cy": 112,
+          "x_frac": 0.249,
+          "y_in_band": 0.843,
+          "conf": 0.99,
+          "n_boxes": 1,
+          "ocr_text": "WindicatorFamily"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 162,
+          "cy": 240,
+          "x_frac": 0.225,
+          "y_in_band": 0.732,
+          "conf": 0.972,
+          "n_boxes": 1,
+          "ocr_text": "WindicatorFamily"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 309,
+          "cy": 556,
+          "x_frac": 0.429,
+          "y_in_band": 0.643,
+          "conf": 0.97,
+          "n_boxes": 1,
+          "ocr_text": "WindicatorFamily"
+        }
+      ],
+      "ocr_texts": [
+        "WindicatorFamily",
+        "WindicatorFamily",
+        "WindicatorFamily"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.74,
+      "avg_x_frac": 0.301,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ZETTA FORCE",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "797",
+          "cx": 347,
+          "cy": 123,
+          "x_frac": 0.482,
+          "y_in_band": 0.934,
+          "conf": 0.876,
+          "n_boxes": 1,
+          "ocr_text": "Zetta Force"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 264,
+          "cy": 269,
+          "x_frac": 0.367,
+          "y_in_band": 0.926,
+          "conf": 0.983,
+          "n_boxes": 1,
+          "ocr_text": "ZettaForce"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 257,
+          "cy": 423,
+          "x_frac": 0.357,
+          "y_in_band": 0.953,
+          "conf": 0.981,
+          "n_boxes": 1,
+          "ocr_text": "ZettaForce"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 592,
+          "cy": 561,
+          "x_frac": 0.822,
+          "y_in_band": 0.682,
+          "conf": 0.987,
+          "n_boxes": 1,
+          "ocr_text": "ZettaForce"
+        }
+      ],
+      "ocr_texts": [
+        "Zetta Force",
+        "ZettaForce",
+        "ZettaForce",
+        "ZettaForce"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.872,
+      "avg_x_frac": 0.508,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 79,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-06-25T02:43:21"
+  }
+}
