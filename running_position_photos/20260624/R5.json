@@ -1,0 +1,559 @@
+{
+  "date": "2026-06-24",
+  "race_number": 5,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "800",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "FORZA LEADER",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "800",
+          "cx": 525,
+          "cy": 28,
+          "x_frac": 0.729,
+          "y_in_band": 0.149,
+          "conf": 0.978,
+          "n_boxes": 1,
+          "ocr_text": "Forza Leader"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 452,
+          "cy": 185,
+          "x_frac": 0.628,
+          "y_in_band": 0.362,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "ForzaLead"
+        }
+      ],
+      "ocr_texts": [
+        "Forza Leader",
+        "ForzaLead"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.256,
+      "avg_x_frac": 0.678,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GAMEPLAYER ELITE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "800",
+          "cx": 308,
+          "cy": 33,
+          "x_frac": 0.428,
+          "y_in_band": 0.19,
+          "conf": 0.911,
+          "n_boxes": 1,
+          "ocr_text": "Gameplayer Elite"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 289,
+          "cy": 187,
+          "x_frac": 0.401,
+          "y_in_band": 0.376,
+          "conf": 0.921,
+          "n_boxes": 1,
+          "ocr_text": "GameplayerEite"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 198,
+          "cy": 420,
+          "x_frac": 0.275,
+          "y_in_band": 0.933,
+          "conf": 0.959,
+          "n_boxes": 1,
+          "ocr_text": "Gameplayer Elite"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 192,
+          "cy": 553,
+          "x_frac": 0.267,
+          "y_in_band": 0.715,
+          "conf": 0.912,
+          "n_boxes": 1,
+          "ocr_text": "GameplayerElite"
+        }
+      ],
+      "ocr_texts": [
+        "Gameplayer Elite",
+        "GameplayerEite",
+        "Gameplayer Elite",
+        "GameplayerElite"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.558,
+      "avg_x_frac": 0.342,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GRATIFIDE",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "800",
+          "cx": 401,
+          "cy": 30,
+          "x_frac": 0.557,
+          "y_in_band": 0.165,
+          "conf": 0.97,
+          "n_boxes": 1,
+          "ocr_text": "Gratide"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 367,
+          "cy": 186,
+          "x_frac": 0.51,
+          "y_in_band": 0.369,
+          "conf": 0.973,
+          "n_boxes": 1,
+          "ocr_text": "Gratifide"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 276,
+          "cy": 399,
+          "x_frac": 0.383,
+          "y_in_band": 0.793,
+          "conf": 0.841,
+          "n_boxes": 1,
+          "ocr_text": "Gratifide"
+        }
+      ],
+      "ocr_texts": [
+        "Gratide",
+        "Gratifide",
+        "Gratifide"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.426,
+      "avg_x_frac": 0.488,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KWAI CHUNG TALENTS",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "800",
+          "cx": 452,
+          "cy": 120,
+          "x_frac": 0.628,
+          "y_in_band": 0.909,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "Kwai Chung Talents"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 394,
+          "cy": 274,
+          "x_frac": 0.547,
+          "y_in_band": 0.96,
+          "conf": 0.891,
+          "n_boxes": 1,
+          "ocr_text": "Kwai Chung Talents"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 321,
+          "cy": 515,
+          "x_frac": 0.446,
+          "y_in_band": 0.493,
+          "conf": 0.957,
+          "n_boxes": 2,
+          "ocr_text": "Kwai Chung Talents"
+        }
+      ],
+      "ocr_texts": [
+        "Kwai Chung Talents",
+        "Kwai Chung Talents",
+        "Kwai Chung Talents",
+        "Kwai Chung Talents"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.783,
+      "avg_x_frac": 0.54,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MEOWTH",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "800",
+          "cx": 316,
+          "cy": 107,
+          "x_frac": 0.439,
+          "y_in_band": 0.802,
+          "conf": 0.935,
+          "n_boxes": 1,
+          "ocr_text": "Meowth"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 130,
+          "cy": 393,
+          "x_frac": 0.181,
+          "y_in_band": 0.753,
+          "conf": 0.88,
+          "n_boxes": 1,
+          "ocr_text": "eowth"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 127,
+          "cy": 544,
+          "x_frac": 0.176,
+          "y_in_band": 0.663,
+          "conf": 0.938,
+          "n_boxes": 1,
+          "ocr_text": "Meowth"
+        }
+      ],
+      "ocr_texts": [
+        "Meowth",
+        "eowth",
+        "Meowth"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.739,
+      "avg_x_frac": 0.267,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "QUARTZ LEGEND",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "800",
+          "cx": 372,
+          "cy": 118,
+          "x_frac": 0.517,
+          "y_in_band": 0.893,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Quartz Legend"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 304,
+          "cy": 349,
+          "x_frac": 0.422,
+          "y_in_band": 0.461,
+          "conf": 0.935,
+          "n_boxes": 2,
+          "ocr_text": "Quartz Legend"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 377,
+          "cy": 552,
+          "x_frac": 0.524,
+          "y_in_band": 0.709,
+          "conf": 0.935,
+          "n_boxes": 1,
+          "ocr_text": "Quartz Legend"
+        }
+      ],
+      "ocr_texts": [
+        "Quartz Legend",
+        "Quartz Legend",
+        "Quartz Legend",
+        "Quartz Legend"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.69,
+      "avg_x_frac": 0.488,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SMART FIGHTER",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "800",
+          "cx": 229,
+          "cy": 33,
+          "x_frac": 0.318,
+          "y_in_band": 0.19,
+          "conf": 0.98,
+          "n_boxes": 1,
+          "ocr_text": "SmartFighter"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 206,
+          "cy": 186,
+          "x_frac": 0.286,
+          "y_in_band": 0.369,
+          "conf": 0.94,
+          "n_boxes": 1,
+          "ocr_text": "martFighter"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 230,
+          "cy": 398,
+          "x_frac": 0.319,
+          "y_in_band": 0.787,
+          "conf": 0.979,
+          "n_boxes": 1,
+          "ocr_text": "SmartFighter"
+        }
+      ],
+      "ocr_texts": [
+        "SmartFighter",
+        "martFighter",
+        "SmartFighter"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.45,
+      "avg_x_frac": 0.308,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TACTICAL HORIZONS",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "800",
+          "cx": 507,
+          "cy": 99,
+          "x_frac": 0.704,
+          "y_in_band": 0.736,
+          "conf": 0.963,
+          "n_boxes": 1,
+          "ocr_text": "Tactical Horizons"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 434,
+          "cy": 251,
+          "x_frac": 0.603,
+          "y_in_band": 0.805,
+          "conf": 0.925,
+          "n_boxes": 1,
+          "ocr_text": "Tacical Horizons"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 410,
+          "cy": 399,
+          "x_frac": 0.569,
+          "y_in_band": 0.793,
+          "conf": 0.915,
+          "n_boxes": 1,
+          "ocr_text": "Tacical Horizons"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 499,
+          "cy": 553,
+          "x_frac": 0.693,
+          "y_in_band": 0.715,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "TacticalHorizons"
+        }
+      ],
+      "ocr_texts": [
+        "Tactical Horizons",
+        "Tacical Horizons",
+        "Tacical Horizons",
+        "TacticalHorizons"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.762,
+      "avg_x_frac": 0.643,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WARRIORS DREAM",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "800",
+          "cx": 411,
+          "cy": 98,
+          "x_frac": 0.571,
+          "y_in_band": 0.727,
+          "conf": 0.917,
+          "n_boxes": 1,
+          "ocr_text": "Warriors Dream"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 274,
+          "cy": 257,
+          "x_frac": 0.381,
+          "y_in_band": 0.846,
+          "conf": 0.957,
+          "n_boxes": 1,
+          "ocr_text": "Warriors Drean"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 248,
+          "cy": 502,
+          "x_frac": 0.344,
+          "y_in_band": 0.419,
+          "conf": 0.932,
+          "n_boxes": 2,
+          "ocr_text": "Warriors Dream"
+        }
+      ],
+      "ocr_texts": [
+        "Warriors Dream",
+        "Warriors Drean",
+        "Warriors Dream",
+        "Warriors Dream"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.665,
+      "avg_x_frac": 0.431,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WORLD HERO",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 336,
+          "cy": 139,
+          "x_frac": 0.467,
+          "y_in_band": 0.054,
+          "conf": 0.933,
+          "n_boxes": 1,
+          "ocr_text": "World Hero"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 316,
+          "cy": 353,
+          "x_frac": 0.438,
+          "y_in_band": 0.486,
+          "conf": 0.93,
+          "n_boxes": 2,
+          "ocr_text": "World Hero"
+        }
+      ],
+      "ocr_texts": [
+        "World Hero",
+        "World Hero",
+        "World Hero"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.27,
+      "avg_x_frac": 0.453,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 78,
+    "matched_horses": 10,
+    "field_size": 12,
+    "coverage": 0.833,
+    "parsed_at": "2026-06-25T02:43:24"
+  }
+}
