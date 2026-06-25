@@ -1,0 +1,563 @@
+{
+  "date": "2026-06-24",
+  "race_number": 8,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "803",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ACE CHAMPION",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 354,
+          "cy": 339,
+          "x_frac": 0.492,
+          "y_in_band": 0.393,
+          "conf": 0.973,
+          "n_boxes": 1,
+          "ocr_text": "Ace Champion"
+        }
+      ],
+      "ocr_texts": [
+        "Ace Champion"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.393,
+      "avg_x_frac": 0.492,
+      "wide_frames": 0,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "AMAZING KID",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 328,
+          "cy": 403,
+          "x_frac": 0.456,
+          "y_in_band": 0.82,
+          "conf": 0.959,
+          "n_boxes": 1,
+          "ocr_text": "Amazing Kid"
+        }
+      ],
+      "ocr_texts": [
+        "Amazing Kid"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.82,
+      "avg_x_frac": 0.456,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DARYL FLASH",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 390,
+          "cy": 288,
+          "x_frac": 0.542,
+          "y_in_band": 0.053,
+          "conf": 0.934,
+          "n_boxes": 1,
+          "ocr_text": "Daryl Flash"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 263,
+          "cy": 512,
+          "x_frac": 0.365,
+          "y_in_band": 0.476,
+          "conf": 0.992,
+          "n_boxes": 2,
+          "ocr_text": "Daryl Flash"
+        }
+      ],
+      "ocr_texts": [
+        "Daryl Flash",
+        "Daryi Flash",
+        "Daryl Flash"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.271,
+      "avg_x_frac": 0.451,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DO YOU JUST",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "803",
+          "cx": 217,
+          "cy": 106,
+          "x_frac": 0.301,
+          "y_in_band": 0.793,
+          "conf": 0.914,
+          "n_boxes": 1,
+          "ocr_text": "Do You Just"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 274,
+          "cy": 259,
+          "x_frac": 0.381,
+          "y_in_band": 0.859,
+          "conf": 0.996,
+          "n_boxes": 1,
+          "ocr_text": "DoYouJust"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 265,
+          "cy": 405,
+          "x_frac": 0.368,
+          "y_in_band": 0.833,
+          "conf": 0.953,
+          "n_boxes": 1,
+          "ocr_text": "Do YouJust"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 274,
+          "cy": 571,
+          "x_frac": 0.381,
+          "y_in_band": 0.82,
+          "conf": 0.995,
+          "n_boxes": 1,
+          "ocr_text": "DoYouJust"
+        }
+      ],
+      "ocr_texts": [
+        "Do You Just",
+        "DoYouJust",
+        "Do YouJust",
+        "DoYouJust"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.827,
+      "avg_x_frac": 0.359,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ENDURANCE EXPRESS",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "803",
+          "cx": 156,
+          "cy": 105,
+          "x_frac": 0.217,
+          "y_in_band": 0.785,
+          "conf": 0.946,
+          "n_boxes": 1,
+          "ocr_text": "Endurance Express"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 140,
+          "cy": 249,
+          "x_frac": 0.194,
+          "y_in_band": 0.792,
+          "conf": 0.974,
+          "n_boxes": 1,
+          "ocr_text": "Endurance Express"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 144,
+          "cy": 390,
+          "x_frac": 0.2,
+          "y_in_band": 0.733,
+          "conf": 0.987,
+          "n_boxes": 1,
+          "ocr_text": "Endurance Express"
+        }
+      ],
+      "ocr_texts": [
+        "Endurance Express",
+        "Endurance Express",
+        "Endurance Express"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.77,
+      "avg_x_frac": 0.204,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HONEST WITNESS",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "803",
+          "cx": 129,
+          "cy": 33,
+          "x_frac": 0.179,
+          "y_in_band": 0.19,
+          "conf": 0.977,
+          "n_boxes": 1,
+          "ocr_text": "Honest Witness"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 112,
+          "cy": 188,
+          "x_frac": 0.156,
+          "y_in_band": 0.383,
+          "conf": 0.947,
+          "n_boxes": 1,
+          "ocr_text": "Honest Witness"
+        }
+      ],
+      "ocr_texts": [
+        "Honest Witness",
+        "Honest Witness"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.285,
+      "avg_x_frac": 0.168,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "JUMBO TREASURE",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "803",
+          "cx": 239,
+          "cy": 34,
+          "x_frac": 0.332,
+          "y_in_band": 0.198,
+          "conf": 0.956,
+          "n_boxes": 1,
+          "ocr_text": "Jumbo Treasure"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 220,
+          "cy": 252,
+          "x_frac": 0.306,
+          "y_in_band": 0.812,
+          "conf": 0.995,
+          "n_boxes": 1,
+          "ocr_text": "JumboTreasure"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 212,
+          "cy": 396,
+          "x_frac": 0.294,
+          "y_in_band": 0.773,
+          "conf": 0.961,
+          "n_boxes": 1,
+          "ocr_text": "Jumbo Treasure"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 102,
+          "cy": 562,
+          "x_frac": 0.142,
+          "y_in_band": 0.767,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "Jumbo Treasure"
+        }
+      ],
+      "ocr_texts": [
+        "Jumbo Treasure",
+        "JumboTreasure",
+        "Jumbo Treasure",
+        "Jumbo Treasure"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.64,
+      "avg_x_frac": 0.269,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KING LOTUS",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 507,
+          "cy": 290,
+          "x_frac": 0.704,
+          "y_in_band": 0.067,
+          "conf": 0.985,
+          "n_boxes": 1,
+          "ocr_text": "KingLotus"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 351,
+          "cy": 517,
+          "x_frac": 0.487,
+          "y_in_band": 0.507,
+          "conf": 0.995,
+          "n_boxes": 2,
+          "ocr_text": "KingLotus"
+        }
+      ],
+      "ocr_texts": [
+        "KingLotus",
+        "KingLotus",
+        "KingLotus"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.288,
+      "avg_x_frac": 0.595,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SYMBOL OF STRENGTH",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 274,
+          "cy": 339,
+          "x_frac": 0.381,
+          "y_in_band": 0.393,
+          "conf": 0.943,
+          "n_boxes": 1,
+          "ocr_text": "Symbol Of Strength"
+        }
+      ],
+      "ocr_texts": [
+        "Symbol Of Strength"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.393,
+      "avg_x_frac": 0.381,
+      "wide_frames": 0,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE HEIR",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 435,
+          "cy": 271,
+          "x_frac": 0.604,
+          "y_in_band": 0.94,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "The Heir"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 350,
+          "cy": 424,
+          "x_frac": 0.486,
+          "y_in_band": 0.96,
+          "conf": 0.929,
+          "n_boxes": 1,
+          "ocr_text": "The Heir"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 154,
+          "cy": 550,
+          "x_frac": 0.214,
+          "y_in_band": 0.698,
+          "conf": 0.946,
+          "n_boxes": 1,
+          "ocr_text": "The Heir"
+        }
+      ],
+      "ocr_texts": [
+        "The Heir",
+        "The Heir",
+        "The Heir"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.866,
+      "avg_x_frac": 0.435,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TRIPLE FORTUNE",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 385,
+          "cy": 317,
+          "x_frac": 0.535,
+          "y_in_band": 0.247,
+          "conf": 0.921,
+          "n_boxes": 1,
+          "ocr_text": "TripleFortune"
+        }
+      ],
+      "ocr_texts": [
+        "TripleFortune"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.247,
+      "avg_x_frac": 0.535,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "YOUNG EMPEROR",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "803",
+          "cx": 273,
+          "cy": 105,
+          "x_frac": 0.379,
+          "y_in_band": 0.785,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Young Emperor"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 332,
+          "cy": 270,
+          "x_frac": 0.461,
+          "y_in_band": 0.933,
+          "conf": 0.967,
+          "n_boxes": 1,
+          "ocr_text": "Young Emperor"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 280,
+          "cy": 426,
+          "x_frac": 0.389,
+          "y_in_band": 0.973,
+          "conf": 0.961,
+          "n_boxes": 1,
+          "ocr_text": "Young Emperor"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 153,
+          "cy": 584,
+          "x_frac": 0.212,
+          "y_in_band": 0.895,
+          "conf": 0.996,
+          "n_boxes": 1,
+          "ocr_text": "YoungEmperor"
+        }
+      ],
+      "ocr_texts": [
+        "Young Emperor",
+        "Young Emperor",
+        "Young Emperor",
+        "YoungEmperor"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.896,
+      "avg_x_frac": 0.359,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 65,
+    "matched_horses": 12,
+    "field_size": 13,
+    "coverage": 0.923,
+    "parsed_at": "2026-06-25T02:43:28"
+  }
+}
