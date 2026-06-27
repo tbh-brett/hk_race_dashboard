@@ -1,0 +1,586 @@
+{
+  "date": "2026-06-27",
+  "race_number": 9,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "813",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ALL ROUND WINNER",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "813",
+          "cx": 660,
+          "cy": 30,
+          "x_frac": 0.917,
+          "y_in_band": 0.165,
+          "conf": 0.939,
+          "n_boxes": 1,
+          "ocr_text": "AllRoundWinner"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 515,
+          "cy": 422,
+          "x_frac": 0.715,
+          "y_in_band": 0.947,
+          "conf": 0.942,
+          "n_boxes": 1,
+          "ocr_text": "AllRound Winner"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 379,
+          "cy": 576,
+          "x_frac": 0.526,
+          "y_in_band": 0.849,
+          "conf": 0.981,
+          "n_boxes": 1,
+          "ocr_text": "AllRoundWinner"
+        }
+      ],
+      "ocr_texts": [
+        "AllRoundWinner",
+        "AllRound Winner",
+        "AllRoundWinner"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.657,
+      "avg_x_frac": 0.716,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GLITTERING LEGEND",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "813",
+          "cx": 442,
+          "cy": 101,
+          "x_frac": 0.614,
+          "y_in_band": 0.752,
+          "conf": 0.957,
+          "n_boxes": 1,
+          "ocr_text": "Glittering Legend"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 495,
+          "cy": 249,
+          "x_frac": 0.688,
+          "y_in_band": 0.792,
+          "conf": 0.94,
+          "n_boxes": 1,
+          "ocr_text": "Glittering Legend"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 488,
+          "cy": 401,
+          "x_frac": 0.678,
+          "y_in_band": 0.807,
+          "conf": 0.921,
+          "n_boxes": 1,
+          "ocr_text": "Glitering Legend"
+        }
+      ],
+      "ocr_texts": [
+        "Glittering Legend",
+        "Glittering Legend",
+        "Glitering Legend"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.783,
+      "avg_x_frac": 0.66,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KAHOLO ANGEL",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "813",
+          "cx": 501,
+          "cy": 103,
+          "x_frac": 0.696,
+          "y_in_band": 0.769,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "Kaholo Angel"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 367,
+          "cy": 275,
+          "x_frac": 0.51,
+          "y_in_band": 0.966,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "KaholoAngel"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 238,
+          "cy": 423,
+          "x_frac": 0.331,
+          "y_in_band": 0.953,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "KaholoAngel"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 279,
+          "cy": 570,
+          "x_frac": 0.388,
+          "y_in_band": 0.814,
+          "conf": 0.939,
+          "n_boxes": 1,
+          "ocr_text": "aholo Ange"
+        }
+      ],
+      "ocr_texts": [
+        "Kaholo Angel",
+        "KaholoAngel",
+        "KaholoAngel",
+        "aholo Ange"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.876,
+      "avg_x_frac": 0.481,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KING DANCE",
+      "horse_no": 13,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "813",
+          "cx": 379,
+          "cy": 104,
+          "x_frac": 0.526,
+          "y_in_band": 0.777,
+          "conf": 0.948,
+          "n_boxes": 1,
+          "ocr_text": "King Dance"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 478,
+          "cy": 272,
+          "x_frac": 0.664,
+          "y_in_band": 0.946,
+          "conf": 0.966,
+          "n_boxes": 1,
+          "ocr_text": "King Dance"
+        }
+      ],
+      "ocr_texts": [
+        "King Dance",
+        "King Dance"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.862,
+      "avg_x_frac": 0.596,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NEZHA",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "813",
+          "cx": 579,
+          "cy": 104,
+          "x_frac": 0.804,
+          "y_in_band": 0.777,
+          "conf": 0.993,
+          "n_boxes": 1,
+          "ocr_text": "Nezha"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 551,
+          "cy": 249,
+          "x_frac": 0.765,
+          "y_in_band": 0.792,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "Nezha"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 508,
+          "cy": 508,
+          "x_frac": 0.706,
+          "y_in_band": 0.452,
+          "conf": 0.969,
+          "n_boxes": 2,
+          "ocr_text": "Nezha"
+        }
+      ],
+      "ocr_texts": [
+        "Nezha",
+        "Nezha",
+        "ezha",
+        "Nezha"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.675,
+      "avg_x_frac": 0.759,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PRAY FOR JUSTICE",
+      "horse_no": 14,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 174,
+          "cy": 416,
+          "x_frac": 0.242,
+          "y_in_band": 0.907,
+          "conf": 0.984,
+          "n_boxes": 1,
+          "ocr_text": "PrayForJustice"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 188,
+          "cy": 549,
+          "x_frac": 0.261,
+          "y_in_band": 0.692,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Pray ForJustice"
+        }
+      ],
+      "ocr_texts": [
+        "PrayForJustice",
+        "Pray ForJustice"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.8,
+      "avg_x_frac": 0.251,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RUN RUN SMART",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 142,
+          "cy": 394,
+          "x_frac": 0.197,
+          "y_in_band": 0.76,
+          "conf": 0.922,
+          "n_boxes": 1,
+          "ocr_text": "Run Run Smart"
+        }
+      ],
+      "ocr_texts": [
+        "Run Run Smart"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.76,
+      "avg_x_frac": 0.197,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SWORD POINT",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "813",
+          "cx": 344,
+          "cy": 30,
+          "x_frac": 0.478,
+          "y_in_band": 0.165,
+          "conf": 0.969,
+          "n_boxes": 1,
+          "ocr_text": "SwordPoint"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 295,
+          "cy": 332,
+          "x_frac": 0.41,
+          "y_in_band": 0.347,
+          "conf": 0.968,
+          "n_boxes": 1,
+          "ocr_text": "SwordPoint"
+        }
+      ],
+      "ocr_texts": [
+        "SwordPoint",
+        "SwordPoint"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.256,
+      "avg_x_frac": 0.444,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "TALENTS AMBITION",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "813",
+          "cx": 297,
+          "cy": 102,
+          "x_frac": 0.412,
+          "y_in_band": 0.76,
+          "conf": 0.939,
+          "n_boxes": 1,
+          "ocr_text": "Talents Ambition"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 275,
+          "cy": 277,
+          "x_frac": 0.382,
+          "y_in_band": 0.98,
+          "conf": 0.99,
+          "n_boxes": 1,
+          "ocr_text": "Talents Ambition"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 110,
+          "cy": 423,
+          "x_frac": 0.153,
+          "y_in_band": 0.953,
+          "conf": 0.961,
+          "n_boxes": 1,
+          "ocr_text": "TalentsAmbition"
+        }
+      ],
+      "ocr_texts": [
+        "Talents Ambition",
+        "Talents Ambition",
+        "TalentsAmbition"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.9,
+      "avg_x_frac": 0.316,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TELECOM FIGHTERS",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "813",
+          "cx": 220,
+          "cy": 101,
+          "x_frac": 0.306,
+          "y_in_band": 0.752,
+          "conf": 0.964,
+          "n_boxes": 1,
+          "ocr_text": "Telecom Fighters"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 664,
+          "cy": 556,
+          "x_frac": 0.922,
+          "y_in_band": 0.733,
+          "conf": 0.987,
+          "n_boxes": 1,
+          "ocr_text": "TelecomFighters"
+        }
+      ],
+      "ocr_texts": [
+        "Telecom Fighters",
+        "TelecomFighters"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.742,
+      "avg_x_frac": 0.618,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TURIN MASCOT",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 369,
+          "cy": 252,
+          "x_frac": 0.512,
+          "y_in_band": 0.812,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "Turin Mascot"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 246,
+          "cy": 402,
+          "x_frac": 0.342,
+          "y_in_band": 0.813,
+          "conf": 0.963,
+          "n_boxes": 1,
+          "ocr_text": "Turin Mascot"
+        }
+      ],
+      "ocr_texts": [
+        "Turin Mascot",
+        "Turin Mascot"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.812,
+      "avg_x_frac": 0.427,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VICTORY SKY",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "813",
+          "cx": 145,
+          "cy": 101,
+          "x_frac": 0.201,
+          "y_in_band": 0.752,
+          "conf": 0.994,
+          "n_boxes": 1,
+          "ocr_text": "VictorySky"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 292,
+          "cy": 252,
+          "x_frac": 0.406,
+          "y_in_band": 0.812,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "VictorySky"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 415,
+          "cy": 394,
+          "x_frac": 0.576,
+          "y_in_band": 0.76,
+          "conf": 0.922,
+          "n_boxes": 1,
+          "ocr_text": "FictorySky"
+        }
+      ],
+      "ocr_texts": [
+        "VictorySky",
+        "VictorySky",
+        "FictorySky"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.775,
+      "avg_x_frac": 0.39,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 72,
+    "matched_horses": 12,
+    "field_size": 14,
+    "coverage": 0.857,
+    "parsed_at": "2026-06-27T17:54:18"
+  }
+}
