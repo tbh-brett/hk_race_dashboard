@@ -1,0 +1,751 @@
+{
+  "date": "2026-06-27",
+  "race_number": 10,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "814",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "CHATEAUNEUF",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 596,
+          "cy": 96,
+          "x_frac": 0.828,
+          "y_in_band": 0.711,
+          "conf": 0.963,
+          "n_boxes": 1,
+          "ocr_text": "Chateauneu"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 379,
+          "cy": 265,
+          "x_frac": 0.526,
+          "y_in_band": 0.899,
+          "conf": 0.928,
+          "n_boxes": 1,
+          "ocr_text": "Chateauneud"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 361,
+          "cy": 490,
+          "x_frac": 0.501,
+          "y_in_band": 0.346,
+          "conf": 0.947,
+          "n_boxes": 2,
+          "ocr_text": "Chateauneuf"
+        }
+      ],
+      "ocr_texts": [
+        "Chateauneu",
+        "Chateauneud",
+        "Chateauneuf",
+        "Chateauneuf"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.651,
+      "avg_x_frac": 0.62,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CITY GOLD BANNER",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 438,
+          "cy": 98,
+          "x_frac": 0.608,
+          "y_in_band": 0.727,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "CityGoldBanner"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 217,
+          "cy": 261,
+          "x_frac": 0.301,
+          "y_in_band": 0.872,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "City Gold Banner"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 235,
+          "cy": 423,
+          "x_frac": 0.326,
+          "y_in_band": 0.953,
+          "conf": 0.957,
+          "n_boxes": 1,
+          "ocr_text": "Gold Banner"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 285,
+          "cy": 562,
+          "x_frac": 0.396,
+          "y_in_band": 0.767,
+          "conf": 0.927,
+          "n_boxes": 1,
+          "ocr_text": "CityGold Banner"
+        }
+      ],
+      "ocr_texts": [
+        "CityGoldBanner",
+        "City Gold Banner",
+        "Gold Banner",
+        "CityGold Banner"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.83,
+      "avg_x_frac": 0.409,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DOUBLE MONEY",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 615,
+          "cy": 23,
+          "x_frac": 0.854,
+          "y_in_band": 0.107,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "Double Money"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 356,
+          "cy": 239,
+          "x_frac": 0.494,
+          "y_in_band": 0.725,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "Double Money"
+        }
+      ],
+      "ocr_texts": [
+        "Double Money",
+        "Double Money"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.415,
+      "avg_x_frac": 0.675,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "EMBRACE ABERDEEN",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 300,
+          "cy": 122,
+          "x_frac": 0.417,
+          "y_in_band": 0.926,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Embrace Aberdeen"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 141,
+          "cy": 354,
+          "x_frac": 0.196,
+          "y_in_band": 0.491,
+          "conf": 0.983,
+          "n_boxes": 2,
+          "ocr_text": "Embrace Aberdeen"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 219,
+          "cy": 556,
+          "x_frac": 0.304,
+          "y_in_band": 0.733,
+          "conf": 0.993,
+          "n_boxes": 1,
+          "ocr_text": "EmbraceAberdeen"
+        }
+      ],
+      "ocr_texts": [
+        "Embrace Aberdeen",
+        "Embrace Aberdeen",
+        "Embrace Aberdeen",
+        "EmbraceAberdeen"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.716,
+      "avg_x_frac": 0.305,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GUSTOSISIMO",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 337,
+          "cy": 24,
+          "x_frac": 0.468,
+          "y_in_band": 0.116,
+          "conf": 0.987,
+          "n_boxes": 1,
+          "ocr_text": "Gustosisimo"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 173,
+          "cy": 240,
+          "x_frac": 0.24,
+          "y_in_band": 0.732,
+          "conf": 0.978,
+          "n_boxes": 1,
+          "ocr_text": "Gustosisimo"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 244,
+          "cy": 403,
+          "x_frac": 0.339,
+          "y_in_band": 0.82,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "Gustosis"
+        }
+      ],
+      "ocr_texts": [
+        "Gustosisimo",
+        "Gustosisimo",
+        "Gustosis"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.553,
+      "avg_x_frac": 0.349,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HAPPY INDEX",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 386,
+          "cy": 122,
+          "x_frac": 0.536,
+          "y_in_band": 0.926,
+          "conf": 0.919,
+          "n_boxes": 1,
+          "ocr_text": "HappyIndex"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 242,
+          "cy": 288,
+          "x_frac": 0.336,
+          "y_in_band": 0.053,
+          "conf": 0.946,
+          "n_boxes": 1,
+          "ocr_text": "HappyIndex"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 309,
+          "cy": 515,
+          "x_frac": 0.43,
+          "y_in_band": 0.496,
+          "conf": 0.957,
+          "n_boxes": 2,
+          "ocr_text": "Happy Index"
+        }
+      ],
+      "ocr_texts": [
+        "HappyIndex",
+        "HappyIndex",
+        "Happy Index",
+        "Happy Index"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.488,
+      "avg_x_frac": 0.433,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LIFELINE EXPRESS",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 349,
+          "cy": 97,
+          "x_frac": 0.485,
+          "y_in_band": 0.719,
+          "conf": 0.949,
+          "n_boxes": 1,
+          "ocr_text": "Lifeine Express"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 189,
+          "cy": 284,
+          "x_frac": 0.263,
+          "y_in_band": 0.027,
+          "conf": 0.965,
+          "n_boxes": 1,
+          "ocr_text": "Lifeine Express"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 310,
+          "cy": 508,
+          "x_frac": 0.43,
+          "y_in_band": 0.451,
+          "conf": 0.946,
+          "n_boxes": 2,
+          "ocr_text": "LifelineExpress"
+        }
+      ],
+      "ocr_texts": [
+        "Lifeine Express",
+        "Lifeine Express",
+        "LifelineExpress",
+        "Lifeline Express"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.397,
+      "avg_x_frac": 0.392,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MR INCREDIBLE",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 228,
+          "cy": 122,
+          "x_frac": 0.317,
+          "y_in_band": 0.926,
+          "conf": 0.896,
+          "n_boxes": 1,
+          "ocr_text": "MrIncredible"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 117,
+          "cy": 264,
+          "x_frac": 0.163,
+          "y_in_band": 0.893,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "MrIncredible"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 131,
+          "cy": 396,
+          "x_frac": 0.182,
+          "y_in_band": 0.773,
+          "conf": 0.979,
+          "n_boxes": 1,
+          "ocr_text": "MrIncredible"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 133,
+          "cy": 544,
+          "x_frac": 0.185,
+          "y_in_band": 0.663,
+          "conf": 0.942,
+          "n_boxes": 1,
+          "ocr_text": "Mrincredible"
+        }
+      ],
+      "ocr_texts": [
+        "MrIncredible",
+        "MrIncredible",
+        "MrIncredible",
+        "Mrincredible"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.812,
+      "avg_x_frac": 0.21,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ROYAL BLITZ",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 140,
+          "cy": 121,
+          "x_frac": 0.194,
+          "y_in_band": 0.917,
+          "conf": 0.872,
+          "n_boxes": 1,
+          "ocr_text": "Royal Blitz"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 99,
+          "cy": 241,
+          "x_frac": 0.138,
+          "y_in_band": 0.738,
+          "conf": 0.943,
+          "n_boxes": 1,
+          "ocr_text": "Royal Bitz"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 307,
+          "cy": 540,
+          "x_frac": 0.426,
+          "y_in_band": 0.64,
+          "conf": 0.892,
+          "n_boxes": 1,
+          "ocr_text": "Royal Blitz"
+        }
+      ],
+      "ocr_texts": [
+        "Royal Blitz",
+        "Royal Bitz",
+        "Royal Blitz"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.763,
+      "avg_x_frac": 0.251,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "STANLEY EXPRESS",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 503,
+          "cy": 98,
+          "x_frac": 0.699,
+          "y_in_band": 0.727,
+          "conf": 0.986,
+          "n_boxes": 1,
+          "ocr_text": "StanleyExpress"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 306,
+          "cy": 262,
+          "x_frac": 0.425,
+          "y_in_band": 0.879,
+          "conf": 0.963,
+          "n_boxes": 1,
+          "ocr_text": "Stanley Express"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 349,
+          "cy": 407,
+          "x_frac": 0.485,
+          "y_in_band": 0.847,
+          "conf": 0.973,
+          "n_boxes": 1,
+          "ocr_text": "Stanley Express"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 455,
+          "cy": 550,
+          "x_frac": 0.632,
+          "y_in_band": 0.698,
+          "conf": 0.961,
+          "n_boxes": 1,
+          "ocr_text": "Stanley Express"
+        }
+      ],
+      "ocr_texts": [
+        "StanleyExpress",
+        "Stanley Express",
+        "Stanley Express",
+        "Stanley Express"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.788,
+      "avg_x_frac": 0.561,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SUGAR SUGAR",
+      "horse_no": 14,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 213,
+          "cy": 97,
+          "x_frac": 0.296,
+          "y_in_band": 0.719,
+          "conf": 0.906,
+          "n_boxes": 1,
+          "ocr_text": "Sugar Sugar"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 151,
+          "cy": 173,
+          "x_frac": 0.21,
+          "y_in_band": 0.282,
+          "conf": 0.98,
+          "n_boxes": 1,
+          "ocr_text": "Sugar Sugar"
+        }
+      ],
+      "ocr_texts": [
+        "Sugar Sugar",
+        "Sugar Sugar"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.492,
+      "avg_x_frac": 0.251,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THOUSAND SPIRIT",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 484,
+          "cy": 122,
+          "x_frac": 0.672,
+          "y_in_band": 0.926,
+          "conf": 0.973,
+          "n_boxes": 1,
+          "ocr_text": "Thousand Spirit"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 328,
+          "cy": 287,
+          "x_frac": 0.456,
+          "y_in_band": 0.047,
+          "conf": 0.903,
+          "n_boxes": 1,
+          "ocr_text": "Thousand Spirit"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 378,
+          "cy": 593,
+          "x_frac": 0.525,
+          "y_in_band": 0.948,
+          "conf": 0.956,
+          "n_boxes": 1,
+          "ocr_text": "Thousand Spirit"
+        }
+      ],
+      "ocr_texts": [
+        "Thousand Spirit",
+        "Thousand Spirit",
+        "Thousand Spirit"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.653,
+      "avg_x_frac": 0.554,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THUNDER KIT",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 528,
+          "cy": 23,
+          "x_frac": 0.733,
+          "y_in_band": 0.107,
+          "conf": 0.883,
+          "n_boxes": 1,
+          "ocr_text": "ThunderKin"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 254,
+          "cy": 172,
+          "x_frac": 0.353,
+          "y_in_band": 0.275,
+          "conf": 0.99,
+          "n_boxes": 1,
+          "ocr_text": "ThunderKi"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 253,
+          "cy": 536,
+          "x_frac": 0.351,
+          "y_in_band": 0.616,
+          "conf": 0.993,
+          "n_boxes": 1,
+          "ocr_text": "ThunderKit"
+        }
+      ],
+      "ocr_texts": [
+        "ThunderKin",
+        "ThunderKi",
+        "ThunderKit"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.341,
+      "avg_x_frac": 0.469,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VIGOR HAPPINESS",
+      "horse_no": 13,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "814",
+          "cx": 131,
+          "cy": 98,
+          "x_frac": 0.182,
+          "y_in_band": 0.727,
+          "conf": 0.934,
+          "n_boxes": 1,
+          "ocr_text": "Vigor Happiness"
+        }
+      ],
+      "ocr_texts": [
+        "Vigor Happiness"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.727,
+      "avg_x_frac": 0.182,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 93,
+    "matched_horses": 14,
+    "field_size": 14,
+    "coverage": 1.0,
+    "parsed_at": "2026-06-27T17:54:08"
+  }
+}
