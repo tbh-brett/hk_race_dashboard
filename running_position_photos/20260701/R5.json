@@ -1,0 +1,583 @@
+{
+  "date": "2026-07-01",
+  "race_number": 5,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "820",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 485,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 457
+    },
+    {
+      "y_top": 485,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 543
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "BEAUTY BOLT",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "820",
+          "cx": 208,
+          "cy": 111,
+          "x_frac": 0.289,
+          "y_in_band": 0.835,
+          "conf": 0.919,
+          "n_boxes": 1,
+          "ocr_text": "Beauty Bolt"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 162,
+          "cy": 242,
+          "x_frac": 0.225,
+          "y_in_band": 0.745,
+          "conf": 0.925,
+          "n_boxes": 1,
+          "ocr_text": "BeautyBoll"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 189,
+          "cy": 403,
+          "x_frac": 0.263,
+          "y_in_band": 0.82,
+          "conf": 0.938,
+          "n_boxes": 1,
+          "ocr_text": "BeautyBol"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 181,
+          "cy": 576,
+          "x_frac": 0.251,
+          "y_in_band": 0.778,
+          "conf": 0.911,
+          "n_boxes": 1,
+          "ocr_text": "Beauty Bolt"
+        }
+      ],
+      "ocr_texts": [
+        "Beauty Bolt",
+        "BeautyBoll",
+        "BeautyBol",
+        "Beauty Bolt"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.795,
+      "avg_x_frac": 0.257,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "EMBLAZON",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "820",
+          "cx": 358,
+          "cy": 111,
+          "x_frac": 0.497,
+          "y_in_band": 0.835,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "Emblazon"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 297,
+          "cy": 252,
+          "x_frac": 0.412,
+          "y_in_band": 0.812,
+          "conf": 0.983,
+          "n_boxes": 1,
+          "ocr_text": "Emblazon"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 309,
+          "cy": 429,
+          "x_frac": 0.429,
+          "y_in_band": 0.993,
+          "conf": 0.914,
+          "n_boxes": 1,
+          "ocr_text": "mblazon"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 320,
+          "cy": 596,
+          "x_frac": 0.444,
+          "y_in_band": 0.949,
+          "conf": 0.987,
+          "n_boxes": 1,
+          "ocr_text": "Emblazon"
+        }
+      ],
+      "ocr_texts": [
+        "Emblazon",
+        "Emblazon",
+        "mblazon",
+        "Emblazon"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.896,
+      "avg_x_frac": 0.446,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GORGEOUS WIN",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "820",
+          "cx": 499,
+          "cy": 111,
+          "x_frac": 0.693,
+          "y_in_band": 0.835,
+          "conf": 0.993,
+          "n_boxes": 1,
+          "ocr_text": "GorgeousWin"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 456,
+          "cy": 266,
+          "x_frac": 0.633,
+          "y_in_band": 0.906,
+          "conf": 0.963,
+          "n_boxes": 1,
+          "ocr_text": "Gorgeous Win"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 435,
+          "cy": 431,
+          "x_frac": 0.604,
+          "y_in_band": 0.018,
+          "conf": 0.994,
+          "n_boxes": 1,
+          "ocr_text": "GorgeousWin"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 412,
+          "cy": 594,
+          "x_frac": 0.572,
+          "y_in_band": 0.932,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "GorgeousWin"
+        }
+      ],
+      "ocr_texts": [
+        "GorgeousWin",
+        "Gorgeous Win",
+        "GorgeousWin",
+        "GorgeousWin"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.671,
+      "avg_x_frac": 0.625,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "INVINCIBLE SHIELD",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "820",
+          "cx": 317,
+          "cy": 47,
+          "x_frac": 0.44,
+          "y_in_band": 0.306,
+          "conf": 0.934,
+          "n_boxes": 1,
+          "ocr_text": "Invincible Shield"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 285,
+          "cy": 178,
+          "x_frac": 0.396,
+          "y_in_band": 0.315,
+          "conf": 0.957,
+          "n_boxes": 1,
+          "ocr_text": "Invincible Shield"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 326,
+          "cy": 328,
+          "x_frac": 0.453,
+          "y_in_band": 0.32,
+          "conf": 0.976,
+          "n_boxes": 1,
+          "ocr_text": "Invincible Shield"
+        }
+      ],
+      "ocr_texts": [
+        "Invincible Shield",
+        "Invincible Shield",
+        "Invincible Shield"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.314,
+      "avg_x_frac": 0.43,
+      "wide_frames": 0,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "KA YING ATTACK",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "820",
+          "cx": 107,
+          "cy": 114,
+          "x_frac": 0.149,
+          "y_in_band": 0.86,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "KaYing Attack"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 97,
+          "cy": 177,
+          "x_frac": 0.135,
+          "y_in_band": 0.309,
+          "conf": 0.927,
+          "n_boxes": 1,
+          "ocr_text": "KaYing Attack"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 106,
+          "cy": 328,
+          "x_frac": 0.147,
+          "y_in_band": 0.32,
+          "conf": 0.889,
+          "n_boxes": 1,
+          "ocr_text": "KaYing Attack"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 115,
+          "cy": 548,
+          "x_frac": 0.16,
+          "y_in_band": 0.538,
+          "conf": 0.859,
+          "n_boxes": 1,
+          "ocr_text": "KaYing Alttack"
+        }
+      ],
+      "ocr_texts": [
+        "KaYing Attack",
+        "KaYing Attack",
+        "KaYing Attack",
+        "KaYing Alttack"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.511,
+      "avg_x_frac": 0.148,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PUBLIC ATTENTION",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 215,
+          "cy": 177,
+          "x_frac": 0.299,
+          "y_in_band": 0.309,
+          "conf": 0.964,
+          "n_boxes": 1,
+          "ocr_text": "PublicAttention"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 261,
+          "cy": 403,
+          "x_frac": 0.362,
+          "y_in_band": 0.82,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "icAttention"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 253,
+          "cy": 572,
+          "x_frac": 0.351,
+          "y_in_band": 0.744,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "PublicAttention"
+        }
+      ],
+      "ocr_texts": [
+        "PublicAttention",
+        "icAttention",
+        "PublicAttention"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.623,
+      "avg_x_frac": 0.337,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "REGAL GEM",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "820",
+          "cx": 408,
+          "cy": 46,
+          "x_frac": 0.567,
+          "y_in_band": 0.298,
+          "conf": 0.961,
+          "n_boxes": 1,
+          "ocr_text": "Regal Gem"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 349,
+          "cy": 246,
+          "x_frac": 0.485,
+          "y_in_band": 0.772,
+          "conf": 0.923,
+          "n_boxes": 1,
+          "ocr_text": "Regal Gem"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 273,
+          "cy": 328,
+          "x_frac": 0.379,
+          "y_in_band": 0.32,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "Regal Gem"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 185,
+          "cy": 554,
+          "x_frac": 0.257,
+          "y_in_band": 0.59,
+          "conf": 0.984,
+          "n_boxes": 1,
+          "ocr_text": "Regal Gem"
+        }
+      ],
+      "ocr_texts": [
+        "Regal Gem",
+        "Regal Gem",
+        "Regal Gem",
+        "Regal Gem"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.493,
+      "avg_x_frac": 0.421,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "STORM RIDER",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "820",
+          "cx": 278,
+          "cy": 111,
+          "x_frac": 0.386,
+          "y_in_band": 0.835,
+          "conf": 0.966,
+          "n_boxes": 1,
+          "ocr_text": "StormRider"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 251,
+          "cy": 242,
+          "x_frac": 0.349,
+          "y_in_band": 0.745,
+          "conf": 0.948,
+          "n_boxes": 1,
+          "ocr_text": "StormRider"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 307,
+          "cy": 573,
+          "x_frac": 0.426,
+          "y_in_band": 0.752,
+          "conf": 0.948,
+          "n_boxes": 1,
+          "ocr_text": "Storm Rider"
+        }
+      ],
+      "ocr_texts": [
+        "StormRider",
+        "StormRider",
+        "Storm Rider"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.778,
+      "avg_x_frac": 0.387,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TOP DRAGON",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "820",
+          "cx": 428,
+          "cy": 111,
+          "x_frac": 0.594,
+          "y_in_band": 0.835,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "TopDragon"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 358,
+          "cy": 270,
+          "x_frac": 0.497,
+          "y_in_band": 0.933,
+          "conf": 0.993,
+          "n_boxes": 1,
+          "ocr_text": "TopDragon"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 360,
+          "cy": 427,
+          "x_frac": 0.5,
+          "y_in_band": 0.98,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "TopDragon"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 403,
+          "cy": 572,
+          "x_frac": 0.56,
+          "y_in_band": 0.744,
+          "conf": 0.994,
+          "n_boxes": 1,
+          "ocr_text": "TopDragon"
+        }
+      ],
+      "ocr_texts": [
+        "TopDragon",
+        "TopDragon",
+        "TopDragon",
+        "TopDragon"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.873,
+      "avg_x_frac": 0.538,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 71,
+    "matched_horses": 9,
+    "field_size": 10,
+    "coverage": 0.9,
+    "parsed_at": "2026-07-02T01:38:15"
+  }
+}
