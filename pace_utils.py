@@ -259,6 +259,127 @@ def _parse_sects(s) -> List[float]:
     return out
 
 
+# ── HKJC sectional structure (section lengths in metres) ────────────────
+# Mirrors sarr_raceday.py. Used to normalise the first section to 400m pace.
+SECTION_LENGTHS: Dict[int, List[int]] = {
+    1000: [200, 400, 400],
+    1200: [400, 400, 400],
+    1400: [200, 400, 400, 400],
+    1600: [400, 400, 400, 400],
+    1650: [450, 400, 400, 400],
+    1800: [200, 400, 400, 400, 400],
+    2000: [400, 400, 400, 400, 400],
+    2200: [200, 400, 400, 400, 400, 400],
+    2400: [400, 400, 400, 400, 400, 400],
+}
+
+
+def _early_zone_pace(secs: List[float], distance) -> Optional[float]:
+    """First section normalised to a 400m-equivalent pace. Lower=faster."""
+    if not secs:
+        return None
+    try:
+        d = int(float(distance))
+    except (TypeError, ValueError):
+        return None
+    lengths = SECTION_LENGTHS.get(d)
+    if not lengths or len(secs) != len(lengths):
+        return None
+    first_len = lengths[0]
+    if first_len <= 0:
+        return None
+    return secs[0] * 400.0 / first_len
+
+
+def compute_sectional_metrics(form_db) -> dict:
+    """Per-run Form Guide lookup for ESZ, Fin Δ, and finish z-score.
+
+    ESZ is the within-race z-score of first-section 400m pace; negative is
+    faster early. Fin Δ is finish_time_seconds minus the field median;
+    negative is faster than the field. Keys are (YYYY-MM-DD, race_number).
+    """
+    import math
+    import numpy as np
+    import pandas as pd
+
+    out: Dict[tuple, Dict[str, dict]] = {}
+    need = {"race_date", "race_number", "horse_name", "distance",
+            "finish_time_seconds", "sectiontimes"}
+    if form_db is None or not need.issubset(set(getattr(form_db, "columns", []))):
+        return out
+
+    sub = form_db.dropna(subset=["race_date", "race_number", "horse_name"]).copy()
+    if sub.empty:
+        return out
+
+    sub["_ft"] = pd.to_numeric(sub["finish_time_seconds"], errors="coerce")
+    sub["_early"] = [
+        _early_zone_pace(_parse_sects(s), d)
+        for s, d in zip(sub["sectiontimes"].tolist(), sub["distance"].tolist())
+    ]
+
+    for (rd, rn), g in sub.groupby(["race_date", "race_number"], sort=False):
+        try:
+            rn_i = int(rn)
+        except (TypeError, ValueError):
+            continue
+        try:
+            dkey = pd.Timestamp(rd).strftime("%Y-%m-%d")
+        except Exception:
+            dkey = str(rd)[:10]
+
+        ft = g["_ft"].dropna()
+        med_ft = float(ft.median()) if len(ft) >= 4 else math.nan
+        ft_vals = ft.to_numpy(dtype=float)
+        if len(ft_vals) >= 4 and ft_vals.std() > 1e-6:
+            ft_mu = float(ft_vals.mean())
+            ft_sd = float(ft_vals.std())
+        else:
+            ft_mu = ft_sd = math.nan
+
+        ep = pd.to_numeric(g["_early"], errors="coerce").dropna()
+        if len(ep) >= 4 and float(ep.std()) > 1e-6:
+            ep_mu = float(ep.mean())
+            ep_sd = float(ep.std())
+        else:
+            ep_mu = ep_sd = math.nan
+
+        m: Dict[str, dict] = {}
+        for _, r in g.iterrows():
+            h = str(r["horse_name"]).strip().upper()
+            if not h or h == "NAN":
+                continue
+            esz = None
+            early = r["_early"]
+            if early is not None and not (isinstance(early, float) and math.isnan(early)):
+                try:
+                    e = float(early)
+                except (TypeError, ValueError):
+                    e = math.nan
+                if not math.isnan(e) and not math.isnan(ep_mu) and ep_sd > 0:
+                    esz = (e - ep_mu) / ep_sd
+            fin_delta = None
+            f = r["_ft"]
+            if f is not None and not (isinstance(f, float) and math.isnan(f)):
+                try:
+                    fval = float(f)
+                except (TypeError, ValueError):
+                    fval = math.nan
+                if not math.isnan(fval) and not math.isnan(med_ft):
+                    fin_delta = fval - med_ft
+            fin_z = None
+            if f is not None and not (isinstance(f, float) and math.isnan(f)):
+                try:
+                    fval = float(f)
+                except (TypeError, ValueError):
+                    fval = math.nan
+                if not math.isnan(fval) and not math.isnan(ft_mu) and ft_sd > 0:
+                    fin_z = (fval - ft_mu) / ft_sd
+            m[h] = {"esz": esz, "fin_delta": fin_delta, "fin_z": fin_z}
+        out[(dkey, rn_i)] = m
+    return out
+
+
 def compute_actual_race_pace(race: dict, venue: str) -> dict:
     """Given a race dict as produced by scrape_hkjc_results.scrape_race()
     (or the equivalent shape read from hkjc_results_updated.xlsx), return

@@ -3,10 +3,6 @@
 HKJC Race Day Dashboard — dashboard.py
 ========================================
 Streamlit dashboard displaying model picks for upcoming HKJC meetings.
-
-Launch:
-    streamlit run dashboard.py
-
 Features:
   - Browse all analysed meetings from reports/*.json
   - Top 4 picks per race with colour-coded risk tiers
@@ -1777,6 +1773,7 @@ FORM_COLS = [
     "going", "race_class", "jockey", "trainer", "rating", "draw", "running_positions",
     "place", "lbw", "finish_time_seconds", "distance", "actual_weight",
     "sire", "dam_sire", "current_rating", "last_rating", "declared_weight",
+    "sectiontimes",
 ]
 
 
@@ -2271,8 +2268,8 @@ def _render_raceday_highlights(race: dict, date_str: str,
 
 
 @st.cache_data(show_spinner=False)
-def _load_fuse_report(date_compact: str, _mtime: float = 0.0) -> dict:
-    """Load the FUSE model report (reports/race_day_report_<dc>_FUSE.json)."""
+def _load_fuse_report(date_compact: str, mtime: float = 0.0) -> dict:
+    """Load the FUSE report, keyed by file mtime so new reports invalidate."""
     try:
         p = REPORTS / f"race_day_report_{date_compact}_FUSE.json"
         if not p.exists():
@@ -3339,6 +3336,19 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                     return
                 with st.expander("Scrape output"):
                     st.code((res.stdout or "")[-2500:])
+
+        # ── [1.5/3] Sync any freshly-scraped results → hkjc.db ──────
+        # SARR reads hkjc.db, so sync results_*.json before SARR, not only
+        # later before ET/form-guide. The later sync is then a cheap no-op.
+        try:
+            n_mtg_pre, n_rows_pre = _auto_sync_results_to_db(verbose=False)
+            if n_mtg_pre:
+                st.info(
+                    f"Auto-synced {n_mtg_pre} meeting(s) → hkjc.db before SARR "
+                    f"({n_rows_pre} rows) so SARR analyses the latest results."
+                )
+        except Exception as _e:
+            st.warning(f"Pre-SARR DB sync skipped: {_e}")
 
         # ── [2/3] SARR model on the fresh card ─────────────────────
         _pbar.progress(33, text="[2/3] Running SARR model…")
@@ -4608,6 +4618,82 @@ def _render_cycle_signals_for_race(race: dict, date_compact: str) -> None:
             f'</div>', unsafe_allow_html=True)
 
 
+# ── Pace / sectional-metric colour scales (shared) ───────────────────────
+# Temperature scale: fast = red, slow = blue, normal = gray. Accepts canonical
+# labels ("Very Fast") and legacy abbreviations ("V.Fast").
+_PACE_LABEL_COLOUR = {
+    "VERY FAST": "#b91c1c", "VFAST": "#b91c1c",
+    "FAST": "#ef4444",
+    "SLIGHTLY FAST": "#fca5a5", "SLFAST": "#fca5a5",
+    "NORMAL": "#9ca3af",
+    "SLIGHTLY SLOW": "#93c5fd", "SLSLOW": "#93c5fd",
+    "SLOW": "#3b82f6",
+    "VERY SLOW": "#1d4ed8", "VSLOW": "#1d4ed8",
+}
+
+
+def _pace_label_colour(label) -> str:
+    """Temperature-scale colour for a race-pace label."""
+    if not label:
+        return "#9ca3af"
+    raw = str(label).strip().upper()
+    if raw in _PACE_LABEL_COLOUR:
+        return _PACE_LABEL_COLOUR[raw]
+    key = raw.replace(".", "")
+    return _PACE_LABEL_COLOUR.get(key, "#9ca3af")
+
+
+def _metric_z_colour(z) -> str:
+    """Temperature colour for a standardised metric: negative=fast/red."""
+    import math as _m
+    if z is None:
+        return "#9ca3af"
+    try:
+        v = float(z)
+    except (TypeError, ValueError):
+        return "#9ca3af"
+    if _m.isnan(v) or v == 0.0:
+        return "#9ca3af"
+    if v <= -2.0:
+        return "#b91c1c"
+    if v <= -1.0:
+        return "#ef4444"
+    if v <= -0.4:
+        return "#fca5a5"
+    if v < 0.4:
+        return "#9ca3af"
+    if v < 1.0:
+        return "#93c5fd"
+    if v < 2.0:
+        return "#3b82f6"
+    return "#1d4ed8"
+
+
+def _fmt_signed(v, nd: int = 1):
+    """Format a float with a leading sign, or return None for missing values."""
+    import math as _m
+    if v is None:
+        return None
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    if _m.isnan(f):
+        return None
+    return f"{f:+.{nd}f}"
+
+
+@st.cache_data(show_spinner=False)
+def _sectional_metrics_cached(sqlite_mtime: float, xlsx_mtime: float) -> dict:
+    """Cached per-run ESZ + Fin Δ lookup for the Form Guide."""
+    from pace_utils import compute_sectional_metrics
+    from db_utils import load_results_db
+    db = load_results_db()
+    if db is None or db.empty:
+        return {}
+    return compute_sectional_metrics(db)
+
+
 def _render_race_cockpit(race: dict, sarr_race: dict | None,
                          edges_for_race: list[dict],
                          bb_active: dict, trial_index: dict | None,
@@ -4632,10 +4718,7 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
     pace_score = race.get("pace_score", 0.0)
     field_size = len(race.get("picks", []) or race.get("speed_map", {}).get("grid", []))
 
-    pace_colour = {"Very Fast": "#ef4444", "Fast": "#f97316",
-                   "Slightly Fast": "#f59e0b", "Normal": "#9ca3af",
-                   "Slightly Slow": "#60a5fa", "Slow": "#3b82f6",
-                   "Very Slow": "#1d4ed8"}.get(pace, "#9ca3af")
+    pace_colour = _pace_label_colour(pace)
 
     st.markdown(
         f'<div style="background:linear-gradient(90deg,rgba(96,165,250,0.12),rgba(96,165,250,0));'
@@ -11137,6 +11220,24 @@ def page_form_guide():
         else:
             st.error(f"Build failed:\n```\n{result.stderr[-800:] if result.stderr else result.stdout[-800:]}\n```")
 
+    # Per-run ESZ + Fin Δ columns (early speed vs field / finishing vs field).
+    # Keyed (iso_date_str, race_number) → {horse_name_upper: {esz, fin_delta, fin_z}}.
+    sec_metrics: dict = {}
+    try:
+        from db_utils import SQLITE_FILE
+        try:
+            _sm_sql = SQLITE_FILE.stat().st_mtime if SQLITE_FILE.exists() else 0.0
+        except OSError:
+            _sm_sql = 0.0
+        try:
+            from db_utils import DB_FILE as _RESULTS_XLSX
+            _sm_xls = _RESULTS_XLSX.stat().st_mtime if _RESULTS_XLSX.exists() else 0.0
+        except Exception:
+            _sm_xls = 0.0
+        sec_metrics = _sectional_metrics_cached(_sm_sql, _sm_xls)
+    except Exception:
+        sec_metrics = {}
+
     if fg_cache:
         form_db = pd.DataFrame()  # not needed for HTML when cache available
         race_idx = {}
@@ -11150,6 +11251,12 @@ def page_form_guide():
             )
             return
         race_idx = _build_race_index(form_db)
+        if not sec_metrics:
+            try:
+                from pace_utils import compute_sectional_metrics
+                sec_metrics = compute_sectional_metrics(form_db)
+            except Exception:
+                sec_metrics = {}
 
     races = meeting_data.get("races", [])
     if not races:
@@ -11452,6 +11559,15 @@ def page_form_guide():
                     date_disp = str(run.get("date", "?"))[:8]
                     date_dc   = ""
                 top5 = [(int(entry[0]), entry[1]) for entry in (run.get("top5") or [])]
+                sm_run = None
+                _rdate = run.get("date")
+                _rnum = run.get("race_number")
+                if isinstance(_rdate, str) and _rnum is not None:
+                    try:
+                        sm_run = (sec_metrics.get((_rdate[:10], int(_rnum))) or {})\
+                            .get(hname.strip().upper())
+                    except (ValueError, TypeError):
+                        sm_run = None
                 display_runs.append({
                     "date_disp": date_disp,
                     "date_dc":   date_dc,
@@ -11470,7 +11586,10 @@ def page_form_guide():
                     "margin": str(run.get("margin", "-")),
                     "pace": str(run.get("pace", "-")),
                     "pace_dev": run.get("pace_dev"),
-                    "ftime": str(run.get("time", "-")),
+                    "esz":       (sm_run or {}).get("esz"),
+                    "ftime":     str(run.get("time", "-")),
+                    "fin_delta": (sm_run or {}).get("fin_delta"),
+                    "fin_z":     (sm_run or {}).get("fin_z"),
                     "top5": top5,
                     "top5_next": run.get("top5_next") or [],
                     "lane_avg": run.get("lane_avg"),
@@ -11513,6 +11632,14 @@ def page_form_guide():
                     place_val = str(int(row["place_num"])) if pd.notna(row.get("place_num")) else "?"
                 except (ValueError, TypeError):
                     place_val = "?"
+                _sm = None
+                _rd_iso = rd.strftime("%Y-%m-%d") if hasattr(rd, "strftime") else str(rd)[:10]
+                if pd.notna(rnum):
+                    try:
+                        _sm = (sec_metrics.get((_rd_iso, int(rnum))) or {})\
+                            .get(hname.strip().upper())
+                    except (ValueError, TypeError):
+                        _sm = None
                 display_runs.append({
                     "date_disp": date_disp,
                     "date_dc":   date_dc,
@@ -11531,7 +11658,10 @@ def page_form_guide():
                     "margin": margin,
                     "pace": "-",
                     "pace_dev": None,
-                    "ftime": ftime,
+                    "esz":       (_sm or {}).get("esz"),
+                    "ftime":     ftime,
+                    "fin_delta": (_sm or {}).get("fin_delta"),
+                    "fin_z":     (_sm or {}).get("fin_z"),
                     "top5": ri.get("top5", []),
                 })
 
@@ -11557,24 +11687,31 @@ def page_form_guide():
             margin_cell = f'<span class="form-margin" style="{margin_style}">{_smart_frac_html(margin)}</span>'
             t5_html = _fmt_top5_html(top5, hname, dr.get("top5_next")) if top5 else "&mdash;"
 
-            # Pace cell — colour-code based on deviation from HKJC standard
+            # Pace cell — temperature colour (fast=red, slow=blue).
             pace_label = str(dr.get("pace", "-")) or "-"
             pace_dev = dr.get("pace_dev")
-            if pace_label in ("V.Fast", "Fast"):
-                pace_colour = "#22c55e"
-            elif pace_label == "Sl.Fast":
-                pace_colour = "#86efac"
-            elif pace_label in ("V.Slow", "Slow"):
-                pace_colour = "#ef4444"
-            elif pace_label == "Sl.Slow":
-                pace_colour = "#fca5a5"
-            else:
-                pace_colour = "#9ca3af"
+            pace_colour = _pace_label_colour(pace_label)
             dev_title = f" ({pace_dev:+.2f}s vs HKJC)" if isinstance(pace_dev, (int, float)) else ""
             pace_cell = (
                 f'<span title="Race-pace deviation from HKJC standard{dev_title}" '
                 f'style="color:{pace_colour};font-weight:600">{pace_label}</span>'
                 if pace_label and pace_label != "-" else "&mdash;"
+            )
+
+            esz_raw = dr.get("esz")
+            fin_delta = dr.get("fin_delta")
+            fin_z = dr.get("fin_z")
+            esz_disp = _fmt_signed(esz_raw)
+            fin_disp = _fmt_signed(fin_delta)
+            esz_cell = (
+                f'<span title="Early Speed Z vs field (negative = faster early)" '
+                f'style="color:{_metric_z_colour(esz_raw)};font-weight:600">'
+                f'{esz_disp}</span>' if esz_disp is not None else "&mdash;"
+            )
+            fin_cell = (
+                f'<span title="Finish time vs field median (s, negative = faster than the field)" '
+                f'style="color:{_metric_z_colour(fin_z)};font-weight:600">'
+                f'{fin_disp}</span>' if fin_disp is not None else "&mdash;"
             )
 
             # Per-run video link + short commentary (inline cells)
@@ -11627,12 +11764,14 @@ def page_form_guide():
                 f'<td>{lane_cell}</td>'
                 f'<td>{margin_cell}</td>'
                 f'<td>{pace_cell}</td>'
+                f'<td>{esz_cell}</td>'
                 f'<td>{ftime}</td>'
+                f'<td>{fin_cell}</td>'
                 f'<td>{vid_cell}</td>'
                 f'<td class="td-left form-comment">{comment_cell}</td>'
                 f'</tr>'
                 f'<tr class="top5-row">'
-                f'<td colspan="18">{t5_html}</td>'
+                f'<td colspan="20">{t5_html}</td>'
                 f'</tr>'
             )
 
@@ -11657,7 +11796,9 @@ def page_form_guide():
                 "Positions": pos,
                 "Margin": margin,
                 "Pace": pace_label,
+                "ESZ": _fmt_signed(esz_raw) or "",
                 "Finish Time": ftime,
+                "Fin Delta": _fmt_signed(fin_delta) or "",
                 "Top 5": t5_plain,
                 "Comment": comment_cell,
             })
@@ -11667,7 +11808,8 @@ def page_form_guide():
             '<thead><tr>'
             '<th>Date</th><th>Pl</th><th>Dist</th><th>Trk</th><th>Crs</th>'
             '<th>Gng</th><th>Cls</th><th class="th-left">Jockey</th>'
-            '<th>Rtg</th><th>Wt</th><th>Gt</th><th>Pos</th><th>Ln</th><th>Mrgn</th><th>Pace</th><th>Time</th>'
+            '<th>Rtg</th><th>Wt</th><th>Gt</th><th>Pos</th><th>Ln</th><th>Mrgn</th>'
+            '<th>Pace</th><th>ESZ</th><th>Time</th><th>Fin &Delta;</th>'
             '<th>Vid</th><th class="th-left">Comment</th>'
             '</tr></thead>'
             '<tbody>' + "".join(html_rows) + '</tbody>'
