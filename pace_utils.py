@@ -294,9 +294,10 @@ def _early_zone_pace(secs: List[float], distance) -> Optional[float]:
 def compute_sectional_metrics(form_db) -> dict:
     """Per-run Form Guide lookup for ESZ, Fin Δ, and finish z-score.
 
-    ESZ is the within-race z-score of first-section 400m pace; negative is
-    faster early. Fin Δ is finish_time_seconds minus the field median;
-    negative is faster than the field. Keys are (YYYY-MM-DD, race_number).
+    ESZ is SARR-style early_dev: first-section 400m pace minus the race
+    median; negative is faster early. Fin Δ is finish_time_seconds minus
+    the field median; negative is faster than the field. Keys are
+    (YYYY-MM-DD, race_number).
     """
     import math
     import numpy as np
@@ -338,6 +339,7 @@ def compute_sectional_metrics(form_db) -> dict:
             ft_mu = ft_sd = math.nan
 
         ep = pd.to_numeric(g["_early"], errors="coerce").dropna()
+        med_ep = float(ep.median()) if len(ep) >= 4 else math.nan
         if len(ep) >= 4 and float(ep.std()) > 1e-6:
             ep_mu = float(ep.mean())
             ep_sd = float(ep.std())
@@ -350,14 +352,19 @@ def compute_sectional_metrics(form_db) -> dict:
             if not h or h == "NAN":
                 continue
             esz = None
+            esz_z = None
             early = r["_early"]
             if early is not None and not (isinstance(early, float) and math.isnan(early)):
                 try:
                     e = float(early)
                 except (TypeError, ValueError):
                     e = math.nan
+                if not math.isnan(e) and not math.isnan(med_ep):
+                    # SARR ESZ = early_dev: first-section 400m pace vs race median.
+                    # Negative means faster early speed.
+                    esz = e - med_ep
                 if not math.isnan(e) and not math.isnan(ep_mu) and ep_sd > 0:
-                    esz = (e - ep_mu) / ep_sd
+                    esz_z = (e - ep_mu) / ep_sd
             fin_delta = None
             f = r["_ft"]
             if f is not None and not (isinstance(f, float) and math.isnan(f)):
@@ -375,7 +382,8 @@ def compute_sectional_metrics(form_db) -> dict:
                     fval = math.nan
                 if not math.isnan(fval) and not math.isnan(ft_mu) and ft_sd > 0:
                     fin_z = (fval - ft_mu) / ft_sd
-            m[h] = {"esz": esz, "fin_delta": fin_delta, "fin_z": fin_z}
+                m[h] = {"esz": esz, "esz_z": esz_z,
+                    "fin_delta": fin_delta, "fin_z": fin_z}
         out[(dkey, rn_i)] = m
     return out
 

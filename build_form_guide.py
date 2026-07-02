@@ -26,6 +26,7 @@ import pandas as pd
 BASE = Path(__file__).parent
 CACHE_DIR = BASE / "cache"
 RACECARDS_DIR = BASE / "racecards"
+REPORTS_DIR = BASE / "reports"
 
 FORM_COLS = [
     "horse_name", "race_date", "race_number", "race_track", "race_course",
@@ -164,6 +165,33 @@ def _build_pace_index(form_db: pd.DataFrame) -> dict:
             }
         except ValueError:
             continue
+
+    # Safety net: result JSONs already carry actual_pace_label/actual_dev
+    # from scrape_hkjc_results.py. Use them to fill any races missing from a
+    # stale race_pace_index.json (the June 2026 symptom).
+    for fp in sorted(REPORTS_DIR.glob("results_*.json")):
+        stem = fp.stem.replace("results_", "")
+        if len(stem) != 8 or not stem.isdigit():
+            continue
+        d_iso = f"{stem[:4]}-{stem[4:6]}-{stem[6:]}"
+        try:
+            data = json.loads(fp.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        for race in data.get("races", []):
+            try:
+                rn = int(race.get("race_number"))
+            except (TypeError, ValueError):
+                continue
+            if (d_iso, rn) in out:
+                continue
+            label = race.get("actual_pace_label") or "-"
+            if label == "N/A":
+                label = "-"
+            out[(d_iso, rn)] = {
+                "label": label,
+                "dev": race.get("actual_dev"),
+            }
     return out
 
 

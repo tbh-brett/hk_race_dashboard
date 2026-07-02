@@ -150,6 +150,7 @@ def _load_commentary(date_dc: str) -> dict:
             out[key] = {
                 "short": h.get("short") or "",
                 "tags": h.get("tags") or [],
+                "polarity_score": h.get("polarity_score"),
                 "incident_text": h.get("incident_text") or "",
             }
     return out
@@ -189,19 +190,34 @@ def _commentary_tag_chips(tags, polarity_score=None) -> str:
     unknown."""
     if not tags:
         return ""
-    if isinstance(polarity_score, (int, float)) and polarity_score > 0:
-        bg, fg = "#13351f", "#3fb950"
-    elif isinstance(polarity_score, (int, float)) and polarity_score < 0:
-        bg, fg = "#3a1416", "#f85149"
-    else:
-        bg, fg = "#21262d", "#9da7b3"
-    chips = "".join(
+    pos_tags = {
+        "too_far_back", "held_up", "no_clear_run", "bumped_start",
+        "crowded", "hampered_start", "unbalanced", "wide_no_cover",
+        "jumped_fairly", "wide_all_way",
+    }
+    neg_tags = {"bleeding", "vet_hold", "raced_keenly", "disappointing", "weakened"}
+
+    def _tag_cols(tag):
+        t = str(tag).strip()
+        if t in pos_tags:
+            return "#13351f", "#3fb950"
+        if t in neg_tags:
+            return "#3a1416", "#f85149"
+        if isinstance(polarity_score, (int, float)) and polarity_score > 0:
+            return "#13351f", "#3fb950"
+        if isinstance(polarity_score, (int, float)) and polarity_score < 0:
+            return "#3a1416", "#f85149"
+        return "#21262d", "#9da7b3"
+
+    chips = ""
+    for t in tags:
+        bg, fg = _tag_cols(t)
+        chips += (
         f'<span style="display:inline-block;background:{bg};color:{fg};'
         f'border-radius:8px;padding:1px 7px;margin:1px 3px 1px 0;'
         f'font-size:10px;font-weight:600;white-space:nowrap">'
         f'{str(t).replace("_", " ")}</span>'
-        for t in tags
-    )
+        )
     return chips
 
 # ── Playwright browser pre-install (Streamlit Cloud has no post-install hook) ─
@@ -1365,6 +1381,7 @@ def _gh_persist_postrace_outputs(date_str: str) -> tuple[int, int, list[str]]:
         (REPORTS / f"commentary_{dc}.json",    f"reports/commentary_{dc}.json"),
         (REPORTS / f"backtest_{dc}.json",      f"reports/backtest_{dc}.json"),
         (REPORTS / f"backtest_unified_{dc}.json", f"reports/backtest_unified_{dc}.json"),
+        (BASE / "cache" / "race_pace_index.json", "cache/race_pace_index.json"),
         # Form guide cache often gets lane data added during step 6.
         (BASE / "cache" / f"form_guide_{date_str}.json",
          f"cache/form_guide_{date_str}.json"),
@@ -8738,6 +8755,21 @@ def _run_results_scraper(date_str: str, *, full: bool = False):
             except Exception as e:
                 st.error(f"DB safety-net append failed for {date_str}: {e}")
 
+        # Rebuild measured race-pace cache after DB/full-scrape merge, before
+        # upcoming form guides are rebuilt from it.
+        try:
+            _rp = subprocess.run(
+                [PYTHON, str(BASE / "build_pace_index.py")],
+                env=env, cwd=str(BASE), capture_output=True,
+                text=True, encoding="utf-8", timeout=600,
+            )
+            if _rp.returncode == 0:
+                st.info("Measured race-pace index rebuilt.")
+            else:
+                st.warning("Pace-index rebuild failed: " + ((_rp.stderr or _rp.stdout or "")[-300:]))
+        except Exception as e:
+            st.warning(f"Pace-index rebuild skipped: {e}")
+
         # v4.9: Auto-rebuild form guides for any upcoming meeting (next 14 days)
         # so freshly-ingested results show up on Race Card / Form Guide tabs
         # without the user having to re-run pre-race pipeline.
@@ -11587,6 +11619,7 @@ def page_form_guide():
                     "pace": str(run.get("pace", "-")),
                     "pace_dev": run.get("pace_dev"),
                     "esz":       (sm_run or {}).get("esz"),
+                    "esz_z":     (sm_run or {}).get("esz_z"),
                     "ftime":     str(run.get("time", "-")),
                     "fin_delta": (sm_run or {}).get("fin_delta"),
                     "fin_z":     (sm_run or {}).get("fin_z"),
@@ -11659,6 +11692,7 @@ def page_form_guide():
                     "pace": "-",
                     "pace_dev": None,
                     "esz":       (_sm or {}).get("esz"),
+                    "esz_z":     (_sm or {}).get("esz_z"),
                     "ftime":     ftime,
                     "fin_delta": (_sm or {}).get("fin_delta"),
                     "fin_z":     (_sm or {}).get("fin_z"),
@@ -11699,13 +11733,14 @@ def page_form_guide():
             )
 
             esz_raw = dr.get("esz")
+            esz_z = dr.get("esz_z")
             fin_delta = dr.get("fin_delta")
             fin_z = dr.get("fin_z")
             esz_disp = _fmt_signed(esz_raw)
             fin_disp = _fmt_signed(fin_delta)
             esz_cell = (
-                f'<span title="Early Speed Z vs field (negative = faster early)" '
-                f'style="color:{_metric_z_colour(esz_raw)};font-weight:600">'
+                f'<span title="SARR ESZ: early 400m-pace deviation vs race median (s; negative = faster early)" '
+                f'style="color:{_metric_z_colour(esz_z)};font-weight:600">'
                 f'{esz_disp}</span>' if esz_disp is not None else "&mdash;"
             )
             fin_cell = (
@@ -11727,7 +11762,8 @@ def page_form_guide():
                 )
                 comment_cell = _run_commentary_lookup(dc, rnum, hname)
                 _c_short = comment_cell.get("short", "") or ""
-                _c_chips = _commentary_tag_chips(comment_cell.get("tags"))
+                _c_chips = _commentary_tag_chips(
+                    comment_cell.get("tags"), comment_cell.get("polarity_score"))
                 comment_cell = (_c_short + (" " if _c_short and _c_chips else "") + _c_chips)
 
             # v4.5: lane cell — coloured dot + 800/400/200 mini-track
