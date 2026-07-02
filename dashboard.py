@@ -33,7 +33,8 @@ import streamlit as st
 
 BASE = Path(__file__).parent
 REPORTS = BASE / "reports"
-PYTHON = sys.executable
+_LOCAL_PYTHON = Path(r"C:\Users\tbhbr\miniconda3\python.exe")
+PYTHON = str(_LOCAL_PYTHON) if _LOCAL_PYTHON.exists() else sys.executable
 BLACKBOOK_FILE = BASE / "blackbook.json"
 
 
@@ -2304,6 +2305,205 @@ def _fuse_report_mtime(date_compact: str) -> float:
         return 0.0
 
 
+def _run_fuse_refresh(date_iso: str, going_turf: str, going_awt: str
+                      ) -> tuple[bool, list[tuple[str, int, str]]]:
+    """Run only the FUSE report refresh, then rebuild mutual picks."""
+    dc = date_iso.replace("-", "")
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    outputs: list[tuple[str, int, str]] = []
+    racecard_xlsx = BASE / "racecards" / f"racecard_{dc}.xlsx"
+    if not racecard_xlsx.exists():
+        return False, [("FUSE", 1, f"Missing racecard: {racecard_xlsx.name}")]
+
+    try:
+        res_fu = subprocess.run(
+            [PYTHON, str(BASE / "fuse_raceday.py"),
+             "--date", dc, "--going", going_turf or "Good",
+             "--going-awt", going_awt or "Good"],
+            env=env, cwd=str(BASE), capture_output=True, text=True,
+            encoding="utf-8", timeout=180,
+        )
+        outputs.append(("FUSE", res_fu.returncode,
+                        (res_fu.stdout or "") + ("\n" + res_fu.stderr
+                                             if res_fu.stderr else "")))
+    except subprocess.TimeoutExpired as exc:
+        return False, [("FUSE", 124, f"Timed out after {exc.timeout}s")]
+    except OSError as exc:
+        return False, [("FUSE", 1, f"{type(exc).__name__}: {exc}")]
+
+    fuse_json = REPORTS / f"race_day_report_{dc}_FUSE.json"
+    fuse_ok = res_fu.returncode == 0 and fuse_json.exists()
+    if not fuse_ok:
+        return False, outputs
+
+    try:
+        res_mut = subprocess.run(
+            [PYTHON, str(BASE / "build_mutual_picks.py"), "--date", dc],
+            env=env, cwd=str(BASE), capture_output=True, text=True,
+            encoding="utf-8", timeout=60,
+        )
+        outputs.append(("Mutual picks", res_mut.returncode,
+                        (res_mut.stdout or "") + ("\n" + res_mut.stderr
+                                             if res_mut.stderr else "")))
+    except subprocess.TimeoutExpired as exc:
+        outputs.append(("Mutual picks", 124, f"Timed out after {exc.timeout}s"))
+    except OSError as exc:
+        outputs.append(("Mutual picks", 1, f"{type(exc).__name__}: {exc}"))
+
+    if _is_streamlit_cloud():
+        try:
+            pushed, _missing, errors = _gh_persist_pipeline_outputs(date_iso, "v4.4")
+            msg = f"pushed {pushed} file(s)" if pushed else "no files pushed"
+            if errors:
+                msg += "; " + "; ".join(errors[:3])
+            outputs.append(("GitHub sync", 0 if not errors else 1, msg))
+        except Exception as exc:
+            outputs.append(("GitHub sync", 1, f"{type(exc).__name__}: {exc}"))
+    return True, outputs
+
+
+def _count_live_odds_snapshots(date_compact: str, venue_code: str) -> int:
+    snap_dir = BASE / "cache" / "live_odds" / date_compact
+    if not snap_dir.exists():
+        return 0
+    return len(list(snap_dir.glob(f"{venue_code}_R*.json")))
+
+
+def _render_fuse_race_segment(race: dict, date_compact: str,
+                              venue_code: str, meeting_info: dict) -> None:
+    """Selected-race FUSE table plus refresh actions for Race Day Insight."""
+    rn = race.get("race_number")
+    try:
+        rn_int = int(rn)
+    except (TypeError, ValueError):
+        rn_int = 0
+    date_iso = f"{date_compact[:4]}-{date_compact[4:6]}-{date_compact[6:]}"
+    turf_default = str(st.session_state.get("going_turf") or
+                       race.get("going") or "Good")
+    awt_default = str(st.session_state.get("going_awt") or "Good")
+    n_races = int(meeting_info.get("n_races") or 0)
+    if not n_races:
+        n_races = max(1, rn_int)
+
+    st.markdown("#### FUSE table")
+    st.caption(
+        "FUSE refresh is intentionally separate from core ET/SARR analysis. "
+        "Use odds + FUSE when fresh market prices are available; use FUSE-only "
+        "when the odds snapshots are already current."
+    )
+    ctl1, ctl2, ctl3 = st.columns([1, 1.25, 1.25])
+    with ctl1:
+        st.metric("Live odds", _count_live_odds_snapshots(date_compact, venue_code)
+                  if venue_code else 0)
+    with ctl2:
+        if st.button("Refresh FUSE", key=f"fuse_refresh_{date_compact}_{rn_int}",
+                     width='stretch'):
+            with st.spinner("Refreshing FUSE and mutual picks..."):
+                ok, outputs = _run_fuse_refresh(date_iso, turf_default, awt_default)
+            if ok:
+                st.success("FUSE refreshed.")
+            else:
+                st.error("FUSE refresh failed.")
+            with st.expander("FUSE refresh log", expanded=not ok):
+                for label, rc, log in outputs:
+                    st.markdown(f"**{label}** exit `{rc}`")
+                    if log:
+                        st.code(log[-3000:])
+            try:
+                _load_fuse_report.clear()
+            except Exception:
+                pass
+            if ok:
+                st.rerun()
+    with ctl3:
+        disabled = not bool(venue_code)
+        if st.button("Scrape odds + Refresh FUSE",
+                     key=f"fuse_odds_refresh_{date_compact}_{rn_int}",
+                     width='stretch', disabled=disabled,
+                     help="Sequential: scrape live odds for the full meeting, then rebuild FUSE."):
+            races_arg = f"1-{n_races}"
+            before = _count_live_odds_snapshots(date_compact, venue_code)
+            with st.spinner(f"Scraping live odds {venue_code} R{races_arg}..."):
+                rc, log = _run_live_odds_scraper(date_iso, venue_code, races_arg)
+            after = _count_live_odds_snapshots(date_compact, venue_code)
+            if rc == 0:
+                new_n = max(0, after - before)
+                st.success(f"Odds scrape complete ({new_n} new snapshot(s)).")
+                if _is_streamlit_cloud():
+                    pushed, _missing, errs = _gh_persist_live_odds_snapshots(
+                        date_iso, venue_code)
+                    if pushed:
+                        st.info(f"Synced {pushed} live-odds snapshot(s) to GitHub.")
+                    if errs:
+                        st.warning("Live-odds sync had errors: " + "; ".join(errs[:3]))
+                with st.spinner("Refreshing FUSE with latest odds..."):
+                    ok, outputs = _run_fuse_refresh(date_iso, turf_default, awt_default)
+                if ok:
+                    st.success("FUSE refreshed with latest available odds.")
+                else:
+                    st.error("Odds scraped, but FUSE refresh failed.")
+                with st.expander("Odds + FUSE log", expanded=not ok):
+                    if log.strip():
+                        st.markdown("**Live odds scraper**")
+                        st.code(log[-3000:])
+                    for label, rc2, out in outputs:
+                        st.markdown(f"**{label}** exit `{rc2}`")
+                        if out:
+                            st.code(out[-3000:])
+                try:
+                    _load_fuse_report.clear()
+                except Exception:
+                    pass
+                if ok:
+                    st.rerun()
+            else:
+                st.error(f"Live odds scrape failed (exit {rc}); FUSE was not refreshed.")
+                if log.strip():
+                    with st.expander("Live odds scraper log", expanded=True):
+                        st.code(log[-4000:])
+
+    fuse_rep = _load_fuse_report(date_compact, _fuse_report_mtime(date_compact))
+    if not fuse_rep:
+        st.info("No FUSE report yet. Click **Refresh FUSE** after ET/SARR have a racecard.")
+        return
+    fr = next((r for r in fuse_rep.get("races", [])
+               if int(r.get("race_number") or 0) == rn_int), None)
+    if not fr:
+        st.warning(f"FUSE report exists, but R{rn_int} is not in it.")
+        return
+
+    rows = []
+    for pick in fr.get("picks", []) or []:
+        edge = pick.get("edge")
+        rows.append({
+            "Rank": pick.get("rank"),
+            "No": pick.get("horse_no"),
+            "Horse": pick.get("horse_name"),
+            "Win %": round((pick.get("p_win") or 0) * 100, 1),
+            "Top2 %": round((pick.get("p_top2") or 0) * 100, 1),
+            "Top3 %": round((pick.get("p_top3") or 0) * 100, 1),
+            "Win Odds": pick.get("win_odds"),
+            "Edge pp": round(edge * 100, 1) if edge is not None else None,
+        })
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width='stretch')
+
+    qps = fr.get("quinella_pairs") or []
+    if qps:
+        qtxt = " · ".join(
+            f"{q.get('a')}-{q.get('b')} {q.get('p', 0) * 100:.1f}% "
+            f"(fair {q.get('fair_odds', 0):.0f})"
+            for q in qps[:4]
+        )
+        st.caption(f"Quinella: {qtxt}")
+    mode = "live-odds anchored" if fr.get("odds_anchored") else "fundamentals only"
+    st.caption(
+        f"{mode} · odds mode {fuse_rep.get('odds_mode', '?')} · trained on "
+        f"{fuse_rep.get('n_train', 0):,} runner-starts · generated "
+        f"{fuse_rep.get('generated_at_hkt', '?')} HKT"
+    )
+
+
 @st.cache_data(show_spinner=False)
 def _load_mutual_picks(date_compact: str) -> dict:
     """Load model-agreed (ET ∩ SARR) picks for a meeting, keyed by race_no.
@@ -3285,7 +3485,8 @@ def render_sarr_race_card(race: dict, et_race: dict | None = None,
 
 
 def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
-                 model: str = "v4.4", skip_scrape: bool = False):
+                 model: str = "v4.4", skip_scrape: bool = False,
+                 run_fuse: bool = False):
     """Run the race-day pipeline as three EXPLICIT, user-visible stages:
 
         [1/3] Scrape the race card for the meeting
@@ -3438,10 +3639,10 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
     et_json_now = REPORTS / f"race_day_report_{dc}_{model}.json"
     sarr_json_now = REPORTS / f"race_day_report_{dc}_SARR.json"
 
-    # 0) FUSE model — needs only the racecard + DB history (runs even when
-    #    ET/SARR failed). Trains fresh on all results < meeting date and
-    #    anchors on the latest live-odds snapshots when present.
-    if racecard_xlsx.exists():
+    # 0) Optional FUSE model. This is kept out of the default core pipeline
+    # so routine ET/SARR refreshes finish quickly; Race Day Insight has a
+    # dedicated FUSE refresh button for odds-sensitive rebuilds.
+    if run_fuse and racecard_xlsx.exists():
         try:
             with st.spinner("[post] FUSE model training + inference…"):
                 res_fu = subprocess.run(
@@ -3461,6 +3662,8 @@ def run_pipeline(date_str: str, no_cache: bool, going_turf: str, going_awt: str,
                     + f": {(res_fu.stderr or res_fu.stdout or '')[-200:]}")
         except Exception as _e:
             st.warning(f"⚠ [post] FUSE model failed: {_e}")
+    elif racecard_xlsx.exists():
+        st.info("[post] FUSE skipped for speed. Use Race Day Insight → Refresh FUSE when needed.")
 
     if et_json_now.exists() and sarr_json_now.exists():
         # 1) Mutual picks (ET ∩ SARR top-3, + FUSE ranks when available)
@@ -5044,9 +5247,16 @@ def _render_race_cockpit(race: dict, sarr_race: dict | None,
     except Exception as _ev_err:
         st.caption(f"_Ensemble votes unavailable: {_ev_err}_")
 
-    # ── Speed-map + pace research (always shown, no dropdown) ──────
-    st.markdown("#### Speedmap + pace research")
-    render_speed_map(race)
+    # ── FUSE table + refresh actions ───────────────────────────────
+    try:
+        _render_fuse_race_segment(
+            race,
+            st.session_state.get("_rdi_date_compact", ""),
+            st.session_state.get("_rdi_venue_code", ""),
+            meeting_info,
+        )
+    except Exception as _fu_err:
+        st.caption(f"_FUSE table unavailable: {_fu_err}_")
 
     # ── Form Screen (notable mentions + top-5 H2H) ────────────────
     try:
@@ -6021,15 +6231,16 @@ def page_race_day(selected):
         # scratchings / reserve promotions versus the previous version.
         _snapshot_racecard_field(date_str, et_races or data.get("races", []))
         _render_scratch_chip(date_str)
-        with st.expander("🏁 Race-day controls — re-scrape & run everything",
+        with st.expander("🏁 Race-day controls — re-scrape & run core analysis",
                          expanded=False):
             rc1, rc2 = st.columns([3, 2])
             with rc1:
                 st.caption(
                     f"**{_iso}** · {_age_txt}. Use this whenever the card is "
-                    "out or a late scratching / reserve swap is announced — it "
+                    f"out or a late scratching / reserve swap is announced — it "
                     "re-scrapes the live field and rebuilds SARR + ET + form "
-                    "guide in one pass."
+                    "guide in one pass. Refresh FUSE separately after live odds "
+                    "are current."
                 )
                 _gt = st.text_input("Turf going", value=str(
                     st.session_state.get("going_turf", "Good")),
@@ -6038,7 +6249,7 @@ def page_race_day(selected):
                     st.session_state.get("going_awt", "Good")),
                     key=f"rd_ctl_ga_{date_str}")
             with rc2:
-                if st.button("🔄 Re-scrape & run everything",
+                if st.button("🔄 Re-scrape & run core analysis",
                              key=f"rd_runall_{date_str}",
                              type="primary", width='stretch'):
                     try:
@@ -6048,7 +6259,8 @@ def page_race_day(selected):
                     run_pipeline(_iso, no_cache=True,
                                  going_turf=_gt or "Good",
                                  going_awt=_ga or "Good",
-                                 skip_scrape=False)
+                                 skip_scrape=False,
+                                 run_fuse=False)
                     st.rerun()
                 st.caption("Takes a few minutes. Picks below refresh "
                            "automatically when it finishes.")
@@ -15753,11 +15965,11 @@ def _run_live_odds_scraper(date_iso: str, venue: str, races: str,
             pass
     try:
         r = subprocess.run(cmd, capture_output=True, text=True,
-                           timeout=600, cwd=str(BASE))
+                           timeout=300, cwd=str(BASE))
         log = (r.stdout or "") + ("\n" + r.stderr if r.stderr else "")
         return r.returncode, log
     except subprocess.TimeoutExpired:
-        return 124, "Scraper timed out after 10 min."
+        return 124, "Scraper timed out after 5 min."
     except Exception as e:
         return 1, f"{type(e).__name__}: {e}"
 
@@ -22173,14 +22385,23 @@ def sidebar_race_day():
     col1, col2 = st.sidebar.columns(2)
     with col1:
         run_date = st.date_input("Race Date", value=date.today(), key="run_date")
+    date_iso = run_date.isoformat()
+    date_compact = date_iso.replace("-", "")
+    _has_racecard = (BASE / "racecards" / f"racecard_{date_compact}.xlsx").exists()
     with col2:
         no_cache = st.checkbox(
             "Re-scrape",
-            value=True,   # DEFAULT ON — we want fresh data (scratches, substitutes)
+            value=False,
             key="no_cache",
-            help="Force a fresh HKJC scrape — needed to pick up scratched horses "
-                 "and late substitutes. Uncheck only to reuse an existing racecard.",
+            help="Force a fresh HKJC scrape for scratches/substitutes. Leave off "
+                 "to reuse the existing racecard and run the faster core ET/SARR path.",
         )
+    run_fuse_after = st.sidebar.checkbox(
+        "Also refresh FUSE",
+        value=False,
+        key="run_fuse_after_analysis",
+        help="Usually leave off: refresh FUSE from the Race Day Insight FUSE table after live odds are scraped.",
+    )
 
     going_turf = st.sidebar.text_input("Turf Going", value="Good", key="going_turf")
     going_awt = st.sidebar.text_input("AWT Going", value="Good", key="going_awt")
@@ -22201,25 +22422,24 @@ def sidebar_race_day():
                 st.session_state["_last_upload_id"] = upload_id
 
     # Detect whether uploaded racecard is available for the selected date
-    date_iso = run_date.isoformat()
-    date_compact = date_iso.replace("-", "")
-    _has_racecard = (BASE / "racecards" / f"racecard_{date_compact}.xlsx").exists()
     _uploaded_for_this_date = (
         st.session_state.get("_uploaded_rc_date") == date_iso
     )
 
     if st.sidebar.button("[ RUN ANALYSIS ]", type="primary", width='stretch'):
-        # Only skip scraping when we have an EXPLICIT user-uploaded racecard
-        # for this date (cloud-without-HKJC workflow). Otherwise, always
-        # re-scrape so late scratches and substitutes are captured.
-        skip = _uploaded_for_this_date and not no_cache
+        # Fast default: reuse an existing racecard. Tick Re-scrape when late
+        # scratches/substitutes need to be pulled from HKJC again.
+        skip = _has_racecard and not no_cache
+        if _uploaded_for_this_date and not no_cache:
+            skip = True
         # Clear Streamlit caches BEFORE run_pipeline (which may internally
         # rerun) so we don't race the cache clear against the rerun call.
         try:
             st.cache_data.clear()
         except Exception:
             pass
-        run_pipeline(date_iso, no_cache, going_turf, going_awt, skip_scrape=skip)
+        run_pipeline(date_iso, no_cache, going_turf, going_awt,
+                 skip_scrape=skip, run_fuse=run_fuse_after)
 
     st.sidebar.markdown('<hr class="sb-divider">', unsafe_allow_html=True)
     st.sidebar.markdown('<div class="sb-nav-section">Meetings</div>', unsafe_allow_html=True)
