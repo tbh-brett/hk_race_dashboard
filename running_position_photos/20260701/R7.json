@@ -1,0 +1,118 @@
+{
+  "date": "2026-07-01",
+  "race_number": 7,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "822",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 592,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 511
+    },
+    {
+      "y_top": 592,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 597
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "METRO POWER",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 109,
+          "cy": 141,
+          "x_frac": 0.151,
+          "y_in_band": 0.067,
+          "conf": 0.994,
+          "n_boxes": 1,
+          "ocr_text": "MetroPower"
+        }
+      ],
+      "ocr_texts": [
+        "MetroPower"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.067,
+      "avg_x_frac": 0.151,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "PARENTS' LOVE",
+      "horse_no": 14,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "822",
+          "cx": 125,
+          "cy": 120,
+          "x_frac": 0.174,
+          "y_in_band": 0.909,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "Parents'Love"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 101,
+          "cy": 172,
+          "x_frac": 0.14,
+          "y_in_band": 0.275,
+          "conf": 0.952,
+          "n_boxes": 1,
+          "ocr_text": "Parents'Love"
+        }
+      ],
+      "ocr_texts": [
+        "Parents'Love",
+        "Parents'Love"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.593,
+      "avg_x_frac": 0.157,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 16,
+    "matched_horses": 2,
+    "field_size": 14,
+    "coverage": 0.143,
+    "parsed_at": "2026-07-02T01:38:17"
+  }
+}
