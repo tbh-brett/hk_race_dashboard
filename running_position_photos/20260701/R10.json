@@ -1,0 +1,455 @@
+{
+  "date": "2026-07-01",
+  "race_number": 10,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "825",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 452,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 441
+    },
+    {
+      "y_top": 452,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 527
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "AMAZING PARTNERS",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 254,
+          "cy": 265,
+          "x_frac": 0.353,
+          "y_in_band": 0.899,
+          "conf": 0.986,
+          "n_boxes": 1,
+          "ocr_text": "AmazingPartners"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 110,
+          "cy": 442,
+          "x_frac": 0.153,
+          "y_in_band": 0.545,
+          "conf": 0.982,
+          "n_boxes": 1,
+          "ocr_text": "Amazing Partners"
+        }
+      ],
+      "ocr_texts": [
+        "AmazingPartners",
+        "Amazing Partners"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.722,
+      "avg_x_frac": 0.253,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "EMBRACES",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 383,
+          "cy": 139,
+          "x_frac": 0.532,
+          "y_in_band": 0.054,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "Embraces"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 131,
+          "cy": 355,
+          "x_frac": 0.183,
+          "y_in_band": 0.497,
+          "conf": 0.995,
+          "n_boxes": 2,
+          "ocr_text": "Embraces"
+        }
+      ],
+      "ocr_texts": [
+        "Embraces",
+        "mbraces",
+        "Embraces"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.276,
+      "avg_x_frac": 0.357,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GOLDFIELD",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "825",
+          "cx": 551,
+          "cy": 117,
+          "x_frac": 0.765,
+          "y_in_band": 0.884,
+          "conf": 0.803,
+          "n_boxes": 1,
+          "ocr_text": "Goidfield"
+        }
+      ],
+      "ocr_texts": [
+        "Goidfield"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.884,
+      "avg_x_frac": 0.765,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HYMNBOOK",
+      "horse_no": 13,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "825",
+          "cx": 495,
+          "cy": 116,
+          "x_frac": 0.688,
+          "y_in_band": 0.876,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "Hymnbook"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 240,
+          "cy": 288,
+          "x_frac": 0.333,
+          "y_in_band": 0.053,
+          "conf": 0.99,
+          "n_boxes": 1,
+          "ocr_text": "Hymnbook"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 168,
+          "cy": 444,
+          "x_frac": 0.233,
+          "y_in_band": 0.636,
+          "conf": 0.99,
+          "n_boxes": 1,
+          "ocr_text": "Hymnbook"
+        }
+      ],
+      "ocr_texts": [
+        "Hymnbook",
+        "Hymnbook",
+        "Hymnbook"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.522,
+      "avg_x_frac": 0.418,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "OUTGATE",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 433,
+          "cy": 564,
+          "x_frac": 0.601,
+          "y_in_band": 0.747,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "utgate"
+        }
+      ],
+      "ocr_texts": [
+        "utgate"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.747,
+      "avg_x_frac": 0.601,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "POWER OF VITAM",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "825",
+          "cx": 617,
+          "cy": 114,
+          "x_frac": 0.857,
+          "y_in_band": 0.86,
+          "conf": 0.923,
+          "n_boxes": 1,
+          "ocr_text": "Power Of Vitam"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 369,
+          "cy": 293,
+          "x_frac": 0.512,
+          "y_in_band": 0.087,
+          "conf": 0.945,
+          "n_boxes": 1,
+          "ocr_text": "PowerOf Vitam"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 250,
+          "cy": 590,
+          "x_frac": 0.347,
+          "y_in_band": 0.92,
+          "conf": 0.92,
+          "n_boxes": 1,
+          "ocr_text": "PowerOf Vitam"
+        }
+      ],
+      "ocr_texts": [
+        "Power Of Vitam",
+        "PowerOf Vitam",
+        "PowerOf Vitam"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.618,
+      "avg_x_frac": 0.572,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SEWARD",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 166,
+          "cy": 177,
+          "x_frac": 0.231,
+          "y_in_band": 0.309,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Seward"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 195,
+          "cy": 397,
+          "x_frac": 0.271,
+          "y_in_band": 0.78,
+          "conf": 0.994,
+          "n_boxes": 1,
+          "ocr_text": "Seward"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 310,
+          "cy": 547,
+          "x_frac": 0.431,
+          "y_in_band": 0.633,
+          "conf": 0.995,
+          "n_boxes": 1,
+          "ocr_text": "Seward"
+        }
+      ],
+      "ocr_texts": [
+        "Seward",
+        "Seward",
+        "Seward"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.576,
+      "avg_x_frac": 0.312,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SHANWAH",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 278,
+          "cy": 176,
+          "x_frac": 0.386,
+          "y_in_band": 0.302,
+          "conf": 0.974,
+          "n_boxes": 1,
+          "ocr_text": "Shanwah"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 276,
+          "cy": 400,
+          "x_frac": 0.383,
+          "y_in_band": 0.8,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "Shanwah"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 266,
+          "cy": 550,
+          "x_frac": 0.369,
+          "y_in_band": 0.653,
+          "conf": 0.99,
+          "n_boxes": 1,
+          "ocr_text": "Shanwah"
+        }
+      ],
+      "ocr_texts": [
+        "Shanwah",
+        "Shanwah",
+        "Shanwah"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.586,
+      "avg_x_frac": 0.379,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "TRINITY TREASURE",
+      "horse_no": 14,
+      "frames": [
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 301,
+          "cy": 524,
+          "x_frac": 0.418,
+          "y_in_band": 0.48,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "TrinityTreasure"
+        }
+      ],
+      "ocr_texts": [
+        "TrinityTreasure"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.48,
+      "avg_x_frac": 0.418,
+      "wide_frames": 0,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "YUEN LONG ELITE",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 304,
+          "cy": 290,
+          "x_frac": 0.422,
+          "y_in_band": 0.067,
+          "conf": 0.936,
+          "n_boxes": 1,
+          "ocr_text": "Yuen Long Elite"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 256,
+          "cy": 570,
+          "x_frac": 0.356,
+          "y_in_band": 0.787,
+          "conf": 0.959,
+          "n_boxes": 1,
+          "ocr_text": "Yuen LongElite"
+        }
+      ],
+      "ocr_texts": [
+        "Yuen Long Elite",
+        "Yuen LongElite"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.431,
+      "avg_x_frac": 0.389,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 57,
+    "matched_horses": 10,
+    "field_size": 14,
+    "coverage": 0.714,
+    "parsed_at": "2026-07-02T01:38:10"
+  }
+}
