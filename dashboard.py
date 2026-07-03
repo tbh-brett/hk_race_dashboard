@@ -2322,7 +2322,7 @@ def _run_fuse_refresh(date_iso: str, going_turf: str, going_awt: str
              "--date", dc, "--going", going_turf or "Good",
              "--going-awt", going_awt or "Good"],
             env=env, cwd=str(BASE), capture_output=True, text=True,
-            encoding="utf-8", timeout=180,
+            encoding="utf-8", timeout=600,
         )
         outputs.append(("FUSE", res_fu.returncode,
                         (res_fu.stdout or "") + ("\n" + res_fu.stderr
