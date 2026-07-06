@@ -1,0 +1,620 @@
+{
+  "date": "2026-07-04",
+  "race_number": 3,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "829",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 596,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 513
+    },
+    {
+      "y_top": 596,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 599
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "BULLISH PRIDE",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 324,
+          "cy": 239,
+          "x_frac": 0.45,
+          "y_in_band": 0.725,
+          "conf": 0.934,
+          "n_boxes": 1,
+          "ocr_text": "BullishPride"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 217,
+          "cy": 582,
+          "x_frac": 0.301,
+          "y_in_band": 0.916,
+          "conf": 0.876,
+          "n_boxes": 1,
+          "ocr_text": "Bulish Pnide"
+        }
+      ],
+      "ocr_texts": [
+        "BullishPride",
+        "Bulish Pnide"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.817,
+      "avg_x_frac": 0.378,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CIRRUS SPEED",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "829",
+          "cx": 339,
+          "cy": 32,
+          "x_frac": 0.471,
+          "y_in_band": 0.182,
+          "conf": 0.977,
+          "n_boxes": 1,
+          "ocr_text": "CirrusSpeed"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 337,
+          "cy": 262,
+          "x_frac": 0.468,
+          "y_in_band": 0.879,
+          "conf": 0.877,
+          "n_boxes": 1,
+          "ocr_text": "Cirus Speed"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 337,
+          "cy": 515,
+          "x_frac": 0.468,
+          "y_in_band": 0.513,
+          "conf": 0.973,
+          "n_boxes": 2,
+          "ocr_text": "Cirrus Speed"
+        }
+      ],
+      "ocr_texts": [
+        "CirrusSpeed",
+        "Cirus Speed",
+        "Cirrus Speed",
+        "Cirrus Speed"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.512,
+      "avg_x_frac": 0.469,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DAILY TROPHY",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 314,
+          "cy": 394,
+          "x_frac": 0.436,
+          "y_in_band": 0.76,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "DailyTrophy"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 209,
+          "cy": 540,
+          "x_frac": 0.29,
+          "y_in_band": 0.663,
+          "conf": 0.922,
+          "n_boxes": 1,
+          "ocr_text": "DalyTrophy"
+        }
+      ],
+      "ocr_texts": [
+        "DailyTrophy",
+        "DalyTrophy"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.712,
+      "avg_x_frac": 0.364,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FULL OF LAUGHTER",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 389,
+          "cy": 189,
+          "x_frac": 0.54,
+          "y_in_band": 0.391,
+          "conf": 0.966,
+          "n_boxes": 2,
+          "ocr_text": "Full Of Laughter"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 520,
+          "cy": 553,
+          "x_frac": 0.722,
+          "y_in_band": 0.741,
+          "conf": 0.889,
+          "n_boxes": 1,
+          "ocr_text": "FullOf Laughter"
+        }
+      ],
+      "ocr_texts": [
+        "Full Of Laughter",
+        "Full Of Laughter",
+        "FullOf Laughter"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.559,
+      "avg_x_frac": 0.627,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GIMME FIVE",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 266,
+          "cy": 142,
+          "x_frac": 0.369,
+          "y_in_band": 0.074,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "GimmeFive"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 447,
+          "cy": 353,
+          "x_frac": 0.621,
+          "y_in_band": 0.488,
+          "conf": 0.928,
+          "n_boxes": 2,
+          "ocr_text": "Gimme Five"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 689,
+          "cy": 569,
+          "x_frac": 0.957,
+          "y_in_band": 0.837,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "GimmeFive"
+        }
+      ],
+      "ocr_texts": [
+        "GimmeFive",
+        "Gimme Five",
+        "GimmeFive",
+        "GimmeFive"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.466,
+      "avg_x_frac": 0.65,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HAPPY ACTION",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "829",
+          "cx": 330,
+          "cy": 119,
+          "x_frac": 0.458,
+          "y_in_band": 0.901,
+          "conf": 0.953,
+          "n_boxes": 1,
+          "ocr_text": "Happy Action"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 391,
+          "cy": 262,
+          "x_frac": 0.543,
+          "y_in_band": 0.879,
+          "conf": 0.927,
+          "n_boxes": 1,
+          "ocr_text": "Happy Action"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 403,
+          "cy": 423,
+          "x_frac": 0.56,
+          "y_in_band": 0.953,
+          "conf": 0.938,
+          "n_boxes": 1,
+          "ocr_text": "Happy Action"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 432,
+          "cy": 582,
+          "x_frac": 0.6,
+          "y_in_band": 0.916,
+          "conf": 0.952,
+          "n_boxes": 1,
+          "ocr_text": "HappyAction"
+        }
+      ],
+      "ocr_texts": [
+        "Happy Action",
+        "Happy Action",
+        "Happy Action",
+        "HappyAction"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.912,
+      "avg_x_frac": 0.54,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MACANESE MASTER",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "829",
+          "cx": 198,
+          "cy": 113,
+          "x_frac": 0.275,
+          "y_in_band": 0.851,
+          "conf": 0.969,
+          "n_boxes": 1,
+          "ocr_text": "Macanese Master"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 182,
+          "cy": 262,
+          "x_frac": 0.253,
+          "y_in_band": 0.879,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "Macanese Master"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 158,
+          "cy": 392,
+          "x_frac": 0.219,
+          "y_in_band": 0.747,
+          "conf": 0.976,
+          "n_boxes": 1,
+          "ocr_text": "Macanese Master"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 141,
+          "cy": 562,
+          "x_frac": 0.196,
+          "y_in_band": 0.795,
+          "conf": 0.975,
+          "n_boxes": 1,
+          "ocr_text": "Macanese Master"
+        }
+      ],
+      "ocr_texts": [
+        "Macanese Master",
+        "Macanese Master",
+        "Macanese Master",
+        "Macanese Master"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.818,
+      "avg_x_frac": 0.236,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NOBLE DELUXE",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "829",
+          "cx": 137,
+          "cy": 112,
+          "x_frac": 0.19,
+          "y_in_band": 0.843,
+          "conf": 0.959,
+          "n_boxes": 1,
+          "ocr_text": "Noble Deluxe"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 141,
+          "cy": 240,
+          "x_frac": 0.196,
+          "y_in_band": 0.732,
+          "conf": 0.968,
+          "n_boxes": 1,
+          "ocr_text": "Noble Deluxe"
+        }
+      ],
+      "ocr_texts": [
+        "Noble Deluxe",
+        "Noble Deluxe"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.787,
+      "avg_x_frac": 0.193,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "QUICK MONEY",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 296,
+          "cy": 321,
+          "x_frac": 0.411,
+          "y_in_band": 0.273,
+          "conf": 0.956,
+          "n_boxes": 1,
+          "ocr_text": "Quick Money"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 329,
+          "cy": 557,
+          "x_frac": 0.457,
+          "y_in_band": 0.765,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "Quick Money"
+        }
+      ],
+      "ocr_texts": [
+        "Quick Money",
+        "Quick Money"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.52,
+      "avg_x_frac": 0.434,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ROBOT KNIGHT",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 231,
+          "cy": 198,
+          "x_frac": 0.32,
+          "y_in_band": 0.451,
+          "conf": 0.964,
+          "n_boxes": 2,
+          "ocr_text": "Robot Knight"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 442,
+          "cy": 557,
+          "x_frac": 0.614,
+          "y_in_band": 0.765,
+          "conf": 0.921,
+          "n_boxes": 1,
+          "ocr_text": "Robot Knight"
+        }
+      ],
+      "ocr_texts": [
+        "Robot Knight",
+        "Robot Knight",
+        "Robot Knight"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.604,
+      "avg_x_frac": 0.464,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VIVA CHALEUR",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "829",
+          "cx": 258,
+          "cy": 119,
+          "x_frac": 0.358,
+          "y_in_band": 0.901,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Viva Chaleur"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 264,
+          "cy": 246,
+          "x_frac": 0.367,
+          "y_in_band": 0.772,
+          "conf": 0.955,
+          "n_boxes": 1,
+          "ocr_text": "VivaChal"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 248,
+          "cy": 400,
+          "x_frac": 0.344,
+          "y_in_band": 0.8,
+          "conf": 0.953,
+          "n_boxes": 1,
+          "ocr_text": "Viva Chaleur"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 209,
+          "cy": 562,
+          "x_frac": 0.29,
+          "y_in_band": 0.795,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "Viva Chaleur"
+        }
+      ],
+      "ocr_texts": [
+        "Viva Chaleur",
+        "VivaChal",
+        "Viva Chaleur",
+        "Viva Chaleur"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.817,
+      "avg_x_frac": 0.34,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "YOUNG STRIKER",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "829",
+          "cx": 386,
+          "cy": 114,
+          "x_frac": 0.536,
+          "y_in_band": 0.86,
+          "conf": 0.949,
+          "n_boxes": 1,
+          "ocr_text": "Young Striker"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 392,
+          "cy": 559,
+          "x_frac": 0.544,
+          "y_in_band": 0.777,
+          "conf": 0.917,
+          "n_boxes": 1,
+          "ocr_text": "Young Striker"
+        }
+      ],
+      "ocr_texts": [
+        "Young Striker",
+        "Young Striker"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.819,
+      "avg_x_frac": 0.54,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 86,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-07-06T02:12:02"
+  }
+}
