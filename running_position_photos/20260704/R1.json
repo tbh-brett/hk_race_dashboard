@@ -1,0 +1,606 @@
+{
+  "date": "2026-07-04",
+  "race_number": 1,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "827",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ALMIGHTY WARRIOR",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "827",
+          "cx": 262,
+          "cy": 117,
+          "x_frac": 0.364,
+          "y_in_band": 0.884,
+          "conf": 0.914,
+          "n_boxes": 1,
+          "ocr_text": "Almighty Warior"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 196,
+          "cy": 238,
+          "x_frac": 0.272,
+          "y_in_band": 0.718,
+          "conf": 0.895,
+          "n_boxes": 1,
+          "ocr_text": "AlmightyWarrior"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 122,
+          "cy": 378,
+          "x_frac": 0.169,
+          "y_in_band": 0.653,
+          "conf": 0.941,
+          "n_boxes": 1,
+          "ocr_text": "AlmightyWarrior"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 134,
+          "cy": 562,
+          "x_frac": 0.186,
+          "y_in_band": 0.767,
+          "conf": 0.933,
+          "n_boxes": 1,
+          "ocr_text": "AlmightyWarrior"
+        }
+      ],
+      "ocr_texts": [
+        "Almighty Warior",
+        "AlmightyWarrior",
+        "AlmightyWarrior",
+        "AlmightyWarrior"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.755,
+      "avg_x_frac": 0.247,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "CHANCHENG SPARKLE",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "827",
+          "cx": 343,
+          "cy": 117,
+          "x_frac": 0.476,
+          "y_in_band": 0.884,
+          "conf": 0.946,
+          "n_boxes": 1,
+          "ocr_text": "Chancheng Sparkle"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 350,
+          "cy": 266,
+          "x_frac": 0.486,
+          "y_in_band": 0.906,
+          "conf": 0.934,
+          "n_boxes": 1,
+          "ocr_text": "Chancheng Sparkle"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 344,
+          "cy": 503,
+          "x_frac": 0.478,
+          "y_in_band": 0.424,
+          "conf": 0.955,
+          "n_boxes": 2,
+          "ocr_text": "Chancheng Sparkle"
+        }
+      ],
+      "ocr_texts": [
+        "Chancheng Sparkle",
+        "Chancheng Sparkle",
+        "Chancheng Sparkle",
+        "Chancheng Sparkle"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.736,
+      "avg_x_frac": 0.48,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "COOGEE BAY",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "827",
+          "cx": 377,
+          "cy": 94,
+          "x_frac": 0.524,
+          "y_in_band": 0.694,
+          "conf": 0.974,
+          "n_boxes": 1,
+          "ocr_text": "Coogee Bay"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 396,
+          "cy": 238,
+          "x_frac": 0.55,
+          "y_in_band": 0.718,
+          "conf": 0.955,
+          "n_boxes": 1,
+          "ocr_text": "Coogee Bay"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 433,
+          "cy": 412,
+          "x_frac": 0.601,
+          "y_in_band": 0.88,
+          "conf": 0.995,
+          "n_boxes": 1,
+          "ocr_text": "CoogeeBay"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 671,
+          "cy": 557,
+          "x_frac": 0.932,
+          "y_in_band": 0.738,
+          "conf": 0.897,
+          "n_boxes": 1,
+          "ocr_text": "Coogee Bay"
+        }
+      ],
+      "ocr_texts": [
+        "Coogee Bay",
+        "Coogee Bay",
+        "CoogeeBay",
+        "Coogee Bay"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.759,
+      "avg_x_frac": 0.646,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "DRAGON GENERATION",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "827",
+          "cx": 502,
+          "cy": 24,
+          "x_frac": 0.697,
+          "y_in_band": 0.116,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "Dragon Generation"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 419,
+          "cy": 172,
+          "x_frac": 0.582,
+          "y_in_band": 0.275,
+          "conf": 0.982,
+          "n_boxes": 1,
+          "ocr_text": "DragonGeneration"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 338,
+          "cy": 387,
+          "x_frac": 0.469,
+          "y_in_band": 0.713,
+          "conf": 0.983,
+          "n_boxes": 1,
+          "ocr_text": "OragonGeneration"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 485,
+          "cy": 567,
+          "x_frac": 0.674,
+          "y_in_band": 0.797,
+          "conf": 0.98,
+          "n_boxes": 1,
+          "ocr_text": "Dragon Generation"
+        }
+      ],
+      "ocr_texts": [
+        "Dragon Generation",
+        "DragonGeneration",
+        "OragonGeneration",
+        "Dragon Generation"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.477,
+      "avg_x_frac": 0.605,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "EVER WEALTH",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 210,
+          "cy": 203,
+          "x_frac": 0.292,
+          "y_in_band": 0.482,
+          "conf": 0.956,
+          "n_boxes": 2,
+          "ocr_text": "Ever Wealth"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 270,
+          "cy": 387,
+          "x_frac": 0.375,
+          "y_in_band": 0.713,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "EverWealth"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 489,
+          "cy": 545,
+          "x_frac": 0.679,
+          "y_in_band": 0.669,
+          "conf": 0.987,
+          "n_boxes": 1,
+          "ocr_text": "EverWealth"
+        }
+      ],
+      "ocr_texts": [
+        "Ever Wealth",
+        "Ever Wealth",
+        "EverWealth",
+        "EverWealth"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.623,
+      "avg_x_frac": 0.45,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "GOLDEN GUNNERS",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "827",
+          "cx": 355,
+          "cy": 23,
+          "x_frac": 0.493,
+          "y_in_band": 0.107,
+          "conf": 0.974,
+          "n_boxes": 1,
+          "ocr_text": "Golden Gunners"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 320,
+          "cy": 172,
+          "x_frac": 0.444,
+          "y_in_band": 0.275,
+          "conf": 0.957,
+          "n_boxes": 1,
+          "ocr_text": "Golden Gunners"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 373,
+          "cy": 320,
+          "x_frac": 0.518,
+          "y_in_band": 0.267,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "denGunners"
+        }
+      ],
+      "ocr_texts": [
+        "Golden Gunners",
+        "Golden Gunners",
+        "denGunners"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.216,
+      "avg_x_frac": 0.485,
+      "wide_frames": 0,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "JEDI SPURS",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "827",
+          "cx": 154,
+          "cy": 116,
+          "x_frac": 0.214,
+          "y_in_band": 0.876,
+          "conf": 0.929,
+          "n_boxes": 1,
+          "ocr_text": "JediSpurs"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 123,
+          "cy": 238,
+          "x_frac": 0.171,
+          "y_in_band": 0.718,
+          "conf": 0.979,
+          "n_boxes": 1,
+          "ocr_text": "JediSpurs"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 127,
+          "cy": 322,
+          "x_frac": 0.176,
+          "y_in_band": 0.28,
+          "conf": 0.978,
+          "n_boxes": 1,
+          "ocr_text": "JediSpurs"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 304,
+          "cy": 543,
+          "x_frac": 0.422,
+          "y_in_band": 0.657,
+          "conf": 0.917,
+          "n_boxes": 1,
+          "ocr_text": "Jedi Spurs"
+        }
+      ],
+      "ocr_texts": [
+        "JediSpurs",
+        "JediSpurs",
+        "JediSpurs",
+        "Jedi Spurs"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.629,
+      "avg_x_frac": 0.243,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KYOTO SPRING",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "827",
+          "cx": 482,
+          "cy": 93,
+          "x_frac": 0.669,
+          "y_in_band": 0.686,
+          "conf": 0.974,
+          "n_boxes": 1,
+          "ocr_text": "Kyoto Spring"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 483,
+          "cy": 262,
+          "x_frac": 0.671,
+          "y_in_band": 0.879,
+          "conf": 0.969,
+          "n_boxes": 1,
+          "ocr_text": "Kyoto Spring"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 540,
+          "cy": 412,
+          "x_frac": 0.75,
+          "y_in_band": 0.88,
+          "conf": 0.94,
+          "n_boxes": 1,
+          "ocr_text": "Kyoto Spring"
+        }
+      ],
+      "ocr_texts": [
+        "Kyoto Spring",
+        "Kyoto Spring",
+        "Kyoto Spring"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.814,
+      "avg_x_frac": 0.696,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "QUANTUM WUKONG",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 278,
+          "cy": 201,
+          "x_frac": 0.387,
+          "y_in_band": 0.468,
+          "conf": 0.986,
+          "n_boxes": 2,
+          "ocr_text": "QuantumWukong"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 259,
+          "cy": 410,
+          "x_frac": 0.36,
+          "y_in_band": 0.867,
+          "conf": 0.969,
+          "n_boxes": 1,
+          "ocr_text": "QuantumWukong"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 333,
+          "cy": 566,
+          "x_frac": 0.463,
+          "y_in_band": 0.791,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "QuantumWukong"
+        }
+      ],
+      "ocr_texts": [
+        "QuantumWukong",
+        "QuantumWukong",
+        "QuantumWukong",
+        "QuantumWukong"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.708,
+      "avg_x_frac": 0.404,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ULTRA BOLT",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 416,
+          "cy": 141,
+          "x_frac": 0.578,
+          "y_in_band": 0.067,
+          "conf": 0.845,
+          "n_boxes": 1,
+          "ocr_text": "Uitra Bolt"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 496,
+          "cy": 286,
+          "x_frac": 0.689,
+          "y_in_band": 0.04,
+          "conf": 0.831,
+          "n_boxes": 1,
+          "ocr_text": "Uitra Bolt"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 522,
+          "cy": 436,
+          "x_frac": 0.725,
+          "y_in_band": 0.035,
+          "conf": 0.852,
+          "n_boxes": 1,
+          "ocr_text": "Uitra Boll"
+        }
+      ],
+      "ocr_texts": [
+        "Uitra Bolt",
+        "Uitra Bolt",
+        "Uitra Boll"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.047,
+      "avg_x_frac": 0.664,
+      "wide_frames": 0,
+      "rail_frames": 3,
+      "wide_all_way": false,
+      "rail_all_way": true
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 75,
+    "matched_horses": 10,
+    "field_size": 10,
+    "coverage": 1.0,
+    "parsed_at": "2026-07-06T02:11:57"
+  }
+}
