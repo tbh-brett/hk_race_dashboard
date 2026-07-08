@@ -2,10 +2,10 @@
   "date": "20260708",
   "schema_version": 2,
   "top_n": 3,
-  "has_fuse": false,
+  "has_fuse": true,
   "n_races": 9,
   "n_mutual_total": 14,
-  "n_triple_total": 0,
+  "n_triple_total": 11,
   "races": [
     {
       "race_number": 1,
@@ -19,19 +19,31 @@
         "#10 SPICY SPANGLE",
         "#7 HAPPY ACTION"
       ],
-      "fuse_picks": [],
+      "fuse_picks": [
+        "#3 HAPPY UNITED",
+        "#8 THOUSAND CUPS",
+        "#12 BRILLIANT FIRE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "HAPPY UNITED",
           "et_rank": 3,
           "sarr_rank": 1,
-          "fuse_rank": null
+          "fuse_rank": 1
         }
       ],
       "mutual_size": 1,
-      "triple_horses": [],
-      "triple_size": 0
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "HAPPY UNITED",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 2,
@@ -45,26 +57,45 @@
         "#8 HAPPY SMILE",
         "#4 CASA ROCHESTER"
       ],
-      "fuse_picks": [],
+      "fuse_picks": [
+        "#2 CHARMING LEGEND",
+        "#8 HAPPY SMILE",
+        "#4 CASA ROCHESTER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "CHARMING LEGEND",
           "et_rank": 1,
           "sarr_rank": 1,
-          "fuse_rank": null
+          "fuse_rank": 1
         },
         {
           "horse_no": 4,
           "horse_name": "CASA ROCHESTER",
           "et_rank": 2,
           "sarr_rank": 3,
-          "fuse_rank": null
+          "fuse_rank": 3
         }
       ],
       "mutual_size": 2,
-      "triple_horses": [],
-      "triple_size": 0
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "CHARMING LEGEND",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 4,
+          "horse_name": "CASA ROCHESTER",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 3,
@@ -78,19 +109,31 @@
         "#8 HARMONY FIRE",
         "#10 ZOUPER FELLOW"
       ],
-      "fuse_picks": [],
+      "fuse_picks": [
+        "#4 BEAUTY SHOW",
+        "#11 JUMBO BLESSING",
+        "#1 GRAND NOVA"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
           "horse_name": "GRAND NOVA",
           "et_rank": 1,
           "sarr_rank": 1,
-          "fuse_rank": null
+          "fuse_rank": 3
         }
       ],
       "mutual_size": 1,
-      "triple_horses": [],
-      "triple_size": 0
+      "triple_horses": [
+        {
+          "horse_no": 1,
+          "horse_name": "GRAND NOVA",
+          "et_rank": 1,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 4,
@@ -104,7 +147,11 @@
         "#5 LUCKY YEAR",
         "#7 PODIUM"
       ],
-      "fuse_picks": [],
+      "fuse_picks": [
+        "#1 FORZA TORO",
+        "#5 LUCKY YEAR",
+        "#6 PRECISION HOPE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 7,
@@ -130,19 +177,31 @@
         "#6 KING OBERON",
         "#10 ACE POWER"
       ],
-      "fuse_picks": [],
+      "fuse_picks": [
+        "#9 THE PERFECT MATCH",
+        "#4 GOOD LUCK HAPPY",
+        "#3 SUPERB KING"
+      ],
       "mutual_horses": [
         {
           "horse_no": 9,
           "horse_name": "THE PERFECT MATCH",
           "et_rank": 2,
           "sarr_rank": 1,
-          "fuse_rank": null
+          "fuse_rank": 1
         }
       ],
       "mutual_size": 1,
-      "triple_horses": [],
-      "triple_size": 0
+      "triple_horses": [
+        {
+          "horse_no": 9,
+          "horse_name": "THE PERFECT MATCH",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 1
     },
     {
       "race_number": 6,
@@ -156,26 +215,45 @@
         "#4 LEADING AGILITY",
         "#9 THUNDER PRINCE"
       ],
-      "fuse_picks": [],
+      "fuse_picks": [
+        "#4 LEADING AGILITY",
+        "#7 NEVER TOO SOON",
+        "#3 FORERUNNER"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "FORERUNNER",
           "et_rank": 2,
           "sarr_rank": 1,
-          "fuse_rank": null
+          "fuse_rank": 3
         },
         {
           "horse_no": 4,
           "horse_name": "LEADING AGILITY",
           "et_rank": 1,
           "sarr_rank": 2,
-          "fuse_rank": null
+          "fuse_rank": 1
         }
       ],
       "mutual_size": 2,
-      "triple_horses": [],
-      "triple_size": 0
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "FORERUNNER",
+          "et_rank": 2,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        },
+        {
+          "horse_no": 4,
+          "horse_name": "LEADING AGILITY",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 7,
@@ -189,14 +267,18 @@
         "#2 ETERNAL FORTUNE",
         "#5 CALIFORNIA BLITZ"
       ],
-      "fuse_picks": [],
+      "fuse_picks": [
+        "#3 BUNTA BABY",
+        "#2 ETERNAL FORTUNE",
+        "#11 ROBOT LUCKY STAR"
+      ],
       "mutual_horses": [
         {
           "horse_no": 2,
           "horse_name": "ETERNAL FORTUNE",
           "et_rank": 1,
           "sarr_rank": 2,
-          "fuse_rank": null
+          "fuse_rank": 2
         },
         {
           "horse_no": 5,
@@ -210,12 +292,27 @@
           "horse_name": "ROBOT LUCKY STAR",
           "et_rank": 3,
           "sarr_rank": 1,
-          "fuse_rank": null
+          "fuse_rank": 3
         }
       ],
       "mutual_size": 3,
-      "triple_horses": [],
-      "triple_size": 0
+      "triple_horses": [
+        {
+          "horse_no": 2,
+          "horse_name": "ETERNAL FORTUNE",
+          "et_rank": 1,
+          "sarr_rank": 2,
+          "fuse_rank": 2
+        },
+        {
+          "horse_no": 11,
+          "horse_name": "ROBOT LUCKY STAR",
+          "et_rank": 3,
+          "sarr_rank": 1,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 8,
@@ -229,26 +326,45 @@
         "#3 LIVEANDLETLIVE",
         "#12 FORTUNATE SON"
       ],
-      "fuse_picks": [],
+      "fuse_picks": [
+        "#3 LIVEANDLETLIVE",
+        "#6 ROMANTIC THOR",
+        "#12 FORTUNATE SON"
+      ],
       "mutual_horses": [
         {
           "horse_no": 3,
           "horse_name": "LIVEANDLETLIVE",
           "et_rank": 3,
           "sarr_rank": 2,
-          "fuse_rank": null
+          "fuse_rank": 1
         },
         {
           "horse_no": 12,
           "horse_name": "FORTUNATE SON",
           "et_rank": 2,
           "sarr_rank": 3,
-          "fuse_rank": null
+          "fuse_rank": 3
         }
       ],
       "mutual_size": 2,
-      "triple_horses": [],
-      "triple_size": 0
+      "triple_horses": [
+        {
+          "horse_no": 3,
+          "horse_name": "LIVEANDLETLIVE",
+          "et_rank": 3,
+          "sarr_rank": 2,
+          "fuse_rank": 1
+        },
+        {
+          "horse_no": 12,
+          "horse_name": "FORTUNATE SON",
+          "et_rank": 2,
+          "sarr_rank": 3,
+          "fuse_rank": 3
+        }
+      ],
+      "triple_size": 2
     },
     {
       "race_number": 9,
@@ -262,7 +378,11 @@
         "#11 WINGS OF WAR",
         "#2 JUBILANT WINNER"
       ],
-      "fuse_picks": [],
+      "fuse_picks": [
+        "#10 FRIENDS OF SHAJING",
+        "#7 KING PROFIT",
+        "#4 TARGET AUDIENCE"
+      ],
       "mutual_horses": [
         {
           "horse_no": 1,
