@@ -252,11 +252,6 @@ def _ensure_playwright_chromium():
         except Exception:
             pass
 
-try:
-    _ensure_playwright_chromium()
-except Exception:
-    pass  # Non-critical — scraper will retry at runtime
-
 DEFAULT_EXPIRY_DAYS = 90
 CEILING_EXPIRY_DAYS = 45
 
@@ -729,7 +724,7 @@ code, pre, .stCode {
 # Data loading
 # ══════════════════════════════════════════════════════════════════════════════
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=300)
 def load_available_meetings() -> list[dict]:
     """Scan reports/ for JSON result files and return sorted list."""
     meetings = []
@@ -12134,6 +12129,7 @@ def _load_trial_data(path_str: str) -> dict:
         return json.load(f)
 
 
+@st.cache_data(show_spinner=False, ttl=3600)
 def _load_all_trial_horse_index() -> dict:
     """Build horse_name_upper → list of recent trial entries across all trial files."""
     index: dict[str, list] = {}
