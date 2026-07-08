@@ -1,0 +1,642 @@
+{
+  "date": "2026-07-08",
+  "race_number": 5,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "842",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 467,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 448
+    },
+    {
+      "y_top": 467,
+      "y_bot": 497,
+      "label": null,
+      "kind": null,
+      "y_center": 482
+    },
+    {
+      "y_top": 497,
+      "y_bot": 503,
+      "label": null,
+      "kind": null,
+      "y_center": 500
+    },
+    {
+      "y_top": 503,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 552
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "ACE POWER",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "842",
+          "cx": 535,
+          "cy": 42,
+          "x_frac": 0.743,
+          "y_in_band": 0.264,
+          "conf": 0.973,
+          "n_boxes": 1,
+          "ocr_text": "AcePower"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 401,
+          "cy": 403,
+          "x_frac": 0.557,
+          "y_in_band": 0.82,
+          "conf": 0.994,
+          "n_boxes": 1,
+          "ocr_text": "AcePower"
+        }
+      ],
+      "ocr_texts": [
+        "AcePower",
+        "AcePower"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.545,
+      "avg_x_frac": 0.649,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "E PASSION",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "842",
+          "cx": 619,
+          "cy": 45,
+          "x_frac": 0.86,
+          "y_in_band": 0.289,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "EPassion"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 461,
+          "cy": 321,
+          "x_frac": 0.64,
+          "y_in_band": 0.273,
+          "conf": 0.985,
+          "n_boxes": 1,
+          "ocr_text": "EPassion"
+        }
+      ],
+      "ocr_texts": [
+        "EPassion",
+        "EPassion"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.281,
+      "avg_x_frac": 0.75,
+      "wide_frames": 0,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "GOOD LUCK HAPPY",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "842",
+          "cx": 366,
+          "cy": 112,
+          "x_frac": 0.508,
+          "y_in_band": 0.843,
+          "conf": 0.942,
+          "n_boxes": 1,
+          "ocr_text": "Good Luck Happy"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 303,
+          "cy": 255,
+          "x_frac": 0.421,
+          "y_in_band": 0.832,
+          "conf": 0.914,
+          "n_boxes": 1,
+          "ocr_text": "Good Luck Happy"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 304,
+          "cy": 419,
+          "x_frac": 0.422,
+          "y_in_band": 0.927,
+          "conf": 0.96,
+          "n_boxes": 1,
+          "ocr_text": "Good LuckHappy"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 268,
+          "cy": 561,
+          "x_frac": 0.372,
+          "y_in_band": 0.586,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "Good LuckHappy"
+        }
+      ],
+      "ocr_texts": [
+        "Good Luck Happy",
+        "Good Luck Happy",
+        "Good LuckHappy",
+        "Good LuckHappy"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.797,
+      "avg_x_frac": 0.431,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KING OBERON",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "842",
+          "cx": 207,
+          "cy": 40,
+          "x_frac": 0.287,
+          "y_in_band": 0.248,
+          "conf": 0.975,
+          "n_boxes": 1,
+          "ocr_text": "KingOberon"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 185,
+          "cy": 484,
+          "x_frac": 0.257,
+          "y_in_band": 0.567,
+          "conf": 0.993,
+          "n_boxes": 1,
+          "ocr_text": "KingOberon"
+        }
+      ],
+      "ocr_texts": [
+        "KingOberon",
+        "KingOberon"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.409,
+      "avg_x_frac": 0.272,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KWAI CHUNG TALENTS",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "842",
+          "cx": 292,
+          "cy": 109,
+          "x_frac": 0.406,
+          "y_in_band": 0.818,
+          "conf": 0.955,
+          "n_boxes": 1,
+          "ocr_text": "Kwai Chung Talents"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 232,
+          "cy": 256,
+          "x_frac": 0.322,
+          "y_in_band": 0.839,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "Kwai Chung Talents"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 200,
+          "cy": 417,
+          "x_frac": 0.278,
+          "y_in_band": 0.913,
+          "conf": 0.947,
+          "n_boxes": 1,
+          "ocr_text": "Kwai Chung Talents"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 139,
+          "cy": 575,
+          "x_frac": 0.193,
+          "y_in_band": 0.727,
+          "conf": 0.879,
+          "n_boxes": 1,
+          "ocr_text": "Kwai Chung Talents"
+        }
+      ],
+      "ocr_texts": [
+        "Kwai Chung Talents",
+        "Kwai Chung Talents",
+        "Kwai Chung Talents",
+        "Kwai Chung Talents"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.826,
+      "avg_x_frac": 0.302,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LOOKING BRIGHT",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "842",
+          "cx": 167,
+          "cy": 114,
+          "x_frac": 0.232,
+          "y_in_band": 0.86,
+          "conf": 0.984,
+          "n_boxes": 1,
+          "ocr_text": "LookingBright"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 122,
+          "cy": 383,
+          "x_frac": 0.169,
+          "y_in_band": 0.687,
+          "conf": 0.963,
+          "n_boxes": 1,
+          "ocr_text": "LookingBright"
+        }
+      ],
+      "ocr_texts": [
+        "LookingBright",
+        "LookingBright"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.774,
+      "avg_x_frac": 0.201,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MATZDEN",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "842",
+          "cx": 422,
+          "cy": 118,
+          "x_frac": 0.586,
+          "y_in_band": 0.893,
+          "conf": 0.986,
+          "n_boxes": 1,
+          "ocr_text": "Matzden"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 316,
+          "cy": 281,
+          "x_frac": 0.439,
+          "y_in_band": 0.007,
+          "conf": 0.991,
+          "n_boxes": 1,
+          "ocr_text": "Matzden"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 288,
+          "cy": 442,
+          "x_frac": 0.4,
+          "y_in_band": 0.324,
+          "conf": 0.945,
+          "n_boxes": 1,
+          "ocr_text": "Matrden"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 194,
+          "cy": 580,
+          "x_frac": 0.269,
+          "y_in_band": 0.778,
+          "conf": 0.969,
+          "n_boxes": 1,
+          "ocr_text": "Matrden"
+        }
+      ],
+      "ocr_texts": [
+        "Matzden",
+        "Matzden",
+        "Matrden",
+        "Matrden"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.501,
+      "avg_x_frac": 0.424,
+      "wide_frames": 2,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "QUARTZ LEGEND",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "842",
+          "cx": 396,
+          "cy": 41,
+          "x_frac": 0.55,
+          "y_in_band": 0.256,
+          "conf": 0.924,
+          "n_boxes": 1,
+          "ocr_text": "Quartz Legend"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 509,
+          "cy": 391,
+          "x_frac": 0.707,
+          "y_in_band": 0.74,
+          "conf": 0.904,
+          "n_boxes": 1,
+          "ocr_text": "Quartz Legend"
+        }
+      ],
+      "ocr_texts": [
+        "Quartz Legend",
+        "Quartz Legend"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.495,
+      "avg_x_frac": 0.628,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SPEEDY POWER",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "842",
+          "cx": 564,
+          "cy": 113,
+          "x_frac": 0.783,
+          "y_in_band": 0.851,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "SpeedyPower"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 449,
+          "cy": 407,
+          "x_frac": 0.624,
+          "y_in_band": 0.847,
+          "conf": 0.994,
+          "n_boxes": 1,
+          "ocr_text": "SpeedyPower"
+        }
+      ],
+      "ocr_texts": [
+        "SpeedyPower",
+        "SpeedyPower"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.849,
+      "avg_x_frac": 0.703,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SUPERB KING",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "842",
+          "cx": 232,
+          "cy": 118,
+          "x_frac": 0.322,
+          "y_in_band": 0.893,
+          "conf": 0.94,
+          "n_boxes": 1,
+          "ocr_text": "SuperbKing"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 172,
+          "cy": 393,
+          "x_frac": 0.239,
+          "y_in_band": 0.753,
+          "conf": 0.974,
+          "n_boxes": 1,
+          "ocr_text": "SuperbKing"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 210,
+          "cy": 554,
+          "x_frac": 0.292,
+          "y_in_band": 0.515,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "Superb King"
+        }
+      ],
+      "ocr_texts": [
+        "SuperbKing",
+        "SuperbKing",
+        "Superb King"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.72,
+      "avg_x_frac": 0.284,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE PERFECT MATCH",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 231,
+          "cy": 388,
+          "x_frac": 0.321,
+          "y_in_band": 0.72,
+          "conf": 0.956,
+          "n_boxes": 1,
+          "ocr_text": "The Perfect Match"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 92,
+          "cy": 552,
+          "x_frac": 0.128,
+          "y_in_band": 0.495,
+          "conf": 0.952,
+          "n_boxes": 1,
+          "ocr_text": "The PerlectMatch"
+        }
+      ],
+      "ocr_texts": [
+        "The Perfect Match",
+        "The PerlectMatch"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.608,
+      "avg_x_frac": 0.225,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "WARRIORS DREAM",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "842",
+          "cx": 468,
+          "cy": 111,
+          "x_frac": 0.65,
+          "y_in_band": 0.835,
+          "conf": 0.883,
+          "n_boxes": 1,
+          "ocr_text": "WamorsDream"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 411,
+          "cy": 252,
+          "x_frac": 0.571,
+          "y_in_band": 0.812,
+          "conf": 0.961,
+          "n_boxes": 1,
+          "ocr_text": "WarriorsDream"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 390,
+          "cy": 428,
+          "x_frac": 0.542,
+          "y_in_band": 0.987,
+          "conf": 0.961,
+          "n_boxes": 1,
+          "ocr_text": "WarriorsDream"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 288,
+          "cy": 585,
+          "x_frac": 0.4,
+          "y_in_band": 0.828,
+          "conf": 0.964,
+          "n_boxes": 1,
+          "ocr_text": "WarmorsDream"
+        }
+      ],
+      "ocr_texts": [
+        "WamorsDream",
+        "WarriorsDream",
+        "WarriorsDream",
+        "WarmorsDream"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.866,
+      "avg_x_frac": 0.538,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 73,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-07-08T17:53:23"
+  }
+}
