@@ -1,0 +1,448 @@
+{
+  "date": "2026-07-08",
+  "race_number": 4,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "841",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 461,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 445
+    },
+    {
+      "y_top": 461,
+      "y_bot": 494,
+      "label": null,
+      "kind": null,
+      "y_center": 477
+    },
+    {
+      "y_top": 494,
+      "y_bot": 501,
+      "label": null,
+      "kind": null,
+      "y_center": 497
+    },
+    {
+      "y_top": 501,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 551
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "FORZA TORO",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "841",
+          "cx": 137,
+          "cy": 109,
+          "x_frac": 0.19,
+          "y_in_band": 0.818,
+          "conf": 0.996,
+          "n_boxes": 1,
+          "ocr_text": "ForzaToro"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 114,
+          "cy": 174,
+          "x_frac": 0.158,
+          "y_in_band": 0.289,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "ForzaToro"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 111,
+          "cy": 393,
+          "x_frac": 0.154,
+          "y_in_band": 0.753,
+          "conf": 0.996,
+          "n_boxes": 1,
+          "ocr_text": "ForzaToro"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 111,
+          "cy": 554,
+          "x_frac": 0.154,
+          "y_in_band": 0.525,
+          "conf": 0.996,
+          "n_boxes": 1,
+          "ocr_text": "ForzaToro"
+        }
+      ],
+      "ocr_texts": [
+        "ForzaToro",
+        "ForzaToro",
+        "ForzaToro",
+        "ForzaToro"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.597,
+      "avg_x_frac": 0.164,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "LUCKY YEAR",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "841",
+          "cx": 231,
+          "cy": 112,
+          "x_frac": 0.321,
+          "y_in_band": 0.843,
+          "conf": 0.993,
+          "n_boxes": 1,
+          "ocr_text": "LuckyYear"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 273,
+          "cy": 258,
+          "x_frac": 0.379,
+          "y_in_band": 0.852,
+          "conf": 0.993,
+          "n_boxes": 1,
+          "ocr_text": "LuckyYear"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 293,
+          "cy": 402,
+          "x_frac": 0.407,
+          "y_in_band": 0.813,
+          "conf": 0.975,
+          "n_boxes": 1,
+          "ocr_text": "LuckyYear"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 300,
+          "cy": 560,
+          "x_frac": 0.417,
+          "y_in_band": 0.584,
+          "conf": 0.98,
+          "n_boxes": 1,
+          "ocr_text": "LuckyYear"
+        }
+      ],
+      "ocr_texts": [
+        "LuckyYear",
+        "LuckyYear",
+        "LuckyYear",
+        "LuckyYear"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.773,
+      "avg_x_frac": 0.381,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PODIUM",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 225,
+          "cy": 249,
+          "x_frac": 0.312,
+          "y_in_band": 0.792,
+          "conf": 0.958,
+          "n_boxes": 1,
+          "ocr_text": "Podium"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 221,
+          "cy": 396,
+          "x_frac": 0.307,
+          "y_in_band": 0.773,
+          "conf": 0.985,
+          "n_boxes": 1,
+          "ocr_text": "Podium"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 245,
+          "cy": 554,
+          "x_frac": 0.34,
+          "y_in_band": 0.525,
+          "conf": 0.984,
+          "n_boxes": 1,
+          "ocr_text": "Podium"
+        }
+      ],
+      "ocr_texts": [
+        "Podium",
+        "Podium",
+        "Podium"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.696,
+      "avg_x_frac": 0.32,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PRECISION HOPE",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 329,
+          "cy": 196,
+          "x_frac": 0.457,
+          "y_in_band": 0.434,
+          "conf": 0.963,
+          "n_boxes": 2,
+          "ocr_text": "Precision Hope"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 351,
+          "cy": 412,
+          "x_frac": 0.487,
+          "y_in_band": 0.88,
+          "conf": 0.992,
+          "n_boxes": 1,
+          "ocr_text": "PrecisionHope"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 300,
+          "cy": 583,
+          "x_frac": 0.417,
+          "y_in_band": 0.812,
+          "conf": 0.995,
+          "n_boxes": 1,
+          "ocr_text": "PrecisionHope"
+        }
+      ],
+      "ocr_texts": [
+        "Precision Hope",
+        "Precision Hope",
+        "PrecisionHope",
+        "PrecisionHope"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.711,
+      "avg_x_frac": 0.454,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "STURDY RUBY",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "841",
+          "cx": 445,
+          "cy": 122,
+          "x_frac": 0.618,
+          "y_in_band": 0.926,
+          "conf": 0.997,
+          "n_boxes": 1,
+          "ocr_text": "SturdyRuby"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 488,
+          "cy": 273,
+          "x_frac": 0.678,
+          "y_in_band": 0.953,
+          "conf": 0.945,
+          "n_boxes": 1,
+          "ocr_text": "Sturdy Ruby"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 532,
+          "cy": 418,
+          "x_frac": 0.739,
+          "y_in_band": 0.92,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "SturdyRuby"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 520,
+          "cy": 586,
+          "x_frac": 0.722,
+          "y_in_band": 0.842,
+          "conf": 0.983,
+          "n_boxes": 1,
+          "ocr_text": "SturdyRuby"
+        }
+      ],
+      "ocr_texts": [
+        "SturdyRuby",
+        "Sturdy Ruby",
+        "SturdyRuby",
+        "SturdyRuby"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.91,
+      "avg_x_frac": 0.689,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SUPERB KID",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 638,
+          "cy": 544,
+          "x_frac": 0.886,
+          "y_in_band": 0.426,
+          "conf": 0.932,
+          "n_boxes": 1,
+          "ocr_text": "SuperbKid"
+        }
+      ],
+      "ocr_texts": [
+        "SuperbKid"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.426,
+      "avg_x_frac": 0.886,
+      "wide_frames": 0,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "THE AZURE",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "841",
+          "cx": 448,
+          "cy": 44,
+          "x_frac": 0.622,
+          "y_in_band": 0.281,
+          "conf": 0.944,
+          "n_boxes": 1,
+          "ocr_text": "The Azure"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 475,
+          "cy": 250,
+          "x_frac": 0.66,
+          "y_in_band": 0.799,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "The Azure"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 461,
+          "cy": 396,
+          "x_frac": 0.64,
+          "y_in_band": 0.773,
+          "conf": 0.997,
+          "n_boxes": 1,
+          "ocr_text": "TheAzure"
+        },
+        {
+          "band_idx": 6,
+          "band_label": null,
+          "cx": 520,
+          "cy": 563,
+          "x_frac": 0.722,
+          "y_in_band": 0.614,
+          "conf": 0.995,
+          "n_boxes": 1,
+          "ocr_text": "TheAzure"
+        }
+      ],
+      "ocr_texts": [
+        "The Azure",
+        "The Azure",
+        "TheAzure",
+        "TheAzure"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.619,
+      "avg_x_frac": 0.662,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 54,
+    "matched_horses": 7,
+    "field_size": 8,
+    "coverage": 0.875,
+    "parsed_at": "2026-07-08T17:53:23"
+  }
+}
