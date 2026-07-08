@@ -2314,7 +2314,7 @@ def _run_fuse_refresh(date_iso: str, going_turf: str, going_awt: str
     try:
         res_fu = subprocess.run(
             [PYTHON, str(BASE / "fuse_raceday.py"),
-             "--date", dc, "--going", going_turf or "Good",
+             "--date", dc, "--refresh-odds-only", "--going", going_turf or "Good",
              "--going-awt", going_awt or "Good"],
             env=env, cwd=str(BASE), capture_output=True, text=True,
             encoding="utf-8", timeout=600,

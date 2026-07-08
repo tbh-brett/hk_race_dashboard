@@ -15,6 +15,7 @@ Final probability:
 CLI
 ---
   python fuse_raceday.py --date 20260613 [--going G] [--going-awt GD]
+    python fuse_raceday.py --date 20260613 --refresh-odds-only
   python fuse_raceday.py --backfill            # all racecards with results
 """
 from __future__ import annotations
@@ -142,6 +143,146 @@ def latest_live_odds(dc: str) -> dict[int, dict[int, float]]:
     return out
 
 
+def _safe_float(v) -> float:
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return float("nan")
+
+
+def _norm_prob(arr: np.ndarray) -> np.ndarray:
+    arr = np.nan_to_num(np.asarray(arr, dtype=float), nan=0.0, posinf=0.0, neginf=0.0)
+    if arr.size == 0:
+        return arr
+    s = arr.sum()
+    if s <= 0:
+        return np.full(arr.size, 1.0 / arr.size, dtype=float)
+    return arr / s
+
+
+def _refresh_race_from_odds(race_rec: dict, odds_by_no: dict[int, float]) -> dict:
+    """Re-anchor an existing FUSE race record to the newest live WIN odds.
+
+    This avoids retraining the LightGBM heads after every odds scrape. It uses
+    persisted fundamental probabilities (and, when available, the persisted
+    market-model probabilities) from the previous full FUSE run.
+    """
+    picks = [dict(p) for p in (race_rec.get("picks") or [])]
+    if not picks:
+        return race_rec
+
+    horse_nos = [p.get("horse_no") for p in picks]
+    p_fund = _norm_prob(np.array([
+        _safe_float(p.get("p_fund", p.get("p_win"))) for p in picks
+    ], dtype=float))
+    p_mkt_model = np.array([
+        _safe_float(p.get("p_mkt_model")) for p in picks
+    ], dtype=float)
+
+    have_all_odds = all(
+        hn is not None and hn in odds_by_no and _safe_float(odds_by_no.get(hn)) >= 1.01
+        for hn in horse_nos
+    )
+    market_norm = np.array([float("nan")] * len(picks), dtype=float)
+    if have_all_odds:
+        market_norm = _norm_prob(np.array([
+            1.0 / _safe_float(odds_by_no[hn]) for hn in horse_nos
+        ], dtype=float))
+        base = p_mkt_model if np.isfinite(p_mkt_model).all() and p_mkt_model.sum() > 0 else p_fund
+        base = _norm_prob(base)
+        p_win = log_pool([base, market_norm], [1.0, W_MARKET])
+        odds_anchored = True
+    else:
+        p_win = p_fund
+        odds_anchored = False
+        if any(hn is not None and hn in odds_by_no for hn in horse_nos):
+            market_norm = _norm_prob(np.array([
+                1.0 / _safe_float(odds_by_no[hn]) if hn is not None and hn in odds_by_no else float("nan")
+                for hn in horse_nos
+            ], dtype=float))
+
+    order = np.argsort(-p_win)
+    q_pairs = pair_probs(p_win, FUSE_LAMBDA)
+    top_pairs = sorted(q_pairs.items(), key=lambda kv: -kv[1])[:6]
+    q_out = []
+    for (i, j), v in top_pairs:
+        hni = horse_nos[i]
+        hnj = horse_nos[j]
+        if hni is None or hnj is None:
+            continue
+        q_out.append({
+            "a": int(hni), "b": int(hnj), "p": round(float(v), 4),
+            "fair_odds": round(0.825 / max(v, 1e-6), 1),
+        })
+
+    new_picks = []
+    for new_rank, ix in enumerate(order, 1):
+        p = dict(picks[ix])
+        hn = horse_nos[ix]
+        p["rank"] = new_rank
+        p["p_win"] = round(float(p_win[ix]), 4)
+        p["p_market"] = (round(float(market_norm[ix]), 4)
+                         if np.isfinite(market_norm[ix]) else None)
+        p["edge"] = (round(float(p_win[ix] - market_norm[ix]), 4)
+                     if np.isfinite(market_norm[ix]) else None)
+        p["win_odds"] = (round(float(odds_by_no[hn]), 2)
+                        if hn is not None and hn in odds_by_no else None)
+        if p.get("p_fund_top2") is not None or p.get("p_mkt_top2_model") is not None:
+            p["p_top2"] = (p.get("p_mkt_top2_model") if odds_anchored and p.get("p_mkt_top2_model") is not None
+                           else p.get("p_fund_top2"))
+        if p.get("p_fund_top3") is not None or p.get("p_mkt_top3_model") is not None:
+            p["p_top3"] = (p.get("p_mkt_top3_model") if odds_anchored and p.get("p_mkt_top3_model") is not None
+                           else p.get("p_fund_top3"))
+        new_picks.append(p)
+
+    out = dict(race_rec)
+    out["odds_anchored"] = odds_anchored
+    out["picks"] = new_picks
+    out["quinella_pairs"] = q_out
+    return out
+
+
+def refresh_fuse_report_odds_only(dc: str, going_turf: str = "G",
+                                  going_awt: str = "GD",
+                                  quiet: bool = False) -> Path:
+    """Refresh an existing FUSE report from the newest live WIN odds only.
+
+    Falls back to a full FUSE generation when the report doesn't exist yet.
+    This keeps repeated post-scrape refreshes fast and reliable on the live host.
+    """
+    def say(msg):
+        if not quiet:
+            print(msg)
+
+    out = REPORTS / f"race_day_report_{dc}_FUSE.json"
+    if not out.exists():
+        say("[fuse] no existing report — running full generation")
+        return generate_fuse_report(dc, going_turf, going_awt, quiet=quiet)
+
+    try:
+        report = json.loads(out.read_text(encoding="utf-8"))
+    except Exception:
+        say("[fuse] existing report unreadable — running full generation")
+        return generate_fuse_report(dc, going_turf, going_awt, quiet=quiet)
+
+    odds_map = latest_live_odds(dc)
+    races = []
+    for race in report.get("races", []):
+        rn = int(race.get("race_number") or 0)
+        races.append(_refresh_race_from_odds(race, odds_map.get(rn, {})))
+
+    report["generated_at_hkt"] = datetime.now(HKT).strftime("%Y-%m-%d %H:%M:%S")
+    report["going_turf"] = going_turf
+    report["going_awt"] = going_awt
+    report["odds_mode"] = "live" if odds_map else "none"
+    report["refresh_mode"] = "odds-only"
+    report["races"] = races
+    out.write_text(json.dumps(report, indent=1, ensure_ascii=False),
+                   encoding="utf-8")
+    say(f"[fuse] odds-only refresh written → {out.name}")
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Report generation
 # ---------------------------------------------------------------------------
@@ -209,6 +350,11 @@ def generate_fuse_report(dc: str, going_turf: str = "G", going_awt: str = "GD",
                 "p_top2": round(float(p_t2[ix]), 4) if not np.isnan(p_t2[ix]) else None,
                 "p_top3": round(float(p_t3[ix]), 4) if not np.isnan(p_t3[ix]) else None,
                 "p_fund": round(float(p_fund[ix]), 4),
+                "p_fund_top2": round(float(r["p_fund_top2"]), 4) if not np.isnan(r["p_fund_top2"]) else None,
+                "p_fund_top3": round(float(r["p_fund_top3"]), 4) if not np.isnan(r["p_fund_top3"]) else None,
+                "p_mkt_model": round(float(p_mkt[ix]), 4) if not np.isnan(p_mkt[ix]) else None,
+                "p_mkt_top2_model": round(float(r["p_mkt_top2"]), 4) if not np.isnan(r["p_mkt_top2"]) else None,
+                "p_mkt_top3_model": round(float(r["p_mkt_top3"]), 4) if not np.isnan(r["p_mkt_top3"]) else None,
                 "p_market": round(float(inv[ix]), 4) if not np.isnan(inv[ix]) else None,
                 "edge": round(float(p_win[ix] - inv[ix]), 4)
                         if not np.isnan(inv[ix]) else None,
@@ -280,12 +426,17 @@ if __name__ == "__main__":
     ap.add_argument("--date", help="meeting date YYYYMMDD")
     ap.add_argument("--going", default="G", help="turf going code")
     ap.add_argument("--going-awt", default="GD", help="AWT going code")
+    ap.add_argument("--refresh-odds-only", action="store_true",
+                    help="Re-anchor an existing FUSE report to the newest live WIN odds")
     ap.add_argument("--backfill", action="store_true")
     ap.add_argument("--force", action="store_true")
     a = ap.parse_args()
     if a.backfill:
         backfill_all(force=a.force)
     elif a.date:
-        generate_fuse_report(a.date, a.going, a.going_awt)
+        if a.refresh_odds_only:
+            refresh_fuse_report_odds_only(a.date, a.going, a.going_awt)
+        else:
+            generate_fuse_report(a.date, a.going, a.going_awt)
     else:
         ap.error("--date or --backfill required")
