@@ -1876,6 +1876,18 @@ def _load_form_db() -> pd.DataFrame:
         from db_utils import SQLITE_FILE, read_sqlite
         sqlite_path = Path(SQLITE_FILE)
         if sqlite_path.exists():
+            # On Streamlit Cloud prefer sqlite unconditionally. Git checkout
+            # mtimes are not a reliable freshness signal there, and falling
+            # through to the xlsx->parquet branch has triggered hard crashes
+            # under Python 3.14 / pandas 3 / pyarrow.
+            if _is_streamlit_cloud():
+                cols = ", ".join(f'"{c}"' for c in FORM_COLS)
+                df = read_sqlite(f"SELECT {cols} FROM results")
+                df["race_date"] = pd.to_datetime(df["race_date"]).dt.date
+                df["place_num"] = pd.to_numeric(df["place"], errors="coerce")
+                df["horse_name_upper"] = df["horse_name"].str.upper().str.strip()
+                return df
+
             try:
                 xlsx_mtime = db_file.stat().st_mtime
             except OSError:
@@ -1894,7 +1906,9 @@ def _load_form_db() -> pd.DataFrame:
                 df["place_num"] = pd.to_numeric(df["place"], errors="coerce")
                 df["horse_name_upper"] = df["horse_name"].str.upper().str.strip()
                 return df
-    except Exception:
+    except Exception as exc:
+        if _is_streamlit_cloud():
+            raise RuntimeError(f"sqlite fast path failed in _load_form_db: {exc}") from exc
         pass
 
     parquet_file = CACHE_DIR / "form_db.parquet"
@@ -1928,13 +1942,20 @@ def _load_form_db() -> pd.DataFrame:
     df["race_date"] = pd.to_datetime(df["race_date"]).dt.date
     df["place_num"] = pd.to_numeric(df["place"], errors="coerce")
     df["horse_name_upper"] = df["horse_name"].str.upper().str.strip()
+
+    # On Streamlit Cloud, stop here. Writing the parquet sidecar has been
+    # observed to segfault the process under Python 3.14 / pandas 3.0 when
+    # mixed object/string columns are coerced for Arrow serialisation.
+    if _is_streamlit_cloud():
+        return df
+
     try:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         # Coerce mixed-type object columns (e.g. ``place`` = int + 'DH' / 'WV')
         # to plain strings so pyarrow can serialise without ArrowTypeError.
         # Preserve NaN cells (don't let astype(str) turn them into 'nan').
         df_pq = df.copy()
-        for col in df_pq.select_dtypes(include="object").columns:
+        for col in df_pq.select_dtypes(include=["object", "string"]).columns:
             mask_na = df_pq[col].isna()
             df_pq[col] = df_pq[col].astype(str)
             df_pq.loc[mask_na, col] = None
