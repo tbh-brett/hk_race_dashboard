@@ -23,6 +23,7 @@ import subprocess
 import sys
 import tempfile
 import uuid
+from functools import lru_cache
 from collections import defaultdict
 from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
@@ -1411,6 +1412,7 @@ def _gh_persist_postrace_outputs(date_str: str) -> tuple[int, int, list[str]]:
 
 
 def _gh_persist_live_odds_snapshots(date_iso: str, venue: str
+                                    , file_names: list[str] | None = None
                                     ) -> tuple[int, int, list[str]]:
     """Push live-odds JSON snapshots to GitHub so they survive Cloud reboots.
 
@@ -1436,7 +1438,11 @@ def _gh_persist_live_odds_snapshots(date_iso: str, venue: str
     pushed = 0
     errors: list[str] = []
     msg = f"live-odds: auto-sync {date_iso} {venue} [skip ci]"
-    for fp in sorted(snap_dir.glob(f"{venue}_R*.json")):
+    wanted = set(file_names or [])
+    fps = sorted(snap_dir.glob(f"{venue}_R*.json"))
+    if wanted:
+        fps = [fp for fp in fps if fp.name in wanted]
+    for fp in fps:
         repo_path = f"cache/live_odds/{dc}/{fp.name}"
         try:
             data = fp.read_bytes()
@@ -1447,6 +1453,43 @@ def _gh_persist_live_odds_snapshots(date_iso: str, venue: str
         except Exception as e:
             errors.append(f"{repo_path}: {e}")
     return (pushed, 0, errors)
+
+
+@lru_cache(maxsize=4)
+def _ensure_playwright_runtime(python_exe: str) -> tuple[bool, str]:
+    """Probe/install Playwright Chromium once per container/interpreter.
+
+    Live-odds scraping is the only feature that needs Chromium. Doing this on
+    every scrape burns CPU and can destabilize a small Streamlit host.
+    """
+    try:
+        probe = subprocess.run(
+            [python_exe, "-m", "playwright", "install", "--dry-run", "chromium"],
+            capture_output=True, text=True, timeout=20, cwd=str(BASE),
+        )
+        loc = ""
+        for line in (probe.stdout or "").splitlines():
+            if "Install location:" in line:
+                loc = line.split("Install location:", 1)[1].strip()
+                break
+        if probe.returncode == 0 and loc and Path(loc).exists():
+            return True, "chromium already installed"
+    except (subprocess.SubprocessError, FileNotFoundError, OSError) as exc:
+        probe_err = f"dry-run probe failed: {type(exc).__name__}: {exc}"
+    else:
+        probe_err = (probe.stderr or probe.stdout or f"dry-run exit {probe.returncode}").strip()
+
+    try:
+        install = subprocess.run(
+            [python_exe, "-m", "playwright", "install", "chromium"],
+            capture_output=True, text=True, timeout=180, cwd=str(BASE),
+        )
+        if install.returncode == 0:
+            return True, "chromium installed"
+        msg = (install.stderr or install.stdout or f"install exit {install.returncode}").strip()
+        return False, f"Playwright install failed: {msg[:200]}"
+    except (subprocess.SubprocessError, FileNotFoundError, OSError) as exc:
+        return False, f"Playwright install failed after {probe_err[:120]}: {type(exc).__name__}: {exc}"
 
 
 def _gh_persist_pipeline_outputs(date_str: str, model: str) -> tuple[int, int, list[str]]:
@@ -15932,37 +15975,15 @@ def _run_live_odds_scraper(date_iso: str, venue: str, races: str,
     cmd = [sys.executable, str(script),
            "--date", date_iso, "--venue", venue, "--races", races,
            "--pools", pools]
-    # On Streamlit Cloud, Playwright Chromium may not be installed; locally
-    # it almost always is. Probe first via `playwright install --dry-run`
-    # (very fast, ~1s) and only do a real install when the reported
-    # `Install location:` path doesn't actually exist on disk. This avoids
-    # 30-180 s wasted on every click locally.
-    try:
-        probe = subprocess.run(
-            [sys.executable, "-m", "playwright", "install", "--dry-run", "chromium"],
-            capture_output=True, text=True, timeout=20, cwd=str(BASE),
-        )
-        loc = ""
-        for line in (probe.stdout or "").splitlines():
-            if "Install location:" in line:
-                loc = line.split("Install location:", 1)[1].strip()
-                break
-        needs_install = (probe.returncode != 0 or not loc
-                         or not Path(loc).exists())
-    except (subprocess.SubprocessError, FileNotFoundError, OSError):
-        needs_install = True
-    if needs_install:
-        try:
-            subprocess.run(
-                [sys.executable, "-m", "playwright", "install", "chromium"],
-                capture_output=True, text=True, timeout=180, cwd=str(BASE),
-            )
-        except (subprocess.SubprocessError, FileNotFoundError, OSError):
-            pass
+    ok_pw, pw_msg = _ensure_playwright_runtime(sys.executable)
+    if not ok_pw:
+        return 1, pw_msg
     try:
         r = subprocess.run(cmd, capture_output=True, text=True,
                            timeout=300, cwd=str(BASE))
         log = (r.stdout or "") + ("\n" + r.stderr if r.stderr else "")
+        if pw_msg:
+            log = f"[playwright] {pw_msg}\n" + log
         return r.returncode, log
     except subprocess.TimeoutExpired:
         return 124, "Scraper timed out after 5 min."
@@ -16098,9 +16119,10 @@ def page_live_odds():
                 # they survive the next redeploy/reboot. Without this, only
                 # the snapshots committed at deploy time would persist.
                 if _is_streamlit_cloud():
+                    _new_files = sorted(_after - _before)
                     with st.spinner("Persisting snapshots to GitHub…"):
                         pushed, _missing, errs = _gh_persist_live_odds_snapshots(
-                            scr_date.isoformat(), scr_venue)
+                            scr_date.isoformat(), scr_venue, _new_files)
                     if pushed:
                         st.info(f"☁ Synced {pushed} snapshot file(s) to GitHub "
                                 f"(survives Cloud reboot).")
