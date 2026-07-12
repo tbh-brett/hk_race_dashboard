@@ -22336,12 +22336,16 @@ def main():
         page_betting()
     elif page == "Model Analysis":
         selected = sidebar_race_day()
-        tab_race, tab_compare = st.tabs([
-            "🏁 Race Day Picks", "⚖️ Model Comparison",
-        ])
-        with tab_race:
+        model_view = st.radio(
+            "Model Analysis view",
+            ["🏁 Race Day Picks", "⚖️ Model Comparison"],
+            horizontal=True,
+            key="model_analysis_view",
+            label_visibility="collapsed",
+        )
+        if model_view.startswith("🏁"):
             page_race_day(selected)
-        with tab_compare:
+        else:
             page_model_comparison()
     elif page == "Data Analysis":
         page_data_analysis()
