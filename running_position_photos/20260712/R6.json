@@ -1,0 +1,663 @@
+{
+  "date": "2026-07-12",
+  "race_number": 6,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "852",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 602,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 516
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "IRON SECURITY",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "852",
+          "cx": 270,
+          "cy": 128,
+          "x_frac": 0.375,
+          "y_in_band": 0.975,
+          "conf": 0.962,
+          "n_boxes": 1,
+          "ocr_text": "ronSecurity"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 234,
+          "cy": 243,
+          "x_frac": 0.325,
+          "y_in_band": 0.752,
+          "conf": 0.924,
+          "n_boxes": 1,
+          "ocr_text": "Iron Security"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 389,
+          "cy": 583,
+          "x_frac": 0.54,
+          "y_in_band": 0.89,
+          "conf": 0.878,
+          "n_boxes": 1,
+          "ocr_text": "IronSecunity"
+        }
+      ],
+      "ocr_texts": [
+        "ronSecurity",
+        "Iron Security",
+        "IronSecunity"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.873,
+      "avg_x_frac": 0.411,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KING'S ARROW",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 331,
+          "cy": 245,
+          "x_frac": 0.46,
+          "y_in_band": 0.765,
+          "conf": 0.953,
+          "n_boxes": 1,
+          "ocr_text": "King'sArrow"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 304,
+          "cy": 379,
+          "x_frac": 0.422,
+          "y_in_band": 0.66,
+          "conf": 0.923,
+          "n_boxes": 1,
+          "ocr_text": "ing'sArrow"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 329,
+          "cy": 528,
+          "x_frac": 0.457,
+          "y_in_band": 0.57,
+          "conf": 0.939,
+          "n_boxes": 1,
+          "ocr_text": "King'sArrow"
+        }
+      ],
+      "ocr_texts": [
+        "King'sArrow",
+        "ing'sArrow",
+        "King'sArrow"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.666,
+      "avg_x_frac": 0.447,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MAJESTIC LIFE",
+      "horse_no": 13,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "852",
+          "cx": 399,
+          "cy": 30,
+          "x_frac": 0.554,
+          "y_in_band": 0.165,
+          "conf": 0.924,
+          "n_boxes": 1,
+          "ocr_text": "estic Life"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 332,
+          "cy": 171,
+          "x_frac": 0.461,
+          "y_in_band": 0.268,
+          "conf": 0.909,
+          "n_boxes": 1,
+          "ocr_text": "MajesticLife"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 485,
+          "cy": 532,
+          "x_frac": 0.674,
+          "y_in_band": 0.593,
+          "conf": 0.789,
+          "n_boxes": 1,
+          "ocr_text": "MajesticUle"
+        }
+      ],
+      "ocr_texts": [
+        "estic Life",
+        "MajesticLife",
+        "MajesticUle"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.33,
+      "avg_x_frac": 0.558,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "MONTA FRUTTA",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 383,
+          "cy": 176,
+          "x_frac": 0.532,
+          "y_in_band": 0.302,
+          "conf": 0.948,
+          "n_boxes": 1,
+          "ocr_text": "Monta Frutta"
+        }
+      ],
+      "ocr_texts": [
+        "Monta Frutta"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.302,
+      "avg_x_frac": 0.532,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "NOBLE SUPERIOR",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "852",
+          "cx": 264,
+          "cy": 24,
+          "x_frac": 0.367,
+          "y_in_band": 0.116,
+          "conf": 0.972,
+          "n_boxes": 1,
+          "ocr_text": "Noble Superior"
+        }
+      ],
+      "ocr_texts": [
+        "Noble Superior"
+      ],
+      "n_frames_seen": 1,
+      "avg_y_in_band": 0.116,
+      "avg_x_frac": 0.367,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": true
+    },
+    {
+      "horse_name": "OLDTOWN",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "852",
+          "cx": 421,
+          "cy": 128,
+          "x_frac": 0.585,
+          "y_in_band": 0.975,
+          "conf": 0.898,
+          "n_boxes": 1,
+          "ocr_text": "Oldtown"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 354,
+          "cy": 269,
+          "x_frac": 0.492,
+          "y_in_band": 0.926,
+          "conf": 0.884,
+          "n_boxes": 1,
+          "ocr_text": "Oldtown"
+        }
+      ],
+      "ocr_texts": [
+        "Oldtown",
+        "Oldtown"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.951,
+      "avg_x_frac": 0.539,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PRESTIGE ALWAYS",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 175,
+          "cy": 242,
+          "x_frac": 0.243,
+          "y_in_band": 0.745,
+          "conf": 0.954,
+          "n_boxes": 1,
+          "ocr_text": "Prestige Always"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 127,
+          "cy": 407,
+          "x_frac": 0.176,
+          "y_in_band": 0.847,
+          "conf": 0.927,
+          "n_boxes": 1,
+          "ocr_text": "Prestige Always"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 120,
+          "cy": 550,
+          "x_frac": 0.167,
+          "y_in_band": 0.698,
+          "conf": 0.981,
+          "n_boxes": 1,
+          "ocr_text": "Prestige Always"
+        }
+      ],
+      "ocr_texts": [
+        "Prestige Always",
+        "Prestige Always",
+        "Prestige Always"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.762,
+      "avg_x_frac": 0.195,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "PRIME WINISTER",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "852",
+          "cx": 139,
+          "cy": 128,
+          "x_frac": 0.193,
+          "y_in_band": 0.975,
+          "conf": 0.931,
+          "n_boxes": 1,
+          "ocr_text": "Prime Winister"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 113,
+          "cy": 242,
+          "x_frac": 0.157,
+          "y_in_band": 0.745,
+          "conf": 0.988,
+          "n_boxes": 1,
+          "ocr_text": "PrimeWinister"
+        }
+      ],
+      "ocr_texts": [
+        "Prime Winister",
+        "PrimeWinister"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.857,
+      "avg_x_frac": 0.174,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RISING ELITE",
+      "horse_no": 14,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "852",
+          "cx": 302,
+          "cy": 103,
+          "x_frac": 0.419,
+          "y_in_band": 0.769,
+          "conf": 0.951,
+          "n_boxes": 1,
+          "ocr_text": "RisingElite"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 220,
+          "cy": 549,
+          "x_frac": 0.306,
+          "y_in_band": 0.692,
+          "conf": 0.95,
+          "n_boxes": 1,
+          "ocr_text": "Rising Elite"
+        }
+      ],
+      "ocr_texts": [
+        "RisingElite",
+        "Rising Elite"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.731,
+      "avg_x_frac": 0.363,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "RYUI KOKOROE",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 433,
+          "cy": 170,
+          "x_frac": 0.601,
+          "y_in_band": 0.262,
+          "conf": 0.978,
+          "n_boxes": 1,
+          "ocr_text": "RyuiKokoroe"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 271,
+          "cy": 550,
+          "x_frac": 0.376,
+          "y_in_band": 0.698,
+          "conf": 0.968,
+          "n_boxes": 1,
+          "ocr_text": "Ryui Kokoroe"
+        }
+      ],
+      "ocr_texts": [
+        "RyuiKokoroe",
+        "Ryui Kokoroe"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.479,
+      "avg_x_frac": 0.489,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SILVER SPURS",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "852",
+          "cx": 205,
+          "cy": 128,
+          "x_frac": 0.285,
+          "y_in_band": 0.975,
+          "conf": 0.948,
+          "n_boxes": 1,
+          "ocr_text": "lverSpurs"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 189,
+          "cy": 269,
+          "x_frac": 0.263,
+          "y_in_band": 0.926,
+          "conf": 0.989,
+          "n_boxes": 1,
+          "ocr_text": "SilverSpurs"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 242,
+          "cy": 404,
+          "x_frac": 0.336,
+          "y_in_band": 0.827,
+          "conf": 0.97,
+          "n_boxes": 1,
+          "ocr_text": "verSpurs"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 426,
+          "cy": 532,
+          "x_frac": 0.592,
+          "y_in_band": 0.593,
+          "conf": 0.942,
+          "n_boxes": 1,
+          "ocr_text": "SilverSpurs"
+        }
+      ],
+      "ocr_texts": [
+        "lverSpurs",
+        "SilverSpurs",
+        "verSpurs",
+        "SilverSpurs"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.832,
+      "avg_x_frac": 0.367,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SOLID CAR",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 415,
+          "cy": 272,
+          "x_frac": 0.576,
+          "y_in_band": 0.946,
+          "conf": 0.939,
+          "n_boxes": 1,
+          "ocr_text": "Solid Car"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 176,
+          "cy": 576,
+          "x_frac": 0.244,
+          "y_in_band": 0.849,
+          "conf": 0.982,
+          "n_boxes": 1,
+          "ocr_text": "SolidCar"
+        }
+      ],
+      "ocr_texts": [
+        "Solid Car",
+        "SolidCar"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.896,
+      "avg_x_frac": 0.406,
+      "wide_frames": 2,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SPIRITED STEED",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "852",
+          "cx": 361,
+          "cy": 103,
+          "x_frac": 0.501,
+          "y_in_band": 0.769,
+          "conf": 0.949,
+          "n_boxes": 1,
+          "ocr_text": "SpiritedSteed"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 298,
+          "cy": 269,
+          "x_frac": 0.414,
+          "y_in_band": 0.926,
+          "conf": 0.964,
+          "n_boxes": 1,
+          "ocr_text": "Spirited Steed"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 128,
+          "cy": 575,
+          "x_frac": 0.178,
+          "y_in_band": 0.843,
+          "conf": 0.84,
+          "n_boxes": 1,
+          "ocr_text": "Spirited Steed"
+        }
+      ],
+      "ocr_texts": [
+        "SpiritedSteed",
+        "Spirited Steed",
+        "Spirited Steed"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.847,
+      "avg_x_frac": 0.372,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VICTORY CHAMPION",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "852",
+          "cx": 522,
+          "cy": 125,
+          "x_frac": 0.725,
+          "y_in_band": 0.95,
+          "conf": 0.94,
+          "n_boxes": 1,
+          "ocr_text": "Victory Champion"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 436,
+          "cy": 292,
+          "x_frac": 0.606,
+          "y_in_band": 0.08,
+          "conf": 0.972,
+          "n_boxes": 1,
+          "ocr_text": "Victory Champion"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 230,
+          "cy": 593,
+          "x_frac": 0.319,
+          "y_in_band": 0.948,
+          "conf": 0.971,
+          "n_boxes": 1,
+          "ocr_text": "Victory Champion"
+        }
+      ],
+      "ocr_texts": [
+        "Victory Champion",
+        "Victory Champion",
+        "Victory Champion"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.656,
+      "avg_x_frac": 0.548,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 72,
+    "matched_horses": 14,
+    "field_size": 14,
+    "coverage": 1.0,
+    "parsed_at": "2026-07-13T02:19:55"
+  }
+}
