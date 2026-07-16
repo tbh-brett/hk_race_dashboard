@@ -870,15 +870,65 @@ _GH_BB_PATH = "blackbook.json"
 
 def _gh_headers() -> dict | None:
     """Return GitHub API auth headers, or None if no token configured."""
-    token = st.secrets.get("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN", ""))
+    token = _gh_token_value()
     if not token:
         return None
     return {"Authorization": f"token {token}",
             "Accept": "application/vnd.github.v3+json"}
 
 
+def _gh_token_value() -> str:
+    """Return a normalized GitHub token from Streamlit secrets or env."""
+    token = st.secrets.get("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN", ""))
+    token = str(token or "").strip()
+    m = re.search(
+        r"(?im)\bGITHUB_TOKEN\b\s*=\s*(?P<quote>['\"]?)(?P<value>[^'\"\r\n#,]+)(?P=quote)",
+        token,
+    )
+    if m:
+        token = m.group("value").strip()
+    lower = token.lower()
+    for prefix in ("token ", "bearer "):
+        if lower.startswith(prefix):
+            token = token[len(prefix):].strip()
+            lower = token.lower()
+            break
+    m = re.search(r"(github_pat_[A-Za-z0-9_]+|gh[pousr]_[A-Za-z0-9_]+)", token)
+    if m:
+        token = m.group(1)
+    token = token.rstrip(",").strip().strip('"').strip("'").strip()
+    return token
+
+
+def _gh_auth_block_reason() -> str:
+    """Return a session-local auth block reason after GitHub rejects a token."""
+    try:
+        return str(st.session_state.get("_gh_auth_block_reason", "") or "")
+    except Exception:
+        return ""
+
+
+def _gh_note_auth_failure(status_code: int, detail: str = "") -> None:
+    """Block further GitHub writes in this session after an auth rejection."""
+    msg = f"token rejected (HTTP {status_code}) — update GITHUB_TOKEN secret"
+    if detail and "bad credentials" in detail.lower():
+        msg = "token rejected (Bad credentials) — expired, revoked, or malformed GITHUB_TOKEN"
+    try:
+        if st.session_state.get("_gh_auth_block_reason") != msg:
+            st.session_state["_gh_auth_block_reason"] = msg
+            _gh_record_error(f"GitHub sync disabled for this session: {msg}")
+    except Exception:
+        pass
+    try:
+        _gh_token_check.clear()
+    except Exception:
+        pass
+
+
 def _gh_get_file_sha() -> str | None:
     """Get the current SHA of blackbook.json on GitHub (needed for updates)."""
+    if _gh_auth_block_reason():
+        return None
     headers = _gh_headers()
     if not headers:
         return None
@@ -888,6 +938,8 @@ def _gh_get_file_sha() -> str | None:
             headers=headers, timeout=10)
         if r.status_code == 200:
             return r.json().get("sha")
+        if r.status_code == 401:
+            _gh_note_auth_failure(r.status_code, r.text)
     except Exception:
         pass
     return None
@@ -895,6 +947,8 @@ def _gh_get_file_sha() -> str | None:
 
 def _gh_push_blackbook(content_bytes: bytes) -> bool:
     """Push blackbook.json to GitHub via the Contents API."""
+    if _gh_auth_block_reason():
+        return False
     headers = _gh_headers()
     if not headers:
         _gh_record_error("blackbook.json: no GITHUB_TOKEN")
@@ -906,6 +960,8 @@ def _gh_push_blackbook(content_bytes: bytes) -> bool:
     }
     if sha:
         payload["sha"] = sha
+    if _gh_auth_block_reason():
+        return False
     try:
         r = _requests.put(
             f"https://api.github.com/repos/{_GH_REPO}/contents/{_GH_BB_PATH}",
@@ -913,6 +969,8 @@ def _gh_push_blackbook(content_bytes: bytes) -> bool:
         if r.status_code in (200, 201):
             _gh_record_push(_GH_BB_PATH)
             return True
+        if r.status_code == 401:
+            _gh_note_auth_failure(r.status_code, r.text)
         _gh_record_error(
             f"blackbook.json: HTTP {r.status_code} {r.text[:160]}")
         return False
@@ -952,7 +1010,10 @@ def _gh_token_check() -> tuple[bool, bool, str]:
     API on every rerun. Performs a lightweight ``GET /repos/<repo>`` call;
     a 200 with ``permissions.push == True`` means we can write.
     """
-    token = st.secrets.get("GITHUB_TOKEN", os.environ.get("GITHUB_TOKEN", ""))
+    blocked = _gh_auth_block_reason()
+    if blocked:
+        return (True, False, blocked)
+    token = _gh_token_value()
     if not token:
         return (False, False, "no token configured")
     try:
@@ -1222,6 +1283,8 @@ def _render_persistence_sidebar() -> None:
 
 def _gh_get_path_sha(repo_path: str) -> str | None:
     """Get SHA for an arbitrary path on GitHub. Returns None if missing/no auth."""
+    if _gh_auth_block_reason():
+        return None
     headers = _gh_headers()
     if not headers:
         return None
@@ -1231,6 +1294,8 @@ def _gh_get_path_sha(repo_path: str) -> str | None:
             headers=headers, timeout=10)
         if r.status_code == 200:
             return r.json().get("sha")
+        if r.status_code == 401:
+            _gh_note_auth_failure(r.status_code, r.text)
     except Exception:
         pass
     return None
@@ -1272,6 +1337,8 @@ def _gh_push_file(repo_path: str, content_bytes: bytes, message: str) -> bool:
     sidebar persistence panel can surface it (instead of silent loss).
     Retries once on 409/422 (sha race) by re-fetching the SHA.
     """
+    if _gh_auth_block_reason():
+        return False
     headers = _gh_headers()
     if not headers:
         _gh_record_error(f"{repo_path}: no GITHUB_TOKEN")
@@ -1281,6 +1348,8 @@ def _gh_push_file(repo_path: str, content_bytes: bytes, message: str) -> bool:
         "content": base64.b64encode(content_bytes).decode("ascii"),
     }
     sha = _gh_get_path_sha(repo_path)
+    if _gh_auth_block_reason():
+        return False
     if sha:
         payload["sha"] = sha
     try:
@@ -1290,6 +1359,8 @@ def _gh_push_file(repo_path: str, content_bytes: bytes, message: str) -> bool:
         if r.status_code in (200, 201):
             _gh_record_push(repo_path)
             return True
+        if r.status_code == 401:
+            _gh_note_auth_failure(r.status_code, r.text)
         # Retry once on sha conflict (someone else pushed between get/put)
         if r.status_code in (409, 422):
             sha2 = _gh_get_path_sha(repo_path)
@@ -1301,6 +1372,8 @@ def _gh_push_file(repo_path: str, content_bytes: bytes, message: str) -> bool:
                 if r2.status_code in (200, 201):
                     _gh_record_push(repo_path)
                     return True
+                if r2.status_code == 401:
+                    _gh_note_auth_failure(r2.status_code, r2.text)
                 _gh_record_error(
                     f"{repo_path}: HTTP {r2.status_code} {r2.text[:160]}")
                 return False

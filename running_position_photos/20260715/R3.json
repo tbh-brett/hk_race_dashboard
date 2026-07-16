@@ -1,0 +1,720 @@
+{
+  "date": "2026-07-15",
+  "race_number": 3,
+  "img_w": 720,
+  "img_h": 602,
+  "bands": [
+    {
+      "y_top": 10,
+      "y_bot": 131,
+      "label": "860",
+      "kind": "start",
+      "y_center": 70
+    },
+    {
+      "y_top": 131,
+      "y_bot": 280,
+      "label": "800M",
+      "kind": "800M",
+      "y_center": 205
+    },
+    {
+      "y_top": 280,
+      "y_bot": 430,
+      "label": "400M",
+      "kind": "400M",
+      "y_center": 355
+    },
+    {
+      "y_top": 430,
+      "y_bot": 464,
+      "label": "200M",
+      "kind": "200M",
+      "y_center": 447
+    },
+    {
+      "y_top": 464,
+      "y_bot": 481,
+      "label": null,
+      "kind": null,
+      "y_center": 472
+    },
+    {
+      "y_top": 481,
+      "y_bot": 602,
+      "label": null,
+      "kind": null,
+      "y_center": 541
+    }
+  ],
+  "horses": [
+    {
+      "horse_name": "CASA ROCHESTER",
+      "horse_no": 2,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 360,
+          "cy": 179,
+          "x_frac": 0.5,
+          "y_in_band": 0.322,
+          "conf": 0.828,
+          "n_boxes": 1,
+          "ocr_text": "Casa Rochester"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 201,
+          "cy": 319,
+          "x_frac": 0.279,
+          "y_in_band": 0.26,
+          "conf": 0.823,
+          "n_boxes": 1,
+          "ocr_text": "Casa Roche"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 162,
+          "cy": 474,
+          "x_frac": 0.225,
+          "y_in_band": 0.588,
+          "conf": 0.892,
+          "n_boxes": 1,
+          "ocr_text": "CasaRochester"
+        }
+      ],
+      "ocr_texts": [
+        "Casa Rochester",
+        "Casa Roche",
+        "CasaRochester"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.395,
+      "avg_x_frac": 0.332,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FAST SPEED",
+      "horse_no": 7,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 322,
+          "cy": 277,
+          "x_frac": 0.447,
+          "y_in_band": 0.98,
+          "conf": 0.875,
+          "n_boxes": 1,
+          "ocr_text": "FastSpeed"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 314,
+          "cy": 435,
+          "x_frac": 0.436,
+          "y_in_band": 0.147,
+          "conf": 0.885,
+          "n_boxes": 1,
+          "ocr_text": "Fast Speed"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 351,
+          "cy": 586,
+          "x_frac": 0.487,
+          "y_in_band": 0.868,
+          "conf": 0.819,
+          "n_boxes": 1,
+          "ocr_text": "Fast Speed"
+        }
+      ],
+      "ocr_texts": [
+        "FastSpeed",
+        "Fast Speed",
+        "Fast Speed"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.659,
+      "avg_x_frac": 0.456,
+      "wide_frames": 2,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "FIREFOOT",
+      "horse_no": 8,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 146,
+          "cy": 184,
+          "x_frac": 0.203,
+          "y_in_band": 0.356,
+          "conf": 0.854,
+          "n_boxes": 1,
+          "ocr_text": "Firefoot"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 104,
+          "cy": 322,
+          "x_frac": 0.144,
+          "y_in_band": 0.28,
+          "conf": 0.77,
+          "n_boxes": 1,
+          "ocr_text": "refoot"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 202,
+          "cy": 535,
+          "x_frac": 0.281,
+          "y_in_band": 0.446,
+          "conf": 0.797,
+          "n_boxes": 1,
+          "ocr_text": "Firefoot"
+        }
+      ],
+      "ocr_texts": [
+        "Firefoot",
+        "refoot",
+        "Firefoot"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.361,
+      "avg_x_frac": 0.21,
+      "wide_frames": 0,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "HARMONY GALAXY",
+      "horse_no": 1,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "860",
+          "cx": 501,
+          "cy": 116,
+          "x_frac": 0.696,
+          "y_in_band": 0.876,
+          "conf": 0.899,
+          "n_boxes": 1,
+          "ocr_text": "Harmony Galaxy"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 432,
+          "cy": 272,
+          "x_frac": 0.6,
+          "y_in_band": 0.946,
+          "conf": 0.909,
+          "n_boxes": 1,
+          "ocr_text": "HarmonyGalaxy"
+        },
+        {
+          "band_idx": 3,
+          "band_label": "200M",
+          "cx": 389,
+          "cy": 435,
+          "x_frac": 0.54,
+          "y_in_band": 0.147,
+          "conf": 0.901,
+          "n_boxes": 1,
+          "ocr_text": "Harmony Galaxy"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 425,
+          "cy": 571,
+          "x_frac": 0.59,
+          "y_in_band": 0.744,
+          "conf": 0.856,
+          "n_boxes": 1,
+          "ocr_text": "Harmony Galaxy"
+        }
+      ],
+      "ocr_texts": [
+        "Harmony Galaxy",
+        "HarmonyGalaxy",
+        "Harmony Galaxy",
+        "Harmony Galaxy"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.678,
+      "avg_x_frac": 0.607,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "KYRUS TREASURE",
+      "horse_no": 10,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "860",
+          "cx": 331,
+          "cy": 120,
+          "x_frac": 0.46,
+          "y_in_band": 0.909,
+          "conf": 0.884,
+          "n_boxes": 1,
+          "ocr_text": "Kyrus Treasure"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 247,
+          "cy": 262,
+          "x_frac": 0.343,
+          "y_in_band": 0.879,
+          "conf": 0.87,
+          "n_boxes": 1,
+          "ocr_text": "Kyrus Treasure"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 113,
+          "cy": 404,
+          "x_frac": 0.157,
+          "y_in_band": 0.827,
+          "conf": 0.873,
+          "n_boxes": 1,
+          "ocr_text": "Kyrus Treasure"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 103,
+          "cy": 551,
+          "x_frac": 0.143,
+          "y_in_band": 0.579,
+          "conf": 0.896,
+          "n_boxes": 1,
+          "ocr_text": "Kyrus Treasure"
+        }
+      ],
+      "ocr_texts": [
+        "Kyrus Treasure",
+        "Kyrus Treasure",
+        "Kyrus Treasure",
+        "Kyrus Treasure"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.797,
+      "avg_x_frac": 0.275,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NOBLE PURSUIT",
+      "horse_no": 9,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "860",
+          "cx": 217,
+          "cy": 40,
+          "x_frac": 0.301,
+          "y_in_band": 0.248,
+          "conf": 0.854,
+          "n_boxes": 1,
+          "ocr_text": "Noble Pursuit"
+        },
+        {
+          "band_idx": 4,
+          "band_label": null,
+          "cx": 259,
+          "cy": 478,
+          "x_frac": 0.36,
+          "y_in_band": 0.824,
+          "conf": 0.881,
+          "n_boxes": 1,
+          "ocr_text": "NoblePursuit"
+        }
+      ],
+      "ocr_texts": [
+        "Noble Pursuit",
+        "NoblePursuit"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.54,
+      "avg_x_frac": 0.331,
+      "wide_frames": 1,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "NORTHERN BEAST",
+      "horse_no": 11,
+      "frames": [
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 506,
+          "cy": 208,
+          "x_frac": 0.703,
+          "y_in_band": 0.519,
+          "conf": 0.917,
+          "n_boxes": 2,
+          "ocr_text": "Northern Beast"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 523,
+          "cy": 582,
+          "x_frac": 0.726,
+          "y_in_band": 0.835,
+          "conf": 0.886,
+          "n_boxes": 1,
+          "ocr_text": "Northern Beast"
+        }
+      ],
+      "ocr_texts": [
+        "NorthernBeast",
+        "Northern Beast",
+        "Northern Beast"
+      ],
+      "n_frames_seen": 2,
+      "avg_y_in_band": 0.674,
+      "avg_x_frac": 0.714,
+      "wide_frames": 1,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "OCEAN IMPACT",
+      "horse_no": 12,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "860",
+          "cx": 254,
+          "cy": 111,
+          "x_frac": 0.353,
+          "y_in_band": 0.835,
+          "conf": 0.838,
+          "n_boxes": 1,
+          "ocr_text": "Ocean Impact"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 303,
+          "cy": 252,
+          "x_frac": 0.421,
+          "y_in_band": 0.812,
+          "conf": 0.868,
+          "n_boxes": 1,
+          "ocr_text": "Ocean impact"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 244,
+          "cy": 406,
+          "x_frac": 0.339,
+          "y_in_band": 0.84,
+          "conf": 0.843,
+          "n_boxes": 1,
+          "ocr_text": "Ocean Impact"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 304,
+          "cy": 558,
+          "x_frac": 0.422,
+          "y_in_band": 0.636,
+          "conf": 0.87,
+          "n_boxes": 1,
+          "ocr_text": "Ocean Impact"
+        }
+      ],
+      "ocr_texts": [
+        "Ocean Impact",
+        "Ocean impact",
+        "Ocean Impact",
+        "Ocean Impact"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.78,
+      "avg_x_frac": 0.384,
+      "wide_frames": 4,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "ROMANTIC LAOS",
+      "horse_no": 4,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "860",
+          "cx": 433,
+          "cy": 117,
+          "x_frac": 0.601,
+          "y_in_band": 0.884,
+          "conf": 0.918,
+          "n_boxes": 1,
+          "ocr_text": "RomanticLaos"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 370,
+          "cy": 272,
+          "x_frac": 0.514,
+          "y_in_band": 0.946,
+          "conf": 0.829,
+          "n_boxes": 1,
+          "ocr_text": "RomanticLaos"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 162,
+          "cy": 567,
+          "x_frac": 0.225,
+          "y_in_band": 0.711,
+          "conf": 0.867,
+          "n_boxes": 1,
+          "ocr_text": "Romantic Laos"
+        }
+      ],
+      "ocr_texts": [
+        "RomanticLaos",
+        "RomanticLaos",
+        "Romantic Laos"
+      ],
+      "n_frames_seen": 3,
+      "avg_y_in_band": 0.846,
+      "avg_x_frac": 0.449,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": true,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "SERANGOON",
+      "horse_no": 5,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "860",
+          "cx": 520,
+          "cy": 37,
+          "x_frac": 0.722,
+          "y_in_band": 0.223,
+          "conf": 0.875,
+          "n_boxes": 1,
+          "ocr_text": "Serangoon"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 436,
+          "cy": 176,
+          "x_frac": 0.606,
+          "y_in_band": 0.302,
+          "conf": 0.896,
+          "n_boxes": 1,
+          "ocr_text": "Serangoon"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 300,
+          "cy": 404,
+          "x_frac": 0.417,
+          "y_in_band": 0.827,
+          "conf": 0.867,
+          "n_boxes": 1,
+          "ocr_text": "Serangoon"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 154,
+          "cy": 544,
+          "x_frac": 0.214,
+          "y_in_band": 0.521,
+          "conf": 0.861,
+          "n_boxes": 1,
+          "ocr_text": "Serangoon"
+        }
+      ],
+      "ocr_texts": [
+        "Serangoon",
+        "Serangoon",
+        "Serangoon",
+        "Serangoon"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.466,
+      "avg_x_frac": 0.492,
+      "wide_frames": 1,
+      "rail_frames": 2,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "STORM RUNNER",
+      "horse_no": 6,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "860",
+          "cx": 162,
+          "cy": 120,
+          "x_frac": 0.225,
+          "y_in_band": 0.909,
+          "conf": 0.905,
+          "n_boxes": 1,
+          "ocr_text": "StormRunner"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 187,
+          "cy": 252,
+          "x_frac": 0.26,
+          "y_in_band": 0.812,
+          "conf": 0.873,
+          "n_boxes": 1,
+          "ocr_text": "Storm Runner"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 182,
+          "cy": 398,
+          "x_frac": 0.253,
+          "y_in_band": 0.787,
+          "conf": 0.902,
+          "n_boxes": 1,
+          "ocr_text": "StormRunner"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 251,
+          "cy": 544,
+          "x_frac": 0.349,
+          "y_in_band": 0.521,
+          "conf": 0.79,
+          "n_boxes": 1,
+          "ocr_text": "Storm Runner"
+        }
+      ],
+      "ocr_texts": [
+        "StormRunner",
+        "Storm Runner",
+        "StormRunner",
+        "Storm Runner"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.765,
+      "avg_x_frac": 0.269,
+      "wide_frames": 3,
+      "rail_frames": 0,
+      "wide_all_way": false,
+      "rail_all_way": false
+    },
+    {
+      "horse_name": "VOLCANIC SPARK",
+      "horse_no": 3,
+      "frames": [
+        {
+          "band_idx": 0,
+          "band_label": "860",
+          "cx": 433,
+          "cy": 39,
+          "x_frac": 0.601,
+          "y_in_band": 0.24,
+          "conf": 0.894,
+          "n_boxes": 1,
+          "ocr_text": "Volcanic Spark"
+        },
+        {
+          "band_idx": 1,
+          "band_label": "800M",
+          "cx": 417,
+          "cy": 247,
+          "x_frac": 0.579,
+          "y_in_band": 0.779,
+          "conf": 0.865,
+          "n_boxes": 1,
+          "ocr_text": "Voicanic Spark"
+        },
+        {
+          "band_idx": 2,
+          "band_label": "400M",
+          "cx": 351,
+          "cy": 409,
+          "x_frac": 0.487,
+          "y_in_band": 0.86,
+          "conf": 0.881,
+          "n_boxes": 1,
+          "ocr_text": "Volcanic Spark"
+        },
+        {
+          "band_idx": 5,
+          "band_label": null,
+          "cx": 305,
+          "cy": 582,
+          "x_frac": 0.424,
+          "y_in_band": 0.835,
+          "conf": 0.887,
+          "n_boxes": 1,
+          "ocr_text": "Volcanic Spark"
+        }
+      ],
+      "ocr_texts": [
+        "Volcanic Spark",
+        "Voicanic Spark",
+        "Volcanic Spark",
+        "Volcanic Spark"
+      ],
+      "n_frames_seen": 4,
+      "avg_y_in_band": 0.677,
+      "avg_x_frac": 0.523,
+      "wide_frames": 3,
+      "rail_frames": 1,
+      "wide_all_way": false,
+      "rail_all_way": false
+    }
+  ],
+  "meta": {
+    "ocr_boxes": 68,
+    "matched_horses": 12,
+    "field_size": 12,
+    "coverage": 1.0,
+    "parsed_at": "2026-07-16T11:38:12"
+  }
+}
