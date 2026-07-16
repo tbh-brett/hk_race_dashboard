@@ -69,29 +69,100 @@ def hkt_fmt(dt_or_ts, fmt: str = "%Y-%m-%d %H:%M") -> str:
 # ── Per-run commentary lookup (for Form Guide rows) ──────────────────────────
 def _hkjc_video_url(date_dc: str, race_no: int,
                     track: str | None = None) -> str:
-    """Return a URL to the HKJC race replay page.
+    """Return the direct HKJC replay iframe URL.
 
-    ``date_dc`` is ``YYYY/MM/DD``.  When ``track`` (``ST``/``HV``) is supplied
-    we point at the public English LocalResults page which embeds the
-    replay player and works when opened standalone in a new tab.  Otherwise
-    we fall back to the older iframe player URL.
+    ``date_dc`` may be ``YYYY/MM/DD`` or ``YYYY-MM-DD``. When ``track`` is
+    available we include the Local Results referrer payload expected by the
+    current HKJC player so the replay opens directly instead of landing on the
+    wrapper results page.
     """
+    raw_date = str(date_dc or "").strip()
+    date_compact = raw_date.replace("-", "").replace("/", "")
+    date_slash = raw_date.replace("-", "/")
     rn = int(race_no)
     if track:
         tk = str(track).strip().upper()
         rc = "ST" if tk in ("ST", "SHA TIN") else (
             "HV" if tk in ("HV", "HAPPY VALLEY") else tk or "ST")
         return (
-            "https://racing.hkjc.com/racing/information/English/Racing/"
-            f"LocalResults.aspx?RaceDate={date_dc}&Racecourse={rc}"
-            f"&RaceNo={rn:02d}"
+            "https://racing.hkjc.com/contentAsset/videoplayer_v4/"
+            "video-player-iframe_v4.html?type=replay-full"
+            f"&date={date_compact}&no={rn:02d}&lang=eng"
+            "&noPTbar=false&noLeading=false&videoParam=P"
+            "&rf=http://racing.hkjc.com/en-us/local/information/localresults"
+            f"?racedate={date_slash}&Racecourse={rc}&RaceNo={rn}"
+            "&pageid=racing/local"
         )
     return (
         "https://racing.hkjc.com/contentAsset/videoplayer_v4/"
         "video-player-iframe_v4.html?type=replay-full"
-        f"&date={date_dc}&no={rn:02d}&lang=eng"
-        "&noPTbar=false&noLeading=false&videoParam=PAD"
+        f"&date={date_compact}&no={rn:02d}&lang=eng"
+        "&noPTbar=false&noLeading=false&videoParam=P"
     )
+
+
+def _rl_name_key(value) -> str:
+    return str(value or "").strip().upper()
+
+
+def _rl_text_or_none(value):
+    if value is None:
+        return None
+    if isinstance(value, float) and pd.isna(value):
+        return None
+    txt = str(value).strip()
+    if not txt or txt.lower() in ("nan", "none"):
+        return None
+    return txt
+
+
+def _rl_profile_search_url(horse_name: str) -> str:
+    query = "+".join(str(horse_name or "").strip().split())
+    if not query:
+        return ""
+    return (
+        "https://racing.hkjc.com/racing/information/English/Horse/"
+        f"SelectHorse.aspx?HorseName={query}"
+    )
+
+
+def _rl_day_runner_meta(date_iso: str) -> dict:
+    """Best-effort per-runner metadata from date-scoped report artifacts."""
+    compact = str(date_iso or "").replace("-", "")
+    if len(compact) != 8 or not compact.isdigit():
+        return {}
+
+    path = REPORTS / f"hv_gy_y_analysis_{compact}.json"
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+    out = {}
+    for race in raw.get("today", []) or []:
+        try:
+            race_no = int(race.get("race_number"))
+        except Exception:
+            continue
+        for runner in race.get("picks", []) or []:
+            name_key = _rl_name_key(runner.get("horse_name"))
+            if not name_key:
+                continue
+            rec = {}
+            rating = runner.get("rating")
+            if rating is not None and not (isinstance(rating, float) and pd.isna(rating)):
+                rec["rating"] = rating
+            gear = _rl_text_or_none(runner.get("gear"))
+            if gear:
+                rec["gear"] = gear
+            horse_url = _rl_text_or_none(runner.get("horse_url"))
+            if horse_url:
+                rec["horse_url"] = horse_url
+            if rec:
+                out[(race_no, name_key)] = rec
+    return out
 
 
 _TRIAL_COURSE_TO_RC = {
@@ -20941,6 +21012,7 @@ def _lookup_load_df(db_mtime: float, pace_mtime: float) -> pd.DataFrame:
     df["race_date_str"] = df["race_date"].dt.strftime("%Y-%m-%d")
     df["year"] = df["race_date"].dt.year
     df["month"] = df["race_date"].dt.to_period("M").astype(str)
+    df["horse_name_key"] = df["horse_name"].map(_rl_name_key)
     df["going"] = df["going"].map(
         lambda g: abbreviate_going(str(g).strip())
         if not pd.isna(g) and str(g).strip().lower() not in ("", "nan", "none")
@@ -20954,6 +21026,63 @@ def _lookup_load_df(db_mtime: float, pace_mtime: float) -> pd.DataFrame:
     df["distance_n"] = pd.to_numeric(df["distance"], errors="coerce")
     df["finish_time_seconds"] = pd.to_numeric(df["finish_time_seconds"], errors="coerce")
     df["win_odds_n"] = pd.to_numeric(df["win_odds"], errors="coerce")
+    df["distance_display"] = df["distance_n"].round().astype("Int64")
+
+    # ── Display fallbacks for sparse post-race metadata ─────────────────
+    day_meta_cache = {}
+    report_rating = []
+    report_gear = []
+    report_horse_url = []
+    for date_iso, race_no, horse_key in zip(
+        df["race_date_str"], df["race_number"], df["horse_name_key"]
+    ):
+        meta = day_meta_cache.get(date_iso)
+        if meta is None:
+            meta = _rl_day_runner_meta(date_iso)
+            day_meta_cache[date_iso] = meta
+        try:
+            race_no_int = int(race_no)
+        except Exception:
+            race_no_int = None
+        rec = meta.get((race_no_int, horse_key), {}) if race_no_int is not None else {}
+        report_rating.append(rec.get("rating"))
+        report_gear.append(rec.get("gear"))
+        report_horse_url.append(rec.get("horse_url"))
+
+    df["report_rating_n"] = pd.to_numeric(report_rating, errors="coerce")
+    df["report_gear"] = pd.Series(report_gear, index=df.index, dtype="object")
+    df["report_horse_url"] = pd.Series(report_horse_url, index=df.index, dtype="object")
+
+    rating_known = pd.to_numeric(df["rating"], errors="coerce")
+    rating_known = rating_known.combine_first(pd.to_numeric(df["current_rating"], errors="coerce"))
+    rating_known = rating_known.combine_first(df["report_rating_n"])
+
+    gear_known = df["gear"].map(_rl_text_or_none)
+    gear_known = gear_known.combine_first(df["report_gear"].map(_rl_text_or_none))
+
+    hist_meta = pd.DataFrame({
+        "horse_name_key": df["horse_name_key"],
+        "race_date": df["race_date"],
+        "race_number_n": pd.to_numeric(df["race_number"], errors="coerce"),
+        "rating_known": rating_known,
+        "gear_known": gear_known,
+    }, index=df.index).sort_values(["horse_name_key", "race_date", "race_number_n"])
+    hist_meta["rating_ffill"] = hist_meta.groupby("horse_name_key")["rating_known"].ffill()
+    hist_meta["gear_ffill"] = hist_meta.groupby("horse_name_key")["gear_known"].ffill()
+
+    df["rating_display"] = rating_known.combine_first(
+        hist_meta["rating_ffill"].reindex(df.index)
+    ).round().astype("Int64")
+    df["gear_display"] = gear_known.combine_first(
+        hist_meta["gear_ffill"].reindex(df.index)
+    ).fillna("")
+    df["horse_url_display"] = df["horse_url"].map(_rl_text_or_none)
+    df["horse_url_display"] = df["horse_url_display"].combine_first(
+        df["report_horse_url"].map(_rl_text_or_none)
+    )
+    df["horse_url_display"] = df["horse_url_display"].combine_first(
+        df["horse_name"].map(_rl_profile_search_url)
+    )
 
     # ── Gate band ────────────────────────────────────────────────────────
     def _gate_band(d):
@@ -21758,41 +21887,47 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
     with sub_results:
         disp = df.copy()
         disp["video"] = [
-            _hkjc_video_url(d.replace("-", "/"), int(rn))
-            for d, rn in zip(disp["race_date_str"], disp["race_number"])
+            _hkjc_video_url(d, int(rn), tk)
+            for d, rn, tk in zip(
+                disp["race_date_str"],
+                disp["race_number"],
+                disp.get("race_track", [""] * len(disp)),
+            )
         ]
         cols_order = [
             "race_date_str", "race_number", "race_track", "race_course",
-            "surface", "race_class", "distance_n", "going",
+            "surface", "race_class", "distance_display", "going",
             "field_size",
-            "place", "horse_name", "draw", "rating", "actual_weight",
+            "place", "horse_name", "draw", "rating_display", "actual_weight",
             "jockey", "trainer", "run_style", "running_positions",
             "pace_display", "finish_time_seconds", "fin_delta",
-            "lbw", "win_odds", "gear",
-            "video", "horse_url",
+            "lbw", "win_odds", "gear_display",
+            "video", "horse_url_display",
         ]
         cols_order = [c for c in cols_order if c in disp.columns]
         disp = disp[cols_order].rename(columns={
             "race_date_str": "Date", "race_number": "R",
             "race_track": "Track", "race_course": "Course",
             "surface": "Surface", "race_class": "Class",
-            "distance_n": "Dist", "going": "Going",
+            "distance_display": "Dist", "going": "Going",
             "field_size": "Fld",
             "place": "Pl", "horse_name": "Horse",
-            "draw": "Gate", "rating": "RT",
+            "draw": "Gate", "rating_display": "RT",
             "actual_weight": "Wt", "jockey": "Jockey",
             "trainer": "Trainer", "run_style": "Style",
             "running_positions": "Run pos.",
             "pace_display": "Pace",
             "finish_time_seconds": "Time(s)", "fin_delta": "Fin Δ",
-            "lbw": "LBW", "win_odds": "Odds", "gear": "Gear",
-            "video": "▶ Replay", "horse_url": "🐴 HKJC",
+            "lbw": "LBW", "win_odds": "Odds", "gear_display": "Gear",
+            "video": "▶ Replay", "horse_url_display": "🐴 HKJC",
         })
         _rl_col_cfg = {
             "▶ Replay": st.column_config.LinkColumn(
                 "▶ Replay", display_text="▶ Watch", width="small"),
             "🐴 HKJC": st.column_config.LinkColumn(
                 "🐴 HKJC", display_text="open", width="small"),
+            "Dist": st.column_config.NumberColumn(format="%d"),
+            "RT": st.column_config.NumberColumn(format="%d"),
             "Pace": st.column_config.TextColumn(
                 "Pace",
                 help="Race pace label with deviation vs HKJC standard in brackets. "
@@ -21838,11 +21973,15 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
                 st.info("No history.")
             else:
                 hist = hist.assign(video=[
-                    _hkjc_video_url(d.replace("-", "/"), int(rn))
-                    for d, rn in zip(hist["race_date_str"], hist["race_number"])
+                    _hkjc_video_url(d, int(rn), tk)
+                    for d, rn, tk in zip(
+                        hist["race_date_str"],
+                        hist["race_number"],
+                        hist.get("race_track", [""] * len(hist)),
+                    )
                 ])
                 show_cols = ["race_date_str", "race_number", "race_track",
-                             "race_course", "race_class", "distance_n",
+                             "race_course", "race_class", "distance_display",
                              "going", "pace_display", "place", "draw",
                              "jockey", "trainer", "run_style",
                              "running_positions", "finish_time_seconds",
@@ -21851,7 +21990,7 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
                 hist_disp = hist[show_cols].rename(columns={
                     "race_date_str": "Date", "race_number": "R",
                     "race_track": "Trk", "race_course": "Crs",
-                    "race_class": "Cls", "distance_n": "Dist",
+                    "race_class": "Cls", "distance_display": "Dist",
                     "going": "Going", "pace_display": "Pace",
                     "place": "Pl", "draw": "Gate", "jockey": "Jky",
                     "trainer": "Trn", "run_style": "Style",
