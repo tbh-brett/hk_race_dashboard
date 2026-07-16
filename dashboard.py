@@ -8705,22 +8705,21 @@ def _results_json_to_excel_bytes(results_path: Path) -> bytes | None:
 
 
 def _auto_sync_results_to_db(verbose: bool = False) -> tuple[int, int]:
-    """Backfill any reports/results_*.json files that are out of sync.
+    """Backfill any reports/results_*.json files missing from hkjc.db.
 
     This guards against the recurring failure mode where the post-race
     pipeline scraped a results JSON but the DB-append step never ran
     (e.g. the pipeline was interrupted, the safety-net was added later,
     or a meeting was scraped from a different machine and only the JSON
-    was synced via git). It also covers same-date refreshes where a
-    results JSON was re-scraped or updated after the DB was last written.
-    Form Guide and Race Lookup both read from
+    was synced via git). Form Guide and Race Lookup both read from
     hkjc.db, so any missing date silently disappears from the form lines
     of downstream race cards.
 
-    Strategy: for every results_*.json on disk, sync it when either its
-    race_date is absent from hkjc.db or the JSON file is newer than the DB
-    snapshot on disk. ``append_results_to_db`` is itself idempotent and
-    replaces the date slice, so re-running it over an existing meeting is safe.
+    Strategy: for every results_*.json on disk, check if its race_date is
+    already present in hkjc.db. If not, call ``db_utils.append_results_to_db``
+    on it. ``append_results_to_db`` is itself idempotent, so re-running it
+    over already-imported dates is safe — but we skip them anyway to keep
+    the no-op path cheap.
 
     Returns ``(n_meetings_synced, n_rows_appended)``. Silent if nothing
     to do; callers may surface the count via st.toast / st.info.
@@ -8737,12 +8736,6 @@ def _auto_sync_results_to_db(verbose: bool = False) -> tuple[int, int]:
         have = {str(d)[:10] for d in df["race_date"].astype(str)}
     except Exception:
         have = set()
-    db_mtime = 0.0
-    for _db_path in (BASE / "hkjc.db", BASE / "hkjc_results_updated.xlsx"):
-        try:
-            db_mtime = max(db_mtime, _db_path.stat().st_mtime)
-        except OSError:
-            pass
     n_meetings = 0
     n_rows = 0
     for fp in sorted(results_dir.glob("results_*.json")):
@@ -8750,11 +8743,7 @@ def _auto_sync_results_to_db(verbose: bool = False) -> tuple[int, int]:
         if len(stem) != 8 or not stem.isdigit():
             continue
         iso = f"{stem[:4]}-{stem[4:6]}-{stem[6:]}"
-        try:
-            file_newer_than_db = fp.stat().st_mtime > db_mtime
-        except OSError:
-            file_newer_than_db = False
-        if iso in have and not file_newer_than_db:
+        if iso in have:
             continue
         try:
             n = append_results_to_db(fp, verbose=verbose)
@@ -8843,7 +8832,7 @@ def _rebuild_caches_after_sync() -> list[str]:
 
 
 def _db_pending_meetings() -> list[str]:
-    """ISO dates whose results JSON is missing from, or newer than, the DB."""
+    """ISO dates with a reports/results_*.json that are missing from hkjc.db."""
     try:
         from db_utils import read_sqlite
     except Exception:
@@ -8856,23 +8845,13 @@ def _db_pending_meetings() -> list[str]:
         have = {str(d)[:10] for d in df["race_date"].astype(str)}
     except Exception:
         have = set()
-    db_mtime = 0.0
-    for _db_path in (BASE / "hkjc.db", BASE / "hkjc_results_updated.xlsx"):
-        try:
-            db_mtime = max(db_mtime, _db_path.stat().st_mtime)
-        except OSError:
-            pass
     pending: list[str] = []
     for fp in sorted(results_dir.glob("results_*.json")):
         stem = fp.stem.replace("results_", "")
         if len(stem) != 8 or not stem.isdigit():
             continue
         iso = f"{stem[:4]}-{stem[4:6]}-{stem[6:]}"
-        try:
-            file_newer_than_db = fp.stat().st_mtime > db_mtime
-        except OSError:
-            file_newer_than_db = False
-        if iso not in have or file_newer_than_db:
+        if iso not in have:
             pending.append(iso)
     return pending
 
