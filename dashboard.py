@@ -20843,6 +20843,78 @@ def _rl_apply_preset(preset: dict):
         st.session_state[k] = v
 
 
+_RL_PACE_LABELS = {
+    "VERY FAST": "V.Fast",
+    "FAST": "Fast",
+    "SLIGHTLY FAST": "Sl.Fast",
+    "NORMAL": "Normal",
+    "NEUTRAL": "Normal",
+    "SLIGHTLY SLOW": "Sl.Slow",
+    "SLOW": "Slow",
+    "VERY SLOW": "V.Slow",
+}
+
+
+def _rl_pace_display_label(label: str) -> str:
+    txt = str(label or "").strip()
+    if not txt:
+        return ""
+    return _RL_PACE_LABELS.get(txt.upper(), txt)
+
+
+def _rl_pace_display_value(label: str, dev) -> str:
+    pace = _rl_pace_display_label(label)
+    if not pace:
+        return "—"
+    if isinstance(dev, (int, float)):
+        return f"{pace} ({dev:+.2f})"
+    return pace
+
+
+def _rl_pace_style(val) -> str:
+    txt = str(val or "").strip().upper()
+    if not txt or txt == "—":
+        return ""
+    if txt.startswith("V.FAST"):
+        return "color:#d73a49;font-weight:700"
+    if txt.startswith("FAST"):
+        return "color:#e85d75;font-weight:600"
+    if txt.startswith("SL.FAST"):
+        return "color:#f0a0a0;font-weight:600"
+    if txt.startswith("V.SLOW"):
+        return "color:#3a69d7;font-weight:700"
+    if txt.startswith("SLOW"):
+        return "color:#5d8fe8;font-weight:600"
+    if txt.startswith("SL.SLOW"):
+        return "color:#a0c0f0;font-weight:600"
+    return ""
+
+
+def _rl_fin_style(val) -> str:
+    if not isinstance(val, (int, float)):
+        return ""
+    if val <= -0.5:
+        return "background-color:#28a74522;color:#28a745;font-weight:700"
+    if val <= -0.2:
+        return "color:#28a745;font-weight:600"
+    if val >= 0.5:
+        return "color:#d73a49"
+    return ""
+
+
+def _rl_last_section_time(sectiontimes) -> float | None:
+    if sectiontimes is None or (isinstance(sectiontimes, float) and pd.isna(sectiontimes)):
+        return None
+    vals = [p.strip() for p in str(sectiontimes).split(";")
+            if str(p).strip() not in ("", "-", "---")]
+    if not vals:
+        return None
+    try:
+        return float(vals[-1])
+    except (TypeError, ValueError):
+        return None
+
+
 @st.cache_data(ttl=600, show_spinner="Loading master DB…")
 def _lookup_load_df(db_mtime: float, pace_mtime: float) -> pd.DataFrame:
     """Load every row from hkjc.db once, enrich with derived fields, and
@@ -20850,6 +20922,7 @@ def _lookup_load_df(db_mtime: float, pace_mtime: float) -> pd.DataFrame:
     `append_results_to_db` rewrites the SQLite mirror or the pace index is
     rebuilt. All filtering happens in-memory afterwards (instant)."""
     from db_utils import read_sqlite
+    from hkjc_client import abbreviate_going
 
     cols = (
         "race_date, race_number, race_track, race_course, track_type, "
@@ -20868,6 +20941,11 @@ def _lookup_load_df(db_mtime: float, pace_mtime: float) -> pd.DataFrame:
     df["race_date_str"] = df["race_date"].dt.strftime("%Y-%m-%d")
     df["year"] = df["race_date"].dt.year
     df["month"] = df["race_date"].dt.to_period("M").astype(str)
+    df["going"] = df["going"].map(
+        lambda g: abbreviate_going(str(g).strip())
+        if not pd.isna(g) and str(g).strip().lower() not in ("", "nan", "none")
+        else ""
+    )
 
     # ── Numeric coercions ────────────────────────────────────────────────
     df["draw_n"] = pd.to_numeric(df["draw"], errors="coerce")
@@ -20932,15 +21010,28 @@ def _lookup_load_df(db_mtime: float, pace_mtime: float) -> pd.DataFrame:
     # ── Pace label (per race) — merge from cache/race_pace_index.json ───
     pidx_path = BASE / "cache" / "race_pace_index.json"
     pace_map = {}
+    pace_dev_map = {}
     if pidx_path.exists():
         try:
             raw = json.loads(pidx_path.read_text(encoding="utf-8"))
             for k, v in raw.items():
-                pace_map[k] = v.get("label") or ""
+                pace_map[k] = _rl_pace_display_label(v.get("label") or "")
+                pace_dev_map[k] = v.get("adj_dev_s")
         except Exception:
             pace_map = {}
+            pace_dev_map = {}
     df["race_key"] = df["race_date_str"] + "_R" + df["race_number"].astype(str)
     df["pace_label"] = df["race_key"].map(pace_map).fillna("")
+    df["pace_dev"] = pd.to_numeric(df["race_key"].map(pace_dev_map), errors="coerce")
+    df["pace_display"] = [
+        _rl_pace_display_value(lbl, dev)
+        for lbl, dev in zip(df["pace_label"], df["pace_dev"])
+    ]
+
+    # ── Finishing speed (last 400m vs field avg) ───────────────────────
+    df["l400m"] = df["sectiontimes"].map(_rl_last_section_time)
+    field_avg_l400 = df.groupby("race_key")["l400m"].transform("mean")
+    df["fin_delta"] = (df["l400m"] - field_avg_l400).round(2)
 
     # ── Speed figure: z-score within (course, distance, going) ──────────
     # Negative = faster than bucket mean. Only for buckets with >=10 runs.
@@ -21667,18 +21758,17 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
     with sub_results:
         disp = df.copy()
         disp["video"] = [
-            _hkjc_video_url(d.replace("-", "/"), int(rn), tk)
-            for d, rn, tk in zip(disp["race_date_str"],
-                                  disp["race_number"],
-                                  disp.get("race_track", [""] * len(disp)))
+            _hkjc_video_url(d.replace("-", "/"), int(rn))
+            for d, rn in zip(disp["race_date_str"], disp["race_number"])
         ]
         cols_order = [
             "race_date_str", "race_number", "race_track", "race_course",
-            "surface", "race_class", "distance_n", "going", "pace_label",
+            "surface", "race_class", "distance_n", "going",
             "field_size",
             "place", "horse_name", "draw", "rating", "actual_weight",
             "jockey", "trainer", "run_style", "running_positions",
-            "finish_time_seconds", "speed_fig", "lbw", "win_odds", "gear",
+            "pace_display", "finish_time_seconds", "fin_delta",
+            "lbw", "win_odds", "gear",
             "video", "horse_url",
         ]
         cols_order = [c for c in cols_order if c in disp.columns]
@@ -21687,32 +21777,46 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
             "race_track": "Track", "race_course": "Course",
             "surface": "Surface", "race_class": "Class",
             "distance_n": "Dist", "going": "Going",
-            "pace_label": "Pace", "field_size": "Fld",
+            "field_size": "Fld",
             "place": "Pl", "horse_name": "Horse",
             "draw": "Gate", "rating": "RT",
             "actual_weight": "Wt", "jockey": "Jockey",
             "trainer": "Trainer", "run_style": "Style",
             "running_positions": "Run pos.",
-            "finish_time_seconds": "Time(s)", "speed_fig": "SpdFig",
+            "pace_display": "Pace",
+            "finish_time_seconds": "Time(s)", "fin_delta": "Fin Δ",
             "lbw": "LBW", "win_odds": "Odds", "gear": "Gear",
             "video": "▶ Replay", "horse_url": "🐴 HKJC",
         })
-
-        st.dataframe(
-            disp, width='stretch', hide_index=True,
-            height=min(900, 120 + 35 * min(len(disp), 22)),
-            column_config={
-                "▶ Replay": st.column_config.LinkColumn(
-                    "▶ Replay", display_text="▶ Watch", width="small"),
-                "🐴 HKJC": st.column_config.LinkColumn(
-                    "🐴 HKJC", display_text="open", width="small"),
-                "Time(s)": st.column_config.NumberColumn(format="%.2f"),
-                "SpdFig":  st.column_config.NumberColumn(
-                    format="%+.2f",
-                    help="Speed figure z-score (negative = faster than "
-                         "course/distance/going bucket mean)."),
-            },
-        )
+        _rl_col_cfg = {
+            "▶ Replay": st.column_config.LinkColumn(
+                "▶ Replay", display_text="▶ Watch", width="small"),
+            "🐴 HKJC": st.column_config.LinkColumn(
+                "🐴 HKJC", display_text="open", width="small"),
+            "Pace": st.column_config.TextColumn(
+                "Pace",
+                help="Race pace label with deviation vs HKJC standard in brackets. "
+                     "Fast = red, Slow = blue."),
+            "Time(s)": st.column_config.NumberColumn(format="%.2f"),
+            "Fin Δ": st.column_config.NumberColumn(
+                format="%+.2f",
+                help="Final 400m sectional vs the race field average. "
+                     "Negative = finished faster than the field."),
+        }
+        try:
+            _styled = disp.style.map(_rl_pace_style, subset=["Pace"]).map(
+                _rl_fin_style, subset=["Fin Δ"])
+            st.dataframe(
+                _styled, width='stretch', hide_index=True,
+                height=min(900, 120 + 35 * min(len(disp), 22)),
+                column_config=_rl_col_cfg,
+            )
+        except Exception:
+            st.dataframe(
+                disp, width='stretch', hide_index=True,
+                height=min(900, 120 + 35 * min(len(disp), 22)),
+                column_config=_rl_col_cfg,
+            )
 
         csv = disp.to_csv(index=False).encode("utf-8")
         st.download_button("⬇️ Download CSV", data=csv,
@@ -21734,40 +21838,59 @@ def _rl_render_lookup(df_all: pd.DataFrame, baselines: dict,
                 st.info("No history.")
             else:
                 hist = hist.assign(video=[
-                    _hkjc_video_url(d.replace("-", "/"), int(rn), tk)
-                    for d, rn, tk in zip(hist["race_date_str"],
-                                          hist["race_number"],
-                                          hist.get("race_track",
-                                                   [""] * len(hist)))
+                    _hkjc_video_url(d.replace("-", "/"), int(rn))
+                    for d, rn in zip(hist["race_date_str"], hist["race_number"])
                 ])
                 show_cols = ["race_date_str", "race_number", "race_track",
                              "race_course", "race_class", "distance_n",
-                             "going", "pace_label", "place", "draw",
+                             "going", "pace_display", "place", "draw",
                              "jockey", "trainer", "run_style",
                              "running_positions", "finish_time_seconds",
-                             "speed_fig", "lbw", "win_odds", "video"]
+                             "fin_delta", "lbw", "win_odds", "video"]
                 show_cols = [c for c in show_cols if c in hist.columns]
-                st.dataframe(
-                    hist[show_cols].rename(columns={
-                        "race_date_str": "Date", "race_number": "R",
-                        "race_track": "Trk", "race_course": "Crs",
-                        "race_class": "Cls", "distance_n": "Dist",
-                        "going": "Going", "pace_label": "Pace",
-                        "place": "Pl", "draw": "Gate", "jockey": "Jky",
-                        "trainer": "Trn", "run_style": "Style",
-                        "running_positions": "Run pos.",
-                        "finish_time_seconds": "Time(s)",
-                        "speed_fig": "SpdFig", "lbw": "LBW",
-                        "win_odds": "Odds", "video": "▶ Replay",
-                    }),
-                    width='stretch', hide_index=True,
-                    column_config={
-                        "▶ Replay": st.column_config.LinkColumn(
-                            "▶ Replay", display_text="▶", width="small"),
-                        "Time(s)": st.column_config.NumberColumn(format="%.2f"),
-                        "SpdFig": st.column_config.NumberColumn(format="%+.2f"),
-                    },
-                )
+                hist_disp = hist[show_cols].rename(columns={
+                    "race_date_str": "Date", "race_number": "R",
+                    "race_track": "Trk", "race_course": "Crs",
+                    "race_class": "Cls", "distance_n": "Dist",
+                    "going": "Going", "pace_display": "Pace",
+                    "place": "Pl", "draw": "Gate", "jockey": "Jky",
+                    "trainer": "Trn", "run_style": "Style",
+                    "running_positions": "Run pos.",
+                    "finish_time_seconds": "Time(s)",
+                    "fin_delta": "Fin Δ", "lbw": "LBW",
+                    "win_odds": "Odds", "video": "▶ Replay",
+                })
+                try:
+                    _hist_styled = hist_disp.style.map(
+                        _rl_pace_style, subset=["Pace"]).map(
+                        _rl_fin_style, subset=["Fin Δ"])
+                    st.dataframe(
+                        _hist_styled,
+                        width='stretch', hide_index=True,
+                        column_config={
+                            "▶ Replay": st.column_config.LinkColumn(
+                                "▶ Replay", display_text="▶", width="small"),
+                            "Pace": st.column_config.TextColumn(
+                                "Pace",
+                                help="Race pace label with deviation vs HKJC standard in brackets."),
+                            "Time(s)": st.column_config.NumberColumn(format="%.2f"),
+                            "Fin Δ": st.column_config.NumberColumn(format="%+.2f"),
+                        },
+                    )
+                except Exception:
+                    st.dataframe(
+                        hist_disp,
+                        width='stretch', hide_index=True,
+                        column_config={
+                            "▶ Replay": st.column_config.LinkColumn(
+                                "▶ Replay", display_text="▶", width="small"),
+                            "Pace": st.column_config.TextColumn(
+                                "Pace",
+                                help="Race pace label with deviation vs HKJC standard in brackets."),
+                            "Time(s)": st.column_config.NumberColumn(format="%.2f"),
+                            "Fin Δ": st.column_config.NumberColumn(format="%+.2f"),
+                        },
+                    )
 
     # ─────────────────────────── Insights ────────────────────────────────
     with sub_insights:

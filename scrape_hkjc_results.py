@@ -136,18 +136,31 @@ def parse_race_header(html: str) -> Dict[str, str]:
             if dist_only:
                 info["distance"] = dist_only.group(1)
 
-    gm = re.search(
-        r"Going\s*:\s*([A-Z]+(?:\s+(?:TO|AND)\s+[A-Z]+)?(?:\s+(?:FAST|SLOW))?)",
-        text)
+    gm = re.search(r"Going\s*:\s*(.+?)\s+Course\s*:", text)
     if gm:
-        raw = gm.group(1).strip()
-        info["going"] = GOING_ABBREV.get(raw.upper(), raw)
+        segment = re.sub(r"\s+", " ", gm.group(1).strip())
+        seg_up = segment.upper()
+        for full in sorted(GOING_ABBREV, key=len, reverse=True):
+            if seg_up == full or seg_up.startswith(full + " "):
+                info["going"] = GOING_ABBREV[full]
+                race_name = segment[len(full):].strip()
+                if race_name:
+                    info["race_name"] = race_name
+                break
+    if "going" not in info:
+        gm = re.search(
+            r"Going\s*:\s*([A-Z]+(?:\s+(?:TO|AND)\s+[A-Z]+)?(?:\s+(?:FAST|SLOW))?)",
+            text)
+        if gm:
+            raw = gm.group(1).strip()
+            info["going"] = GOING_ABBREV.get(raw.upper(), raw)
 
-    nm = re.search(
-        r"Going\s*:\s*(?:[A-Z]+(?:\s+(?:TO|AND)\s+[A-Z]+)?(?:\s+(?:FAST|SLOW))?)"
-        r"\s+(.+?)\s+Course\s*:", text)
-    if nm:
-        info["race_name"] = nm.group(1).strip()
+    if "race_name" not in info:
+        nm = re.search(
+            r"Going\s*:\s*(?:[A-Z]+(?:\s+(?:TO|AND)\s+[A-Z]+)?(?:\s+(?:FAST|SLOW))?)"
+            r"\s+(.+?)\s+Course\s*:", text)
+        if nm:
+            info["race_name"] = nm.group(1).strip()
 
     course_m = re.search(r'Course\s*:\s*(.+?)(?:\s+Class|\s+Race|\s*$)', text)
     if course_m:
