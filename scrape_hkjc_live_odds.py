@@ -49,7 +49,6 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-from hkjc_client import prune_old_snapshots
 
 BASE = Path(__file__).parent
 OUT_ROOT = BASE / "cache" / "live_odds"
@@ -424,11 +423,17 @@ def main():
                           "(default: wp,qin,qpl — all extracted from the "
                           "single /wpq/ page render)."))
     ap.add_argument("--headless", action="store_true", default=True)
-    ap.add_argument("--keep", type=int, default=20,
-                    help="Keep only the N most recent snapshots per race in "
-                         "cache/live_odds/YYYYMMDD/ (default: 20). Set 0 to "
-                         "disable rotation.")
+    ap.add_argument("--keep", type=int, default=0,
+                    help="DEPRECATED and ignored. Snapshot rotation has been "
+                         "removed: it deleted all but the N most recent files "
+                         "per race and cost a full season of odds history. "
+                         "Accepted only so existing schedulers keep running.")
     args = ap.parse_args()
+
+    if args.keep:
+        print("warning: --keep is ignored. Snapshot rotation was removed "
+              "because it destroyed a season of odds history; every capture "
+              "is now kept.", file=sys.stderr)
 
     date_iso = args.date or dt.date.today().isoformat()
     ymd = date_iso.replace("-", "")
@@ -494,15 +499,12 @@ def main():
                     if "qpl_odds" in snap:
                         parts.append(f"QPL={len(snap['qpl_odds'])}")
                     print(f"{' '.join(parts)} → {outf.name}")
-                    # Bug F: rotate per-race snapshots so the directory doesn't
-                    # accumulate hundreds of files over a meeting.
-                    if args.keep and args.keep > 0:
-                        prune_old_snapshots(
-                            out_dir,
-                            f"{args.venue}_R{rn:02d}_*.json",
-                            keep=args.keep,
-                            quiet=True,
-                        )
+                    # Snapshots are NEVER deleted. Odds movement is the only
+                    # data in this system that cannot be reconstructed after
+                    # the fact, and rotation previously destroyed it: keeping
+                    # the 20 most recent files per race left 17 meetings alive
+                    # out of a full season. A season of snapshots is a few
+                    # hundred megabytes. Disk is cheaper than the data.
                 except KeyboardInterrupt:
                     raise
                 except Exception as e:
