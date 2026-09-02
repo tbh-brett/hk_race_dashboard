@@ -1,0 +1,43 @@
+# Keep the build context (and the image) to what the app actually runs.
+# Data directories are NOT excluded — they seed the volume on first boot.
+
+.git
+.github
+.devcontainer
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Screenshots and UI verification captures (~8 MB, dev-only)
+dashboard-*.png
+phase-c-*.png
+verify-*.png
+debug_racecard.png
+rp-photo-r1.png
+step*.png
+
+# Scratch probes / one-off analysis scripts
+_*.py
+*_temp.py
+apr15_*.py
+
+# Logs and captured stdout
+*.log
+*_output.txt
+backtest_output.txt
+
+# Superseded copies of the app
+dashboard_backup_*.py
+"dashboard (aesthetically improved).py"
+race_day_analysis_2026*.py
+
+# Local secrets — must only ever reach the app via `fly secrets set`
+.streamlit/secrets.toml
+.env
+
+# Bookmaker account statements. These contain a real HKJC account number;
+# they are parser fixtures, not runtime inputs.
+acctstmt*.txt
+
+.playwright-mcp/

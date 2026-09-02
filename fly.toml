@@ -1,0 +1,66 @@
+# Fly.io deployment for the HKJC Racing Dashboard.
+#
+# Shape of this config, and why:
+#   * ONE machine, never more. State lives in a Fly volume, and a volume
+#     attaches to exactly one machine. A second machine would get its own
+#     empty volume and silently serve a different blackbook / bet log.
+#   * Never auto-stop. A [ RUN ANALYSIS ] pipeline run is a multi-minute
+#     subprocess inside the Streamlit process; a machine that suspends
+#     mid-scrape loses the run.
+#
+# Rename `app` to whatever `fly launch --no-deploy` created for you.
+
+app = "hkjc-dashboard"
+primary_region = "hkg"           # next to HKJC's origin — scrapes are chatty
+
+[build]
+
+[env]
+  DATA_DIR = "/data"
+  TZ = "Asia/Hong_Kong"
+  PYTHONIOENCODING = "utf-8"
+  # dashboard.py::_is_streamlit_cloud() keys off this. True here is correct:
+  # it selects the sqlite fast path over the parquet sidecar (which the code
+  # documents as crash-prone) and keeps the GitHub Contents API sync on, so
+  # the volume has an offsite mirror.
+  STREAMLIT_SERVER_HEADLESS = "true"
+
+[[mounts]]
+  source = "hkjc_data"
+  destination = "/data"
+  # Snapshots are the only backstop for the bet log and blackbook if the
+  # GitHub sync token ever lapses.
+  snapshot_retention = 14
+
+[http_service]
+  internal_port = 8501
+  force_https = true
+  auto_stop_machines = false     # see header — do not flip this on
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    # Streamlit holds an open websocket per browser tab, so count
+    # connections rather than requests.
+    type = "connections"
+    soft_limit = 20
+    hard_limit = 40
+
+  [[http_service.checks]]
+    grace_period = "90s"         # cold start imports pandas + lightgbm
+    interval = "30s"
+    method = "GET"
+    timeout = "10s"
+    path = "/_stcore/health"
+
+[deploy]
+  # Single volume-bound machine: there is no second machine to roll onto,
+  # so take the short restart instead of pretending otherwise.
+  strategy = "immediate"
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "4gb"
+  # 4gb is sized for the worst case: Streamlit holding form-guide DataFrames
+  # while a RUN ANALYSIS subprocess spawns its own Python + Chromium.
+  # Watch `fly logs` for "Out of memory" before trimming this to 2gb.

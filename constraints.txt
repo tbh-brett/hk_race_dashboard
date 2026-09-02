@@ -1,0 +1,21 @@
+# Upper bounds for the production image.
+#
+# requirements.txt is deliberately loose (">=") for local dev. That is a
+# liability in production: an unrelated rebuild can silently pull a new major
+# and break the app. These pins encode the incompatibilities the codebase
+# already documents in comments:
+#
+#   * pandas 3.x  — dashboard.py:_load_form_db notes segfaults / ArrowTypeError
+#                   when the parquet sidecar is written under pandas 3.0.
+#   * numpy 3.x   — not validated against the SARR / ET numeric paths.
+#
+# After the first green deploy, freeze the exact resolved set:
+#     fly ssh console -C "pip freeze" > requirements.lock.txt
+# and switch the Dockerfile to install from that lock for byte-reproducible
+# rebuilds.
+pandas<3.0
+numpy<3.0
+streamlit<2.0
+scipy<2.0
+scikit-learn<2.0
+lightgbm<5.0
