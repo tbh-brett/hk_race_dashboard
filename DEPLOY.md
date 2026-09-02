@@ -78,37 +78,91 @@ holds pandas below 3.
 
 ## 2. First deploy
 
-```bash
-fly auth login
-fly launch --no-deploy          # names the app, writes nothing we don't already have
+### The one that bites first: deploy from a commit that HAS these files
+
+Fly's GitHub-integration launch flow scans the branch it is pointed at. If that
+branch has no `Dockerfile`, Fly **generates its own** — a generic Python one
+that knows nothing about Streamlit — and deploys that instead. The symptom is
+unmistakable in the deploy log:
+
+```
+WARNING The app is not listening on the expected address ...
+  - 0.0.0.0:8080
+Found these processes inside the machine with open listening sockets:
+ PROCESS        │ ADDRESSES
+ /.fly/hallpass │ [fdaa:...]:22
 ```
 
-Accept the app name or edit `app = "hkjc-dashboard"` in `fly.toml` to match.
+`/.fly/hallpass` is Fly's own SSH agent. If it is the *only* listener, your app
+process never started at all — this is not a port mismatch, it is a wrong
+image. Fly then offers "Just merge new files" to push its generated
+`fly.toml` / `Dockerfile` into your repo.
 
-Create the volume — **one machine, one volume**, in the same region as
-`primary_region`:
+**Do not click "Just merge new files."** It merges Fly's generated config,
+which then fights the config in this repo. Instead, merge this branch into
+`main` and redeploy from `main`:
 
 ```bash
-fly volumes create hkjc_data --region hkg --size 3
+git checkout main
+git merge claude/dashboard-26-27-deploy-irtt5m
+git push origin main
 ```
 
-3 GB is comfortable: the committed data set (`hkjc.db` 17 MB, `reports/` 83 MB,
-`cache/` 42 MB, `running_position_photos/` 94 MB) is ~240 MB, and it grows by a
-few MB per meeting.
+Then use **Retry from latest commit (main)** in the Fly UI, or `fly deploy`
+from a checkout of `main`.
 
-Set secrets (these never go in the repo):
+### Volume
+
+Fly's first launch already created a **1 GB** volume named `hkrd_data`, and
+`fly.toml` points at that name so the existing one is reused. The committed
+seed measures **247 MB**, so 1 GB works but leaves little room as `reports/`
+and `cache/` grow through the season. Extend it:
+
+```bash
+fly vol list                        # confirm name, size, and REGION
+fly vol extend <volume-id> -s 3
+```
+
+Check the region matches `primary_region` in `fly.toml` (`hkg`). A volume in a
+different region cannot attach, and the machine will fail to place.
+
+### IP addresses
+
+The first launch also failed to allocate IPs:
+
+```
+ERROR: error allocating ipv6 ... org_slug is only supported with private_v6 type
+```
+
+Without a public IP the proxy has nothing to route to — that is the "Proxy not
+finding machines to route requests" error. Allocate them explicitly:
+
+```bash
+fly ips allocate-v4 --shared
+fly ips allocate-v6
+fly ips list                        # confirm both are present
+```
+
+### Secrets
 
 ```bash
 fly secrets set GITHUB_TOKEN="github_pat_..."     # fine-grained, this repo, contents:write
 fly secrets set NTFY_TOPIC="your-private-uuid"    # push notifications
 ```
 
-Deploy:
+### Deploy and watch
 
 ```bash
 fly deploy
-fly logs                                          # watch for "[entrypoint] volume ready"
-fly open
+fly logs
+```
+
+A healthy boot logs the seed, then the bind:
+
+```
+[entrypoint] seeding reports
+[entrypoint] volume ready at /data (247M used)
+Uvicorn server started on 0.0.0.0:8501
 ```
 
 First boot copies the image's committed data into the empty volume, then
@@ -120,10 +174,15 @@ regression from commit `b14d292`, handled structurally.
 To deliberately re-seed from a newly committed snapshot:
 
 ```bash
-fly ssh console -C "rm -rf /data/hkjc.db"   # then: fly apps restart hkjc-dashboard
+fly ssh console -C "rm -rf /data/hkjc.db"   # then: fly apps restart new-hk-racing-dashboard
 ```
 
----
+### On ports
+
+The image binds `$PORT` (default 8501) and `fly.toml` sets both `PORT` and
+`internal_port` to 8501, so the two cannot drift apart. If you ever change one,
+change both — a hardcoded port that disagrees with `fly.toml` is invisible
+until fly-proxy reports nothing listening.
 
 ## 3. Sanity checks on the live URL
 
@@ -154,7 +213,7 @@ This is what turns "a URL on the internet" into production.
    Follow the `fly certs show` instructions for the CNAME / A records, and set
    the Cloudflare record to **Proxied** (orange cloud) so Access actually sits
    in the path.
-5. Close the back door: with the app also reachable at `hkjc-dashboard.fly.dev`,
+5. Close the back door: with the app also reachable at `new-hk-racing-dashboard.fly.dev`,
    Access is trivially bypassed. Either restrict Fly to Cloudflare's IP ranges,
    or run the machine on Flycast private networking with a `cloudflared` tunnel
    as the only ingress. Until one of those is done, treat the `.fly.dev`

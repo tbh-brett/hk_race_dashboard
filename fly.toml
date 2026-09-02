@@ -8,9 +8,7 @@
 #     subprocess inside the Streamlit process; a machine that suspends
 #     mid-scrape loses the run.
 #
-# Rename `app` to whatever `fly launch --no-deploy` created for you.
-
-app = "hkjc-dashboard"
+app = "new-hk-racing-dashboard"
 primary_region = "hkg"           # next to HKJC's origin — scrapes are chatty
 
 [build]
@@ -24,15 +22,23 @@ primary_region = "hkg"           # next to HKJC's origin — scrapes are chatty
   # documents as crash-prone) and keeps the GitHub Contents API sync on, so
   # the volume has an offsite mirror.
   STREAMLIT_SERVER_HEADLESS = "true"
+  # The single source of truth for the listen port; the image honours it.
+  PORT = "8501"
 
 [[mounts]]
-  source = "hkjc_data"
+  # Matches the volume Fly created during the first launch. If you ever
+  # recreate it, the name here and the real volume must agree or the machine
+  # will come up with an empty disk and re-seed from the image.
+  source = "hkrd_data"
   destination = "/data"
   # Snapshots are the only backstop for the bet log and blackbook if the
   # GitHub sync token ever lapses.
   snapshot_retention = 14
 
 [http_service]
+  # Must match the port the container actually binds. The Dockerfile reads
+  # $PORT (default 8501) and fly.toml sets PORT below, so the two cannot
+  # drift apart the way they did on the first launch attempt.
   internal_port = 8501
   force_https = true
   auto_stop_machines = false     # see header — do not flip this on

@@ -11,7 +11,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONIOENCODING=utf-8 \
     PIP_NO_CACHE_DIR=1 \
     PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers \
-    TZ=Asia/Hong_Kong
+    TZ=Asia/Hong_Kong \
+    PORT=8501
 
 WORKDIR /app
 
@@ -44,11 +45,15 @@ RUN chmod +x /app/docker-entrypoint.sh
 EXPOSE 8501
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
-    CMD curl -fsS http://localhost:8501/_stcore/health || exit 1
+    CMD curl -fsS "http://localhost:${PORT}/_stcore/health" || exit 1
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["streamlit", "run", "dashboard.py", \
-     "--server.port=8501", \
-     "--server.address=0.0.0.0", \
-     "--server.headless=true", \
-     "--browser.gatherUsageStats=false"]
+# Shell form on purpose: it expands $PORT at container start, so the port the
+# app binds always follows the platform's rather than being baked in. A
+# hardcoded port that disagrees with fly.toml is invisible until fly-proxy
+# reports nothing listening.
+CMD streamlit run dashboard.py \
+      --server.port="${PORT:-8501}" \
+      --server.address=0.0.0.0 \
+      --server.headless=true \
+      --browser.gatherUsageStats=false
